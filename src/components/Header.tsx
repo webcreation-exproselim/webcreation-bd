@@ -45,7 +45,7 @@ export function Header() {
       <header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
           isScrolled
-            ? "glassmorphism-solid shadow-lg shadow-black/30"
+            ? "glassmorphism-nav shadow-lg shadow-black/30"
             : "bg-transparent"
         }`}
       >
@@ -54,7 +54,7 @@ export function Header() {
             {/* Logo */}
             <a href="/" className="flex-shrink-0">
               <div className="flex items-center gap-2">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center shadow-lg shadow-yellow-500/30">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center shadow-lg glow-gold">
                   <span className="text-black font-bold text-xl font-bengali">ড</span>
                 </div>
                 <span className="text-gradient-gold font-bengali text-xl font-bold hidden sm:block">
@@ -85,13 +85,13 @@ export function Header() {
                 <Button
                   variant="outline"
                   onClick={handleLoginClick}
-                  className="border-yellow-500 bg-transparent text-yellow-400 font-bengali font-medium hover:bg-yellow-500/10 hover:border-yellow-400 hover:text-yellow-300 transition-all duration-300"
+                  className="border-white/50 bg-transparent text-white font-bengali font-medium hover:bg-white/10 hover:border-white transition-all duration-300"
                 >
                   লগইন
                 </Button>
                 <Button
                   onClick={handleSignupClick}
-                  className="bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 text-black font-bengali font-semibold hover:from-yellow-300 hover:via-yellow-400 hover:to-yellow-500 hover:scale-[1.03] transition-all duration-300 shadow-lg shadow-yellow-500/30"
+                  className="bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 text-black font-bengali font-semibold hover:from-yellow-300 hover:via-yellow-400 hover:to-yellow-500 hover:scale-[1.03] transition-all duration-300 glow-gold"
                 >
                   সাইন আপ
                 </Button>

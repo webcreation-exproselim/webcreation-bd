@@ -84,7 +84,7 @@ export function HeroSection() {
             </motion.div>
           </motion.div>
 
-          {/* Right Side - Professional Image with Orbiting Icons */}
+          {/* Right Side - Professional Image with Floating Icons */}
           <motion.div 
             className="relative order-1 lg:order-2 flex justify-center lg:justify-end"
             initial={{ opacity: 0, x: 50 }}
@@ -92,50 +92,75 @@ export function HeroSection() {
             transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
           >
             <div className="relative">
-              {/* Orbiting icons around the subject */}
+              {/* Icon Positions - Fixed positions around the image */}
+              {/* Top Right Icon */}
               <motion.div
-                className="pointer-events-none absolute inset-0 z-20 hidden sm:block"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.6, delay: 0.6 }}
+                className="absolute -top-2 -right-2 sm:top-0 sm:right-0 lg:-right-4 z-20"
+                initial={{ opacity: 0, scale: 0 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.6 }}
+                whileHover={{ scale: 1.15, boxShadow: "0 0 20px rgba(251, 191, 36, 0.6)" }}
               >
-                <motion.div
-                  className="absolute left-1/2 top-1/2"
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
-                  style={{ width: 0, height: 0 }}
-                >
-                  {services.map((service, index) => {
-                    const angle = index * (360 / services.length);
-                    const radius = 165;
-                    return (
-                      <motion.div
-                        key={service.label}
-                        className="absolute"
-                        style={{
-                          transform: `rotate(${angle}deg) translateX(${radius}px) rotate(${-angle}deg)`,
-                        }}
-                        animate={{ y: [0, -6, 0] }}
-                        transition={{
-                          duration: 2.8,
-                          repeat: Infinity,
-                          ease: "easeInOut",
-                          delay: index * 0.15,
-                        }}
-                      >
-                        <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-black/70 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-lg">
-                          <service.icon className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-400" />
-                        </div>
-                      </motion.div>
-                    );
-                  })}
-                </motion.div>
+                <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-xl bg-black/70 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-lg cursor-pointer hover:border-yellow-400/80 hover:bg-yellow-500/10 transition-all">
+                  <Code className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 text-yellow-400" />
+                </div>
               </motion.div>
 
+              {/* Right Side Icons - Vertical Stack */}
+              <div className="absolute top-1/4 -right-4 sm:-right-6 lg:-right-10 flex flex-col gap-3 sm:gap-4 z-20">
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.5, delay: 0.7 }}
+                  whileHover={{ scale: 1.15, boxShadow: "0 0 20px rgba(251, 191, 36, 0.6)" }}
+                >
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-xl bg-black/70 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-lg cursor-pointer hover:border-yellow-400/80 hover:bg-yellow-500/10 transition-all">
+                    <Palette className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 text-yellow-400" />
+                  </div>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.5, delay: 0.8 }}
+                  whileHover={{ scale: 1.15, boxShadow: "0 0 20px rgba(251, 191, 36, 0.6)" }}
+                >
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-xl bg-black/70 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-lg cursor-pointer hover:border-yellow-400/80 hover:bg-yellow-500/10 transition-all">
+                    <Video className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 text-yellow-400" />
+                  </div>
+                </motion.div>
+              </div>
+
+              {/* Left Side Icon */}
+              <motion.div
+                className="absolute top-1/3 -left-4 sm:-left-6 lg:-left-8 z-20"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.9 }}
+                whileHover={{ scale: 1.15, boxShadow: "0 0 20px rgba(251, 191, 36, 0.6)" }}
+              >
+                <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-xl bg-black/70 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-lg cursor-pointer hover:border-yellow-400/80 hover:bg-yellow-500/10 transition-all">
+                  <Megaphone className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 text-yellow-400" />
+                </div>
+              </motion.div>
+
+              {/* Bottom Icon */}
+              <motion.div
+                className="absolute -bottom-2 left-1/2 -translate-x-1/2 z-20"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 1.0 }}
+                whileHover={{ scale: 1.15, boxShadow: "0 0 20px rgba(251, 191, 36, 0.6)" }}
+              >
+                <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-xl bg-black/70 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-lg cursor-pointer hover:border-yellow-400/80 hover:bg-yellow-500/10 transition-all">
+                  <Activity className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 text-yellow-400" />
+                </div>
+              </motion.div>
+
+              {/* Main Image */}
               <img 
                 src={heroProfessional} 
                 alt="Professional Digital Agency Expert" 
-                className="relative z-10 w-full max-w-xs sm:max-w-sm lg:max-w-md h-auto object-contain drop-shadow-2xl" 
+                className="relative z-10 w-56 sm:w-64 md:w-72 lg:w-80 xl:w-96 h-auto object-contain drop-shadow-2xl" 
               />
             </div>
           </motion.div>

@@ -39,8 +39,8 @@ export function HeroSection() {
       <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent pointer-events-none" />
 
       {/* Content */}
-      <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 pt-24 pb-16">
-        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+      <div className="relative z-10 max-w-6xl mx-auto px-6 sm:px-8 lg:px-16 pt-28 pb-16">
+        <div className="grid lg:grid-cols-2 gap-6 lg:gap-8 items-center">
           {/* Left Side - Text Content */}
           <motion.div className="text-center lg:text-left order-2 lg:order-1" initial={{
           opacity: 0,
@@ -87,23 +87,65 @@ export function HeroSection() {
             </motion.div>
           </motion.div>
 
-          {/* Right Side - Professional Image */}
-          <motion.div className="relative order-1 lg:order-2 flex justify-center lg:justify-end" initial={{
-          opacity: 0,
-          x: 50
-        }} animate={{
-          opacity: 1,
-          x: 0
-        }} transition={{
-          duration: 0.8,
-          delay: 0.2,
-          ease: "easeOut"
-        }}>
-            <div className="relative animate-float">
+          {/* Right Side - Professional Image with Floating Icons */}
+          <motion.div 
+            className="relative order-1 lg:order-2 flex justify-center lg:justify-end"
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+          >
+            <div className="relative">
               {/* Glow behind image */}
-              <div className="absolute inset-0 bg-gradient-to-t from-yellow-500/20 via-red-600/20 to-transparent blur-3xl scale-110" />
+              <div className="absolute inset-0 bg-gradient-to-t from-yellow-500/30 via-red-600/20 to-transparent blur-3xl scale-125" />
               
-              <img src={heroProfessional} alt="Professional Digital Agency Expert" className="relative z-10 w-full max-w-md lg:max-w-lg xl:max-w-xl h-auto object-contain drop-shadow-2xl" />
+              {/* Floating Service Icons Around Image */}
+              {services.map((service, index) => {
+                const positions = [
+                  { top: '5%', left: '-10%', delay: 0 },
+                  { top: '25%', right: '-5%', delay: 0.2 },
+                  { top: '50%', left: '-15%', delay: 0.4 },
+                  { top: '70%', right: '-10%', delay: 0.6 },
+                  { bottom: '10%', left: '0%', delay: 0.8 },
+                ];
+                const pos = positions[index];
+                
+                return (
+                  <motion.div
+                    key={service.label}
+                    className="absolute z-20 w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-black/60 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-lg"
+                    style={{ 
+                      top: pos.top, 
+                      left: pos.left, 
+                      right: pos.right, 
+                      bottom: pos.bottom 
+                    }}
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{ 
+                      opacity: 1, 
+                      scale: 1,
+                      y: [0, -8, 0],
+                    }}
+                    transition={{ 
+                      opacity: { duration: 0.5, delay: 0.5 + pos.delay },
+                      scale: { duration: 0.5, delay: 0.5 + pos.delay },
+                      y: { duration: 2 + index * 0.3, repeat: Infinity, ease: "easeInOut", delay: pos.delay }
+                    }}
+                    whileHover={{ 
+                      scale: 1.2, 
+                      boxShadow: "0 0 20px rgba(251, 191, 36, 0.6)",
+                      borderColor: "rgba(251, 191, 36, 0.8)"
+                    }}
+                  >
+                    <service.icon className="w-6 h-6 sm:w-7 sm:h-7 text-yellow-400" />
+                  </motion.div>
+                );
+              })}
+              
+              <img 
+                src={heroProfessional} 
+                alt="Professional Digital Agency Expert" 
+                className="relative z-10 w-full max-w-sm lg:max-w-md xl:max-w-lg h-auto object-contain drop-shadow-2xl" 
+              />
             </div>
           </motion.div>
         </div>

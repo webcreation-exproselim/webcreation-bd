@@ -25,10 +25,10 @@ export function MobileDrawer({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="w-80 bg-agency-green border-l-agency-green-dark"
+        className="w-80 bg-luxury-dark/95 backdrop-blur-xl border-l border-yellow-500/10"
       >
         <SheetHeader>
-          <SheetTitle className="text-white text-left">Menu</SheetTitle>
+          <SheetTitle className="text-gradient-gold text-left font-serif">মেনু</SheetTitle>
         </SheetHeader>
         <nav className="flex flex-col gap-1 mt-8">
           {navItems.map((item) => (
@@ -36,9 +36,10 @@ export function MobileDrawer({
               key={item.href}
               href={item.href}
               onClick={() => onOpenChange(false)}
-              className="px-4 py-3 text-white font-medium transition-colors duration-200 hover:text-agency-red hover:bg-white/10 rounded-md"
+              className="px-4 py-3 text-white/80 font-medium transition-all duration-300 hover:text-yellow-400 hover:bg-yellow-500/10 rounded-lg group relative"
             >
               {item.label}
+              <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-0 bg-gradient-to-b from-yellow-400 to-yellow-600 rounded-full transition-all duration-300 group-hover:h-6" />
             </a>
           ))}
         </nav>
@@ -46,15 +47,15 @@ export function MobileDrawer({
           <Button
             variant="outline"
             onClick={onLoginClick}
-            className="w-full border-white/30 bg-transparent text-white hover:bg-agency-green-dark hover:text-white"
+            className="w-full border-yellow-500/50 bg-transparent text-yellow-400 hover:bg-yellow-500/10 hover:border-yellow-400"
           >
-            Login
+            লগইন
           </Button>
           <Button
             onClick={onSignupClick}
-            className="w-full bg-agency-red text-white hover:bg-agency-red-dark"
+            className="w-full bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 text-luxury-dark font-semibold hover:from-yellow-300 hover:via-yellow-400 hover:to-yellow-500"
           >
-            Sign Up
+            সাইন আপ
           </Button>
         </div>
       </SheetContent>

@@ -7,13 +7,13 @@ import { MobileDrawer } from "./MobileDrawer";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const navItems = [
-  { label: "Facebook Ads", href: "#facebook-ads" },
-  { label: "Web Development", href: "#web-development" },
-  { label: "Graphics Design", href: "#graphics-design" },
-  { label: "Video Editing", href: "#video-editing" },
-  { label: "Motion Graphics", href: "#motion-graphics" },
-  { label: "About Us", href: "#about" },
-  { label: "Contact Us", href: "#contact" },
+  { label: "ফেসবুক অ্যাডস", href: "#facebook-ads" },
+  { label: "ওয়েব ডেভেলপমেন্ট", href: "#web-development" },
+  { label: "গ্রাফিক্স ডিজাইন", href: "#graphics-design" },
+  { label: "ভিডিও এডিটিং", href: "#video-editing" },
+  { label: "মোশন গ্রাফিক্স", href: "#motion-graphics" },
+  { label: "আমাদের সম্পর্কে", href: "#about" },
+  { label: "যোগাযোগ", href: "#contact" },
 ];
 
 export function Header() {
@@ -32,12 +32,20 @@ export function Header() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const handleLoginClick = () => {
+    setLoginOpen(true);
+  };
+
+  const handleSignupClick = () => {
+    setSignupOpen(true);
+  };
+
   return (
     <>
       <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out ${
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
           isScrolled
-            ? "bg-agency-green shadow-lg shadow-black/10"
+            ? "glassmorphism-dark shadow-lg shadow-black/20"
             : "bg-transparent"
         }`}
       >
@@ -45,8 +53,13 @@ export function Header() {
           <div className="flex items-center justify-between h-16 lg:h-20">
             {/* Logo */}
             <a href="/" className="flex-shrink-0">
-              <div className="w-32 h-10 bg-white/20 rounded flex items-center justify-center">
-                <span className="text-white font-semibold text-sm">LOGO</span>
+              <div className="flex items-center gap-2">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center">
+                  <span className="text-luxury-dark font-bold text-lg">A</span>
+                </div>
+                <span className="text-gradient-gold font-serif text-xl font-bold hidden sm:block">
+                  এজেন্সি
+                </span>
               </div>
             </a>
 
@@ -57,10 +70,10 @@ export function Header() {
                   <a
                     key={item.href}
                     href={item.href}
-                    className="relative px-3 py-2 text-sm text-white font-medium transition-colors duration-200 hover:text-agency-red group"
+                    className="relative px-3 py-2 text-sm text-white/80 font-medium transition-all duration-300 hover:text-yellow-400 group"
                   >
                     {item.label}
-                    <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-agency-red scale-x-0 transition-transform duration-200 group-hover:scale-x-100" />
+                    <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-gradient-to-r from-yellow-400 to-yellow-600 scale-x-0 transition-transform duration-300 group-hover:scale-x-100 origin-left" />
                   </a>
                 ))}
               </nav>
@@ -71,16 +84,16 @@ export function Header() {
               <div className="hidden lg:flex items-center gap-3">
                 <Button
                   variant="outline"
-                  onClick={() => setLoginOpen(true)}
-                  className="border-agency-green bg-transparent text-white hover:bg-agency-green-dark hover:text-white transition-all duration-200"
+                  onClick={handleLoginClick}
+                  className="border-yellow-500/50 bg-transparent text-yellow-400 hover:bg-yellow-500/10 hover:border-yellow-400 hover:text-yellow-300 transition-all duration-300"
                 >
-                  Login
+                  লগইন
                 </Button>
                 <Button
-                  onClick={() => setSignupOpen(true)}
-                  className="bg-agency-red text-white hover:bg-agency-red-dark hover:scale-[1.03] transition-all duration-200"
+                  onClick={handleSignupClick}
+                  className="bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 text-luxury-dark font-semibold hover:from-yellow-300 hover:via-yellow-400 hover:to-yellow-500 hover:scale-[1.03] transition-all duration-300 shadow-lg shadow-yellow-500/20"
                 >
-                  Sign Up
+                  সাইন আপ
                 </Button>
               </div>
             )}
@@ -91,7 +104,7 @@ export function Header() {
                 variant="ghost"
                 size="icon"
                 onClick={() => setDrawerOpen(true)}
-                className="lg:hidden text-white hover:bg-white/10"
+                className="lg:hidden text-yellow-400 hover:bg-yellow-500/10"
               >
                 <Menu className="h-6 w-6" />
               </Button>

@@ -39,7 +39,7 @@ export function HeroSection() {
       <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent pointer-events-none" />
 
       {/* Content */}
-      <div className="relative z-10 container mx-auto px-4 pt-24 pb-16">
+      <div className="relative z-10 max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 pt-24 pb-16">
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
           {/* Left Side - Text Content */}
           <motion.div className="text-center lg:text-left order-2 lg:order-1" initial={{
@@ -60,12 +60,14 @@ export function HeroSection() {
             </div>
 
             {/* Main Headline */}
-            <h1 className="font-bengali text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl font-bold mb-4 leading-tight text-white">
-              সবার আগে{" "}
+            <h1 className="font-bengali text-2xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-5xl font-bold mb-4 leading-tight text-white">
+              আপনার ব্যবসার{" "}
               <span className="text-gradient-gold relative">
-                 আমাদের সাথে
+                ডিজিটাল রূপান্তর
                 <span className="absolute -bottom-2 left-0 w-full h-1 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-full"></span>
               </span>
+              <br />
+              <span className="text-white">শুরু হোক</span>
             </h1>
 
             {/* Sub-headline */}

@@ -2,9 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* Luxury Dark Maroon & Gold Design System */
 
 @layer base {
   :root {
@@ -38,65 +36,62 @@ All colors MUST be HSL.
 
     --radius: 0.5rem;
 
-    /* Agency brand colors */
-    --agency-green: 160 61% 15%;
-    --agency-green-dark: 160 61% 12%;
-    --agency-red: 358 80% 44%;
-    --agency-red-dark: 358 80% 38%;
+    /* Luxury brand colors */
+    --luxury-dark: 0 100% 2%;
+    --luxury-maroon: 0 75% 10%;
+    --luxury-maroon-light: 0 70% 15%;
+    --luxury-gold: 45 93% 47%;
+    --luxury-gold-light: 48 96% 53%;
+    --luxury-gold-dark: 43 96% 40%;
+    --luxury-crimson: 0 84% 50%;
+    --luxury-crimson-dark: 0 84% 40%;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    --background: 0 100% 2%;
     --foreground: 210 40% 98%;
 
-    --card: 222.2 84% 4.9%;
+    --card: 0 75% 10%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222.2 84% 4.9%;
+    --popover: 0 75% 10%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 45 93% 47%;
+    --primary-foreground: 0 100% 2%;
 
-    --secondary: 217.2 32.6% 17.5%;
+    --secondary: 0 70% 15%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 217.2 32.6% 17.5%;
+    --muted: 0 70% 15%;
     --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 217.2 32.6% 17.5%;
+    --accent: 0 70% 15%;
     --accent-foreground: 210 40% 98%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
+    --border: 0 70% 20%;
+    --input: 0 70% 15%;
+    --ring: 45 93% 47%;
+    --sidebar-background: 0 100% 2%;
     --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-primary: 45 93% 47%;
+    --sidebar-primary-foreground: 0 100% 2%;
+    --sidebar-accent: 0 70% 15%;
     --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-border: 0 70% 20%;
+    --sidebar-ring: 45 93% 47%;
   }
 }
 
@@ -108,4 +103,76 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Luxury Animations */
+@layer utilities {
+  .text-gradient-gold {
+    @apply bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 bg-clip-text text-transparent;
+  }
+
+  .bg-gradient-gold {
+    @apply bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600;
+  }
+
+  .bg-gradient-maroon {
+    background: radial-gradient(ellipse at center, hsl(0, 75%, 10%) 0%, hsl(0, 100%, 2%) 70%);
+  }
+
+  .glow-gold {
+    box-shadow: 0 0 20px hsl(45, 93%, 47%, 0.4), 0 0 40px hsl(45, 93%, 47%, 0.2);
+  }
+
+  .glow-crimson {
+    box-shadow: 0 0 20px hsl(0, 84%, 50%, 0.4), 0 0 40px hsl(0, 84%, 50%, 0.2);
+  }
+
+  .glow-border-hover {
+    @apply transition-all duration-300;
+  }
+
+  .glow-border-hover:hover {
+    box-shadow: 0 0 15px hsl(0, 84%, 50%, 0.6), 0 0 30px hsl(45, 93%, 47%, 0.4), inset 0 0 15px hsl(0, 84%, 50%, 0.1);
+    border-color: hsl(45, 93%, 47%);
+  }
+
+  .glassmorphism {
+    @apply backdrop-blur-md bg-black/40 border border-white/10;
+  }
+
+  .glassmorphism-dark {
+    @apply backdrop-blur-xl bg-black/60 border border-white/5;
+  }
+
+  @keyframes pulse-gold {
+    0%, 100% {
+      box-shadow: 0 0 20px hsl(45, 93%, 47%, 0.4), 0 0 40px hsl(45, 93%, 47%, 0.2);
+    }
+    50% {
+      box-shadow: 0 0 30px hsl(45, 93%, 47%, 0.6), 0 0 60px hsl(45, 93%, 47%, 0.3);
+    }
+  }
+
+  .animate-pulse-gold {
+    animation: pulse-gold 2s ease-in-out infinite;
+  }
+
+  .card-3d-hover {
+    @apply transition-all duration-300 ease-out;
+    transform-style: preserve-3d;
+  }
+
+  .card-3d-hover:hover {
+    transform: translateY(-8px) scale(1.02);
+  }
+}
+
+/* Circuit Pattern Overlay */
+.circuit-pattern {
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg stroke='%23ffffff' stroke-opacity='0.03' stroke-width='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Polygon Network Pattern */
+.polygon-pattern {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cg fill-rule='evenodd'%3E%3Cg stroke='%23d4af37' stroke-opacity='0.05' stroke-width='0.5' fill='none'%3E%3Cpath d='M50 0L100 50L50 100L0 50z'/%3E%3Cpath d='M25 25L75 25L75 75L25 75z'/%3E%3Ccircle cx='50' cy='50' r='3'/%3E%3Ccircle cx='25' cy='25' r='2'/%3E%3Ccircle cx='75' cy='25' r='2'/%3E%3Ccircle cx='75' cy='75' r='2'/%3E%3Ccircle cx='25' cy='75' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
 }

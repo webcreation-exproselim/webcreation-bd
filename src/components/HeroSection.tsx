@@ -63,7 +63,7 @@ export function HeroSection() {
             <h1 className="font-bengali text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl font-bold mb-4 leading-tight text-white">
               সবার আগে{" "}
               <span className="text-gradient-gold relative">
-                বাংলাদেশ
+                 আমাদের সাথে
                 <span className="absolute -bottom-2 left-0 w-full h-1 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-full"></span>
               </span>
             </h1>

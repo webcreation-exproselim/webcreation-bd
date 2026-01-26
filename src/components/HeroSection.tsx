@@ -56,17 +56,16 @@ export function HeroSection() {
             </div>
 
             {/* Main Headline */}
-            <h1 className="font-bengali text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl font-bold mb-6 leading-tight text-white">
-              আপনার ব্যবসার{" "}
-              <span className="text-gradient-gold">ডিজিটাল</span>
+            <h1 className="font-bengali text-4xl sm:text-5xl md:text-6xl lg:text-6xl xl:text-7xl font-bold mb-6 leading-[1.1] text-white">
+              আপনার ব্যবসার
               <br />
-              <span className="text-gradient-gold">রূপান্তর</span>
+              <span className="text-gradient-gold">ডিজিটাল রূপান্তর</span>
               <br />
-              <span className="text-white">শুরু হোক</span>
+              শুরু হোক
             </h1>
 
             {/* Sub-headline */}
-            <p className="text-base sm:text-lg md:text-xl text-white/80 max-w-xl mb-8 font-bengali font-medium leading-relaxed">
+            <p className="text-base sm:text-lg md:text-xl text-white/90 max-w-lg mb-8 font-bengali font-medium leading-relaxed">
               ফেসবুক অ্যাডস, ওয়েব ডেভেলপমেন্ট, গ্রাফিক্স ডিজাইন - সব কিছু এক জায়গায়।
             </p>
 
@@ -77,7 +76,7 @@ export function HeroSection() {
             >
               <Button 
                 size="lg" 
-                className="bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 text-black font-bengali font-bold text-lg px-8 sm:px-10 py-5 sm:py-6 rounded-full animate-pulse-gold hover:from-yellow-300 hover:via-yellow-400 hover:to-yellow-500 transition-all duration-300 shadow-xl"
+                className="bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 text-black font-bengali font-bold text-base sm:text-lg px-8 sm:px-10 py-5 sm:py-6 rounded-lg hover:from-yellow-300 hover:via-yellow-400 hover:to-yellow-500 transition-all duration-300 shadow-xl"
               >
                 ফ্রি কনসালটেশন নিন
               </Button>
@@ -92,67 +91,45 @@ export function HeroSection() {
             transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
           >
             <div className="relative">
-              {/* Icon Positions - Fixed positions around the image */}
-              {/* Top Right Icon */}
+              {/* Right Side Icons - Vertical Stack */}
+              <div className="absolute top-[15%] right-0 translate-x-[110%] flex flex-col gap-4 z-20">
+                {[Palette, Code, Video].map((Icon, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.4, delay: 0.6 + index * 0.1 }}
+                    whileHover={{ scale: 1.1 }}
+                    className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-black/80 backdrop-blur-sm border border-white/10 flex items-center justify-center shadow-lg cursor-pointer hover:border-yellow-400/60 transition-all"
+                  >
+                    <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-400" />
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* Bottom Center Icon */}
               <motion.div
-                className="absolute -top-2 -right-2 sm:top-0 sm:right-0 lg:-right-4 z-20"
-                initial={{ opacity: 0, scale: 0 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, delay: 0.6 }}
-                whileHover={{ scale: 1.15, boxShadow: "0 0 20px rgba(251, 191, 36, 0.6)" }}
+                className="absolute bottom-[5%] left-1/2 -translate-x-1/2 z-20"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.9 }}
+                whileHover={{ scale: 1.1 }}
               >
-                <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-xl bg-black/70 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-lg cursor-pointer hover:border-yellow-400/80 hover:bg-yellow-500/10 transition-all">
-                  <Code className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 text-yellow-400" />
+                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-black/80 backdrop-blur-sm border border-white/10 flex items-center justify-center shadow-lg cursor-pointer hover:border-yellow-400/60 transition-all">
+                  <Activity className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-400" />
                 </div>
               </motion.div>
-
-              {/* Right Side Icons - Vertical Stack */}
-              <div className="absolute top-1/4 -right-4 sm:-right-6 lg:-right-10 flex flex-col gap-3 sm:gap-4 z-20">
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.5, delay: 0.7 }}
-                  whileHover={{ scale: 1.15, boxShadow: "0 0 20px rgba(251, 191, 36, 0.6)" }}
-                >
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-xl bg-black/70 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-lg cursor-pointer hover:border-yellow-400/80 hover:bg-yellow-500/10 transition-all">
-                    <Palette className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 text-yellow-400" />
-                  </div>
-                </motion.div>
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.5, delay: 0.8 }}
-                  whileHover={{ scale: 1.15, boxShadow: "0 0 20px rgba(251, 191, 36, 0.6)" }}
-                >
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-xl bg-black/70 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-lg cursor-pointer hover:border-yellow-400/80 hover:bg-yellow-500/10 transition-all">
-                    <Video className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 text-yellow-400" />
-                  </div>
-                </motion.div>
-              </div>
 
               {/* Left Side Icon */}
               <motion.div
-                className="absolute top-1/3 -left-4 sm:-left-6 lg:-left-8 z-20"
+                className="absolute top-[40%] left-0 -translate-x-[110%] z-20"
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 0.9 }}
-                whileHover={{ scale: 1.15, boxShadow: "0 0 20px rgba(251, 191, 36, 0.6)" }}
+                transition={{ duration: 0.4, delay: 1.0 }}
+                whileHover={{ scale: 1.1 }}
               >
-                <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-xl bg-black/70 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-lg cursor-pointer hover:border-yellow-400/80 hover:bg-yellow-500/10 transition-all">
-                  <Megaphone className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 text-yellow-400" />
-                </div>
-              </motion.div>
-
-              {/* Bottom Icon */}
-              <motion.div
-                className="absolute -bottom-2 left-1/2 -translate-x-1/2 z-20"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 1.0 }}
-                whileHover={{ scale: 1.15, boxShadow: "0 0 20px rgba(251, 191, 36, 0.6)" }}
-              >
-                <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-xl bg-black/70 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-lg cursor-pointer hover:border-yellow-400/80 hover:bg-yellow-500/10 transition-all">
-                  <Activity className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 text-yellow-400" />
+                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-black/80 backdrop-blur-sm border border-white/10 flex items-center justify-center shadow-lg cursor-pointer hover:border-yellow-400/60 transition-all">
+                  <Megaphone className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-400" />
                 </div>
               </motion.div>
 
@@ -160,7 +137,7 @@ export function HeroSection() {
               <img 
                 src={heroProfessional} 
                 alt="Professional Digital Agency Expert" 
-                className="relative z-10 w-56 sm:w-64 md:w-72 lg:w-80 xl:w-96 h-auto object-contain drop-shadow-2xl" 
+                className="relative z-10 w-60 sm:w-72 md:w-80 lg:w-[340px] xl:w-[400px] h-auto object-contain" 
               />
             </div>
           </motion.div>

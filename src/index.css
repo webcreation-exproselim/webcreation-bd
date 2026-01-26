@@ -38,6 +38,12 @@ All colors MUST be HSL.
 
     --radius: 0.5rem;
 
+    /* Agency brand colors */
+    --agency-green: 160 61% 15%;
+    --agency-green-dark: 160 61% 12%;
+    --agency-red: 358 80% 44%;
+    --agency-red-dark: 358 80% 38%;
+
     --sidebar-background: 0 0% 98%;
 
     --sidebar-foreground: 240 5.3% 26.1%;

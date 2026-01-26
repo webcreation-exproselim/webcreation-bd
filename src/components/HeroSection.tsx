@@ -84,7 +84,7 @@ export function HeroSection() {
             </motion.div>
           </motion.div>
 
-          {/* Right Side - Professional Image with Floating Icons */}
+          {/* Right Side - Professional Image with Orbiting Icons */}
           <motion.div 
             className="relative order-1 lg:order-2 flex justify-center lg:justify-end"
             initial={{ opacity: 0, x: 50 }}
@@ -92,49 +92,46 @@ export function HeroSection() {
             transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
           >
             <div className="relative">
-              {/* Floating Service Icons - Right Side Vertical */}
-              <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-12 sm:translate-x-16 flex flex-col gap-4 z-20">
-                {services.slice(0, 4).map((service, index) => (
-                  <motion.div
-                    key={service.label}
-                    className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-black/70 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-lg cursor-pointer"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ 
-                      opacity: 1, 
-                      x: 0,
-                    }}
-                    transition={{ 
-                      duration: 0.5, 
-                      delay: 0.6 + index * 0.15,
-                    }}
-                    whileHover={{ 
-                      scale: 1.15, 
-                      boxShadow: "0 0 20px rgba(251, 191, 36, 0.6)",
-                      borderColor: "rgba(251, 191, 36, 0.8)",
-                      backgroundColor: "rgba(251, 191, 36, 0.15)"
-                    }}
-                  >
-                    <service.icon className="w-6 h-6 sm:w-7 sm:h-7 text-yellow-400" />
-                  </motion.div>
-                ))}
-              </div>
-
-              {/* Bottom Icon */}
+              {/* Orbiting icons around the subject */}
               <motion.div
-                className="absolute bottom-8 left-1/2 -translate-x-1/2 w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-black/70 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-lg z-20 cursor-pointer"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 1.2 }}
-                whileHover={{ 
-                  scale: 1.15, 
-                  boxShadow: "0 0 20px rgba(251, 191, 36, 0.6)",
-                  borderColor: "rgba(251, 191, 36, 0.8)",
-                  backgroundColor: "rgba(251, 191, 36, 0.15)"
-                }}
+                className="pointer-events-none absolute inset-0 z-20 hidden sm:block"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.6, delay: 0.6 }}
               >
-                <Activity className="w-6 h-6 sm:w-7 sm:h-7 text-yellow-400" />
+                <motion.div
+                  className="absolute left-1/2 top-1/2"
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
+                  style={{ width: 0, height: 0 }}
+                >
+                  {services.map((service, index) => {
+                    const angle = index * (360 / services.length);
+                    const radius = 165;
+                    return (
+                      <motion.div
+                        key={service.label}
+                        className="absolute"
+                        style={{
+                          transform: `rotate(${angle}deg) translateX(${radius}px) rotate(${-angle}deg)`,
+                        }}
+                        animate={{ y: [0, -6, 0] }}
+                        transition={{
+                          duration: 2.8,
+                          repeat: Infinity,
+                          ease: "easeInOut",
+                          delay: index * 0.15,
+                        }}
+                      >
+                        <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-black/70 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-lg">
+                          <service.icon className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-400" />
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </motion.div>
               </motion.div>
-              
+
               <img 
                 src={heroProfessional} 
                 alt="Professional Digital Agency Expert" 

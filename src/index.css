@@ -83,9 +83,9 @@
     @apply bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600;
   }
 
-  /* BNP Deep Red Radial Background */
+  /* Bright Red Gradient Background - Like BNP Reference */
   .bg-bnp-gradient {
-    background: radial-gradient(circle at top, #5e0a0a 0%, #2b0202 40%, #000000 100%);
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 30%, #7f1d1d 60%, #450a0a 100%);
   }
 
   /* Glassmorphism - Frosted Glass */

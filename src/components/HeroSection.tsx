@@ -15,14 +15,17 @@ const services = [
 export function HeroSection() {
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden">
-      {/* BNP Style Deep Red Radial Gradient Background */}
+      {/* Bright Red Gradient Background */}
       <div className="absolute inset-0 bg-bnp-gradient" />
+      
+      {/* Golden/Orange gradient overlay on right side */}
+      <div className="absolute inset-0 bg-gradient-to-l from-yellow-500/30 via-orange-500/10 to-transparent pointer-events-none" />
       
       {/* Particle Network Animation */}
       <ParticleNetwork />
 
       {/* Subtle vignette overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/50 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent pointer-events-none" />
 
       {/* Content */}
       <div className="relative z-10 container mx-auto px-4 pt-24 pb-16">
@@ -34,15 +37,25 @@ export function HeroSection() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
           >
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 mb-6">
+              <span className="text-yellow-400">🚀</span>
+              <span className="text-white/90 font-bengali text-sm">সবার আগে বাংলাদেশ</span>
+              <span className="text-yellow-400">🚀</span>
+            </div>
+
             {/* Main Headline */}
-            <h1 className="font-bengali text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl font-bold mb-6 leading-tight text-white">
-              আপনার আইডিয়া, আমাদের{" "}
-              <span className="text-gradient-gold">এক্সিকিউশন।</span>
+            <h1 className="font-bengali text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl font-bold mb-4 leading-tight text-white">
+              সবার আগে{" "}
+              <span className="text-gradient-gold relative">
+                বাংলাদেশ
+                <span className="absolute -bottom-2 left-0 w-full h-1 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-full"></span>
+              </span>
             </h1>
 
             {/* Sub-headline */}
-            <p className="text-base sm:text-lg md:text-xl text-gray-300 max-w-xl mx-auto lg:mx-0 mb-8 font-bengali font-medium leading-relaxed">
-              আপনার ব্র্যান্ডকে অনন্য উচ্চতায় নিয়ে যেতে আমরা আছি আপনার পাশে।
+            <p className="text-base sm:text-lg md:text-xl text-white/80 max-w-xl mx-auto lg:mx-0 mb-8 font-bengali font-medium leading-relaxed">
+              আপনার ব্যবসার ডিজিটাল রূপান্তর শুরু হোক আমাদের সাথে। ফেসবুক অ্যাডস, ওয়েব ডেভেলপমেন্ট, গ্রাফিক্স ডিজাইন - সব কিছু এক জায়গায়।
             </p>
 
             {/* Primary CTA */}

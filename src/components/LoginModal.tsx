@@ -23,43 +23,43 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-luxury-dark/95 backdrop-blur-xl border border-yellow-500/20">
+      <DialogContent className="sm:max-w-md bg-black/95 backdrop-blur-xl border border-yellow-500/30">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-serif font-bold text-center text-gradient-gold">
+          <DialogTitle className="text-2xl font-bengali font-bold text-center text-gradient-gold">
             স্বাগতম
           </DialogTitle>
-          <DialogDescription className="text-center text-white/60">
+          <DialogDescription className="text-center text-gray-400 font-bengali">
             আপনার অ্যাকাউন্টে লগইন করুন
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-white/80">ইমেইল</Label>
+            <Label htmlFor="email" className="text-gray-300 font-bengali">ইমেইল</Label>
             <Input
               id="email"
               type="email"
               placeholder="আপনার ইমেইল দিন"
               required
-              className="bg-luxury-maroon/50 border-white/10 text-white placeholder:text-white/40 focus:border-yellow-500/50 focus:ring-yellow-500/20"
+              className="bg-gray-900/50 border-gray-700 text-white placeholder:text-gray-500 focus:border-yellow-500/50 focus:ring-yellow-500/20 font-bengali"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password" className="text-white/80">পাসওয়ার্ড</Label>
+            <Label htmlFor="password" className="text-gray-300 font-bengali">পাসওয়ার্ড</Label>
             <Input
               id="password"
               type="password"
               placeholder="আপনার পাসওয়ার্ড দিন"
               required
-              className="bg-luxury-maroon/50 border-white/10 text-white placeholder:text-white/40 focus:border-yellow-500/50 focus:ring-yellow-500/20"
+              className="bg-gray-900/50 border-gray-700 text-white placeholder:text-gray-500 focus:border-yellow-500/50 focus:ring-yellow-500/20 font-bengali"
             />
           </div>
           <Button
             type="submit"
-            className="w-full bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 text-luxury-dark font-semibold hover:from-yellow-300 hover:via-yellow-400 hover:to-yellow-500 transition-all duration-300"
+            className="w-full bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 text-black font-bengali font-semibold hover:from-yellow-300 hover:via-yellow-400 hover:to-yellow-500 transition-all duration-300"
           >
             লগইন
           </Button>
-          <p className="text-center text-sm text-white/50">
+          <p className="text-center text-sm text-gray-500 font-bengali">
             অ্যাকাউন্ট নেই?{" "}
             <button
               type="button"

@@ -45,7 +45,7 @@ export function Header() {
       <header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
           isScrolled
-            ? "glassmorphism-dark shadow-lg shadow-black/20"
+            ? "glassmorphism-solid shadow-lg shadow-black/30"
             : "bg-transparent"
         }`}
       >
@@ -54,11 +54,11 @@ export function Header() {
             {/* Logo */}
             <a href="/" className="flex-shrink-0">
               <div className="flex items-center gap-2">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center">
-                  <span className="text-luxury-dark font-bold text-lg">A</span>
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center shadow-lg shadow-yellow-500/30">
+                  <span className="text-black font-bold text-xl font-bengali">ড</span>
                 </div>
-                <span className="text-gradient-gold font-serif text-xl font-bold hidden sm:block">
-                  এজেন্সি
+                <span className="text-gradient-gold font-bengali text-xl font-bold hidden sm:block">
+                  ডিজিটাল এজেন্সি
                 </span>
               </div>
             </a>
@@ -70,10 +70,10 @@ export function Header() {
                   <a
                     key={item.href}
                     href={item.href}
-                    className="relative px-3 py-2 text-sm text-white/80 font-medium transition-all duration-300 hover:text-yellow-400 group"
+                    className="relative px-3 py-2 text-sm text-white/80 font-bengali font-medium transition-all duration-300 hover:text-yellow-400 group"
                   >
                     {item.label}
-                    <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-gradient-to-r from-yellow-400 to-yellow-600 scale-x-0 transition-transform duration-300 group-hover:scale-x-100 origin-left" />
+                    <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-gradient-to-r from-yellow-400 to-yellow-500 scale-x-0 transition-transform duration-300 group-hover:scale-x-100 origin-left" />
                   </a>
                 ))}
               </nav>
@@ -85,13 +85,13 @@ export function Header() {
                 <Button
                   variant="outline"
                   onClick={handleLoginClick}
-                  className="border-yellow-500/50 bg-transparent text-yellow-400 hover:bg-yellow-500/10 hover:border-yellow-400 hover:text-yellow-300 transition-all duration-300"
+                  className="border-yellow-500 bg-transparent text-yellow-400 font-bengali font-medium hover:bg-yellow-500/10 hover:border-yellow-400 hover:text-yellow-300 transition-all duration-300"
                 >
                   লগইন
                 </Button>
                 <Button
                   onClick={handleSignupClick}
-                  className="bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 text-luxury-dark font-semibold hover:from-yellow-300 hover:via-yellow-400 hover:to-yellow-500 hover:scale-[1.03] transition-all duration-300 shadow-lg shadow-yellow-500/20"
+                  className="bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 text-black font-bengali font-semibold hover:from-yellow-300 hover:via-yellow-400 hover:to-yellow-500 hover:scale-[1.03] transition-all duration-300 shadow-lg shadow-yellow-500/30"
                 >
                   সাইন আপ
                 </Button>

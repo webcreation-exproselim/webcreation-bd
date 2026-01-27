@@ -3,6 +3,7 @@ import { HeroSection } from "@/components/HeroSection";
 import { StatsSection } from "@/components/StatsSection";
 import { ServicesSection } from "@/components/ServicesSection";
 import { WhyChooseSection } from "@/components/WhyChooseSection";
+import { ComparisonSection } from "@/components/ComparisonSection";
 
 const Index = () => {
   return (
@@ -12,6 +13,7 @@ const Index = () => {
       <StatsSection />
       <WhyChooseSection />
       <ServicesSection />
+      <ComparisonSection />
       
       {/* Placeholder sections for service details */}
       <section id="facebook-ads" className="min-h-[50vh] bg-black flex items-center justify-center border-t border-white/5">

@@ -45,11 +45,85 @@ const services = [
   },
 ];
 
+const ServiceCard = ({ service, index }: { service: typeof services[0]; index: number }) => {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5, delay: index * 0.1 }}
+      whileHover={{ y: -10 }}
+      className="group relative h-full"
+    >
+      {/* Animated gradient border */}
+      <div className="absolute -inset-[1px] rounded-2xl overflow-hidden">
+        <div 
+          className="absolute inset-0 bg-[conic-gradient(from_0deg,#facc15,#ef4444,#facc15,#ef4444,#facc15)] opacity-50 group-hover:opacity-100 transition-opacity duration-500"
+          style={{
+            animation: "spin 4s linear infinite",
+          }}
+        />
+      </div>
+      
+      {/* Card */}
+      <div className="relative bg-black rounded-2xl p-6 sm:p-8 border border-white/5 h-full flex flex-col">
+        {/* Icon */}
+        <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-gradient-to-br ${service.gradient} p-3.5 sm:p-4 mb-4 sm:mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+          <service.icon className="w-full h-full text-white" />
+        </div>
+
+        {/* Title */}
+        <h3 className="text-xl sm:text-2xl font-bengali font-bold text-white mb-3 group-hover:text-gradient-gold transition-all duration-300">
+          {service.title}
+        </h3>
+
+        {/* Description */}
+        <p className="text-sm sm:text-base text-white/70 font-bengali mb-4 sm:mb-6 leading-relaxed flex-grow">
+          {service.description}
+        </p>
+
+        {/* Features */}
+        <ul className="space-y-2 mb-6">
+          {service.features.map((feature) => (
+            <li key={feature} className="flex items-center gap-2 text-xs sm:text-sm text-white/60 font-bengali">
+              <span className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-yellow-400 to-red-500" />
+              {feature}
+            </li>
+          ))}
+        </ul>
+
+        {/* CTA Button */}
+        <a href={service.href}>
+          <Button
+            variant="outline"
+            className="w-full font-bengali border-yellow-400/30 text-yellow-400 hover:bg-yellow-400/10 hover:border-yellow-400 group/btn transition-all duration-300"
+          >
+            বিস্তারিত দেখুন
+            <ArrowRight className="w-4 h-4 ml-2 group-hover/btn:translate-x-1 transition-transform" />
+          </Button>
+        </a>
+      </div>
+    </motion.div>
+  );
+};
+
 export const ServicesSection = () => {
+  // Split services: first 3 in top row, last 2 centered in bottom row
+  const topServices = services.slice(0, 3);
+  const bottomServices = services.slice(3);
+
   return (
     <section id="services" className="py-16 md:py-24 bg-gradient-to-b from-black via-black/95 to-black relative overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 tech-grid-pattern opacity-20" />
+
+      {/* Keyframe animation for spinning border */}
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
 
       <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-16 relative z-10">
         {/* Section Title */}
@@ -68,63 +142,17 @@ export const ServicesSection = () => {
           </p>
         </motion.div>
 
-        {/* Services Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-          {services.map((service, index) => (
-            <motion.div
-              key={service.title}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-              whileHover={{ y: -10 }}
-              className="group relative"
-            >
-              {/* Animated gradient border */}
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-yellow-400 via-red-500 to-yellow-400 rounded-2xl opacity-30 group-hover:opacity-100 blur transition-all duration-500 group-hover:blur-md" />
-              
-              {/* Card */}
-              <div className="relative bg-black/95 backdrop-blur-xl rounded-2xl p-6 sm:p-8 border border-white/10 group-hover:border-yellow-400/30 transition-all duration-500 h-full flex flex-col">
-                {/* Icon */}
-                <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-gradient-to-br ${service.gradient} p-3.5 sm:p-4 mb-4 sm:mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-                  <service.icon className="w-full h-full text-white" />
-                </div>
+        {/* Top Row - 3 Services */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mb-6 md:mb-8">
+          {topServices.map((service, index) => (
+            <ServiceCard key={service.title} service={service} index={index} />
+          ))}
+        </div>
 
-                {/* Title */}
-                <h3 className="text-xl sm:text-2xl font-bengali font-bold text-white mb-3 group-hover:text-gradient-gold transition-all duration-300">
-                  {service.title}
-                </h3>
-
-                {/* Description */}
-                <p className="text-sm sm:text-base text-white/70 font-bengali mb-4 sm:mb-6 leading-relaxed flex-grow">
-                  {service.description}
-                </p>
-
-                {/* Features */}
-                <ul className="space-y-2 mb-6">
-                  {service.features.map((feature) => (
-                    <li key={feature} className="flex items-center gap-2 text-xs sm:text-sm text-white/60 font-bengali">
-                      <span className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-yellow-400 to-red-500" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-
-                {/* CTA Button */}
-                <a href={service.href}>
-                  <Button
-                    variant="outline"
-                    className="w-full font-bengali border-yellow-400/30 text-yellow-400 hover:bg-yellow-400/10 hover:border-yellow-400 group/btn transition-all duration-300"
-                  >
-                    বিস্তারিত দেখুন
-                    <ArrowRight className="w-4 h-4 ml-2 group-hover/btn:translate-x-1 transition-transform" />
-                  </Button>
-                </a>
-
-                {/* Corner Glow */}
-                <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-yellow-400/10 via-transparent to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              </div>
-            </motion.div>
+        {/* Bottom Row - 2 Services Centered */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 max-w-4xl mx-auto">
+          {bottomServices.map((service, index) => (
+            <ServiceCard key={service.title} service={service} index={index + 3} />
           ))}
         </div>
       </div>

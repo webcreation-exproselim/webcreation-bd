@@ -1,5 +1,7 @@
 import { motion } from "framer-motion";
 import { X, Check, AlertTriangle, Zap, Shield, TrendingUp, Smartphone, Gauge } from "lucide-react";
+import comparisonIllustration1 from "@/assets/comparison-illustration-1.png";
+import comparisonIllustration2 from "@/assets/comparison-illustration-2.png";
 
 const regularWebsitePoints = [
   { icon: AlertTriangle, text: "স্লো লোডিং স্পিড" },
@@ -68,6 +70,53 @@ export const ComparisonSection = () => {
             সঠিক সিদ্ধান্ত নিন এবং আপনার ব্যবসাকে এগিয়ে নিয়ে যান
           </p>
         </motion.div>
+
+        {/* Decorative Images */}
+        <div className="grid grid-cols-2 gap-4 md:gap-8 mb-10 md:mb-14">
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="relative group"
+          >
+            <div className="relative rounded-2xl overflow-hidden border border-yellow-400/20 hover:border-yellow-400/50 transition-all duration-500">
+              <img 
+                src={comparisonIllustration1} 
+                alt="Digital Growth" 
+                className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-500"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+              <div className="absolute bottom-3 left-3 right-3">
+                <span className="text-xs sm:text-sm font-bengali text-white/90 bg-black/50 backdrop-blur-sm px-3 py-1 rounded-full">
+                  ডিজিটাল গ্রোথ 📈
+                </span>
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, x: 30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="relative group"
+          >
+            <div className="relative rounded-2xl overflow-hidden border border-green-400/20 hover:border-green-400/50 transition-all duration-500">
+              <img 
+                src={comparisonIllustration2} 
+                alt="Super Fast Speed" 
+                className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-500"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+              <div className="absolute bottom-3 left-3 right-3">
+                <span className="text-xs sm:text-sm font-bengali text-white/90 bg-black/50 backdrop-blur-sm px-3 py-1 rounded-full">
+                  সুপার ফাস্ট স্পিড ⚡
+                </span>
+              </div>
+            </div>
+          </motion.div>
+        </div>
 
         {/* Comparison Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">

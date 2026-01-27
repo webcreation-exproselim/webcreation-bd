@@ -36,12 +36,36 @@ export const ComparisonSection = () => {
           transition={{ duration: 0.6 }}
           className="text-center mb-12 md:mb-16"
         >
-          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bengali font-bold text-white mb-4">
-            সাধারণ ওয়েবসাইট <span className="text-gradient-gold">vs</span>{" "}
-            <span className="text-gradient-gold">Web Creation BD</span> ওয়েবসাইট
+          {/* Badge */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-yellow-400/20 to-red-500/20 border border-yellow-400/30 mb-6"
+          >
+            <span className="text-yellow-400">⚡</span>
+            <span className="text-sm sm:text-base text-white font-bengali font-medium">
+              পার্থক্য দেখুন
+            </span>
+          </motion.div>
+
+          {/* Title - Split into lines for better readability */}
+          <h2 className="font-bengali font-bold text-white mb-4">
+            <span className="block text-xl sm:text-2xl md:text-3xl lg:text-4xl text-white/80 mb-2">
+              সাধারণ ওয়েবসাইট
+            </span>
+            <span className="block text-2xl sm:text-3xl md:text-4xl lg:text-5xl">
+              <span className="text-gradient-gold">vs</span>
+            </span>
+            <span className="block text-xl sm:text-2xl md:text-3xl lg:text-4xl mt-2">
+              <span className="text-gradient-gold">Web Creation BD</span>
+              <span className="text-white/80"> ওয়েবসাইট</span>
+            </span>
           </h2>
+
           <p className="text-muted-foreground text-sm sm:text-base md:text-lg max-w-2xl mx-auto font-bengali">
-            পার্থক্য দেখুন এবং সঠিক সিদ্ধান্ত নিন
+            সঠিক সিদ্ধান্ত নিন এবং আপনার ব্যবসাকে এগিয়ে নিয়ে যান
           </p>
         </motion.div>
 

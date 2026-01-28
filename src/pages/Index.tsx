@@ -6,10 +6,8 @@ import { WhyChooseSection } from "@/components/WhyChooseSection";
 import { ComparisonSection } from "@/components/ComparisonSection";
 import { PortfolioSection } from "@/components/PortfolioSection";
 import { PricingSection } from "@/components/PricingSection";
-
 const Index = () => {
-  return (
-    <div className="min-h-screen bg-black">
+  return <div className="min-h-screen bg-black">
       <Header />
       <HeroSection />
       <StatsSection />
@@ -20,18 +18,10 @@ const Index = () => {
       <PricingSection />
       
       {/* Placeholder sections for service details */}
-      <section id="facebook-ads" className="min-h-[50vh] bg-black flex items-center justify-center border-t border-white/5">
-        <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-16">
-          <h2 className="text-3xl font-bengali font-bold text-gradient-gold">ফেসবুক অ্যাডস বিস্তারিত</h2>
-        </div>
-      </section>
+      
       <section id="web-development" className="min-h-[50vh] bg-black flex items-center justify-center border-t border-white/5">
-        <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-16">
-          <h2 className="text-3xl font-bengali font-bold text-gradient-gold">ওয়েব ডেভেলপমেন্ট বিস্তারিত</h2>
-        </div>
+        
       </section>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;

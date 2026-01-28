@@ -7,8 +7,12 @@ import { ComparisonSection } from "@/components/ComparisonSection";
 import { PortfolioSection } from "@/components/PortfolioSection";
 import { PricingSection } from "@/components/PricingSection";
 import { CustomerReviewSection } from "@/components/CustomerReviewSection";
+import { WorkWithUsSection } from "@/components/WorkWithUsSection";
+import { Footer } from "@/components/Footer";
+
 const Index = () => {
-  return <div className="min-h-screen bg-black">
+  return (
+    <div className="min-h-screen bg-black">
       <Header />
       <HeroSection />
       <StatsSection />
@@ -18,12 +22,10 @@ const Index = () => {
       <PortfolioSection />
       <PricingSection />
       <CustomerReviewSection />
-      
-      {/* Placeholder sections for service details */}
-      
-      <section id="web-development" className="min-h-[50vh] bg-black flex items-center justify-center border-t border-white/5">
-        
-      </section>
-    </div>;
+      <WorkWithUsSection />
+      <Footer />
+    </div>
+  );
 };
+
 export default Index;

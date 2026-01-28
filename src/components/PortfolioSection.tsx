@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Megaphone, Code, Palette, Video, Activity, Layout, ExternalLink, X } from "lucide-react";
+import { Megaphone, Code, Palette, Video, Activity, Layout, ExternalLink, X, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -25,8 +25,10 @@ const serviceTabs: ServiceTab[] = [
   { id: "landing-page", label: "ল্যান্ডিং পেজ", icon: Layout, gradient: "from-teal-500 to-cyan-400" },
 ];
 
-// Services that open modal on click
+// Services that open modal on click (video or image preview)
 const modalServices = ["facebook-ads", "graphics-design", "video-editing", "motion-graphics"];
+// Services that have video content
+const videoServices = ["video-editing", "motion-graphics"];
 // Services that open external URL
 const urlServices = ["web-development", "landing-page"];
 
@@ -65,16 +67,16 @@ const portfolioData: Record<string, PortfolioItem[]> = {
     { id: 6, title: "ব্যানার ডিজাইন", image: "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800&h=600&fit=crop" },
   ],
   "video-editing": [
-    { id: 1, title: "প্রোডাক্ট ভিডিও", image: "https://images.unsplash.com/photo-1492619375914-88005aa9e8fb?w=800&h=600&fit=crop" },
-    { id: 2, title: "কমার্শিয়াল অ্যাড", image: "https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=800&h=600&fit=crop" },
-    { id: 3, title: "সোশ্যাল মিডিয়া রিলস", image: "https://images.unsplash.com/photo-1536240478700-b869070f9279?w=800&h=600&fit=crop" },
-    { id: 4, title: "কর্পোরেট ভিডিও", image: "https://images.unsplash.com/photo-1516321497487-e288fb19713f?w=800&h=600&fit=crop" },
+    { id: 1, title: "প্রোডাক্ট ভিডিও", image: "https://images.unsplash.com/photo-1492619375914-88005aa9e8fb?w=800&h=600&fit=crop", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" },
+    { id: 2, title: "কমার্শিয়াল অ্যাড", image: "https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=800&h=600&fit=crop", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4" },
+    { id: 3, title: "সোশ্যাল মিডিয়া রিলস", image: "https://images.unsplash.com/photo-1536240478700-b869070f9279?w=800&h=600&fit=crop", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" },
+    { id: 4, title: "কর্পোরেট ভিডিও", image: "https://images.unsplash.com/photo-1516321497487-e288fb19713f?w=800&h=600&fit=crop", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4" },
   ],
   "motion-graphics": [
-    { id: 1, title: "অ্যানিমেটেড লোগো", image: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&h=600&fit=crop" },
-    { id: 2, title: "এক্সপ্লেইনার ভিডিও", image: "https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?w=800&h=600&fit=crop" },
-    { id: 3, title: "ইনফোগ্রাফিক্স", image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop" },
-    { id: 4, title: "3D অ্যানিমেশন", image: "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800&h=600&fit=crop" },
+    { id: 1, title: "অ্যানিমেটেড লোগো", image: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&h=600&fit=crop", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4" },
+    { id: 2, title: "এক্সপ্লেইনার ভিডিও", image: "https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?w=800&h=600&fit=crop", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4" },
+    { id: 3, title: "ইনফোগ্রাফিক্স", image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4" },
+    { id: 4, title: "3D অ্যানিমেশন", image: "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800&h=600&fit=crop", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4" },
   ],
   "landing-page": [
     { id: 1, title: "ই-কমার্স ল্যান্ডিং", image: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&h=600&fit=crop", liveUrl: "https://example.com" },
@@ -94,6 +96,7 @@ interface PortfolioCardProps {
 
 const PortfolioCard = ({ item, serviceId, onOpenModal }: PortfolioCardProps) => {
   const isModalService = modalServices.includes(serviceId);
+  const isVideoService = videoServices.includes(serviceId);
   const isUrlService = urlServices.includes(serviceId);
 
   const handleImageClick = () => {
@@ -131,11 +134,15 @@ const PortfolioCard = ({ item, serviceId, onOpenModal }: PortfolioCardProps) => 
         {/* Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         
-        {/* Click indicator for modal services */}
+        {/* Click indicator - Video Play icon for video services, ExternalLink for others */}
         {isModalService && (
           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-r from-yellow-400/80 to-red-500/80 flex items-center justify-center backdrop-blur-sm">
-              <ExternalLink className="w-7 h-7 text-white" />
+            <div className="w-16 h-16 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 flex items-center justify-center shadow-lg shadow-yellow-400/40">
+              {isVideoService ? (
+                <Play className="w-7 h-7 text-white ml-1" fill="white" />
+              ) : (
+                <ExternalLink className="w-7 h-7 text-white" />
+              )}
             </div>
           </div>
         )}
@@ -154,7 +161,11 @@ const PortfolioCard = ({ item, serviceId, onOpenModal }: PortfolioCardProps) => 
           className="w-full font-bengali border-yellow-400/30 text-yellow-400 hover:bg-yellow-400 hover:text-black group/btn transition-all duration-300"
           onClick={handleButtonClick}
         >
-          <ExternalLink className="w-4 h-4 mr-2 group-hover/btn:rotate-12 transition-transform" />
+          {isVideoService ? (
+            <Play className="w-4 h-4 mr-2 group-hover/btn:scale-110 transition-transform" fill="currentColor" />
+          ) : (
+            <ExternalLink className="w-4 h-4 mr-2 group-hover/btn:rotate-12 transition-transform" />
+          )}
           Live Preview
         </Button>
       </div>
@@ -294,7 +305,7 @@ export const PortfolioSection = () => {
 
       {/* Fullscreen Preview Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] p-0 bg-black/95 border border-white/10 backdrop-blur-xl overflow-hidden">
+        <DialogContent className="max-w-5xl w-[95vw] max-h-[90vh] p-0 bg-black/95 border border-white/10 backdrop-blur-xl overflow-hidden">
           <DialogHeader className="absolute top-0 left-0 right-0 z-10 p-4 bg-gradient-to-b from-black/80 to-transparent">
             <div className="flex items-center justify-between">
               <DialogTitle className="text-white font-bengali text-lg sm:text-xl">
@@ -317,11 +328,24 @@ export const PortfolioSection = () => {
               transition={{ duration: 0.3 }}
               className="w-full h-full flex items-center justify-center p-4 pt-16"
             >
-              <img
-                src={selectedItem.image}
-                alt={selectedItem.title}
-                className="max-w-full max-h-[75vh] object-contain rounded-lg shadow-2xl"
-              />
+              {/* Show video if available, otherwise image */}
+              {selectedItem.video ? (
+                <video
+                  src={selectedItem.video}
+                  controls
+                  autoPlay
+                  className="max-w-full max-h-[75vh] rounded-lg shadow-2xl"
+                  poster={selectedItem.image}
+                >
+                  Your browser does not support the video tag.
+                </video>
+              ) : (
+                <img
+                  src={selectedItem.image}
+                  alt={selectedItem.title}
+                  className="max-w-full max-h-[75vh] object-contain rounded-lg shadow-2xl"
+                />
+              )}
             </motion.div>
           )}
         </DialogContent>

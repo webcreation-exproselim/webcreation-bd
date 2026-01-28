@@ -6,6 +6,7 @@ import { WhyChooseSection } from "@/components/WhyChooseSection";
 import { ComparisonSection } from "@/components/ComparisonSection";
 import { PortfolioSection } from "@/components/PortfolioSection";
 import { PricingSection } from "@/components/PricingSection";
+import { CustomerReviewSection } from "@/components/CustomerReviewSection";
 const Index = () => {
   return <div className="min-h-screen bg-black">
       <Header />
@@ -16,6 +17,7 @@ const Index = () => {
       <ComparisonSection />
       <PortfolioSection />
       <PricingSection />
+      <CustomerReviewSection />
       
       {/* Placeholder sections for service details */}
       

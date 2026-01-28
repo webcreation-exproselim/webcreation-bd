@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Megaphone, Code, Palette, Video, Activity, ArrowRight } from "lucide-react";
+import { Megaphone, Code, Palette, Video, Activity, Layout, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const services = [
@@ -42,6 +42,14 @@ const services = [
     features: ["অ্যানিমেটেড লোগো", "এক্সপ্লেইনার ভিডিও", "ইনফোগ্রাফিক্স", "3D অ্যানিমেশন"],
     gradient: "from-yellow-500 to-amber-400",
     href: "#motion-graphics",
+  },
+  {
+    icon: Layout,
+    title: "ল্যান্ডিং পেজ ডিজাইন",
+    description: "হাই-কনভার্টিং ল্যান্ডিং পেজ যা আপনার ভিজিটরদের কাস্টমারে রূপান্তর করবে। মডার্ন ডিজাইন ও ফাস্ট পারফরম্যান্স।",
+    features: ["কনভার্সন অপটিমাইজড", "A/B টেস্টিং রেডি", "মোবাইল ফার্স্ট", "ফাস্ট লোডিং"],
+    gradient: "from-teal-500 to-cyan-400",
+    href: "#landing-page",
   },
 ];
 
@@ -108,10 +116,6 @@ const ServiceCard = ({ service, index }: { service: typeof services[0]; index: n
 };
 
 export const ServicesSection = () => {
-  // Split services: first 3 in top row, last 2 centered in bottom row
-  const topServices = services.slice(0, 3);
-  const bottomServices = services.slice(3);
-
   return (
     <section id="services" className="py-16 md:py-24 bg-gradient-to-b from-black via-black/95 to-black relative overflow-hidden">
       {/* Background Pattern */}
@@ -142,17 +146,10 @@ export const ServicesSection = () => {
           </p>
         </motion.div>
 
-        {/* Top Row - 3 Services */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mb-6 md:mb-8">
-          {topServices.map((service, index) => (
+        {/* 6 Services in 2 rows of 3 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+          {services.map((service, index) => (
             <ServiceCard key={service.title} service={service} index={index} />
-          ))}
-        </div>
-
-        {/* Bottom Row - 2 Services Centered */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 max-w-4xl mx-auto">
-          {bottomServices.map((service, index) => (
-            <ServiceCard key={service.title} service={service} index={index + 3} />
           ))}
         </div>
       </div>

@@ -3,6 +3,8 @@ import { Code, Palette, Video, Activity, Layout, Check, Star, Zap, Crown } from 
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 
+
+
 type ServicePricing = {
   id: string;
   label: string;
@@ -14,11 +16,14 @@ type ServicePricing = {
 type PricingPlan = {
   name: string;
   price: string;
+  originalPrice?: string;
+  discount?: string;
   period: string;
   description: string;
   features: string[];
   popular?: boolean;
   icon: typeof Star;
+  note?: string;
 };
 
 const servicePricingData: ServicePricing[] = [
@@ -29,49 +34,101 @@ const servicePricingData: ServicePricing[] = [
     gradient: "from-green-500 to-emerald-400",
     plans: [
       {
-        name: "বেসিক",
-        price: "১৫,০০০",
+        name: "Starter Package",
+        price: "৫,০০০",
+        originalPrice: "৮,০০০",
+        discount: "37%",
         period: "টাকা",
         description: "ছোট ব্যবসার জন্য পারফেক্ট",
         icon: Star,
+        note: "No Advanced Payment",
         features: [
-          "৫ পেজ ওয়েবসাইট",
-          "মোবাইল রেস্পন্সিভ",
-          "বেসিক SEO",
-          "কন্টাক্ট ফর্ম",
-          "১ মাস সাপোর্ট",
+          ".SHOP Domain - 01 Year",
+          "10 GB Bdix NVME Hosting SSD",
+          "Hosting 01 Year",
+          "cPanel & Full Access",
+          "Fraud Customer Checker",
+          "Courier Integration",
+          "Order Invoice Print",
+          "Live Chat Setup",
+          "Pixel & Conversation API Setup",
+          "Sales Converting Unique Design",
+          "Fast Loading Speed",
+          "Easy Order Management",
+          "Easy Checkout",
+          "Limited Categories",
+          "Limited Product",
+          "24/7 Priority Support",
+          "Video Tutorial",
         ],
       },
       {
-        name: "স্ট্যান্ডার্ড",
-        price: "৩০,০০০",
+        name: "Premium Package",
+        price: "১৫,০০০",
+        originalPrice: "২০,০০০",
+        discount: "25%",
         period: "টাকা",
-        description: "মাঝারি ব্যবসার জন্য আদর্শ",
+        description: "সেরা ভ্যালু প্যাকেজ",
         icon: Zap,
         popular: true,
+        note: "Domain Hosting Fee in Advance",
         features: [
-          "১০ পেজ ওয়েবসাইট",
-          "মোবাইল রেস্পন্সিভ",
-          "অ্যাডভান্সড SEO",
-          "কন্টাক্ট ফর্ম + লাইভ চ্যাট",
-          "অ্যাডমিন প্যানেল",
-          "৩ মাস সাপোর্ট",
+          ".COM Domain - 01 Year",
+          "20 GB Bdix NVME Hosting SSD",
+          "Hosting 01 Year",
+          "cPanel & Full Access",
+          "Fraud Customer Checker",
+          "Courier Integration",
+          "Order Invoice Print",
+          "Live Chat Setup",
+          "Pixel & Conversation API Setup",
+          "Mobile Friendly & Unique Design",
+          "Super Fast Loading Speed",
+          "In Stock Management",
+          "Easy Order Management",
+          "Easy Checkout",
+          "Unlimited Categories",
+          "Unlimited Product",
+          "Advanced Security System",
+          "Facebook Page Full Setup",
+          "Facebook Page Logo Cover Setup",
+          "Website Banner & Logo Setup",
+          "Premium Theme & Pro Plugin",
+          "24/7 Priority Support",
+          "Video Tutorial",
         ],
       },
       {
-        name: "প্রিমিয়াম",
-        price: "৫০,০০০+",
+        name: "Business Package",
+        price: "৮,০০০",
+        originalPrice: "১৫,০০০",
+        discount: "47%",
         period: "টাকা",
-        description: "বড় ব্যবসা ও ই-কমার্স",
+        description: "বিজনেস গ্রোথের জন্য",
         icon: Crown,
+        note: "Domain Hosting Fee in Advance",
         features: [
-          "আনলিমিটেড পেজ",
-          "ই-কমার্স ফিচার",
-          "পেমেন্ট ইন্টিগ্রেশন",
-          "কাস্টম ফিচার ডেভেলপমেন্ট",
-          "ফুল অ্যাডমিন ড্যাশবোর্ড",
-          "৬ মাস সাপোর্ট",
-          "প্রায়োরিটি সাপোর্ট",
+          ".COM Domain - 01 Year",
+          "20 GB Bdix NVME Hosting SSD",
+          "Hosting 01 Year",
+          "cPanel & Full Access",
+          "Fraud Customer Checker",
+          "Courier Integration",
+          "Order Invoice Print",
+          "Live Chat Setup",
+          "Pixel & Conversation API Setup",
+          "Mobile Friendly & Unique Design",
+          "Super Fast Loading Speed",
+          "In Stock Management",
+          "Easy Order Management",
+          "Easy Checkout",
+          "Unlimited Categories",
+          "Unlimited Product",
+          "Facebook Page Logo Cover Setup",
+          "Website Banner & Logo Setup",
+          "Video Tutorial",
+          "Premium Theme & Pro Plugin",
+          "24/7 Priority Support",
         ],
       },
     ],
@@ -297,6 +354,18 @@ const PricingCard = ({ plan, gradient, index }: { plan: PricingPlan; gradient: s
       whileHover={{ y: -8 }}
       className={`relative group h-full ${plan.popular ? 'z-10' : ''}`}
     >
+      {/* Discount Badge */}
+      {plan.discount && (
+        <div className="absolute -top-5 -right-3 z-20">
+          <div className="relative">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-red-500 to-red-600 flex flex-col items-center justify-center shadow-lg shadow-red-500/40 border-2 border-red-400">
+              <span className="text-white font-bold text-lg leading-none">{plan.discount}</span>
+              <span className="text-white text-xs font-bold">OFF</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Popular Badge */}
       {plan.popular && (
         <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20">
@@ -330,24 +399,42 @@ const PricingCard = ({ plan, gradient, index }: { plan: PricingPlan; gradient: s
         
         {/* Price */}
         <div className="mb-4">
-          <span className="text-3xl sm:text-4xl font-bold text-gradient-gold">৳{plan.price}</span>
-          <span className="text-white/60 font-bengali ml-2">{plan.period}</span>
+          <div className="flex items-center gap-2 flex-wrap">
+            {plan.originalPrice && (
+              <span className="text-lg text-white/40 line-through font-bengali">৳{plan.originalPrice}</span>
+            )}
+            <span className="text-3xl sm:text-4xl font-bold text-gradient-gold">৳{plan.price}</span>
+          </div>
+          <span className="text-white/60 font-bengali text-sm">{plan.period}</span>
         </div>
 
         {/* Description */}
-        <p className="text-white/70 font-bengali text-sm mb-6">{plan.description}</p>
+        <p className="text-white/70 font-bengali text-sm mb-4">{plan.description}</p>
 
-        {/* Features */}
-        <ul className="space-y-3 mb-6 flex-grow">
-          {plan.features.map((feature, idx) => (
-            <li key={idx} className="flex items-start gap-3">
-              <div className={`w-5 h-5 rounded-full bg-gradient-to-r ${gradient} flex items-center justify-center flex-shrink-0 mt-0.5`}>
-                <Check className="w-3 h-3 text-white" />
-              </div>
-              <span className="text-white/80 font-bengali text-sm">{feature}</span>
-            </li>
-          ))}
-        </ul>
+        {/* Features with scroll */}
+        <div className="mb-4 flex-grow max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent pr-2">
+          <ul className="space-y-2">
+            {plan.features.map((feature, idx) => (
+              <li key={idx} className="flex items-start gap-2">
+                <div className={`w-4 h-4 rounded-full bg-gradient-to-r ${gradient} flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                  <Check className="w-2.5 h-2.5 text-white" />
+                </div>
+                <span className="text-white/80 font-bengali text-xs">{feature}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Note */}
+        {plan.note && (
+          <div className={`mb-4 px-3 py-2 rounded-lg text-center text-xs font-bengali ${
+            plan.note.includes("No Advanced") 
+              ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+              : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+          }`}>
+            {plan.note}
+          </div>
+        )}
 
         {/* CTA Button */}
         <Button

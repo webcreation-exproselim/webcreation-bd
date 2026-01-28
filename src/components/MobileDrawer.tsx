@@ -14,6 +14,7 @@ const serviceItems = [
   { label: "গ্রাফিক্স ডিজাইন", href: "#graphics-design" },
   { label: "ভিডিও এডিটিং", href: "#video-editing" },
   { label: "মোশন গ্রাফিক্স", href: "#motion-graphics" },
+  { label: "ল্যান্ডিং পেজ ডিজাইন", href: "#landing-page" },
 ];
 
 interface MobileDrawerProps {

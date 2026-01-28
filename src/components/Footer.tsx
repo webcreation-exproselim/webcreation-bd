@@ -212,7 +212,7 @@ export function Footer() {
                 <div>
                   <p className="font-bengali text-white/50 text-xs mb-1">ঠিকানা</p>
                   <p className="font-bengali text-white text-sm">
-                    বাংলাদেশ
+                    সাভার, পাকিজা
                   </p>
                 </div>
               </div>

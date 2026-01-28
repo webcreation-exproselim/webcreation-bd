@@ -16,7 +16,7 @@ const reviewsRow1: Review[] = [
   {
     id: 1,
     name: "মোঃ রফিকুল ইসলাম",
-    photo: "https://i.pravatar.cc/150?img=1",
+    photo: "https://randomuser.me/api/portraits/men/32.jpg",
     rating: 5,
     service: "ওয়েব ডেভেলপমেন্ট",
     review: "অসাধারণ সার্ভিস পেয়েছি। আমার ই-কমার্স ওয়েবসাইট এখন পুরোপুরি কার্যকর এবং সুন্দর দেখাচ্ছে।",
@@ -25,7 +25,7 @@ const reviewsRow1: Review[] = [
   {
     id: 2,
     name: "ফাতেমা বেগম",
-    photo: "https://i.pravatar.cc/150?img=5",
+    photo: "https://randomuser.me/api/portraits/women/44.jpg",
     rating: 5,
     service: "গ্রাফিক্স ডিজাইন",
     review: "লোগো ডিজাইন এতো সুন্দর হয়েছে যে সবাই প্রশংসা করছে। ধন্যবাদ টিমকে!",
@@ -34,7 +34,7 @@ const reviewsRow1: Review[] = [
   {
     id: 3,
     name: "আহমেদ হোসেন",
-    photo: "https://i.pravatar.cc/150?img=3",
+    photo: "https://randomuser.me/api/portraits/men/45.jpg",
     rating: 5,
     service: "ল্যান্ডিং পেজ",
     review: "আমার বিজনেসের জন্য পারফেক্ট ল্যান্ডিং পেজ তৈরি করে দিয়েছে। কনভার্শন রেট অনেক বেড়েছে।",
@@ -43,7 +43,7 @@ const reviewsRow1: Review[] = [
   {
     id: 4,
     name: "সাবরিনা আক্তার",
-    photo: "https://i.pravatar.cc/150?img=9",
+    photo: "https://randomuser.me/api/portraits/women/67.jpg",
     rating: 5,
     service: "ভিডিও এডিটিং",
     review: "YouTube চ্যানেলের জন্য প্রফেশনাল ভিডিও এডিটিং পেয়েছি। সাবস্ক্রাইবার বাড়ছে দ্রুত!",
@@ -52,7 +52,7 @@ const reviewsRow1: Review[] = [
   {
     id: 5,
     name: "মোঃ করিম উদ্দিন",
-    photo: "https://i.pravatar.cc/150?img=8",
+    photo: "https://randomuser.me/api/portraits/men/52.jpg",
     rating: 5,
     service: "মোশন গ্রাফিক্স",
     review: "বিজ্ঞাপনের জন্য অসাধারণ মোশন গ্রাফিক্স তৈরি করেছে। ক্লায়েন্টরা খুবই সন্তুষ্ট।",
@@ -61,7 +61,7 @@ const reviewsRow1: Review[] = [
   {
     id: 6,
     name: "নাজমুল হক",
-    photo: "https://i.pravatar.cc/150?img=12",
+    photo: "https://randomuser.me/api/portraits/men/22.jpg",
     rating: 5,
     service: "ওয়েব ডেভেলপমেন্ট",
     review: "পোর্টফোলিও ওয়েবসাইট এত সুন্দর হয়েছে যে ফ্রিল্যান্সিং এ অনেক কাজ পাচ্ছি।",
@@ -73,7 +73,7 @@ const reviewsRow2: Review[] = [
   {
     id: 7,
     name: "রাশেদা পারভীন",
-    photo: "https://i.pravatar.cc/150?img=20",
+    photo: "https://randomuser.me/api/portraits/women/32.jpg",
     rating: 5,
     service: "গ্রাফিক্স ডিজাইন",
     review: "ব্র্যান্ডিং প্যাকেজ নিয়েছিলাম। সব কিছু একদম পারফেক্ট হয়েছে। সুপার সন্তুষ্ট!",
@@ -82,7 +82,7 @@ const reviewsRow2: Review[] = [
   {
     id: 8,
     name: "মোঃ আলী হোসেন",
-    photo: "https://i.pravatar.cc/150?img=11",
+    photo: "https://randomuser.me/api/portraits/men/64.jpg",
     rating: 5,
     service: "ল্যান্ডিং পেজ",
     review: "ডিজিটাল মার্কেটিং ক্যাম্পেইনের জন্য দারুণ ল্যান্ডিং পেজ পেয়েছি। ROI অনেক ভালো।",
@@ -91,7 +91,7 @@ const reviewsRow2: Review[] = [
   {
     id: 9,
     name: "তানিয়া সুলতানা",
-    photo: "https://i.pravatar.cc/150?img=23",
+    photo: "https://randomuser.me/api/portraits/women/55.jpg",
     rating: 5,
     service: "ওয়েব ডেভেলপমেন্ট",
     review: "অনলাইন শপ তৈরি করে দিয়েছে অসাধারণ। প্রতিদিন অর্ডার আসছে। ধন্যবাদ!",
@@ -100,7 +100,7 @@ const reviewsRow2: Review[] = [
   {
     id: 10,
     name: "জাকির হোসেন",
-    photo: "https://i.pravatar.cc/150?img=15",
+    photo: "https://randomuser.me/api/portraits/men/75.jpg",
     rating: 5,
     service: "ভিডিও এডিটিং",
     review: "বিয়ের ভিডিও এডিটিং করেছে অসাধারণ। পরিবারের সবাই মুগ্ধ হয়েছে।",
@@ -109,7 +109,7 @@ const reviewsRow2: Review[] = [
   {
     id: 11,
     name: "শাহানা আক্তার",
-    photo: "https://i.pravatar.cc/150?img=25",
+    photo: "https://randomuser.me/api/portraits/women/71.jpg",
     rating: 5,
     service: "মোশন গ্রাফিক্স",
     review: "প্রোডাক্ট ভিডিওর জন্য মোশন গ্রাফিক্স তৈরি করেছে। সেলস বেড়েছে ৩ গুণ!",
@@ -118,7 +118,7 @@ const reviewsRow2: Review[] = [
   {
     id: 12,
     name: "মোঃ সোহেল রানা",
-    photo: "https://i.pravatar.cc/150?img=17",
+    photo: "https://randomuser.me/api/portraits/men/36.jpg",
     rating: 5,
     service: "গ্রাফিক্স ডিজাইন",
     review: "সোশ্যাল মিডিয়া পোস্ট ডিজাইন অনেক ভালো হয়েছে। এনগেজমেন্ট বেড়েছে অনেক।",

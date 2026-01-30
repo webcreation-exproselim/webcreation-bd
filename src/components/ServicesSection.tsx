@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Megaphone, Code, Palette, Video, Activity, Layout, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const services = [
   {
@@ -9,7 +10,7 @@ const services = [
     description: "টার্গেটেড ফেসবুক বিজ্ঞাপন ক্যাম্পেইন যা আপনার ব্যবসায় সর্বোচ্চ ROI নিয়ে আসবে। প্রফেশনাল অ্যাড ম্যানেজমেন্ট ও অপটিমাইজেশন।",
     features: ["টার্গেট অডিয়েন্স রিসার্চ", "ক্রিয়েটিভ ডিজাইন", "A/B টেস্টিং", "পারফরম্যান্স রিপোর্ট"],
     gradient: "from-blue-500 to-cyan-400",
-    href: "#facebook-ads",
+    href: "/facebook-ads",
   },
   {
     icon: Code,
@@ -17,7 +18,7 @@ const services = [
     description: "আধুনিক ও রেস্পন্সিভ ওয়েবসাইট যা আপনার ব্র্যান্ডকে অনলাইনে প্রফেশনালভাবে উপস্থাপন করবে। ফুল-স্ট্যাক সল্যুশন।",
     features: ["কাস্টম ডিজাইন", "মোবাইল রেস্পন্সিভ", "SEO অপটিমাইজড", "ফাস্ট লোডিং"],
     gradient: "from-green-500 to-emerald-400",
-    href: "#web-development",
+    href: "/web-development",
   },
   {
     icon: Palette,
@@ -25,7 +26,7 @@ const services = [
     description: "ক্রিয়েটিভ গ্রাফিক্স ডিজাইন যা আপনার ব্র্যান্ড আইডেন্টিটি তৈরি করবে। লোগো থেকে সোশ্যাল মিডিয়া পোস্ট সবকিছু।",
     features: ["লোগো ডিজাইন", "ব্র্যান্ড আইডেন্টিটি", "সোশ্যাল মিডিয়া", "প্রিন্ট ডিজাইন"],
     gradient: "from-purple-500 to-pink-400",
-    href: "#graphics-design",
+    href: "/graphics-design",
   },
   {
     icon: Video,
@@ -33,7 +34,7 @@ const services = [
     description: "প্রফেশনাল ভিডিও এডিটিং সার্ভিস যা আপনার কন্টেন্টকে পরবর্তী স্তরে নিয়ে যাবে। সিনেমাটিক কোয়ালিটি।",
     features: ["প্রফেশনাল কাট", "কালার গ্রেডিং", "সাউন্ড ডিজাইন", "মোশন গ্রাফিক্স"],
     gradient: "from-red-500 to-orange-400",
-    href: "#video-editing",
+    href: "/video-editing",
   },
   {
     icon: Activity,
@@ -41,7 +42,7 @@ const services = [
     description: "আই-ক্যাচিং মোশন গ্রাফিক্স যা আপনার মেসেজকে জীবন্ত করে তুলবে। অ্যানিমেটেড লোগো থেকে এক্সপ্লেইনার ভিডিও।",
     features: ["অ্যানিমেটেড লোগো", "এক্সপ্লেইনার ভিডিও", "ইনফোগ্রাফিক্স", "3D অ্যানিমেশন"],
     gradient: "from-yellow-500 to-amber-400",
-    href: "#motion-graphics",
+    href: "/motion-graphics",
   },
   {
     icon: Layout,
@@ -49,7 +50,7 @@ const services = [
     description: "হাই-কনভার্টিং ল্যান্ডিং পেজ যা আপনার ভিজিটরদের কাস্টমারে রূপান্তর করবে। মডার্ন ডিজাইন ও ফাস্ট পারফরম্যান্স।",
     features: ["কনভার্সন অপটিমাইজড", "A/B টেস্টিং রেডি", "মোবাইল ফার্স্ট", "ফাস্ট লোডিং"],
     gradient: "from-teal-500 to-cyan-400",
-    href: "#landing-page",
+    href: "/landing-page",
   },
 ];
 
@@ -101,7 +102,7 @@ const ServiceCard = ({ service, index }: { service: typeof services[0]; index: n
         </ul>
 
         {/* CTA Button */}
-        <a href={service.href}>
+        <Link to={service.href}>
           <Button
             variant="outline"
             className="w-full font-bengali border-yellow-400/30 text-yellow-400 hover:bg-yellow-400/10 hover:border-yellow-400 group/btn transition-all duration-300"
@@ -109,7 +110,7 @@ const ServiceCard = ({ service, index }: { service: typeof services[0]; index: n
             বিস্তারিত দেখুন
             <ArrowRight className="w-4 h-4 ml-2 group-hover/btn:translate-x-1 transition-transform" />
           </Button>
-        </a>
+        </Link>
       </div>
     </motion.div>
   );

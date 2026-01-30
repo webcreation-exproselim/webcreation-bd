@@ -7,12 +7,12 @@ import { MobileDrawer } from "./MobileDrawer";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const serviceItems = [
-  { label: "ফেসবুক অ্যাডস", href: "#facebook-ads" },
-  { label: "ওয়েব ডেভেলপমেন্ট", href: "#web-development" },
-  { label: "গ্রাফিক্স ডিজাইন", href: "#graphics-design" },
-  { label: "ভিডিও এডিটিং", href: "#video-editing" },
-  { label: "মোশন গ্রাফিক্স", href: "#motion-graphics" },
-  { label: "ল্যান্ডিং পেজ ডিজাইন", href: "#landing-page" },
+  { label: "ফেসবুক অ্যাডস", href: "/facebook-ads" },
+  { label: "ওয়েব ডেভেলপমেন্ট", href: "/web-development" },
+  { label: "গ্রাফিক্স ডিজাইন", href: "/graphics-design" },
+  { label: "ভিডিও এডিটিং", href: "/video-editing" },
+  { label: "মোশন গ্রাফিক্স", href: "/motion-graphics" },
+  { label: "ল্যান্ডিং পেজ ডিজাইন", href: "/landing-page" },
 ];
 
 const navItems = [

@@ -51,10 +51,10 @@ export function Header() {
   return (
     <>
       <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 bg-white ${
           isScrolled
-            ? "bg-white shadow-lg shadow-black/10"
-            : "bg-transparent"
+            ? "shadow-lg shadow-black/10"
+            : ""
         }`}
       >
         <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-16">
@@ -65,7 +65,7 @@ export function Header() {
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center shadow-lg">
                   <span className="text-white font-bold text-xl font-bengali">W</span>
                 </div>
-                <span className={`font-bengali text-xl font-bold hidden sm:block transition-colors duration-300 ${isScrolled ? 'text-red-600' : 'text-white'}`}>
+                <span className="font-bengali text-xl font-bold hidden sm:block text-red-600">
                   Web Creation BD
                 </span>
               </div>
@@ -83,9 +83,7 @@ export function Header() {
                       onMouseLeave={() => setServiceDropdownOpen(false)}
                     >
                       <button
-                        className={`relative px-4 py-2 text-sm font-bengali font-medium transition-all duration-300 flex items-center gap-1 ${
-                          isScrolled ? 'text-gray-700 hover:text-red-600' : 'text-white/90 hover:text-yellow-400'
-                        }`}
+                        className="relative px-4 py-2 text-sm font-bengali font-medium transition-all duration-300 flex items-center gap-1 text-gray-700 hover:text-red-600"
                       >
                         {item.label}
                         <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${serviceDropdownOpen ? 'rotate-180' : ''}`} />
@@ -93,25 +91,17 @@ export function Header() {
                       
                       {/* Dropdown Menu */}
                       <div
-                        className={`absolute top-full left-0 mt-2 w-56 rounded-xl overflow-hidden transition-all duration-300 z-50 ${
+                        className={`absolute top-full left-0 mt-2 w-56 rounded-xl overflow-hidden transition-all duration-300 z-50 bg-white shadow-xl border border-gray-100 ${
                           serviceDropdownOpen 
                             ? 'opacity-100 visible translate-y-0' 
                             : 'opacity-0 invisible -translate-y-2'
-                        } ${
-                          isScrolled 
-                            ? 'bg-white shadow-xl border border-gray-100' 
-                            : 'bg-black/90 backdrop-blur-xl border border-white/10'
                         }`}
                       >
                         {item.submenu?.map((subItem) => (
                           <a
                             key={subItem.href}
                             href={subItem.href}
-                            className={`block px-5 py-3 font-bengali text-sm transition-all duration-200 ${
-                              isScrolled 
-                                ? 'text-gray-700 hover:bg-red-50 hover:text-red-600 hover:pl-7' 
-                                : 'text-white/80 hover:bg-white/10 hover:text-yellow-400 hover:pl-7'
-                            }`}
+                            className="block px-5 py-3 font-bengali text-sm transition-all duration-200 text-gray-700 hover:bg-red-50 hover:text-red-600 hover:pl-7"
                           >
                             {subItem.label}
                           </a>
@@ -122,54 +112,45 @@ export function Header() {
                     <a
                       key={item.href}
                       href={item.href}
-                      className={`relative px-4 py-2 text-sm font-bengali font-medium transition-all duration-300 group ${
-                        isScrolled ? 'text-gray-700 hover:text-red-600' : 'text-white/90 hover:text-yellow-400'
-                      }`}
+                      className="relative px-4 py-2 text-sm font-bengali font-medium transition-all duration-300 group text-gray-700 hover:text-red-600"
                     >
                       {item.label}
-                      <span className={`absolute bottom-0 left-4 right-4 h-0.5 scale-x-0 transition-transform duration-300 group-hover:scale-x-100 origin-left ${
-                        isScrolled ? 'bg-red-500' : 'bg-yellow-400'
-                      }`} />
+                      <span className="absolute bottom-0 left-4 right-4 h-0.5 scale-x-0 transition-transform duration-300 group-hover:scale-x-100 origin-left bg-red-500" />
                     </a>
                   )
                 ))}
               </nav>
             )}
 
-            {/* Auth Buttons - Desktop */}
-            {!isMobile && (
-              <div className="hidden lg:flex items-center gap-3">
-                <Button
-                  variant="outline"
-                  onClick={handleLoginClick}
-                  className={`font-bengali font-medium transition-all duration-300 ${
-                    isScrolled 
-                      ? 'border-red-500 text-red-600 hover:bg-red-50' 
-                      : 'border-white/50 bg-transparent text-white hover:bg-white/10'
-                  }`}
-                >
-                  লগইন
-                </Button>
-                <Button
-                  onClick={handleSignupClick}
-                  className="bg-gradient-to-r from-red-500 to-red-700 text-white font-bengali font-semibold hover:from-red-600 hover:to-red-800 hover:scale-[1.03] transition-all duration-300 shadow-lg"
-                >
-                  সাইন আপ
-                </Button>
-              </div>
-            )}
-
-            {/* Mobile Menu Button */}
-            {isMobile && (
+            {/* Auth Buttons */}
+            <div className="flex items-center gap-2 sm:gap-3">
               <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setDrawerOpen(true)}
-                className={`lg:hidden transition-colors ${isScrolled ? 'text-red-600 hover:bg-red-50' : 'text-white hover:bg-white/10'}`}
+                variant="outline"
+                onClick={handleLoginClick}
+                className="font-bengali font-medium transition-all duration-300 border-red-500 text-red-600 hover:bg-red-50 text-xs sm:text-sm px-2 sm:px-4"
               >
-                <Menu className="h-6 w-6" />
+                লগইন
               </Button>
-            )}
+              <Button
+                onClick={handleSignupClick}
+                className="bg-gradient-to-r from-red-500 to-red-700 text-white font-bengali font-semibold hover:from-red-600 hover:to-red-800 hover:scale-[1.03] transition-all duration-300 shadow-lg text-xs sm:text-sm px-2 sm:px-4"
+              >
+                সাইন আপ
+              </Button>
+              
+              {/* Mobile Menu Button */}
+              {isMobile && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setDrawerOpen(true)}
+                  className="text-red-600 hover:bg-red-50 ml-1"
+                >
+                  <Menu className="h-5 w-5" />
+                </Button>
+              )}
+            </div>
+
           </div>
         </div>
       </header>

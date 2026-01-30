@@ -622,8 +622,13 @@ export const PricingSection = () => {
             <p className="text-white/70 font-bengali text-sm sm:text-base mb-4 max-w-md">
               আপনার প্রয়োজন অনুযায়ী কাস্টম প্যাকেজ তৈরি করতে আমাদের সাথে যোগাযোগ করুন
             </p>
-            <Button className="bg-gradient-to-r from-yellow-400 to-red-500 text-black font-bengali hover:shadow-lg hover:shadow-yellow-400/30 transition-all duration-300">
-              যোগাযোগ করুন
+            <Button 
+              asChild
+              className="bg-gradient-to-r from-yellow-400 to-red-500 text-black font-bengali hover:shadow-lg hover:shadow-yellow-400/30 transition-all duration-300"
+            >
+              <a href="https://wa.me/8801332052874" target="_blank" rel="noopener noreferrer">
+                যোগাযোগ করুন 01332052874
+              </a>
             </Button>
           </div>
         </motion.div>

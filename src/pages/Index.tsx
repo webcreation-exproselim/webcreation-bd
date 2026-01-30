@@ -9,6 +9,7 @@ import { PricingSection } from "@/components/PricingSection";
 import { CustomerReviewSection } from "@/components/CustomerReviewSection";
 import { WorkWithUsSection } from "@/components/WorkWithUsSection";
 import { Footer } from "@/components/Footer";
+import { Chatbot } from "@/components/Chatbot";
 
 const Index = () => {
   return (
@@ -24,6 +25,7 @@ const Index = () => {
       <CustomerReviewSection />
       <WorkWithUsSection />
       <Footer />
+      <Chatbot />
     </div>
   );
 };

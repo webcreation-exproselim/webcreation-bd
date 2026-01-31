@@ -5,6 +5,8 @@ import { LoginModal } from "./LoginModal";
 import { SignupModal } from "./SignupModal";
 import { MobileDrawer } from "./MobileDrawer";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { CartButton } from "./CartButton";
+import { Link } from "react-router-dom";
 
 const serviceItems = [
   { label: "ফেসবুক অ্যাডস", href: "/facebook-ads" },
@@ -60,7 +62,7 @@ export function Header() {
         <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-16">
           <div className="flex items-center justify-between h-16 lg:h-20">
             {/* Logo */}
-            <a href="/" className="flex-shrink-0">
+            <Link to="/" className="flex-shrink-0">
               <div className="flex items-center gap-2">
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center shadow-lg">
                   <span className="text-white font-bold text-xl font-bengali">W</span>
@@ -69,7 +71,7 @@ export function Header() {
                   Web Creation BD
                 </span>
               </div>
-            </a>
+            </Link>
 
             {/* Desktop Navigation */}
             {!isMobile && (
@@ -98,13 +100,13 @@ export function Header() {
                         }`}
                       >
                         {item.submenu?.map((subItem) => (
-                          <a
+                          <Link
                             key={subItem.href}
-                            href={subItem.href}
+                            to={subItem.href}
                             className="block px-5 py-3 font-bengali text-sm transition-all duration-200 text-gray-700 hover:bg-red-50 hover:text-red-600 hover:pl-7"
                           >
                             {subItem.label}
-                          </a>
+                          </Link>
                         ))}
                       </div>
                     </div>
@@ -124,6 +126,7 @@ export function Header() {
 
             {/* Auth Buttons */}
             <div className="flex items-center gap-2 sm:gap-3">
+              <CartButton />
               <Button
                 variant="outline"
                 onClick={handleLoginClick}

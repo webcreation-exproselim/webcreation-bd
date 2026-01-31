@@ -1,8 +1,7 @@
 import { motion } from "framer-motion";
 import { 
   Activity, ArrowLeft, CheckCircle, Star, TrendingUp, 
-  Sparkles, Users, Zap, Award, Clock, Play, Wand2,
-  X
+  Sparkles, Users, Zap, Award, Clock, Play, Wand2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
@@ -11,10 +10,7 @@ import { Chatbot } from "@/components/Chatbot";
 import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-} from "@/components/ui/dialog";
+import { VideoPlayerModal, getRandomDemoVideo } from "@/components/VideoPlayerModal";
 
 // Portfolio Items
 const portfolioItems = [
@@ -309,7 +305,14 @@ const InfiniteSlider = ({
 
 const MotionGraphicsPage = () => {
   const [selectedItem, setSelectedItem] = useState<typeof portfolioItems[0] | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isVideoOpen, setIsVideoOpen] = useState(false);
+  const [videoUrl, setVideoUrl] = useState("");
+
+  const handlePlayVideo = (item: typeof portfolioItems[0]) => {
+    setSelectedItem(item);
+    setVideoUrl(getRandomDemoVideo());
+    setIsVideoOpen(true);
+  };
 
   return (
     <div className="min-h-screen bg-black">
@@ -482,10 +485,7 @@ const MotionGraphicsPage = () => {
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
-                onClick={() => {
-                  setSelectedItem(item);
-                  setIsModalOpen(true);
-                }}
+                onClick={() => handlePlayVideo(item)}
                 className="group relative overflow-hidden rounded-2xl cursor-pointer"
               >
                 <div className="aspect-[4/3] overflow-hidden">
@@ -634,33 +634,14 @@ const MotionGraphicsPage = () => {
         </div>
       </section>
 
-      {/* Portfolio Modal */}
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-4xl bg-black/95 border-yellow-400/30 p-0 overflow-hidden">
-          {selectedItem && (
-            <div className="relative">
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="absolute top-4 right-4 z-10 p-2 rounded-full bg-black/50 hover:bg-black/80 transition-colors"
-              >
-                <X className="w-6 h-6 text-white" />
-              </button>
-              <img
-                src={selectedItem.image}
-                alt={selectedItem.title}
-                className="w-full h-auto"
-              />
-              <div className="p-6 bg-gradient-to-t from-black to-transparent">
-                <span className="inline-block px-3 py-1 text-xs rounded-full bg-gradient-to-r from-yellow-500 to-amber-400 text-black font-medium mb-2">
-                  {selectedItem.category}
-                </span>
-                <h3 className="text-2xl font-bengali font-bold text-white mb-2">{selectedItem.title}</h3>
-                <p className="text-yellow-300 font-bengali">{selectedItem.result}</p>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Video Player Modal */}
+      <VideoPlayerModal
+        isOpen={isVideoOpen}
+        onClose={() => setIsVideoOpen(false)}
+        videoUrl={videoUrl}
+        title={selectedItem?.title || ""}
+        thumbnail={selectedItem?.image}
+      />
 
       <Footer />
       <Chatbot />

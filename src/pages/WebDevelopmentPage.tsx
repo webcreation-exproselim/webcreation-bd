@@ -495,12 +495,12 @@ const WebDevelopmentPage = () => {
                 transition={{ delay: index * 0.1 }}
                 className="group relative overflow-hidden rounded-2xl bg-black/40 border border-green-400/20 hover:border-green-400/50 transition-all duration-300"
               >
-                {/* Image - Full visible with aspect-video */}
-                <div className="aspect-video overflow-hidden bg-black/60">
+                {/* Image - Show top portion of website screenshot */}
+                <div className="aspect-[4/3] overflow-hidden">
                   <img
                     src={item.image_url}
                     alt={item.title}
-                    className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
+                    className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
                   />
                 </div>
                 

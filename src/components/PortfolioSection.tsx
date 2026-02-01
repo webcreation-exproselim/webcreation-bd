@@ -112,13 +112,13 @@ const PortfolioCard = ({ item, serviceId, onOpenModal }: PortfolioCardProps) => 
     >
       {/* Image Container */}
       <div 
-        className={`${isUrlService ? 'aspect-video' : 'aspect-[4/3]'} relative overflow-hidden ${isModalService ? 'cursor-pointer' : ''}`}
+        className={`${isUrlService ? 'aspect-[4/3]' : 'aspect-[4/3]'} relative overflow-hidden ${isModalService ? 'cursor-pointer' : ''}`}
         onClick={handleImageClick}
       >
         <img 
           src={item.image_url} 
           alt={item.title}
-          className={`w-full h-full ${isUrlService ? 'object-contain bg-black/60' : 'object-cover'} group-hover:scale-105 transition-transform duration-500`}
+          className={`w-full h-full ${isUrlService ? 'object-cover object-top' : 'object-cover'} group-hover:scale-105 transition-transform duration-500`}
           loading="lazy"
         />
         {/* Overlay */}

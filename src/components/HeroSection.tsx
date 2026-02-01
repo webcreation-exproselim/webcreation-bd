@@ -1,8 +1,11 @@
 import { Megaphone, Code, Palette, Video, Activity } from "lucide-react";
 import { motion } from "framer-motion";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ParticleNetwork } from "./ParticleNetwork";
+import { ConsultationModal } from "./ConsultationModal";
 import heroProfessional from "@/assets/hero-professional.png";
+
 const services = [{
   icon: Megaphone,
   label: "ফেসবুক অ্যাডস",
@@ -24,8 +27,13 @@ const services = [{
   label: "মোশন গ্রাফিক্স",
   href: "#motion-graphics"
 }];
+
 export function HeroSection() {
-  return <section className="relative min-h-screen flex items-center overflow-hidden">
+  const [isConsultationOpen, setIsConsultationOpen] = useState(false);
+
+  return (
+    <>
+    <section className="relative min-h-screen flex items-center overflow-hidden">
       {/* Bright Red Gradient Background */}
       <div className="absolute inset-0 bg-bnp-gradient" />
       
@@ -76,6 +84,7 @@ export function HeroSection() {
             >
               <Button 
                 size="lg" 
+                onClick={() => setIsConsultationOpen(true)}
                 className="bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 text-black font-bengali font-bold text-base sm:text-lg px-8 sm:px-10 py-5 sm:py-6 rounded-lg hover:from-yellow-300 hover:via-yellow-400 hover:to-yellow-500 transition-all duration-300 shadow-xl"
               >
                 ফ্রি কনসালটেশন নিন
@@ -195,5 +204,13 @@ export function HeroSection() {
           <div className="w-1 h-3 bg-yellow-400/70 rounded-full" />
         </div>
       </motion.div>
-    </section>;
+    </section>
+    
+    {/* Consultation Modal */}
+    <ConsultationModal 
+      isOpen={isConsultationOpen} 
+      onClose={() => setIsConsultationOpen(false)} 
+    />
+    </>
+  );
 }

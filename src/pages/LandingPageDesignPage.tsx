@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { 
   Layout, ArrowLeft, CheckCircle, Star, TrendingUp, 
   MousePointer, Users, Zap, Award, Clock, Target, Layers,
-  ExternalLink
+  ExternalLink, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
@@ -11,56 +11,51 @@ import { Chatbot } from "@/components/Chatbot";
 import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AddToCartButton } from "@/components/AddToCartButton";
+import { useDynamicPortfolio } from "@/hooks/useDynamicPortfolio";
 
-// Portfolio Items
-const portfolioItems = [
+// Fallback Portfolio Items
+const fallbackPortfolioItems = [
   {
-    id: 1,
+    id: "lp1",
     title: "SaaS ল্যান্ডিং পেজ",
-    image: "https://images.unsplash.com/photo-1467232004584-a241de8bcf5d?w=800&h=600&fit=crop",
-    result: "৬০% কনভার্সন",
-    category: "SaaS",
-    url: "https://example.com"
+    image_url: "https://images.unsplash.com/photo-1467232004584-a241de8bcf5d?w=800&h=600&fit=crop",
+    description: "৬০% কনভার্সন",
+    category: "landing-page"
   },
   {
-    id: 2,
+    id: "lp2",
     title: "প্রোডাক্ট লঞ্চ পেজ",
-    image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop",
-    result: "৫০০+ সেলস",
-    category: "প্রোডাক্ট",
-    url: "https://example.com"
+    image_url: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop",
+    description: "৫০০+ সেলস",
+    category: "landing-page"
   },
   {
-    id: 3,
+    id: "lp3",
     title: "লিড জেন পেজ",
-    image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=600&fit=crop",
-    result: "১০০০+ লিড",
-    category: "লিড জেনারেশন",
-    url: "https://example.com"
+    image_url: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=600&fit=crop",
+    description: "১০০০+ লিড",
+    category: "landing-page"
   },
   {
-    id: 4,
+    id: "lp4",
     title: "ইভেন্ট ল্যান্ডিং পেজ",
-    image: "https://images.unsplash.com/photo-1504868584819-f8e8b4b6d7e3?w=800&h=600&fit=crop",
-    result: "৩০০+ রেজিস্ট্রেশন",
-    category: "ইভেন্ট",
-    url: "https://example.com"
+    image_url: "https://images.unsplash.com/photo-1504868584819-f8e8b4b6d7e3?w=800&h=600&fit=crop",
+    description: "৩০০+ রেজিস্ট্রেশন",
+    category: "landing-page"
   },
   {
-    id: 5,
+    id: "lp5",
     title: "অ্যাপ ডাউনলোড পেজ",
-    image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&h=600&fit=crop",
-    result: "৫K+ ডাউনলোড",
-    category: "অ্যাপ",
-    url: "https://example.com"
+    image_url: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&h=600&fit=crop",
+    description: "৫K+ ডাউনলোড",
+    category: "landing-page"
   },
   {
-    id: 6,
+    id: "lp6",
     title: "সার্ভিস পেজ",
-    image: "https://images.unsplash.com/photo-1517292987719-0369a794ec0f?w=800&h=600&fit=crop",
-    result: "হাই কনভার্সন",
-    category: "সার্ভিস",
-    url: "https://example.com"
+    image_url: "https://images.unsplash.com/photo-1517292987719-0369a794ec0f?w=800&h=600&fit=crop",
+    description: "হাই কনভার্সন",
+    category: "landing-page"
   },
 ];
 
@@ -319,6 +314,8 @@ const InfiniteSlider = ({
 };
 
 const LandingPageDesignPage = () => {
+  const { portfolioItems, loading: portfolioLoading } = useDynamicPortfolio("landing-page", fallbackPortfolioItems);
+  
   return (
     <div className="min-h-screen bg-black">
       <Header />
@@ -494,7 +491,7 @@ const LandingPageDesignPage = () => {
               >
                 <div className="aspect-[4/3] overflow-hidden">
                   <img
-                    src={item.image}
+                    src={item.image_url}
                     alt={item.title}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   />
@@ -505,16 +502,13 @@ const LandingPageDesignPage = () => {
                     {item.category}
                   </span>
                   <h3 className="text-xl font-bengali font-bold text-white mb-1">{item.title}</h3>
-                  <p className="text-teal-300 font-bengali text-sm mb-3">{item.result}</p>
-                  <a 
-                    href={item.url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-cyan-400 hover:text-white text-sm font-medium transition-colors"
-                  >
+                  {item.description && (
+                    <p className="text-teal-300 font-bengali text-sm mb-3">{item.description}</p>
+                  )}
+                  <div className="inline-flex items-center gap-2 text-cyan-400 text-sm font-medium">
                     <ExternalLink className="w-4 h-4" />
-                    <span>লাইভ দেখুন</span>
-                  </a>
+                    <span>বিস্তারিত দেখুন</span>
+                  </div>
                 </div>
               </motion.div>
             ))}

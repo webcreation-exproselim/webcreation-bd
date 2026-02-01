@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { 
   Video, ArrowLeft, CheckCircle, Star, TrendingUp, 
-  Play, Users, Zap, Award, Clock, Sparkles, Film
+  Play, Users, Zap, Award, Clock, Sparkles, Film, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
@@ -12,50 +12,51 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useState } from "react";
 import { VideoPlayerModal, getRandomDemoVideo } from "@/components/VideoPlayerModal";
 import { AddToCartButton } from "@/components/AddToCartButton";
+import { useDynamicPortfolio } from "@/hooks/useDynamicPortfolio";
 
-// Portfolio Items
-const portfolioItems = [
+// Fallback Portfolio Items
+const fallbackPortfolioItems = [
   {
-    id: 1,
+    id: "vid1",
     title: "প্রোডাক্ট ভিডিও",
-    image: "https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=800&h=600&fit=crop",
-    result: "১০K+ ভিউ",
-    category: "প্রোডাক্ট"
+    image_url: "https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=800&h=600&fit=crop",
+    description: "১০K+ ভিউ",
+    category: "video-editing"
   },
   {
-    id: 2,
+    id: "vid2",
     title: "কর্পোরেট ভিডিও",
-    image: "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=800&h=600&fit=crop",
-    result: "প্রফেশনাল",
-    category: "কর্পোরেট"
+    image_url: "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=800&h=600&fit=crop",
+    description: "প্রফেশনাল",
+    category: "video-editing"
   },
   {
-    id: 3,
+    id: "vid3",
     title: "YouTube ভিডিও",
-    image: "https://images.unsplash.com/photo-1536240478700-b869070f9279?w=800&h=600&fit=crop",
-    result: "৫০K+ সাবস্ক্রাইবার",
-    category: "YouTube"
+    image_url: "https://images.unsplash.com/photo-1536240478700-b869070f9279?w=800&h=600&fit=crop",
+    description: "৫০K+ সাবস্ক্রাইবার",
+    category: "video-editing"
   },
   {
-    id: 4,
+    id: "vid4",
     title: "রিলস ভিডিও",
-    image: "https://images.unsplash.com/photo-1605826832916-d0ea9d6fe71e?w=800&h=600&fit=crop",
-    result: "ভাইরাল কন্টেন্ট",
-    category: "সোশ্যাল মিডিয়া"
+    image_url: "https://images.unsplash.com/photo-1605826832916-d0ea9d6fe71e?w=800&h=600&fit=crop",
+    description: "ভাইরাল কন্টেন্ট",
+    category: "video-editing"
   },
   {
-    id: 5,
+    id: "vid5",
     title: "ইভেন্ট ভিডিও",
-    image: "https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=800&h=600&fit=crop",
-    result: "হাই কোয়ালিটি",
-    category: "ইভেন্ট"
+    image_url: "https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=800&h=600&fit=crop",
+    description: "হাই কোয়ালিটি",
+    category: "video-editing"
   },
   {
-    id: 6,
+    id: "vid6",
     title: "অ্যাড ভিডিও",
-    image: "https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?w=800&h=600&fit=crop",
-    result: "৩x সেলস",
-    category: "অ্যাডভার্টাইজিং"
+    image_url: "https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?w=800&h=600&fit=crop",
+    description: "৩x সেলস",
+    category: "video-editing"
   },
 ];
 
@@ -314,11 +315,12 @@ const InfiniteSlider = ({
 };
 
 const VideoEditingPage = () => {
-  const [selectedItem, setSelectedItem] = useState<typeof portfolioItems[0] | null>(null);
+  const { portfolioItems, loading: portfolioLoading } = useDynamicPortfolio("video-editing", fallbackPortfolioItems);
+  const [selectedItem, setSelectedItem] = useState<typeof fallbackPortfolioItems[0] | null>(null);
   const [isVideoOpen, setIsVideoOpen] = useState(false);
   const [videoUrl, setVideoUrl] = useState("");
 
-  const handlePlayVideo = (item: typeof portfolioItems[0]) => {
+  const handlePlayVideo = (item: typeof fallbackPortfolioItems[0]) => {
     setSelectedItem(item);
     setVideoUrl(getRandomDemoVideo());
     setIsVideoOpen(true);
@@ -500,7 +502,7 @@ const VideoEditingPage = () => {
               >
                 <div className="aspect-[4/3] overflow-hidden">
                   <img
-                    src={item.image}
+                    src={item.image_url}
                     alt={item.title}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   />
@@ -516,7 +518,9 @@ const VideoEditingPage = () => {
                     {item.category}
                   </span>
                   <h3 className="text-xl font-bengali font-bold text-white mb-1">{item.title}</h3>
-                  <p className="text-red-300 font-bengali text-sm">{item.result}</p>
+                  {item.description && (
+                    <p className="text-red-300 font-bengali text-sm">{item.description}</p>
+                  )}
                 </div>
               </motion.div>
             ))}
@@ -640,7 +644,7 @@ const VideoEditingPage = () => {
         onClose={() => setIsVideoOpen(false)}
         videoUrl={videoUrl}
         title={selectedItem?.title || ""}
-        thumbnail={selectedItem?.image}
+        thumbnail={selectedItem?.image_url}
       />
 
       <Footer />

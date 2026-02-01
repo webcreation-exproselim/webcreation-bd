@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { 
   Activity, ArrowLeft, CheckCircle, Star, TrendingUp, 
-  Sparkles, Users, Zap, Award, Clock, Play, Wand2
+  Sparkles, Users, Zap, Award, Clock, Play, Wand2, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
@@ -12,50 +12,51 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useState } from "react";
 import { VideoPlayerModal, getRandomDemoVideo } from "@/components/VideoPlayerModal";
 import { AddToCartButton } from "@/components/AddToCartButton";
+import { useDynamicPortfolio } from "@/hooks/useDynamicPortfolio";
 
-// Portfolio Items
-const portfolioItems = [
+// Fallback Portfolio Items
+const fallbackPortfolioItems = [
   {
-    id: 1,
+    id: "mg1",
     title: "অ্যানিমেটেড লোগো",
-    image: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&h=600&fit=crop",
-    result: "ব্র্যান্ড রিকগনিশন",
-    category: "লোগো অ্যানিমেশন"
+    image_url: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&h=600&fit=crop",
+    description: "ব্র্যান্ড রিকগনিশন",
+    category: "motion-graphics"
   },
   {
-    id: 2,
+    id: "mg2",
     title: "এক্সপ্লেইনার ভিডিও",
-    image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&h=600&fit=crop",
-    result: "৮০% কনভার্সন",
-    category: "এক্সপ্লেইনার"
+    image_url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&h=600&fit=crop",
+    description: "৮০% কনভার্সন",
+    category: "motion-graphics"
   },
   {
-    id: 3,
+    id: "mg3",
     title: "ইনফোগ্রাফিক্স অ্যানিমেশন",
-    image: "https://images.unsplash.com/photo-1633356122102-3fe601e05bd2?w=800&h=600&fit=crop",
-    result: "ডেটা ভিজ্যুয়ালাইজেশন",
-    category: "ইনফোগ্রাফিক্স"
+    image_url: "https://images.unsplash.com/photo-1633356122102-3fe601e05bd2?w=800&h=600&fit=crop",
+    description: "ডেটা ভিজ্যুয়ালাইজেশন",
+    category: "motion-graphics"
   },
   {
-    id: 4,
+    id: "mg4",
     title: "কিনেটিক টাইপোগ্রাফি",
-    image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop",
-    result: "এনগেজিং কন্টেন্ট",
-    category: "টাইপোগ্রাফি"
+    image_url: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop",
+    description: "এনগেজিং কন্টেন্ট",
+    category: "motion-graphics"
   },
   {
-    id: 5,
+    id: "mg5",
     title: "3D অ্যানিমেশন",
-    image: "https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?w=800&h=600&fit=crop",
-    result: "প্রিমিয়াম কোয়ালিটি",
-    category: "3D"
+    image_url: "https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?w=800&h=600&fit=crop",
+    description: "প্রিমিয়াম কোয়ালিটি",
+    category: "motion-graphics"
   },
   {
-    id: 6,
+    id: "mg6",
     title: "সোশ্যাল মিডিয়া অ্যানিমেশন",
-    image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&h=600&fit=crop",
-    result: "ভাইরাল কন্টেন্ট",
-    category: "সোশ্যাল মিডিয়া"
+    image_url: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&h=600&fit=crop",
+    description: "ভাইরাল কন্টেন্ট",
+    category: "motion-graphics"
   },
 ];
 
@@ -314,11 +315,12 @@ const InfiniteSlider = ({
 };
 
 const MotionGraphicsPage = () => {
-  const [selectedItem, setSelectedItem] = useState<typeof portfolioItems[0] | null>(null);
+  const { portfolioItems, loading: portfolioLoading } = useDynamicPortfolio("motion-graphics", fallbackPortfolioItems);
+  const [selectedItem, setSelectedItem] = useState<typeof fallbackPortfolioItems[0] | null>(null);
   const [isVideoOpen, setIsVideoOpen] = useState(false);
   const [videoUrl, setVideoUrl] = useState("");
 
-  const handlePlayVideo = (item: typeof portfolioItems[0]) => {
+  const handlePlayVideo = (item: typeof fallbackPortfolioItems[0]) => {
     setSelectedItem(item);
     setVideoUrl(getRandomDemoVideo());
     setIsVideoOpen(true);
@@ -500,7 +502,7 @@ const MotionGraphicsPage = () => {
               >
                 <div className="aspect-[4/3] overflow-hidden">
                   <img
-                    src={item.image}
+                    src={item.image_url}
                     alt={item.title}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   />
@@ -516,7 +518,9 @@ const MotionGraphicsPage = () => {
                     {item.category}
                   </span>
                   <h3 className="text-xl font-bengali font-bold text-white mb-1">{item.title}</h3>
-                  <p className="text-yellow-300 font-bengali text-sm">{item.result}</p>
+                  {item.description && (
+                    <p className="text-yellow-300 font-bengali text-sm">{item.description}</p>
+                  )}
                 </div>
               </motion.div>
             ))}
@@ -640,7 +644,7 @@ const MotionGraphicsPage = () => {
         onClose={() => setIsVideoOpen(false)}
         videoUrl={videoUrl}
         title={selectedItem?.title || ""}
-        thumbnail={selectedItem?.image}
+        thumbnail={selectedItem?.image_url}
       />
 
       <Footer />

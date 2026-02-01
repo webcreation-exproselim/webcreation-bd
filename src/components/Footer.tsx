@@ -1,13 +1,14 @@
 import { motion } from "framer-motion";
 import { Phone, Mail, Facebook, MessageCircle, MapPin, ArrowUp } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const services = [
-  { name: "ওয়েব ডেভেলপমেন্ট", href: "#web-development" },
-  { name: "গ্রাফিক্স ডিজাইন", href: "#graphics-design" },
-  { name: "ভিডিও এডিটিং", href: "#video-editing" },
-  { name: "মোশন গ্রাফিক্স", href: "#motion-graphics" },
-  { name: "ফেসবুক অ্যাডস", href: "#facebook-ads" },
-  { name: "ল্যান্ডিং পেজ", href: "#landing-page" },
+  { name: "ওয়েব ডেভেলপমেন্ট", href: "/web-development" },
+  { name: "গ্রাফিক্স ডিজাইন", href: "/graphics-design" },
+  { name: "ভিডিও এডিটিং", href: "/video-editing" },
+  { name: "মোশন গ্রাফিক্স", href: "/motion-graphics" },
+  { name: "ফেসবুক অ্যাডস", href: "/facebook-ads" },
+  { name: "ল্যান্ডিং পেজ", href: "/landing-page" },
 ];
 
 const quickLinks = [
@@ -103,12 +104,12 @@ export function Footer() {
             <ul className="space-y-3">
               {services.map((service) => (
                 <li key={service.name}>
-                  <a
-                    href={service.href}
+                  <Link
+                    to={service.href}
                     className="font-bengali text-white/60 text-sm hover:text-yellow-400 hover:pl-2 transition-all duration-300"
                   >
                     {service.name}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>

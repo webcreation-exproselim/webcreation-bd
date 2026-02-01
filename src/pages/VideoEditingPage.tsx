@@ -11,6 +11,7 @@ import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useState } from "react";
 import { VideoPlayerModal, getRandomDemoVideo } from "@/components/VideoPlayerModal";
+import { AddToCartButton } from "@/components/AddToCartButton";
 
 // Portfolio Items
 const portfolioItems = [
@@ -148,9 +149,12 @@ const reviewsRow2 = [
 // Pricing Plans
 const pricingPlans = [
   {
+    id: "vid-basic",
     name: "বেসিক",
     originalPrice: "৳৩,০০০",
     price: "৳২,০০০",
+    priceNum: 2000,
+    originalPriceNum: 3000,
     discount: "৩৩% ছাড়",
     features: [
       "৫ মিনিট পর্যন্ত ভিডিও",
@@ -161,9 +165,12 @@ const pricingPlans = [
     ],
   },
   {
+    id: "vid-pro",
     name: "প্রফেশনাল",
     originalPrice: "৳৭,০০০",
     price: "৳৫,০০০",
+    priceNum: 5000,
+    originalPriceNum: 7000,
     discount: "২৯% ছাড়",
     popular: true,
     features: [
@@ -176,9 +183,12 @@ const pricingPlans = [
     ],
   },
   {
+    id: "vid-premium",
     name: "প্রিমিয়াম",
     originalPrice: "৳১৫,০০০",
     price: "৳১০,০০০",
+    priceNum: 10000,
+    originalPriceNum: 15000,
     discount: "৩৩% ছাড়",
     features: [
       "৩০ মিনিট পর্যন্ত ভিডিও",
@@ -601,17 +611,7 @@ const VideoEditingPage = () => {
                   ))}
                 </ul>
                 
-                <a href="https://wa.me/8801332052874" target="_blank" rel="noopener noreferrer">
-                  <Button 
-                    className={`w-full font-bengali font-bold ${
-                      plan.popular 
-                        ? 'bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600' 
-                        : 'bg-red-600/50 hover:bg-red-600'
-                    }`}
-                  >
-                    অর্ডার করুন
-                  </Button>
-                </a>
+                <AddToCartButton plan={plan} serviceName="ভিডিও এডিটিং" colorScheme="red" />
               </motion.div>
             ))}
           </div>

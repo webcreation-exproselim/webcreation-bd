@@ -2,13 +2,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   Megaphone, ArrowLeft, CheckCircle, ArrowRight, Star, TrendingUp, 
   Target, BarChart3, Users, Zap, Award, Clock, Shield, Play,
-  ExternalLink, X
+  ExternalLink, X, ShoppingCart
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Chatbot } from "@/components/Chatbot";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useState } from "react";
 import {
@@ -17,6 +17,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useCart } from "@/context/CartContext";
+import { useToast } from "@/hooks/use-toast";
 
 // Portfolio Items
 const portfolioItems = [
@@ -154,9 +156,12 @@ const reviewsRow2 = [
 // Pricing Plans
 const pricingPlans = [
   {
+    id: "fb-starter",
     name: "স্টার্টার",
     originalPrice: "৳৫,০০০",
     price: "৳৩,৫০০",
+    priceNum: 3500,
+    originalPriceNum: 5000,
     discount: "৩০% ছাড়",
     features: [
       "১টি ক্যাম্পেইন সেটআপ",
@@ -167,9 +172,12 @@ const pricingPlans = [
     ],
   },
   {
+    id: "fb-premium",
     name: "প্রিমিয়াম",
     originalPrice: "৳১০,০০০",
     price: "৳৭,০০০",
+    priceNum: 7000,
+    originalPriceNum: 10000,
     discount: "৩০% ছাড়",
     popular: true,
     features: [
@@ -182,9 +190,12 @@ const pricingPlans = [
     ],
   },
   {
+    id: "fb-business",
     name: "বিজনেস",
     originalPrice: "৳২০,০০০",
     price: "৳১৫,০০০",
+    priceNum: 15000,
+    originalPriceNum: 20000,
     discount: "২৫% ছাড়",
     features: [
       "আনলিমিটেড ক্যাম্পেইন",
@@ -312,6 +323,26 @@ const InfiniteSlider = ({
 const FacebookAdsPage = () => {
   const [selectedItem, setSelectedItem] = useState<typeof portfolioItems[0] | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { addItem, isInCart } = useCart();
+  const { toast } = useToast();
+  const navigate = useNavigate();
+
+  const handleAddToCart = (plan: typeof pricingPlans[0]) => {
+    if (isInCart(plan.id)) {
+      navigate('/checkout');
+      return;
+    }
+    addItem({
+      id: plan.id,
+      serviceName: "ফেসবুক অ্যাডস",
+      packageName: plan.name,
+      price: plan.priceNum,
+      originalPrice: plan.originalPriceNum,
+      features: plan.features,
+    });
+    toast({ title: "কার্টে যোগ হয়েছে!", description: `ফেসবুক অ্যাডস - ${plan.name}` });
+    navigate('/checkout');
+  };
 
   return (
     <div className="min-h-screen bg-black">
@@ -619,15 +650,17 @@ const FacebookAdsPage = () => {
                   ))}
                 </ul>
                 
-                <a href="https://wa.me/8801332052874" target="_blank" rel="noopener noreferrer">
-                  <Button className={`w-full font-bengali ${
+                <Button 
+                  onClick={() => handleAddToCart(plan)}
+                  className={`w-full font-bengali ${
                     plan.popular 
                       ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-bold shadow-lg shadow-blue-500/30' 
                       : 'bg-blue-900/50 text-blue-200 hover:bg-blue-800/50 border border-blue-400/30'
-                  }`}>
-                    অর্ডার করুন
-                  </Button>
-                </a>
+                  }`}
+                >
+                  <ShoppingCart className="w-4 h-4 mr-2" />
+                  {isInCart(plan.id) ? 'চেকআউটে যান' : 'অর্ডার করুন'}
+                </Button>
               </motion.div>
             ))}
           </div>

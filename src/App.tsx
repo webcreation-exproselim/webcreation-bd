@@ -13,6 +13,7 @@ import VideoEditingPage from "./pages/VideoEditingPage";
 import MotionGraphicsPage from "./pages/MotionGraphicsPage";
 import LandingPageDesignPage from "./pages/LandingPageDesignPage";
 import CheckoutPage from "./pages/CheckoutPage";
+import AdminDashboard from "./pages/AdminDashboard";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/motion-graphics" element={<MotionGraphicsPage />} />
             <Route path="/landing-page" element={<LandingPageDesignPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
+            <Route path="/admin" element={<AdminDashboard />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -10,6 +10,7 @@ import { Footer } from "@/components/Footer";
 import { Chatbot } from "@/components/Chatbot";
 import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AddToCartButton } from "@/components/AddToCartButton";
 
 // Portfolio Items
 const portfolioItems = [
@@ -153,9 +154,12 @@ const reviewsRow2 = [
 // Pricing Plans
 const pricingPlans = [
   {
+    id: "web-starter",
     name: "স্টার্টার",
     originalPrice: "৳১০,০০০",
     price: "৳৫,০০০",
+    priceNum: 5000,
+    originalPriceNum: 10000,
     discount: "৫০% ছাড়",
     features: [
       "৫ পেজ ওয়েবসাইট",
@@ -166,9 +170,12 @@ const pricingPlans = [
     ],
   },
   {
+    id: "web-premium",
     name: "প্রিমিয়াম",
     originalPrice: "৳২৫,০০০",
     price: "৳১৫,০০০",
+    priceNum: 15000,
+    originalPriceNum: 25000,
     discount: "৪০% ছাড়",
     popular: true,
     features: [
@@ -181,9 +188,12 @@ const pricingPlans = [
     ],
   },
   {
+    id: "web-business",
     name: "বিজনেস",
     originalPrice: "৳১৫,০০০",
     price: "৳৮,০০০",
+    priceNum: 8000,
+    originalPriceNum: 15000,
     discount: "৪৭% ছাড়",
     features: [
       "আনলিমিটেড পেজ",
@@ -599,17 +609,7 @@ const WebDevelopmentPage = () => {
                   ))}
                 </ul>
                 
-                <a href="https://wa.me/8801332052874" target="_blank" rel="noopener noreferrer">
-                  <Button 
-                    className={`w-full font-bengali font-bold ${
-                      plan.popular 
-                        ? 'bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600' 
-                        : 'bg-green-600/50 hover:bg-green-600'
-                    }`}
-                  >
-                    অর্ডার করুন
-                  </Button>
-                </a>
+                <AddToCartButton plan={plan} serviceName="ওয়েব ডেভেলপমেন্ট" colorScheme="green" />
               </motion.div>
             ))}
           </div>

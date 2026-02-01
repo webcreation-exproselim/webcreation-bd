@@ -1,0 +1,593 @@
+import { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { motion } from "framer-motion";
+import {
+  Package,
+  FileText,
+  MessageCircle,
+  Download,
+  LogOut,
+  User,
+  Clock,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  ChevronRight,
+  Send,
+  Home,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import type { User as SupabaseUser, Session } from "@supabase/supabase-js";
+
+interface Order {
+  id: string;
+  services: any[];
+  status: string;
+  progress: number;
+  total_price: number;
+  created_at: string;
+}
+
+interface Invoice {
+  id: string;
+  invoice_number: string;
+  amount: number;
+  paid_amount: number;
+  status: string;
+  created_at: string;
+}
+
+interface Message {
+  id: string;
+  content: string;
+  is_admin: boolean;
+  created_at: string;
+}
+
+export default function ClientDashboard() {
+  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<any>(null);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [newMessage, setNewMessage] = useState("");
+  const [activeTab, setActiveTab] = useState<"orders" | "invoices" | "chat">("orders");
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      if (!session) {
+        navigate("/auth");
+      }
+    });
+
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      if (!session) {
+        navigate("/auth");
+      } else {
+        // Defer data fetching
+        setTimeout(() => {
+          fetchUserData(session.user.id);
+        }, 0);
+      }
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
+  const fetchUserData = async (userId: string) => {
+    // Fetch profile
+    const { data: profileData } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("user_id", userId)
+      .single();
+    
+    if (profileData) setProfile(profileData);
+
+    // Fetch orders
+    const { data: ordersData } = await supabase
+      .from("orders")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+    
+    if (ordersData) setOrders(ordersData as Order[]);
+
+    // Fetch invoices
+    const { data: invoicesData } = await supabase
+      .from("invoices")
+      .select("*")
+      .eq("client_id", userId)
+      .order("created_at", { ascending: false });
+    
+    if (invoicesData) setInvoices(invoicesData as Invoice[]);
+  };
+
+  const fetchMessages = async (orderId: string) => {
+    const { data } = await supabase
+      .from("messages")
+      .select("*")
+      .eq("order_id", orderId)
+      .order("created_at", { ascending: true });
+    
+    if (data) setMessages(data as Message[]);
+  };
+
+  const sendMessage = async () => {
+    if (!newMessage.trim() || !selectedOrder || !user) return;
+
+    const { error } = await supabase.from("messages").insert({
+      order_id: selectedOrder.id,
+      sender_id: user.id,
+      content: newMessage,
+      is_admin: false,
+    });
+
+    if (!error) {
+      setNewMessage("");
+      fetchMessages(selectedOrder.id);
+    } else {
+      toast({
+        title: "ত্রুটি",
+        description: "মেসেজ পাঠানো যায়নি",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/");
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "completed":
+        return <CheckCircle className="w-5 h-5 text-green-400" />;
+      case "cancelled":
+        return <XCircle className="w-5 h-5 text-red-400" />;
+      case "processing":
+        return <Clock className="w-5 h-5 text-yellow-400" />;
+      default:
+        return <AlertCircle className="w-5 h-5 text-blue-400" />;
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case "completed":
+        return "সম্পন্ন";
+      case "cancelled":
+        return "বাতিল";
+      case "processing":
+        return "প্রসেসিং";
+      default:
+        return "পেন্ডিং";
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-red-950 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-500"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-red-950">
+      {/* Header */}
+      <header className="bg-black/50 backdrop-blur-xl border-b border-white/10 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center gap-4">
+              <Link to="/" className="flex items-center gap-2">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center">
+                  <span className="text-white font-bold text-xl font-bengali">W</span>
+                </div>
+                <span className="font-bengali text-lg font-bold text-white hidden sm:block">
+                  Web Creation BD
+                </span>
+              </Link>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <Link to="/">
+                <Button variant="ghost" className="text-white/70 hover:text-white">
+                  <Home className="w-5 h-5 mr-2" />
+                  <span className="hidden sm:inline font-bengali">হোম</span>
+                </Button>
+              </Link>
+              <div className="flex items-center gap-2 text-white/70">
+                <User className="w-5 h-5" />
+                <span className="font-bengali text-sm hidden sm:inline">
+                  {profile?.full_name || user?.email}
+                </span>
+              </div>
+              <Button
+                onClick={handleLogout}
+                variant="ghost"
+                className="text-white/70 hover:text-red-400"
+              >
+                <LogOut className="w-5 h-5" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Welcome Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <h1 className="text-2xl sm:text-3xl font-bengali font-bold text-white mb-2">
+            স্বাগতম, {profile?.full_name || "গ্রাহক"}! 👋
+          </h1>
+          <p className="text-white/60 font-bengali">
+            আপনার অর্ডার এবং ইনভয়েস ট্র্যাক করুন
+          </p>
+        </motion.div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
+                <Package className="w-6 h-6 text-blue-400" />
+              </div>
+              <div>
+                <p className="text-white/60 text-sm font-bengali">মোট অর্ডার</p>
+                <p className="text-2xl font-bold text-white">{orders.length}</p>
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center">
+                <CheckCircle className="w-6 h-6 text-green-400" />
+              </div>
+              <div>
+                <p className="text-white/60 text-sm font-bengali">সম্পন্ন</p>
+                <p className="text-2xl font-bold text-white">
+                  {orders.filter((o) => o.status === "completed").length}
+                </p>
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-yellow-500/20 flex items-center justify-center">
+                <FileText className="w-6 h-6 text-yellow-400" />
+              </div>
+              <div>
+                <p className="text-white/60 text-sm font-bengali">মোট ইনভয়েস</p>
+                <p className="text-2xl font-bold text-white">{invoices.length}</p>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+          <Button
+            onClick={() => setActiveTab("orders")}
+            className={`font-bengali ${
+              activeTab === "orders"
+                ? "bg-red-500 text-white"
+                : "bg-white/5 text-white/70 hover:bg-white/10"
+            }`}
+          >
+            <Package className="w-4 h-4 mr-2" />
+            অর্ডার
+          </Button>
+          <Button
+            onClick={() => setActiveTab("invoices")}
+            className={`font-bengali ${
+              activeTab === "invoices"
+                ? "bg-red-500 text-white"
+                : "bg-white/5 text-white/70 hover:bg-white/10"
+            }`}
+          >
+            <FileText className="w-4 h-4 mr-2" />
+            ইনভয়েস
+          </Button>
+          <Button
+            onClick={() => setActiveTab("chat")}
+            className={`font-bengali ${
+              activeTab === "chat"
+                ? "bg-red-500 text-white"
+                : "bg-white/5 text-white/70 hover:bg-white/10"
+            }`}
+          >
+            <MessageCircle className="w-4 h-4 mr-2" />
+            চ্যাট
+          </Button>
+        </div>
+
+        {/* Orders Tab */}
+        {activeTab === "orders" && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="space-y-4"
+          >
+            {orders.length === 0 ? (
+              <div className="bg-white/5 rounded-2xl border border-white/10 p-12 text-center">
+                <Package className="w-16 h-16 text-white/20 mx-auto mb-4" />
+                <p className="text-white/60 font-bengali">কোন অর্ডার নেই</p>
+                <Link to="/checkout">
+                  <Button className="mt-4 bg-red-500 hover:bg-red-600 font-bengali">
+                    অর্ডার করুন
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              orders.map((order) => (
+                <div
+                  key={order.id}
+                  className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6"
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                    <div className="flex items-center gap-3">
+                      {getStatusIcon(order.status)}
+                      <div>
+                        <p className="text-white font-medium">
+                          অর্ডার #{order.id.slice(0, 8)}
+                        </p>
+                        <p className="text-white/60 text-sm font-bengali">
+                          {new Date(order.created_at).toLocaleDateString("bn-BD")}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={`px-3 py-1 rounded-full text-sm font-bengali ${
+                          order.status === "completed"
+                            ? "bg-green-500/20 text-green-400"
+                            : order.status === "processing"
+                            ? "bg-yellow-500/20 text-yellow-400"
+                            : "bg-blue-500/20 text-blue-400"
+                        }`}
+                      >
+                        {getStatusText(order.status)}
+                      </span>
+                      <span className="text-white font-bold">
+                        ৳{order.total_price.toLocaleString("bn-BD")}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Progress Bar */}
+                  <div className="mb-4">
+                    <div className="flex justify-between text-sm mb-2">
+                      <span className="text-white/60 font-bengali">অগ্রগতি</span>
+                      <span className="text-white font-bengali">{order.progress || 0}%</span>
+                    </div>
+                    <Progress value={order.progress || 0} className="h-2" />
+                  </div>
+
+                  {/* Services */}
+                  <div className="flex flex-wrap gap-2">
+                    {Array.isArray(order.services) &&
+                      order.services.map((service: any, idx: number) => (
+                        <span
+                          key={idx}
+                          className="px-3 py-1 bg-white/5 rounded-lg text-white/70 text-sm font-bengali"
+                        >
+                          {service.name}
+                        </span>
+                      ))}
+                  </div>
+                </div>
+              ))
+            )}
+          </motion.div>
+        )}
+
+        {/* Invoices Tab */}
+        {activeTab === "invoices" && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="space-y-4"
+          >
+            {invoices.length === 0 ? (
+              <div className="bg-white/5 rounded-2xl border border-white/10 p-12 text-center">
+                <FileText className="w-16 h-16 text-white/20 mx-auto mb-4" />
+                <p className="text-white/60 font-bengali">কোন ইনভয়েস নেই</p>
+              </div>
+            ) : (
+              invoices.map((invoice) => (
+                <div
+                  key={invoice.id}
+                  className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-yellow-500/20 flex items-center justify-center">
+                      <FileText className="w-6 h-6 text-yellow-400" />
+                    </div>
+                    <div>
+                      <p className="text-white font-medium">
+                        ইনভয়েস #{invoice.invoice_number}
+                      </p>
+                      <p className="text-white/60 text-sm font-bengali">
+                        {new Date(invoice.created_at).toLocaleDateString("bn-BD")}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <p className="text-white font-bold">
+                        ৳{invoice.amount.toLocaleString("bn-BD")}
+                      </p>
+                      <span
+                        className={`text-sm font-bengali ${
+                          invoice.status === "paid"
+                            ? "text-green-400"
+                            : "text-yellow-400"
+                        }`}
+                      >
+                        {invoice.status === "paid" ? "পরিশোধিত" : "বাকি"}
+                      </span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      className="text-white/60 hover:text-white"
+                    >
+                      <Download className="w-5 h-5" />
+                    </Button>
+                  </div>
+                </div>
+              ))
+            )}
+          </motion.div>
+        )}
+
+        {/* Chat Tab */}
+        {activeTab === "chat" && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+          >
+            {/* Order List */}
+            <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-4">
+              <h3 className="text-white font-bengali font-bold mb-4">
+                অর্ডার সিলেক্ট করুন
+              </h3>
+              <div className="space-y-2">
+                {orders.map((order) => (
+                  <button
+                    key={order.id}
+                    onClick={() => {
+                      setSelectedOrder(order);
+                      fetchMessages(order.id);
+                    }}
+                    className={`w-full p-3 rounded-xl text-left transition-colors ${
+                      selectedOrder?.id === order.id
+                        ? "bg-red-500/20 border border-red-500/50"
+                        : "bg-white/5 hover:bg-white/10"
+                    }`}
+                  >
+                    <p className="text-white text-sm">
+                      অর্ডার #{order.id.slice(0, 8)}
+                    </p>
+                    <p className="text-white/60 text-xs font-bengali">
+                      {getStatusText(order.status)}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Chat Area */}
+            <div className="lg:col-span-2 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 flex flex-col h-[500px]">
+              {selectedOrder ? (
+                <>
+                  {/* Chat Header */}
+                  <div className="p-4 border-b border-white/10">
+                    <p className="text-white font-bengali font-bold">
+                      অর্ডার #{selectedOrder.id.slice(0, 8)}
+                    </p>
+                  </div>
+
+                  {/* Messages */}
+                  <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                    {messages.map((msg) => (
+                      <div
+                        key={msg.id}
+                        className={`flex ${
+                          msg.is_admin ? "justify-start" : "justify-end"
+                        }`}
+                      >
+                        <div
+                          className={`max-w-[80%] p-3 rounded-2xl ${
+                            msg.is_admin
+                              ? "bg-white/10 text-white"
+                              : "bg-red-500 text-white"
+                          }`}
+                        >
+                          <p className="text-sm">{msg.content}</p>
+                          <p className="text-xs text-white/60 mt-1">
+                            {new Date(msg.created_at).toLocaleTimeString("bn-BD")}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Input */}
+                  <div className="p-4 border-t border-white/10">
+                    <div className="flex gap-2">
+                      <Input
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        placeholder="মেসেজ লিখুন..."
+                        className="bg-white/5 border-white/10 text-white placeholder:text-white/40 font-bengali"
+                        onKeyPress={(e) => e.key === "Enter" && sendMessage()}
+                      />
+                      <Button
+                        onClick={sendMessage}
+                        className="bg-red-500 hover:bg-red-600"
+                      >
+                        <Send className="w-5 h-5" />
+                      </Button>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="flex-1 flex items-center justify-center">
+                  <div className="text-center">
+                    <MessageCircle className="w-16 h-16 text-white/20 mx-auto mb-4" />
+                    <p className="text-white/60 font-bengali">
+                      চ্যাট করতে একটি অর্ডার সিলেক্ট করুন
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </main>
+    </div>
+  );
+}

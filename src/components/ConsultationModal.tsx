@@ -13,8 +13,10 @@ import { format, addDays, isBefore, startOfToday } from "date-fns";
 import { bn } from "date-fns/locale";
 
 interface ConsultationModalProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 const timeSlots = [
@@ -30,13 +32,28 @@ const timeSlots = [
   { time: "09:00 PM", label: "রাত ৯:০০" },
 ];
 
-export function ConsultationModal({ isOpen, onClose }: ConsultationModalProps) {
+export function ConsultationModal({ isOpen, onClose, open, onOpenChange }: ConsultationModalProps) {
+  // Support both prop patterns
+  const isModalOpen = open !== undefined ? open : isOpen;
+  
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTime, setSelectedTime] = useState<string | undefined>(undefined);
   const [step, setStep] = useState<"date" | "time" | "confirm">("date");
 
   const today = startOfToday();
   const maxDate = addDays(today, 30);
+
+  const resetModal = () => {
+    setSelectedDate(undefined);
+    setSelectedTime(undefined);
+    setStep("date");
+  };
+
+  const closeModal = () => {
+    if (onOpenChange) onOpenChange(false);
+    if (onClose) onClose();
+    resetModal();
+  };
 
   const handleDateSelect = (date: Date | undefined) => {
     setSelectedDate(date);
@@ -62,23 +79,11 @@ export function ConsultationModal({ isOpen, onClose }: ConsultationModalProps) {
     );
 
     window.open(`https://wa.me/8801332052874?text=${message}`, "_blank");
-    onClose();
-    resetModal();
-  };
-
-  const resetModal = () => {
-    setSelectedDate(undefined);
-    setSelectedTime(undefined);
-    setStep("date");
-  };
-
-  const handleClose = () => {
-    onClose();
-    resetModal();
+    closeModal();
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
+    <Dialog open={isModalOpen} onOpenChange={closeModal}>
       <DialogContent className="sm:max-w-[500px] bg-gradient-to-br from-gray-900 via-black to-gray-900 border-yellow-400/30 p-0 overflow-hidden">
         {/* Header */}
         <div className="bg-gradient-to-r from-yellow-400/20 to-red-500/20 p-6 border-b border-white/10">

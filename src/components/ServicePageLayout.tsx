@@ -1,10 +1,13 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, CheckCircle, ArrowRight } from "lucide-react";
+import { ArrowLeft, CheckCircle, ArrowRight, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { Chatbot } from "./Chatbot";
-import { Link } from "react-router-dom";
+import { ConsultationModal } from "./ConsultationModal";
+import { Link, useNavigate } from "react-router-dom";
+import { useCart } from "@/context/CartContext";
 import { LucideIcon } from "lucide-react";
 
 interface PortfolioItem {
@@ -53,6 +56,25 @@ export const ServicePageLayout = ({
   pricing,
   reviews,
 }: ServicePageLayoutProps) => {
+  const [consultationOpen, setConsultationOpen] = useState(false);
+  const navigate = useNavigate();
+  const { addItem } = useCart();
+
+  const handleOrderClick = (plan: PricingPlan) => {
+    const priceNum = parseInt(plan.price.replace(/[^0-9]/g, ""));
+    const originalPriceNum = parseInt(plan.originalPrice.replace(/[^0-9]/g, ""));
+    
+    addItem({
+      id: `${title}-${plan.name}`,
+      serviceName: title,
+      packageName: plan.name,
+      price: priceNum,
+      originalPrice: originalPriceNum,
+      features: plan.features,
+    });
+    navigate("/checkout");
+  };
+
   return (
     <div className="min-h-screen bg-black">
       <Header />
@@ -101,12 +123,22 @@ export const ServicePageLayout = ({
                 ))}
               </div>
               
-              <a href="https://wa.me/8801332052874" target="_blank" rel="noopener noreferrer">
-                <Button className="bg-gradient-to-r from-yellow-400 to-red-500 text-black font-bengali font-bold text-lg px-8 py-6 rounded-xl hover:scale-105 transition-transform">
-                  এখনই অর্ডার করুন
-                  <ArrowRight className="w-5 h-5 ml-2" />
+              <div className="flex flex-wrap gap-4">
+                <Link to="/checkout">
+                  <Button className="bg-gradient-to-r from-yellow-400 to-red-500 text-black font-bengali font-bold text-lg px-8 py-6 rounded-xl hover:scale-105 transition-transform">
+                    এখনই অর্ডার করুন
+                    <ArrowRight className="w-5 h-5 ml-2" />
+                  </Button>
+                </Link>
+                <Button 
+                  onClick={() => setConsultationOpen(true)}
+                  variant="outline"
+                  className="border-yellow-400/50 text-yellow-400 hover:bg-yellow-400/10 font-bengali font-bold text-lg px-8 py-6 rounded-xl"
+                >
+                  <Calendar className="w-5 h-5 mr-2" />
+                  ফ্রি কনসালটেশন
                 </Button>
-              </a>
+              </div>
             </div>
           </motion.div>
         </div>
@@ -203,15 +235,16 @@ export const ServicePageLayout = ({
                   ))}
                 </ul>
                 
-                <a href="https://wa.me/8801332052874" target="_blank" rel="noopener noreferrer">
-                  <Button className={`w-full font-bengali ${
+                <Button 
+                  onClick={() => handleOrderClick(plan)}
+                  className={`w-full font-bengali ${
                     plan.popular 
                       ? 'bg-gradient-to-r from-yellow-400 to-red-500 text-black font-bold' 
                       : 'bg-white/10 text-white hover:bg-white/20'
-                  }`}>
-                    অর্ডার করুন
-                  </Button>
-                </a>
+                  }`}
+                >
+                  অর্ডার করুন
+                </Button>
               </motion.div>
             ))}
           </div>
@@ -291,6 +324,7 @@ export const ServicePageLayout = ({
 
       <Footer />
       <Chatbot />
+      <ConsultationModal open={consultationOpen} onOpenChange={setConsultationOpen} />
     </div>
   );
 };

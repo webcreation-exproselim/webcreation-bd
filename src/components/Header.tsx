@@ -1,12 +1,10 @@
 import { useState, useEffect } from "react";
 import { Menu, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { LoginModal } from "./LoginModal";
-import { SignupModal } from "./SignupModal";
 import { MobileDrawer } from "./MobileDrawer";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { CartButton } from "./CartButton";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const serviceItems = [
   { label: "ফেসবুক অ্যাডস", href: "/facebook-ads" },
@@ -27,11 +25,10 @@ const navItems = [
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
-  const [loginOpen, setLoginOpen] = useState(false);
-  const [signupOpen, setSignupOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [serviceDropdownOpen, setServiceDropdownOpen] = useState(false);
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -43,11 +40,11 @@ export function Header() {
   }, []);
 
   const handleLoginClick = () => {
-    setLoginOpen(true);
+    navigate("/auth");
   };
 
   const handleSignupClick = () => {
-    setSignupOpen(true);
+    navigate("/auth");
   };
 
   return (
@@ -158,20 +155,18 @@ export function Header() {
         </div>
       </header>
 
-      {/* Modals */}
-      <LoginModal open={loginOpen} onOpenChange={setLoginOpen} />
-      <SignupModal open={signupOpen} onOpenChange={setSignupOpen} />
+      {/* Mobile Drawer */}
       <MobileDrawer
         open={drawerOpen}
         onOpenChange={setDrawerOpen}
         navItems={navItems}
         onLoginClick={() => {
           setDrawerOpen(false);
-          setLoginOpen(true);
+          navigate("/auth");
         }}
         onSignupClick={() => {
           setDrawerOpen(false);
-          setSignupOpen(true);
+          navigate("/auth");
         }}
       />
     </>

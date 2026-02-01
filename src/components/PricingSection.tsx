@@ -1,9 +1,10 @@
 import { motion } from "framer-motion";
-import { Code, Palette, Video, Activity, Layout, Check, Star, Zap, Crown } from "lucide-react";
+import { Code, Palette, Video, Activity, Layout, Check, Star, Zap, Crown, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-
-
+import { useNavigate } from "react-router-dom";
+import { useCart } from "@/context/CartContext";
+import { useToast } from "@/hooks/use-toast";
 
 type ServicePricing = {
   id: string;
@@ -16,7 +17,9 @@ type ServicePricing = {
 type PricingPlan = {
   name: string;
   price: string;
+  priceNum: number;
   originalPrice?: string;
+  originalPriceNum?: number;
   discount?: string;
   period: string;
   description: string;
@@ -36,7 +39,9 @@ const servicePricingData: ServicePricing[] = [
       {
         name: "Starter Package",
         price: "৫,০০০",
+        priceNum: 5000,
         originalPrice: "৮,০০০",
+        originalPriceNum: 8000,
         discount: "37%",
         period: "টাকা",
         description: "ছোট ব্যবসার জন্য পারফেক্ট",
@@ -65,7 +70,9 @@ const servicePricingData: ServicePricing[] = [
       {
         name: "Premium Package",
         price: "১৫,০০০",
+        priceNum: 15000,
         originalPrice: "২০,০০০",
+        originalPriceNum: 20000,
         discount: "25%",
         period: "টাকা",
         description: "সেরা ভ্যালু প্যাকেজ",
@@ -101,7 +108,9 @@ const servicePricingData: ServicePricing[] = [
       {
         name: "Business Package",
         price: "৮,০০০",
+        priceNum: 8000,
         originalPrice: "১৫,০০০",
+        originalPriceNum: 15000,
         discount: "47%",
         period: "টাকা",
         description: "বিজনেস গ্রোথের জন্য",
@@ -142,7 +151,9 @@ const servicePricingData: ServicePricing[] = [
       {
         name: "Startup Package",
         price: "১,৭০০",
+        priceNum: 1700,
         originalPrice: "২,০০০",
+        originalPriceNum: 2000,
         discount: "15%",
         period: "টাকা",
         description: "স্টার্টআপ বিজনেসের জন্য",
@@ -164,7 +175,9 @@ const servicePricingData: ServicePricing[] = [
       {
         name: "Business Package",
         price: "৩,০০০",
+        priceNum: 3000,
         originalPrice: "৪,০০০",
+        originalPriceNum: 4000,
         discount: "25%",
         period: "টাকা",
         description: "গ্রোয়িং বিজনেসের জন্য",
@@ -188,7 +201,9 @@ const servicePricingData: ServicePricing[] = [
       {
         name: "Corporate Package",
         price: "৫,০০০",
+        priceNum: 5000,
         originalPrice: "৭,০০০",
+        originalPriceNum: 7000,
         discount: "29%",
         period: "টাকা",
         description: "বড় প্রতিষ্ঠানের জন্য",
@@ -218,6 +233,7 @@ const servicePricingData: ServicePricing[] = [
       {
         name: "বেসিক",
         price: "৩,০০০",
+        priceNum: 3000,
         period: "টাকা",
         description: "সিম্পল ভিডিও এডিট",
         icon: Star,
@@ -232,6 +248,7 @@ const servicePricingData: ServicePricing[] = [
       {
         name: "স্ট্যান্ডার্ড",
         price: "৭,০০০",
+        priceNum: 7000,
         period: "টাকা",
         description: "প্রফেশনাল এডিটিং",
         icon: Zap,
@@ -248,6 +265,7 @@ const servicePricingData: ServicePricing[] = [
       {
         name: "প্রিমিয়াম",
         price: "১৫,০০০+",
+        priceNum: 15000,
         period: "টাকা",
         description: "সিনেমাটিক কোয়ালিটি",
         icon: Crown,
@@ -271,6 +289,7 @@ const servicePricingData: ServicePricing[] = [
       {
         name: "বেসিক",
         price: "৫,০০০",
+        priceNum: 5000,
         period: "টাকা",
         description: "সিম্পল অ্যানিমেশন",
         icon: Star,
@@ -284,6 +303,7 @@ const servicePricingData: ServicePricing[] = [
       {
         name: "স্ট্যান্ডার্ড",
         price: "১২,০০০",
+        priceNum: 12000,
         period: "টাকা",
         description: "এক্সপ্লেইনার ভিডিও",
         icon: Zap,
@@ -300,6 +320,7 @@ const servicePricingData: ServicePricing[] = [
       {
         name: "প্রিমিয়াম",
         price: "২৫,০০০+",
+        priceNum: 25000,
         period: "টাকা",
         description: "ফুল প্রোডাকশন",
         icon: Crown,
@@ -323,7 +344,9 @@ const servicePricingData: ServicePricing[] = [
       {
         name: "Premium Package",
         price: "২,০০০",
+        priceNum: 2000,
         originalPrice: "৩,২০০",
+        originalPriceNum: 3200,
         discount: "40%",
         period: "টাকা",
         description: "ফুল ফিচার ল্যান্ডিং পেজ",
@@ -352,7 +375,9 @@ const servicePricingData: ServicePricing[] = [
       {
         name: "Business Package",
         price: "৩,০০০",
+        priceNum: 3000,
         originalPrice: "৪,২০০",
+        originalPriceNum: 4200,
         discount: "30%",
         period: "টাকা",
         description: "বিজনেস গ্রোথের জন্য আদর্শ",
@@ -383,7 +408,9 @@ const servicePricingData: ServicePricing[] = [
       {
         name: "Starter Package",
         price: "১,৫০০",
+        priceNum: 1500,
         originalPrice: "২,০০০",
+        originalPriceNum: 2000,
         discount: "40%",
         period: "টাকা",
         description: "বেসিক ল্যান্ডিং পেজ",
@@ -411,7 +438,21 @@ const servicePricingData: ServicePricing[] = [
   },
 ];
 
-const PricingCard = ({ plan, gradient, index }: { plan: PricingPlan; gradient: string; index: number }) => {
+const PricingCard = ({ 
+  plan, 
+  gradient, 
+  index, 
+  serviceId,
+  serviceLabel,
+  onOrder 
+}: { 
+  plan: PricingPlan; 
+  gradient: string; 
+  index: number;
+  serviceId: string;
+  serviceLabel: string;
+  onOrder: (plan: PricingPlan, serviceId: string, serviceLabel: string) => void;
+}) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 30 }}
@@ -505,12 +546,14 @@ const PricingCard = ({ plan, gradient, index }: { plan: PricingPlan; gradient: s
 
         {/* CTA Button */}
         <Button
+          onClick={() => onOrder(plan, serviceId, serviceLabel)}
           className={`w-full font-bengali ${
             plan.popular
               ? 'bg-gradient-to-r from-yellow-400 to-red-500 text-black hover:shadow-lg hover:shadow-yellow-400/30'
               : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
           } transition-all duration-300`}
         >
+          <ShoppingCart className="w-4 h-4 mr-2" />
           অর্ডার করুন
         </Button>
       </div>
@@ -521,6 +564,27 @@ const PricingCard = ({ plan, gradient, index }: { plan: PricingPlan; gradient: s
 export const PricingSection = () => {
   const [activeService, setActiveService] = useState("web-development");
   const currentService = servicePricingData.find(s => s.id === activeService);
+  const navigate = useNavigate();
+  const { addItem, isInCart } = useCart();
+  const { toast } = useToast();
+
+  const handleOrder = (plan: PricingPlan, serviceId: string, serviceLabel: string) => {
+    const itemId = `${serviceId}-${plan.name}`;
+    
+    if (!isInCart(itemId)) {
+      addItem({
+        id: itemId,
+        serviceName: serviceLabel,
+        packageName: plan.name,
+        price: plan.priceNum,
+        originalPrice: plan.originalPriceNum || plan.priceNum,
+        features: plan.features,
+      });
+      toast({ title: "কার্টে যোগ হয়েছে!", description: `${serviceLabel} - ${plan.name}` });
+    }
+    
+    navigate('/checkout');
+  };
 
   return (
     <section id="pricing" className="py-16 md:py-24 bg-gradient-to-b from-black via-black/95 to-black relative overflow-hidden">
@@ -602,6 +666,9 @@ export const PricingSection = () => {
                 plan={plan}
                 gradient={currentService.gradient}
                 index={index}
+                serviceId={currentService.id}
+                serviceLabel={currentService.label}
+                onOrder={handleOrder}
               />
             ))}
           </motion.div>

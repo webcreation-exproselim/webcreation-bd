@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { 
   Package, Clock, CheckCircle, XCircle, Phone, User, 
-  CreditCard, Calendar, TrendingUp, Eye, RefreshCw
+  CreditCard, Calendar, TrendingUp, Eye, RefreshCw, Image, ExternalLink
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,6 +33,8 @@ interface Order {
   total_savings: number;
   payment_method: string;
   transaction_id: string | null;
+  sender_number: string | null;
+  payment_screenshot_url: string | null;
   status: string;
   notes: string | null;
   created_at: string;
@@ -313,11 +315,46 @@ const AdminDashboard = () => {
                 <div className="flex items-center gap-2">
                   <CreditCard className="w-4 h-4 text-gray-400" />
                   <span>{paymentLabels[selectedOrder.payment_method] || selectedOrder.payment_method}</span>
-                  {selectedOrder.transaction_id && (
-                    <span className="text-gray-500">({selectedOrder.transaction_id})</span>
-                  )}
                 </div>
+                {selectedOrder.sender_number && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Phone className="w-4 h-4 text-gray-400" />
+                    <span className="text-gray-600">প্রেরক নম্বর:</span>
+                    <span className="font-medium">{selectedOrder.sender_number}</span>
+                  </div>
+                )}
+                {selectedOrder.transaction_id && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-gray-600">TrxID:</span>
+                    <span className="font-mono font-medium">{selectedOrder.transaction_id}</span>
+                  </div>
+                )}
               </div>
+
+              {/* Payment Screenshot */}
+              {selectedOrder.payment_screenshot_url && (
+                <div>
+                  <h4 className="font-bengali font-semibold mb-2 flex items-center gap-2">
+                    <Image className="w-4 h-4" />
+                    পেমেন্ট প্রমাণ
+                  </h4>
+                  <div className="relative">
+                    <img 
+                      src={selectedOrder.payment_screenshot_url} 
+                      alt="Payment proof" 
+                      className="w-full h-48 object-cover rounded-lg border border-gray-200"
+                    />
+                    <a
+                      href={selectedOrder.payment_screenshot_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="absolute top-2 right-2 p-2 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow"
+                    >
+                      <ExternalLink className="w-4 h-4 text-gray-600" />
+                    </a>
+                  </div>
+                </div>
+              )}
 
               {/* Services */}
               <div>

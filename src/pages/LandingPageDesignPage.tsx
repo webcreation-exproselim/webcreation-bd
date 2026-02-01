@@ -10,6 +10,7 @@ import { Footer } from "@/components/Footer";
 import { Chatbot } from "@/components/Chatbot";
 import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AddToCartButton } from "@/components/AddToCartButton";
 
 // Portfolio Items
 const portfolioItems = [
@@ -153,9 +154,12 @@ const reviewsRow2 = [
 // Pricing Plans
 const pricingPlans = [
   {
+    id: "lp-starter",
     name: "স্টার্টার",
     originalPrice: "৳৩,০০০",
     price: "৳১,৫০০",
+    priceNum: 1500,
+    originalPriceNum: 3000,
     discount: "৫০% ছাড়",
     features: [
       "সিঙ্গেল পেজ ডিজাইন",
@@ -166,9 +170,12 @@ const pricingPlans = [
     ],
   },
   {
+    id: "lp-premium",
     name: "প্রিমিয়াম",
     originalPrice: "৳৪,০০০",
     price: "৳২,০০০",
+    priceNum: 2000,
+    originalPriceNum: 4000,
     discount: "৫০% ছাড়",
     popular: true,
     features: [
@@ -181,9 +188,12 @@ const pricingPlans = [
     ],
   },
   {
+    id: "lp-business",
     name: "বিজনেস",
     originalPrice: "৳৬,০০০",
     price: "৳৩,০০০",
+    priceNum: 3000,
+    originalPriceNum: 6000,
     discount: "৫০% ছাড়",
     features: [
       "ফুল ফানেল ল্যান্ডিং",
@@ -599,17 +609,7 @@ const LandingPageDesignPage = () => {
                   ))}
                 </ul>
                 
-                <a href="https://wa.me/8801332052874" target="_blank" rel="noopener noreferrer">
-                  <Button 
-                    className={`w-full font-bengali font-bold ${
-                      plan.popular 
-                        ? 'bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600' 
-                        : 'bg-teal-600/50 hover:bg-teal-600'
-                    }`}
-                  >
-                    অর্ডার করুন
-                  </Button>
-                </a>
+                <AddToCartButton plan={plan} serviceName="ল্যান্ডিং পেজ" colorScheme="teal" />
               </motion.div>
             ))}
           </div>

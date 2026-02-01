@@ -15,6 +15,7 @@ import {
   Dialog,
   DialogContent,
 } from "@/components/ui/dialog";
+import { AddToCartButton } from "@/components/AddToCartButton";
 
 // Portfolio Items
 const portfolioItems = [
@@ -152,9 +153,12 @@ const reviewsRow2 = [
 // Pricing Plans
 const pricingPlans = [
   {
+    id: "gfx-startup",
     name: "স্টার্টআপ",
     originalPrice: "৳৩,০০০",
     price: "৳১,৭০০",
+    priceNum: 1700,
+    originalPriceNum: 3000,
     discount: "৪৩% ছাড়",
     features: [
       "লোগো ডিজাইন (৩টি কনসেপ্ট)",
@@ -165,9 +169,12 @@ const pricingPlans = [
     ],
   },
   {
+    id: "gfx-business",
     name: "বিজনেস",
     originalPrice: "৳৫,০০০",
     price: "৳৩,০০০",
+    priceNum: 3000,
+    originalPriceNum: 5000,
     discount: "৪০% ছাড়",
     popular: true,
     features: [
@@ -180,9 +187,12 @@ const pricingPlans = [
     ],
   },
   {
+    id: "gfx-corporate",
     name: "কর্পোরেট",
     originalPrice: "৳১০,০০০",
     price: "৳৫,০০০",
+    priceNum: 5000,
+    originalPriceNum: 10000,
     discount: "৫০% ছাড়",
     features: [
       "ফুল ব্র্যান্ড আইডেন্টিটি",
@@ -596,17 +606,7 @@ const GraphicsDesignPage = () => {
                   ))}
                 </ul>
                 
-                <a href="https://wa.me/8801332052874" target="_blank" rel="noopener noreferrer">
-                  <Button 
-                    className={`w-full font-bengali font-bold ${
-                      plan.popular 
-                        ? 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600' 
-                        : 'bg-purple-600/50 hover:bg-purple-600'
-                    }`}
-                  >
-                    অর্ডার করুন
-                  </Button>
-                </a>
+                <AddToCartButton plan={plan} serviceName="গ্রাফিক্স ডিজাইন" colorScheme="purple" />
               </motion.div>
             ))}
           </div>

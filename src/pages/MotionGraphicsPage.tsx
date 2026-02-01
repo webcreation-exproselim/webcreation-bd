@@ -11,6 +11,7 @@ import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useState } from "react";
 import { VideoPlayerModal, getRandomDemoVideo } from "@/components/VideoPlayerModal";
+import { AddToCartButton } from "@/components/AddToCartButton";
 
 // Portfolio Items
 const portfolioItems = [
@@ -148,9 +149,12 @@ const reviewsRow2 = [
 // Pricing Plans
 const pricingPlans = [
   {
+    id: "motion-starter",
     name: "স্টার্টার",
     originalPrice: "৳৫,০০০",
     price: "৳৩,৫০০",
+    priceNum: 3500,
+    originalPriceNum: 5000,
     discount: "৩০% ছাড়",
     features: [
       "অ্যানিমেটেড লোগো",
@@ -161,9 +165,12 @@ const pricingPlans = [
     ],
   },
   {
+    id: "motion-pro",
     name: "প্রফেশনাল",
     originalPrice: "৳১২,০০০",
     price: "৳৮,০০০",
+    priceNum: 8000,
+    originalPriceNum: 12000,
     discount: "৩৩% ছাড়",
     popular: true,
     features: [
@@ -176,9 +183,12 @@ const pricingPlans = [
     ],
   },
   {
+    id: "motion-enterprise",
     name: "এন্টারপ্রাইজ",
     originalPrice: "৳২৫,০০০",
     price: "৳১৮,০০০",
+    priceNum: 18000,
+    originalPriceNum: 25000,
     discount: "২৮% ছাড়",
     features: [
       "৩ মিনিট+ অ্যানিমেশন",
@@ -601,17 +611,7 @@ const MotionGraphicsPage = () => {
                   ))}
                 </ul>
                 
-                <a href="https://wa.me/8801332052874" target="_blank" rel="noopener noreferrer">
-                  <Button 
-                    className={`w-full font-bengali font-bold ${
-                      plan.popular 
-                        ? 'bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 text-black' 
-                        : 'bg-yellow-600/50 hover:bg-yellow-600'
-                    }`}
-                  >
-                    অর্ডার করুন
-                  </Button>
-                </a>
+                <AddToCartButton plan={plan} serviceName="মোশন গ্রাফিক্স" colorScheme="yellow" />
               </motion.div>
             ))}
           </div>

@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { 
   Code, ArrowLeft, CheckCircle, Star, TrendingUp, 
   Globe, Users, Zap, Award, Clock, Shield, Smartphone,
-  ExternalLink
+  ExternalLink, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
@@ -11,56 +11,51 @@ import { Chatbot } from "@/components/Chatbot";
 import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AddToCartButton } from "@/components/AddToCartButton";
+import { useDynamicPortfolio } from "@/hooks/useDynamicPortfolio";
 
-// Portfolio Items
-const portfolioItems = [
+// Fallback Portfolio Items
+const fallbackPortfolioItems = [
   {
-    id: 1,
+    id: "web1",
     title: "ই-কমার্স ওয়েবসাইট",
-    image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=600&fit=crop",
-    result: "৫০০+ অর্ডার/মাস",
-    category: "ই-কমার্স",
-    url: "https://example.com"
+    image_url: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=600&fit=crop",
+    description: "৫০০+ অর্ডার/মাস",
+    category: "web-development"
   },
   {
-    id: 2,
+    id: "web2",
     title: "কর্পোরেট ওয়েবসাইট",
-    image: "https://images.unsplash.com/photo-1547658719-da2b51169166?w=800&h=600&fit=crop",
-    result: "প্রফেশনাল লুক",
-    category: "কর্পোরেট",
-    url: "https://example.com"
+    image_url: "https://images.unsplash.com/photo-1547658719-da2b51169166?w=800&h=600&fit=crop",
+    description: "প্রফেশনাল লুক",
+    category: "web-development"
   },
   {
-    id: 3,
+    id: "web3",
     title: "ড্যাশবোর্ড অ্যাপ",
-    image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop",
-    result: "রিয়েল-টাইম ডেটা",
-    category: "SaaS",
-    url: "https://example.com"
+    image_url: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop",
+    description: "রিয়েল-টাইম ডেটা",
+    category: "web-development"
   },
   {
-    id: 4,
+    id: "web4",
     title: "পোর্টফোলিও সাইট",
-    image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&h=600&fit=crop",
-    result: "মডার্ন ডিজাইন",
-    category: "পোর্টফোলিও",
-    url: "https://example.com"
+    image_url: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&h=600&fit=crop",
+    description: "মডার্ন ডিজাইন",
+    category: "web-development"
   },
   {
-    id: 5,
+    id: "web5",
     title: "SaaS প্ল্যাটফর্ম",
-    image: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&h=600&fit=crop",
-    result: "স্কেলেবল সিস্টেম",
-    category: "SaaS",
-    url: "https://example.com"
+    image_url: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&h=600&fit=crop",
+    description: "স্কেলেবল সিস্টেম",
+    category: "web-development"
   },
   {
-    id: 6,
+    id: "web6",
     title: "ব্লগ ওয়েবসাইট",
-    image: "https://images.unsplash.com/photo-1517292987719-0369a794ec0f?w=800&h=600&fit=crop",
-    result: "SEO অপটিমাইজড",
-    category: "ব্লগ",
-    url: "https://example.com"
+    image_url: "https://images.unsplash.com/photo-1517292987719-0369a794ec0f?w=800&h=600&fit=crop",
+    description: "SEO অপটিমাইজড",
+    category: "web-development"
   },
 ];
 
@@ -319,6 +314,8 @@ const InfiniteSlider = ({
 };
 
 const WebDevelopmentPage = () => {
+  const { portfolioItems, loading: portfolioLoading } = useDynamicPortfolio("web-development", fallbackPortfolioItems);
+  
   return (
     <div className="min-h-screen bg-black">
       <Header />
@@ -494,7 +491,7 @@ const WebDevelopmentPage = () => {
               >
                 <div className="aspect-[4/3] overflow-hidden">
                   <img
-                    src={item.image}
+                    src={item.image_url}
                     alt={item.title}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   />
@@ -505,16 +502,13 @@ const WebDevelopmentPage = () => {
                     {item.category}
                   </span>
                   <h3 className="text-xl font-bengali font-bold text-white mb-1">{item.title}</h3>
-                  <p className="text-green-300 font-bengali text-sm mb-3">{item.result}</p>
-                  <a 
-                    href={item.url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-emerald-400 hover:text-white text-sm font-medium transition-colors"
-                  >
+                  {item.description && (
+                    <p className="text-green-300 font-bengali text-sm mb-3">{item.description}</p>
+                  )}
+                  <div className="inline-flex items-center gap-2 text-emerald-400 text-sm font-medium">
                     <ExternalLink className="w-4 h-4" />
-                    <span>লাইভ দেখুন</span>
-                  </a>
+                    <span>বিস্তারিত দেখুন</span>
+                  </div>
                 </div>
               </motion.div>
             ))}

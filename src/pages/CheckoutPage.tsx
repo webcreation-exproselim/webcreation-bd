@@ -169,6 +169,9 @@ const CheckoutPage = () => {
     setIsSubmitting(true);
 
     try {
+      // Get current user if logged in
+      const { data: { user } } = await supabase.auth.getUser();
+      
       let screenshotUrl = null;
       if (screenshotFile) {
         screenshotUrl = await uploadScreenshot();
@@ -184,7 +187,8 @@ const CheckoutPage = () => {
         transaction_id: transactionId || null,
         sender_number: senderNumber || null,
         payment_screenshot_url: screenshotUrl,
-        status: 'pending'
+        status: 'pending',
+        user_id: user?.id || null, // Link order to logged-in user
       }]);
 
       if (error) throw error;

@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   Megaphone, ArrowLeft, CheckCircle, ArrowRight, Star, TrendingUp, 
   Target, BarChart3, Users, Zap, Award, Clock, Shield, Play,
-  ExternalLink, X, ShoppingCart
+  ExternalLink, X, ShoppingCart, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
@@ -19,50 +19,51 @@ import {
 } from "@/components/ui/dialog";
 import { useCart } from "@/context/CartContext";
 import { useToast } from "@/hooks/use-toast";
+import { useDynamicPortfolio } from "@/hooks/useDynamicPortfolio";
 
-// Portfolio Items
-const portfolioItems = [
+// Fallback Portfolio Items
+const fallbackPortfolioItems = [
   {
-    id: 1,
+    id: "fb1",
     title: "ই-কমার্স ক্যাম্পেইন",
-    image: "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800&h=600&fit=crop",
-    result: "৩০০% ROI",
-    category: "Sales Campaign"
+    image_url: "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800&h=600&fit=crop",
+    description: "৩০০% ROI",
+    category: "facebook-ads"
   },
   {
-    id: 2,
+    id: "fb2",
     title: "রেস্টুরেন্ট প্রমোশন",
-    image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=600&fit=crop",
-    result: "৫০০+ লিড",
-    category: "Lead Generation"
+    image_url: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=600&fit=crop",
+    description: "৫০০+ লিড",
+    category: "facebook-ads"
   },
   {
-    id: 3,
+    id: "fb3",
     title: "ফ্যাশন ব্র্যান্ড",
-    image: "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=800&h=600&fit=crop",
-    result: "২x সেলস",
-    category: "Brand Awareness"
+    image_url: "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=800&h=600&fit=crop",
+    description: "২x সেলস",
+    category: "facebook-ads"
   },
   {
-    id: 4,
+    id: "fb4",
     title: "লিড জেনারেশন",
-    image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop",
-    result: "৮০০+ লিড",
-    category: "Lead Generation"
+    image_url: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop",
+    description: "৮০০+ লিড",
+    category: "facebook-ads"
   },
   {
-    id: 5,
+    id: "fb5",
     title: "অ্যাপ ইনস্টল",
-    image: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=800&h=600&fit=crop",
-    result: "১০K+ ইনস্টল",
-    category: "App Install"
+    image_url: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=800&h=600&fit=crop",
+    description: "১০K+ ইনস্টল",
+    category: "facebook-ads"
   },
   {
-    id: 6,
+    id: "fb6",
     title: "ব্র্যান্ড অ্যাওয়ারনেস",
-    image: "https://images.unsplash.com/photo-1432888622747-4eb9a8efeb07?w=800&h=600&fit=crop",
-    result: "৫০০K+ রিচ",
-    category: "Brand Awareness"
+    image_url: "https://images.unsplash.com/photo-1432888622747-4eb9a8efeb07?w=800&h=600&fit=crop",
+    description: "৫০০K+ রিচ",
+    category: "facebook-ads"
   },
 ];
 
@@ -321,7 +322,8 @@ const InfiniteSlider = ({
 };
 
 const FacebookAdsPage = () => {
-  const [selectedItem, setSelectedItem] = useState<typeof portfolioItems[0] | null>(null);
+  const { portfolioItems, loading: portfolioLoading } = useDynamicPortfolio("facebook-ads", fallbackPortfolioItems);
+  const [selectedItem, setSelectedItem] = useState<typeof fallbackPortfolioItems[0] | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { addItem, isInCart } = useCart();
   const { toast } = useToast();
@@ -528,7 +530,7 @@ const FacebookAdsPage = () => {
               >
                 <div className="aspect-[4/3] relative overflow-hidden">
                   <img
-                    src={item.image}
+                    src={item.image_url}
                     alt={item.title}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   />
@@ -536,9 +538,11 @@ const FacebookAdsPage = () => {
                   <div className="absolute inset-0 bg-gradient-to-t from-blue-950/95 via-blue-900/60 to-transparent" />
                   
                   {/* Result Badge */}
-                  <div className="absolute top-4 right-4 px-3 py-1 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 text-white text-sm font-bold">
-                    {item.result}
-                  </div>
+                  {item.description && (
+                    <div className="absolute top-4 right-4 px-3 py-1 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 text-white text-sm font-bold">
+                      {item.description}
+                    </div>
+                  )}
                   
                   {/* Content */}
                   <div className="absolute bottom-0 left-0 right-0 p-6">
@@ -743,16 +747,18 @@ const FacebookAdsPage = () => {
               className="w-full pt-16 p-4"
             >
               <img
-                src={selectedItem.image}
+                src={selectedItem.image_url}
                 alt={selectedItem.title}
                 className="w-full h-auto rounded-lg"
               />
               <div className="mt-4 p-4 bg-blue-900/30 rounded-xl">
                 <div className="flex items-center justify-between">
                   <span className="text-cyan-400 font-bengali">{selectedItem.category}</span>
-                  <span className="px-3 py-1 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 text-white text-sm font-bold">
-                    {selectedItem.result}
-                  </span>
+                  {selectedItem.description && (
+                    <span className="px-3 py-1 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 text-white text-sm font-bold">
+                      {selectedItem.description}
+                    </span>
+                  )}
                 </div>
               </div>
             </motion.div>

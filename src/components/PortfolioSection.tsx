@@ -89,15 +89,18 @@ const PortfolioCard = ({ item, serviceId, onOpenModal }: PortfolioCardProps) => 
   const handleImageClick = () => {
     if (isModalService) {
       onOpenModal(item);
+    } else if (isUrlService && item.image_url) {
+      // For web dev and landing page - navigate to the URL
+      window.open(item.image_url, "_blank", "noopener,noreferrer");
     }
   };
 
   const handleButtonClick = () => {
     if (isModalService) {
       onOpenModal(item);
-    } else if (isUrlService) {
-      // For web dev and landing page - just open modal for now
-      onOpenModal(item);
+    } else if (isUrlService && item.image_url) {
+      // For web dev and landing page - navigate to the URL
+      window.open(item.image_url, "_blank", "noopener,noreferrer");
     }
   };
 
@@ -109,9 +112,9 @@ const PortfolioCard = ({ item, serviceId, onOpenModal }: PortfolioCardProps) => 
       transition={{ duration: 0.3 }}
       className="group relative rounded-xl overflow-hidden bg-black/40 border border-white/10 hover:border-yellow-400/50 transition-all duration-300"
     >
-      {/* Image Container */}
+      {/* Image Container - Larger for web/landing */}
       <div 
-        className={`aspect-[4/3] relative overflow-hidden ${isModalService || isUrlService ? 'cursor-pointer' : ''}`}
+        className={`${isUrlService ? 'aspect-[16/10]' : 'aspect-[4/3]'} relative overflow-hidden ${isModalService || isUrlService ? 'cursor-pointer' : ''}`}
         onClick={handleImageClick}
       >
         <img 
@@ -160,7 +163,7 @@ const PortfolioCard = ({ item, serviceId, onOpenModal }: PortfolioCardProps) => 
           ) : (
             <ExternalLink className="w-4 h-4 mr-2 group-hover/btn:rotate-12 transition-transform" />
           )}
-          দেখুন
+          {isUrlService ? "লাইভ প্রিভিউ" : "দেখুন"}
         </Button>
       </div>
     </motion.div>

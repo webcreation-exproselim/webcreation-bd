@@ -487,9 +487,10 @@ const LandingPageDesignPage = () => {
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
-                className="group relative overflow-hidden rounded-2xl"
+                className="group relative overflow-hidden rounded-2xl cursor-pointer"
+                onClick={() => item.image_url && window.open(item.image_url, "_blank", "noopener,noreferrer")}
               >
-                <div className="aspect-[4/3] overflow-hidden">
+                <div className="aspect-[16/10] overflow-hidden">
                   <img
                     src={item.image_url}
                     alt={item.title}
@@ -497,6 +498,14 @@ const LandingPageDesignPage = () => {
                   />
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover:opacity-100 transition-opacity" />
+                
+                {/* Hover Overlay with Icon */}
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-r from-teal-400 to-cyan-400 flex items-center justify-center shadow-lg shadow-teal-400/40">
+                    <ExternalLink className="w-7 h-7 text-white" />
+                  </div>
+                </div>
+                
                 <div className="absolute bottom-0 left-0 right-0 p-6">
                   <span className="inline-block px-3 py-1 text-xs rounded-full bg-gradient-to-r from-teal-500 to-cyan-400 text-white font-medium mb-2">
                     {item.category}
@@ -505,10 +514,18 @@ const LandingPageDesignPage = () => {
                   {item.description && (
                     <p className="text-teal-300 font-bengali text-sm mb-3">{item.description}</p>
                   )}
-                  <div className="inline-flex items-center gap-2 text-cyan-400 text-sm font-medium">
-                    <ExternalLink className="w-4 h-4" />
-                    <span>বিস্তারিত দেখুন</span>
-                  </div>
+                  <Button 
+                    variant="outline"
+                    size="sm"
+                    className="border-teal-400/50 text-teal-400 hover:bg-teal-400 hover:text-black font-bengali"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      item.image_url && window.open(item.image_url, "_blank", "noopener,noreferrer");
+                    }}
+                  >
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    লাইভ প্রিভিউ
+                  </Button>
                 </div>
               </motion.div>
             ))}

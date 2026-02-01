@@ -20,42 +20,48 @@ const fallbackPortfolioItems = [
     title: "ই-কমার্স ওয়েবসাইট",
     image_url: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=600&fit=crop",
     description: "৫০০+ অর্ডার/মাস",
-    category: "web-development"
+    category: "web-development",
+    live_url: null
   },
   {
     id: "web2",
     title: "কর্পোরেট ওয়েবসাইট",
     image_url: "https://images.unsplash.com/photo-1547658719-da2b51169166?w=800&h=600&fit=crop",
     description: "প্রফেশনাল লুক",
-    category: "web-development"
+    category: "web-development",
+    live_url: null
   },
   {
     id: "web3",
     title: "ড্যাশবোর্ড অ্যাপ",
     image_url: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop",
     description: "রিয়েল-টাইম ডেটা",
-    category: "web-development"
+    category: "web-development",
+    live_url: null
   },
   {
     id: "web4",
     title: "পোর্টফোলিও সাইট",
     image_url: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&h=600&fit=crop",
     description: "মডার্ন ডিজাইন",
-    category: "web-development"
+    category: "web-development",
+    live_url: null
   },
   {
     id: "web5",
     title: "SaaS প্ল্যাটফর্ম",
     image_url: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&h=600&fit=crop",
     description: "স্কেলেবল সিস্টেম",
-    category: "web-development"
+    category: "web-development",
+    live_url: null
   },
   {
     id: "web6",
     title: "ব্লগ ওয়েবসাইট",
     image_url: "https://images.unsplash.com/photo-1517292987719-0369a794ec0f?w=800&h=600&fit=crop",
     description: "SEO অপটিমাইজড",
-    category: "web-development"
+    category: "web-development",
+    live_url: null
   },
 ];
 
@@ -487,41 +493,32 @@ const WebDevelopmentPage = () => {
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
-                className="group relative overflow-hidden rounded-2xl cursor-pointer"
-                onClick={() => item.image_url && window.open(item.image_url, "_blank", "noopener,noreferrer")}
+                className="group relative overflow-hidden rounded-2xl bg-black/40 border border-green-400/20 hover:border-green-400/50 transition-all duration-300"
               >
-                <div className="aspect-[16/10] overflow-hidden">
+                {/* Image - Full visible with aspect-video */}
+                <div className="aspect-video overflow-hidden bg-black/60">
                   <img
                     src={item.image_url}
                     alt={item.title}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
                   />
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover:opacity-100 transition-opacity" />
                 
-                {/* Hover Overlay with Icon */}
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-r from-green-400 to-emerald-400 flex items-center justify-center shadow-lg shadow-green-400/40">
-                    <ExternalLink className="w-7 h-7 text-white" />
-                  </div>
-                </div>
-                
-                <div className="absolute bottom-0 left-0 right-0 p-6">
-                  <span className="inline-block px-3 py-1 text-xs rounded-full bg-gradient-to-r from-green-500 to-emerald-400 text-white font-medium mb-2">
-                    {item.category}
+                {/* Card Content */}
+                <div className="p-5">
+                  <span className="inline-block px-3 py-1 text-xs rounded-full bg-gradient-to-r from-green-500 to-emerald-400 text-white font-medium mb-3">
+                    ওয়েব ডেভেলপমেন্ট
                   </span>
-                  <h3 className="text-xl font-bengali font-bold text-white mb-1">{item.title}</h3>
+                  <h3 className="text-lg font-bengali font-bold text-white mb-1 line-clamp-1">{item.title}</h3>
                   {item.description && (
-                    <p className="text-green-300 font-bengali text-sm mb-3">{item.description}</p>
+                    <p className="text-green-300/80 font-bengali text-sm mb-4">{item.description}</p>
                   )}
                   <Button 
                     variant="outline"
                     size="sm"
-                    className="border-green-400/50 text-green-400 hover:bg-green-400 hover:text-black font-bengali"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      item.image_url && window.open(item.image_url, "_blank", "noopener,noreferrer");
-                    }}
+                    className={`w-full border-green-400/50 text-green-400 hover:bg-green-400 hover:text-black font-bengali ${!item.live_url ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    onClick={() => item.live_url && window.open(item.live_url, "_blank", "noopener,noreferrer")}
+                    disabled={!item.live_url}
                   >
                     <ExternalLink className="w-4 h-4 mr-2" />
                     লাইভ প্রিভিউ

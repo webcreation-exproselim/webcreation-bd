@@ -39,6 +39,7 @@ type PortfolioItem = {
   description: string | null;
   category: string;
   image_url: string;
+  live_url?: string | null;
 };
 
 // Fallback placeholder items (used when database is empty)
@@ -89,18 +90,15 @@ const PortfolioCard = ({ item, serviceId, onOpenModal }: PortfolioCardProps) => 
   const handleImageClick = () => {
     if (isModalService) {
       onOpenModal(item);
-    } else if (isUrlService && item.image_url) {
-      // For web dev and landing page - navigate to the URL
-      window.open(item.image_url, "_blank", "noopener,noreferrer");
     }
   };
 
-  const handleButtonClick = () => {
+  const handleLivePreviewClick = () => {
     if (isModalService) {
       onOpenModal(item);
-    } else if (isUrlService && item.image_url) {
-      // For web dev and landing page - navigate to the URL
-      window.open(item.image_url, "_blank", "noopener,noreferrer");
+    } else if (isUrlService && item.live_url) {
+      // For web dev and landing page - navigate to the live_url
+      window.open(item.live_url, "_blank", "noopener,noreferrer");
     }
   };
 
@@ -112,22 +110,22 @@ const PortfolioCard = ({ item, serviceId, onOpenModal }: PortfolioCardProps) => 
       transition={{ duration: 0.3 }}
       className="group relative rounded-xl overflow-hidden bg-black/40 border border-white/10 hover:border-yellow-400/50 transition-all duration-300"
     >
-      {/* Image Container - Larger for web/landing */}
+      {/* Image Container */}
       <div 
-        className={`${isUrlService ? 'aspect-[16/10]' : 'aspect-[4/3]'} relative overflow-hidden ${isModalService || isUrlService ? 'cursor-pointer' : ''}`}
+        className={`${isUrlService ? 'aspect-video' : 'aspect-[4/3]'} relative overflow-hidden ${isModalService ? 'cursor-pointer' : ''}`}
         onClick={handleImageClick}
       >
         <img 
           src={item.image_url} 
           alt={item.title}
-          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+          className={`w-full h-full ${isUrlService ? 'object-contain bg-black/60' : 'object-cover'} group-hover:scale-105 transition-transform duration-500`}
           loading="lazy"
         />
         {/* Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         
-        {/* Click indicator */}
-        {(isModalService || isUrlService) && (
+        {/* Click indicator for modal services */}
+        {isModalService && (
           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             <div className="w-16 h-16 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 flex items-center justify-center shadow-lg shadow-yellow-400/40">
               {isVideoService ? (
@@ -155,8 +153,9 @@ const PortfolioCard = ({ item, serviceId, onOpenModal }: PortfolioCardProps) => 
         <Button
           variant="outline"
           size="sm"
-          className="w-full font-bengali border-yellow-400/30 text-yellow-400 hover:bg-yellow-400 hover:text-black group/btn transition-all duration-300"
-          onClick={handleButtonClick}
+          className={`w-full font-bengali border-yellow-400/30 text-yellow-400 hover:bg-yellow-400 hover:text-black group/btn transition-all duration-300 ${isUrlService && !item.live_url ? 'opacity-50 cursor-not-allowed' : ''}`}
+          onClick={handleLivePreviewClick}
+          disabled={isUrlService && !item.live_url}
         >
           {isVideoService ? (
             <Play className="w-4 h-4 mr-2 group-hover/btn:scale-110 transition-transform" fill="currentColor" />

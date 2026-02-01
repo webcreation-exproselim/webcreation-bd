@@ -7,6 +7,7 @@ interface PortfolioItem {
   description: string | null;
   category: string;
   image_url: string;
+  live_url?: string | null;
 }
 
 export function useDynamicPortfolio(category: string, fallbackItems: PortfolioItem[]) {

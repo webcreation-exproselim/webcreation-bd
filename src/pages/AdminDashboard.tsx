@@ -93,6 +93,7 @@ interface PortfolioItem {
   description: string | null;
   category: string;
   image_url: string;
+  live_url?: string | null;
   created_at: string;
 }
 
@@ -174,6 +175,7 @@ const AdminDashboard = () => {
     description: "",
     category: "graphics-design",
     image_url: "",
+    live_url: "",
   });
   const [uploading, setUploading] = useState(false);
   
@@ -371,6 +373,7 @@ const AdminDashboard = () => {
           description: portfolioForm.description,
           category: portfolioForm.category,
           image_url: portfolioForm.image_url,
+          live_url: portfolioForm.live_url || null,
         })
         .eq("id", editingPortfolio.id);
       
@@ -385,6 +388,7 @@ const AdminDashboard = () => {
           description: portfolioForm.description,
           category: portfolioForm.category,
           image_url: portfolioForm.image_url,
+          live_url: portfolioForm.live_url || null,
         });
       
       if (!error) {
@@ -394,7 +398,7 @@ const AdminDashboard = () => {
     
     setIsPortfolioModalOpen(false);
     setEditingPortfolio(null);
-    setPortfolioForm({ title: "", description: "", category: "graphics-design", image_url: "" });
+    setPortfolioForm({ title: "", description: "", category: "graphics-design", image_url: "", live_url: "" });
     fetchPortfolio();
   };
 
@@ -795,7 +799,7 @@ const AdminDashboard = () => {
               <Button
                 onClick={() => {
                   setEditingPortfolio(null);
-                  setPortfolioForm({ title: "", description: "", category: "graphics-design", image_url: "" });
+                  setPortfolioForm({ title: "", description: "", category: "graphics-design", image_url: "", live_url: "" });
                   setIsPortfolioModalOpen(true);
                 }}
                 className="bg-red-600 hover:bg-red-700 font-bengali"
@@ -823,6 +827,7 @@ const AdminDashboard = () => {
                             description: item.description || "",
                             category: item.category,
                             image_url: item.image_url,
+                            live_url: item.live_url || "",
                           });
                           setIsPortfolioModalOpen(true);
                         }}
@@ -1323,8 +1328,24 @@ const AdminDashboard = () => {
                       disabled={uploading}
                     />
                   </Label>
-                </div>
               </div>
+            </div>
+
+            {/* Live URL - Only for web-development and landing-page */}
+            {(portfolioForm.category === "web-development" || portfolioForm.category === "landing-page") && (
+              <div>
+                <Label className="font-bengali">লাইভ প্রিভিউ URL</Label>
+                <Input
+                  value={portfolioForm.live_url}
+                  onChange={(e) => setPortfolioForm(prev => ({ ...prev, live_url: e.target.value }))}
+                  className="mt-1"
+                  placeholder="https://example.com"
+                />
+                <p className="text-xs text-gray-500 mt-1 font-bengali">
+                  "লাইভ প্রিভিউ" বাটনে ক্লিক করলে এই লিংকে যাবে
+                </p>
+              </div>
+            )}
             </div>
 
             <Button

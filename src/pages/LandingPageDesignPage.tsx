@@ -20,42 +20,48 @@ const fallbackPortfolioItems = [
     title: "SaaS ল্যান্ডিং পেজ",
     image_url: "https://images.unsplash.com/photo-1467232004584-a241de8bcf5d?w=800&h=600&fit=crop",
     description: "৬০% কনভার্সন",
-    category: "landing-page"
+    category: "landing-page",
+    live_url: null
   },
   {
     id: "lp2",
     title: "প্রোডাক্ট লঞ্চ পেজ",
     image_url: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop",
     description: "৫০০+ সেলস",
-    category: "landing-page"
+    category: "landing-page",
+    live_url: null
   },
   {
     id: "lp3",
     title: "লিড জেন পেজ",
     image_url: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=600&fit=crop",
     description: "১০০০+ লিড",
-    category: "landing-page"
+    category: "landing-page",
+    live_url: null
   },
   {
     id: "lp4",
     title: "ইভেন্ট ল্যান্ডিং পেজ",
     image_url: "https://images.unsplash.com/photo-1504868584819-f8e8b4b6d7e3?w=800&h=600&fit=crop",
     description: "৩০০+ রেজিস্ট্রেশন",
-    category: "landing-page"
+    category: "landing-page",
+    live_url: null
   },
   {
     id: "lp5",
     title: "অ্যাপ ডাউনলোড পেজ",
     image_url: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&h=600&fit=crop",
     description: "৫K+ ডাউনলোড",
-    category: "landing-page"
+    category: "landing-page",
+    live_url: null
   },
   {
     id: "lp6",
     title: "সার্ভিস পেজ",
     image_url: "https://images.unsplash.com/photo-1517292987719-0369a794ec0f?w=800&h=600&fit=crop",
     description: "হাই কনভার্সন",
-    category: "landing-page"
+    category: "landing-page",
+    live_url: null
   },
 ];
 
@@ -487,41 +493,32 @@ const LandingPageDesignPage = () => {
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
-                className="group relative overflow-hidden rounded-2xl cursor-pointer"
-                onClick={() => item.image_url && window.open(item.image_url, "_blank", "noopener,noreferrer")}
+                className="group relative overflow-hidden rounded-2xl bg-black/40 border border-teal-400/20 hover:border-teal-400/50 transition-all duration-300"
               >
-                <div className="aspect-[16/10] overflow-hidden">
+                {/* Image - Full visible with aspect-video */}
+                <div className="aspect-video overflow-hidden bg-black/60">
                   <img
                     src={item.image_url}
                     alt={item.title}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
                   />
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover:opacity-100 transition-opacity" />
                 
-                {/* Hover Overlay with Icon */}
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-r from-teal-400 to-cyan-400 flex items-center justify-center shadow-lg shadow-teal-400/40">
-                    <ExternalLink className="w-7 h-7 text-white" />
-                  </div>
-                </div>
-                
-                <div className="absolute bottom-0 left-0 right-0 p-6">
-                  <span className="inline-block px-3 py-1 text-xs rounded-full bg-gradient-to-r from-teal-500 to-cyan-400 text-white font-medium mb-2">
-                    {item.category}
+                {/* Card Content */}
+                <div className="p-5">
+                  <span className="inline-block px-3 py-1 text-xs rounded-full bg-gradient-to-r from-teal-500 to-cyan-400 text-white font-medium mb-3">
+                    ল্যান্ডিং পেজ
                   </span>
-                  <h3 className="text-xl font-bengali font-bold text-white mb-1">{item.title}</h3>
+                  <h3 className="text-lg font-bengali font-bold text-white mb-1 line-clamp-1">{item.title}</h3>
                   {item.description && (
-                    <p className="text-teal-300 font-bengali text-sm mb-3">{item.description}</p>
+                    <p className="text-teal-300/80 font-bengali text-sm mb-4">{item.description}</p>
                   )}
                   <Button 
                     variant="outline"
                     size="sm"
-                    className="border-teal-400/50 text-teal-400 hover:bg-teal-400 hover:text-black font-bengali"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      item.image_url && window.open(item.image_url, "_blank", "noopener,noreferrer");
-                    }}
+                    className={`w-full border-teal-400/50 text-teal-400 hover:bg-teal-400 hover:text-black font-bengali ${!item.live_url ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    onClick={() => item.live_url && window.open(item.live_url, "_blank", "noopener,noreferrer")}
+                    disabled={!item.live_url}
                   >
                     <ExternalLink className="w-4 h-4 mr-2" />
                     লাইভ প্রিভিউ

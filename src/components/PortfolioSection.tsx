@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Megaphone, Code, Palette, Video, Activity, Layout, ExternalLink, X, Play } from "lucide-react";
+import { Megaphone, Code, Palette, Video, Activity, Layout, ExternalLink, X, Play, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
   DialogContent,
@@ -33,58 +34,44 @@ const videoServices = ["video-editing", "motion-graphics"];
 const urlServices = ["web-development", "landing-page"];
 
 type PortfolioItem = {
-  id: number;
+  id: string;
   title: string;
-  image?: string;
-  video?: string;
-  liveUrl?: string;
+  description: string | null;
+  category: string;
+  image_url: string;
 };
 
-// Placeholder portfolio items - replace with actual data
-const portfolioData: Record<string, PortfolioItem[]> = {
+// Fallback placeholder items (used when database is empty)
+const fallbackData: Record<string, PortfolioItem[]> = {
   "facebook-ads": [
-    { id: 1, title: "ই-কমার্স ক্যাম্পেইন", image: "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800&h=600&fit=crop" },
-    { id: 2, title: "রেস্টুরেন্ট প্রমোশন", image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=600&fit=crop" },
-    { id: 3, title: "ফ্যাশন ব্র্যান্ড", image: "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=800&h=600&fit=crop" },
-    { id: 4, title: "লিড জেনারেশন", image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop" },
-    { id: 5, title: "অ্যাপ ইনস্টল", image: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=800&h=600&fit=crop" },
-    { id: 6, title: "ব্র্যান্ড অ্যাওয়ারনেস", image: "https://images.unsplash.com/photo-1432888622747-4eb9a8efeb07?w=800&h=600&fit=crop" },
+    { id: "fb1", title: "ই-কমার্স ক্যাম্পেইন", description: null, category: "facebook-ads", image_url: "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800&h=600&fit=crop" },
+    { id: "fb2", title: "রেস্টুরেন্ট প্রমোশন", description: null, category: "facebook-ads", image_url: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=600&fit=crop" },
+    { id: "fb3", title: "ফ্যাশন ব্র্যান্ড", description: null, category: "facebook-ads", image_url: "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=800&h=600&fit=crop" },
   ],
   "web-development": [
-    { id: 1, title: "ই-কমার্স স্টোর", image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=600&fit=crop", liveUrl: "https://example.com" },
-    { id: 2, title: "কর্পোরেট ওয়েবসাইট", image: "https://images.unsplash.com/photo-1467232004584-a241de8bcf5d?w=800&h=600&fit=crop", liveUrl: "https://example.com" },
-    { id: 3, title: "রেস্টুরেন্ট অর্ডারিং", image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=600&fit=crop", liveUrl: "https://example.com" },
-    { id: 4, title: "পোর্টফোলিও সাইট", image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=600&fit=crop", liveUrl: "https://example.com" },
-    { id: 5, title: "বুকিং সিস্টেম", image: "https://images.unsplash.com/photo-1551434678-e076c223a692?w=800&h=600&fit=crop", liveUrl: "https://example.com" },
-    { id: 6, title: "এডুকেশন প্লাটফর্ম", image: "https://images.unsplash.com/photo-1501504905252-473c47e087f8?w=800&h=600&fit=crop", liveUrl: "https://example.com" },
+    { id: "web1", title: "ই-কমার্স স্টোর", description: null, category: "web-development", image_url: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=600&fit=crop" },
+    { id: "web2", title: "কর্পোরেট ওয়েবসাইট", description: null, category: "web-development", image_url: "https://images.unsplash.com/photo-1467232004584-a241de8bcf5d?w=800&h=600&fit=crop" },
+    { id: "web3", title: "রেস্টুরেন্ট অর্ডারিং", description: null, category: "web-development", image_url: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=600&fit=crop" },
   ],
   "graphics-design": [
-    { id: 1, title: "লোগো ডিজাইন", image: "https://images.unsplash.com/photo-1626785774625-ddcddc3445e9?w=800&h=600&fit=crop" },
-    { id: 2, title: "ব্র্যান্ড আইডেন্টিটি", image: "https://images.unsplash.com/photo-1558655146-9f40138edfeb?w=800&h=600&fit=crop" },
-    { id: 3, title: "সোশ্যাল মিডিয়া পোস্ট", image: "https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?w=800&h=600&fit=crop" },
-    { id: 4, title: "প্যাকেজিং ডিজাইন", image: "https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=800&h=600&fit=crop" },
-    { id: 5, title: "বিজনেস কার্ড", image: "https://images.unsplash.com/photo-1589330694653-ded6df03f754?w=800&h=600&fit=crop" },
-    { id: 6, title: "ব্যানার ডিজাইন", image: "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800&h=600&fit=crop" },
+    { id: "gd1", title: "লোগো ডিজাইন", description: null, category: "graphics-design", image_url: "https://images.unsplash.com/photo-1626785774625-ddcddc3445e9?w=800&h=600&fit=crop" },
+    { id: "gd2", title: "ব্র্যান্ড আইডেন্টিটি", description: null, category: "graphics-design", image_url: "https://images.unsplash.com/photo-1558655146-9f40138edfeb?w=800&h=600&fit=crop" },
+    { id: "gd3", title: "সোশ্যাল মিডিয়া পোস্ট", description: null, category: "graphics-design", image_url: "https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?w=800&h=600&fit=crop" },
   ],
   "video-editing": [
-    { id: 1, title: "প্রোডাক্ট ভিডিও", image: "https://images.unsplash.com/photo-1492619375914-88005aa9e8fb?w=800&h=600&fit=crop", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" },
-    { id: 2, title: "কমার্শিয়াল অ্যাড", image: "https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=800&h=600&fit=crop", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4" },
-    { id: 3, title: "সোশ্যাল মিডিয়া রিলস", image: "https://images.unsplash.com/photo-1536240478700-b869070f9279?w=800&h=600&fit=crop", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" },
-    { id: 4, title: "কর্পোরেট ভিডিও", image: "https://images.unsplash.com/photo-1516321497487-e288fb19713f?w=800&h=600&fit=crop", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4" },
+    { id: "ve1", title: "প্রোডাক্ট ভিডিও", description: null, category: "video-editing", image_url: "https://images.unsplash.com/photo-1492619375914-88005aa9e8fb?w=800&h=600&fit=crop" },
+    { id: "ve2", title: "কমার্শিয়াল অ্যাড", description: null, category: "video-editing", image_url: "https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=800&h=600&fit=crop" },
+    { id: "ve3", title: "সোশ্যাল মিডিয়া রিলস", description: null, category: "video-editing", image_url: "https://images.unsplash.com/photo-1536240478700-b869070f9279?w=800&h=600&fit=crop" },
   ],
   "motion-graphics": [
-    { id: 1, title: "অ্যানিমেটেড লোগো", image: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&h=600&fit=crop", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4" },
-    { id: 2, title: "এক্সপ্লেইনার ভিডিও", image: "https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?w=800&h=600&fit=crop", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4" },
-    { id: 3, title: "ইনফোগ্রাফিক্স", image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4" },
-    { id: 4, title: "3D অ্যানিমেশন", image: "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800&h=600&fit=crop", video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4" },
+    { id: "mg1", title: "অ্যানিমেটেড লোগো", description: null, category: "motion-graphics", image_url: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&h=600&fit=crop" },
+    { id: "mg2", title: "এক্সপ্লেইনার ভিডিও", description: null, category: "motion-graphics", image_url: "https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?w=800&h=600&fit=crop" },
+    { id: "mg3", title: "ইনফোগ্রাফিক্স", description: null, category: "motion-graphics", image_url: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop" },
   ],
   "landing-page": [
-    { id: 1, title: "ই-কমার্স ল্যান্ডিং", image: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&h=600&fit=crop", liveUrl: "https://example.com" },
-    { id: 2, title: "অ্যাপ ল্যান্ডিং", image: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=800&h=600&fit=crop", liveUrl: "https://example.com" },
-    { id: 3, title: "SaaS ল্যান্ডিং", image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=600&fit=crop", liveUrl: "https://example.com" },
-    { id: 4, title: "সার্ভিস ল্যান্ডিং", image: "https://images.unsplash.com/photo-1467232004584-a241de8bcf5d?w=800&h=600&fit=crop", liveUrl: "https://example.com" },
-    { id: 5, title: "ইভেন্ট ল্যান্ডিং", image: "https://images.unsplash.com/photo-1501504905252-473c47e087f8?w=800&h=600&fit=crop", liveUrl: "https://example.com" },
-    { id: 6, title: "প্রোডাক্ট ল্যান্ডিং", image: "https://images.unsplash.com/photo-1551434678-e076c223a692?w=800&h=600&fit=crop", liveUrl: "https://example.com" },
+    { id: "lp1", title: "ই-কমার্স ল্যান্ডিং", description: null, category: "landing-page", image_url: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&h=600&fit=crop" },
+    { id: "lp2", title: "অ্যাপ ল্যান্ডিং", description: null, category: "landing-page", image_url: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=800&h=600&fit=crop" },
+    { id: "lp3", title: "SaaS ল্যান্ডিং", description: null, category: "landing-page", image_url: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=600&fit=crop" },
   ],
 };
 
@@ -108,8 +95,9 @@ const PortfolioCard = ({ item, serviceId, onOpenModal }: PortfolioCardProps) => 
   const handleButtonClick = () => {
     if (isModalService) {
       onOpenModal(item);
-    } else if (isUrlService && item.liveUrl) {
-      window.open(item.liveUrl, '_blank');
+    } else if (isUrlService) {
+      // For web dev and landing page - just open modal for now
+      onOpenModal(item);
     }
   };
 
@@ -123,19 +111,20 @@ const PortfolioCard = ({ item, serviceId, onOpenModal }: PortfolioCardProps) => 
     >
       {/* Image Container */}
       <div 
-        className={`aspect-[4/3] relative overflow-hidden ${isModalService ? 'cursor-pointer' : ''}`}
+        className={`aspect-[4/3] relative overflow-hidden ${isModalService || isUrlService ? 'cursor-pointer' : ''}`}
         onClick={handleImageClick}
       >
         <img 
-          src={item.image} 
+          src={item.image_url} 
           alt={item.title}
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+          loading="lazy"
         />
         {/* Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         
-        {/* Click indicator - Video Play icon for video services, ExternalLink for others */}
-        {isModalService && (
+        {/* Click indicator */}
+        {(isModalService || isUrlService) && (
           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             <div className="w-16 h-16 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 flex items-center justify-center shadow-lg shadow-yellow-400/40">
               {isVideoService ? (
@@ -150,9 +139,14 @@ const PortfolioCard = ({ item, serviceId, onOpenModal }: PortfolioCardProps) => 
 
       {/* Card Footer */}
       <div className="p-4">
-        <h4 className="text-white font-bengali font-semibold text-sm sm:text-base mb-3 group-hover:text-yellow-400 transition-colors">
+        <h4 className="text-white font-bengali font-semibold text-sm sm:text-base mb-2 group-hover:text-yellow-400 transition-colors line-clamp-1">
           {item.title}
         </h4>
+        {item.description && (
+          <p className="text-white/60 text-xs mb-3 line-clamp-2 font-bengali">
+            {item.description}
+          </p>
+        )}
         
         {/* Live Preview Button */}
         <Button
@@ -166,7 +160,7 @@ const PortfolioCard = ({ item, serviceId, onOpenModal }: PortfolioCardProps) => 
           ) : (
             <ExternalLink className="w-4 h-4 mr-2 group-hover/btn:rotate-12 transition-transform" />
           )}
-          Live Preview
+          দেখুন
         </Button>
       </div>
     </motion.div>
@@ -177,6 +171,77 @@ export const PortfolioSection = () => {
   const [activeTab, setActiveTab] = useState("facebook-ads");
   const [selectedItem, setSelectedItem] = useState<PortfolioItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [portfolioData, setPortfolioData] = useState<Record<string, PortfolioItem[]>>(fallbackData);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch portfolio items from database
+  useEffect(() => {
+    const fetchPortfolio = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("portfolio_items")
+          .select("*")
+          .order("created_at", { ascending: false });
+
+        if (error) {
+          console.error("Portfolio fetch error:", error);
+          setLoading(false);
+          return;
+        }
+
+        if (data && data.length > 0) {
+          // Group by category
+          const grouped: Record<string, PortfolioItem[]> = {};
+          
+          // Initialize all categories
+          serviceTabs.forEach(tab => {
+            grouped[tab.id] = [];
+          });
+
+          data.forEach((item) => {
+            const category = item.category;
+            if (grouped[category]) {
+              grouped[category].push(item);
+            }
+          });
+
+          // Merge with fallback for empty categories
+          const mergedData: Record<string, PortfolioItem[]> = {};
+          serviceTabs.forEach(tab => {
+            if (grouped[tab.id] && grouped[tab.id].length > 0) {
+              mergedData[tab.id] = grouped[tab.id];
+            } else {
+              mergedData[tab.id] = fallbackData[tab.id] || [];
+            }
+          });
+
+          setPortfolioData(mergedData);
+        }
+      } catch (err) {
+        console.error("Portfolio fetch error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPortfolio();
+
+    // Set up realtime subscription for portfolio updates
+    const channel = supabase
+      .channel("portfolio-changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "portfolio_items" },
+        () => {
+          fetchPortfolio();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const items = portfolioData[activeTab] || [];
 
@@ -265,26 +330,39 @@ export const PortfolioSection = () => {
           আমাদের {serviceTabs.find(t => t.id === activeTab)?.label} পোর্টফোলিও
         </motion.h3>
 
-        {/* Portfolio Grid */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.4 }}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"
-          >
-            {items.map((item) => (
-              <PortfolioCard 
-                key={item.id} 
-                item={item} 
-                serviceId={activeTab}
-                onOpenModal={handleOpenModal}
-              />
-            ))}
-          </motion.div>
-        </AnimatePresence>
+        {/* Loading State */}
+        {loading ? (
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="w-8 h-8 animate-spin text-yellow-400" />
+          </div>
+        ) : (
+          /* Portfolio Grid */
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.4 }}
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"
+            >
+              {items.length > 0 ? (
+                items.map((item) => (
+                  <PortfolioCard 
+                    key={item.id} 
+                    item={item} 
+                    serviceId={activeTab}
+                    onOpenModal={handleOpenModal}
+                  />
+                ))
+              ) : (
+                <div className="col-span-full text-center py-12">
+                  <p className="text-white/60 font-bengali">এই ক্যাটাগরিতে কোন পোর্টফোলিও নেই</p>
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
+        )}
 
         {/* Load More / CTA */}
         <motion.div
@@ -305,7 +383,7 @@ export const PortfolioSection = () => {
 
       {/* Fullscreen Preview Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-5xl w-[95vw] max-h-[90vh] p-0 bg-black/95 border border-white/10 backdrop-blur-xl overflow-hidden">
+        <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] p-0 bg-black/95 border border-white/10 backdrop-blur-xl overflow-hidden">
           <DialogHeader className="absolute top-0 left-0 right-0 z-10 p-4 bg-gradient-to-b from-black/80 to-transparent">
             <div className="flex items-center justify-between">
               <DialogTitle className="text-white font-bengali text-lg sm:text-xl">
@@ -328,24 +406,11 @@ export const PortfolioSection = () => {
               transition={{ duration: 0.3 }}
               className="w-full h-full flex items-center justify-center p-4 pt-16"
             >
-              {/* Show video if available, otherwise image */}
-              {selectedItem.video ? (
-                <video
-                  src={selectedItem.video}
-                  controls
-                  autoPlay
-                  className="max-w-full max-h-[75vh] rounded-lg shadow-2xl"
-                  poster={selectedItem.image}
-                >
-                  Your browser does not support the video tag.
-                </video>
-              ) : (
-                <img
-                  src={selectedItem.image}
-                  alt={selectedItem.title}
-                  className="max-w-full max-h-[75vh] object-contain rounded-lg shadow-2xl"
-                />
-              )}
+              <img 
+                src={selectedItem.image_url} 
+                alt={selectedItem.title}
+                className="max-w-full max-h-[70vh] object-contain rounded-lg"
+              />
             </motion.div>
           )}
         </DialogContent>

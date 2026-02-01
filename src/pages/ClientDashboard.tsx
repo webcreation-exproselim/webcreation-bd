@@ -12,9 +12,10 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
-  ChevronRight,
   Send,
   Home,
+  Loader2,
+  CreditCard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,13 +24,23 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { User as SupabaseUser, Session } from "@supabase/supabase-js";
 
+interface OrderService {
+  id: string;
+  serviceName: string;
+  packageName: string;
+  price: number;
+  originalPrice: number;
+  features: string[];
+}
+
 interface Order {
   id: string;
-  services: any[];
+  services: OrderService[];
   status: string;
   progress: number;
   total_price: number;
   created_at: string;
+  customer_name: string;
 }
 
 interface Invoice {
@@ -81,10 +92,8 @@ export default function ClientDashboard() {
       if (!session) {
         navigate("/auth");
       } else {
-        // Defer data fetching
-        setTimeout(() => {
-          fetchUserData(session.user.id);
-        }, 0);
+        // Defer data fetching to avoid race conditions
+        fetchUserData(session.user.id);
       }
       setLoading(false);
     });
@@ -93,40 +102,63 @@ export default function ClientDashboard() {
   }, [navigate]);
 
   const fetchUserData = async (userId: string) => {
-    // Fetch profile
-    const { data: profileData } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("user_id", userId)
-      .single();
-    
-    if (profileData) setProfile(profileData);
+    try {
+      // Fetch profile
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", userId)
+        .single();
+      
+      if (profileData) setProfile(profileData);
 
-    // Fetch orders
-    const { data: ordersData } = await supabase
-      .from("orders")
-      .select("*")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false });
-    
-    if (ordersData) setOrders(ordersData as Order[]);
+      // Fetch orders for this user
+      const { data: ordersData, error: ordersError } = await supabase
+        .from("orders")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false });
+      
+      if (ordersError) {
+        console.error("Orders fetch error:", ordersError);
+      }
+      
+      if (ordersData) {
+        const typedOrders: Order[] = ordersData.map(order => ({
+          ...order,
+          services: (order.services as unknown) as OrderService[],
+          progress: order.progress || 0,
+        }));
+        setOrders(typedOrders);
+      }
 
-    // Fetch invoices
-    const { data: invoicesData } = await supabase
-      .from("invoices")
-      .select("*")
-      .eq("client_id", userId)
-      .order("created_at", { ascending: false });
-    
-    if (invoicesData) setInvoices(invoicesData as Invoice[]);
+      // Fetch invoices for this user
+      const { data: invoicesData, error: invoicesError } = await supabase
+        .from("invoices")
+        .select("*")
+        .eq("client_id", userId)
+        .order("created_at", { ascending: false });
+      
+      if (invoicesError) {
+        console.error("Invoices fetch error:", invoicesError);
+      }
+      
+      if (invoicesData) setInvoices(invoicesData as Invoice[]);
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+    }
   };
 
   const fetchMessages = async (orderId: string) => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("messages")
       .select("*")
       .eq("order_id", orderId)
       .order("created_at", { ascending: true });
+    
+    if (error) {
+      console.error("Messages fetch error:", error);
+    }
     
     if (data) setMessages(data as Message[]);
   };
@@ -144,14 +176,40 @@ export default function ClientDashboard() {
     if (!error) {
       setNewMessage("");
       fetchMessages(selectedOrder.id);
+      toast({ title: "মেসেজ পাঠানো হয়েছে" });
     } else {
+      console.error("Message send error:", error);
       toast({
-        title: "ত্রুটি",
-        description: "মেসেজ পাঠানো যায়নি",
+        title: "মেসেজ পাঠানো যায়নি",
         variant: "destructive",
       });
     }
   };
+
+  // Subscribe to realtime messages
+  useEffect(() => {
+    if (!selectedOrder) return;
+
+    const channel = supabase
+      .channel(`messages-${selectedOrder.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `order_id=eq.${selectedOrder.id}`,
+        },
+        () => {
+          fetchMessages(selectedOrder.id);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [selectedOrder?.id]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -184,10 +242,23 @@ export default function ClientDashboard() {
     }
   };
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "completed":
+        return "bg-green-500/20 text-green-400 border-green-500/30";
+      case "cancelled":
+        return "bg-red-500/20 text-red-400 border-red-500/30";
+      case "processing":
+        return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
+      default:
+        return "bg-blue-500/20 text-blue-400 border-blue-500/30";
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-red-950 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-500"></div>
+        <Loader2 className="w-10 h-10 animate-spin text-red-500" />
       </div>
     );
   }
@@ -219,7 +290,7 @@ export default function ClientDashboard() {
               <div className="flex items-center gap-2 text-white/70">
                 <User className="w-5 h-5" />
                 <span className="font-bengali text-sm hidden sm:inline">
-                  {profile?.full_name || user?.email}
+                  {profile?.full_name || user?.email?.split("@")[0]}
                 </span>
               </div>
               <Button
@@ -352,17 +423,20 @@ export default function ClientDashboard() {
             {orders.length === 0 ? (
               <div className="bg-white/5 rounded-2xl border border-white/10 p-12 text-center">
                 <Package className="w-16 h-16 text-white/20 mx-auto mb-4" />
-                <p className="text-white/60 font-bengali">কোন অর্ডার নেই</p>
-                <Link to="/checkout">
-                  <Button className="mt-4 bg-red-500 hover:bg-red-600 font-bengali">
-                    অর্ডার করুন
+                <p className="text-white/60 font-bengali mb-4">আপনার কোন অর্ডার নেই</p>
+                <Link to="/#services">
+                  <Button className="bg-red-500 hover:bg-red-600 font-bengali">
+                    সার্ভিস দেখুন
                   </Button>
                 </Link>
               </div>
             ) : (
-              orders.map((order) => (
-                <div
+              orders.map((order, idx) => (
+                <motion.div
                   key={order.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.1 }}
                   className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
@@ -379,18 +453,12 @@ export default function ClientDashboard() {
                     </div>
                     <div className="flex items-center gap-3">
                       <span
-                        className={`px-3 py-1 rounded-full text-sm font-bengali ${
-                          order.status === "completed"
-                            ? "bg-green-500/20 text-green-400"
-                            : order.status === "processing"
-                            ? "bg-yellow-500/20 text-yellow-400"
-                            : "bg-blue-500/20 text-blue-400"
-                        }`}
+                        className={`px-3 py-1 rounded-full text-sm font-bengali border ${getStatusColor(order.status)}`}
                       >
                         {getStatusText(order.status)}
                       </span>
                       <span className="text-white font-bold">
-                        ৳{order.total_price.toLocaleString("bn-BD")}
+                        ৳{Number(order.total_price).toLocaleString()}
                       </span>
                     </div>
                   </div>
@@ -398,25 +466,25 @@ export default function ClientDashboard() {
                   {/* Progress Bar */}
                   <div className="mb-4">
                     <div className="flex justify-between text-sm mb-2">
-                      <span className="text-white/60 font-bengali">অগ্রগতি</span>
-                      <span className="text-white font-bengali">{order.progress || 0}%</span>
+                      <span className="text-white/60 font-bengali">প্রজেক্ট অগ্রগতি</span>
+                      <span className="text-white font-bengali font-medium">{order.progress || 0}%</span>
                     </div>
-                    <Progress value={order.progress || 0} className="h-2" />
+                    <Progress value={order.progress || 0} className="h-3" />
                   </div>
 
                   {/* Services */}
                   <div className="flex flex-wrap gap-2">
                     {Array.isArray(order.services) &&
-                      order.services.map((service: any, idx: number) => (
+                      order.services.map((service, serviceIdx) => (
                         <span
-                          key={idx}
-                          className="px-3 py-1 bg-white/5 rounded-lg text-white/70 text-sm font-bengali"
+                          key={serviceIdx}
+                          className="px-3 py-1 bg-white/5 border border-white/10 rounded-lg text-white/70 text-sm font-bengali"
                         >
-                          {service.name}
+                          {service.serviceName} - {service.packageName}
                         </span>
                       ))}
                   </div>
-                </div>
+                </motion.div>
               ))
             )}
           </motion.div>
@@ -435,48 +503,69 @@ export default function ClientDashboard() {
                 <p className="text-white/60 font-bengali">কোন ইনভয়েস নেই</p>
               </div>
             ) : (
-              invoices.map((invoice) => (
-                <div
+              invoices.map((invoice, idx) => (
+                <motion.div
                   key={invoice.id}
-                  className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.1 }}
+                  className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6"
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-yellow-500/20 flex items-center justify-center">
-                      <FileText className="w-6 h-6 text-yellow-400" />
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-yellow-500/20 flex items-center justify-center">
+                        <FileText className="w-6 h-6 text-yellow-400" />
+                      </div>
+                      <div>
+                        <p className="text-white font-medium font-mono">
+                          #{invoice.invoice_number}
+                        </p>
+                        <p className="text-white/60 text-sm font-bengali">
+                          {new Date(invoice.created_at).toLocaleDateString("bn-BD")}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-white font-medium">
-                        ইনভয়েস #{invoice.invoice_number}
-                      </p>
-                      <p className="text-white/60 text-sm font-bengali">
-                        {new Date(invoice.created_at).toLocaleDateString("bn-BD")}
-                      </p>
-                    </div>
-                  </div>
 
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <p className="text-white font-bold">
-                        ৳{invoice.amount.toLocaleString("bn-BD")}
-                      </p>
-                      <span
-                        className={`text-sm font-bengali ${
-                          invoice.status === "paid"
-                            ? "text-green-400"
-                            : "text-yellow-400"
-                        }`}
-                      >
-                        {invoice.status === "paid" ? "পরিশোধিত" : "বাকি"}
-                      </span>
+                    <div className="flex items-center gap-4">
+                      <div className="text-right">
+                        <p className="text-white font-bold text-lg">
+                          ৳{Number(invoice.amount).toLocaleString()}
+                        </p>
+                        <span
+                          className={`text-sm font-bengali ${
+                            invoice.status === "paid"
+                              ? "text-green-400"
+                              : invoice.status === "partial"
+                              ? "text-yellow-400"
+                              : "text-red-400"
+                          }`}
+                        >
+                          {invoice.status === "paid" 
+                            ? "পরিশোধিত" 
+                            : invoice.status === "partial"
+                            ? `আংশিক (৳${Number(invoice.paid_amount).toLocaleString()})`
+                            : "বাকি"}
+                        </span>
+                      </div>
+                      {invoice.status !== "paid" && (
+                        <a
+                          href={`https://wa.me/8801234567890?text=ইনভয়েস%20${invoice.invoice_number}%20এর%20পেমেন্ট%20করতে%20চাই`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-green-400 border-green-400/30 hover:bg-green-400/10 font-bengali"
+                          >
+                            <CreditCard className="w-4 h-4 mr-2" />
+                            পেমেন্ট
+                          </Button>
+                        </a>
+                      )}
                     </div>
-                    <Button
-                      variant="ghost"
-                      className="text-white/60 hover:text-white"
-                    >
-                      <Download className="w-5 h-5" />
-                    </Button>
                   </div>
-                </div>
+                </motion.div>
               ))
             )}
           </motion.div>
@@ -490,33 +579,39 @@ export default function ClientDashboard() {
             className="grid grid-cols-1 lg:grid-cols-3 gap-6"
           >
             {/* Order List */}
-            <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-4">
+            <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-4 max-h-[500px] overflow-y-auto">
               <h3 className="text-white font-bengali font-bold mb-4">
                 অর্ডার সিলেক্ট করুন
               </h3>
-              <div className="space-y-2">
-                {orders.map((order) => (
-                  <button
-                    key={order.id}
-                    onClick={() => {
-                      setSelectedOrder(order);
-                      fetchMessages(order.id);
-                    }}
-                    className={`w-full p-3 rounded-xl text-left transition-colors ${
-                      selectedOrder?.id === order.id
-                        ? "bg-red-500/20 border border-red-500/50"
-                        : "bg-white/5 hover:bg-white/10"
-                    }`}
-                  >
-                    <p className="text-white text-sm">
-                      অর্ডার #{order.id.slice(0, 8)}
-                    </p>
-                    <p className="text-white/60 text-xs font-bengali">
-                      {getStatusText(order.status)}
-                    </p>
-                  </button>
-                ))}
-              </div>
+              {orders.length === 0 ? (
+                <p className="text-white/40 text-sm font-bengali text-center py-8">
+                  কোন অর্ডার নেই
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {orders.map((order) => (
+                    <button
+                      key={order.id}
+                      onClick={() => {
+                        setSelectedOrder(order);
+                        fetchMessages(order.id);
+                      }}
+                      className={`w-full p-3 rounded-xl text-left transition-colors ${
+                        selectedOrder?.id === order.id
+                          ? "bg-red-500/20 border border-red-500/50"
+                          : "bg-white/5 hover:bg-white/10 border border-transparent"
+                      }`}
+                    >
+                      <p className="text-white text-sm font-medium">
+                        অর্ডার #{order.id.slice(0, 8)}
+                      </p>
+                      <p className="text-white/60 text-xs font-bengali">
+                        {getStatusText(order.status)} • {order.progress || 0}% সম্পন্ন
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Chat Area */}
@@ -528,31 +623,43 @@ export default function ClientDashboard() {
                     <p className="text-white font-bengali font-bold">
                       অর্ডার #{selectedOrder.id.slice(0, 8)}
                     </p>
+                    <p className="text-white/60 text-sm font-bengali">
+                      {getStatusText(selectedOrder.status)}
+                    </p>
                   </div>
 
                   {/* Messages */}
                   <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                    {messages.map((msg) => (
-                      <div
-                        key={msg.id}
-                        className={`flex ${
-                          msg.is_admin ? "justify-start" : "justify-end"
-                        }`}
-                      >
+                    {messages.length === 0 ? (
+                      <div className="text-center py-8">
+                        <MessageCircle className="w-12 h-12 text-white/20 mx-auto mb-2" />
+                        <p className="text-white/40 text-sm font-bengali">
+                          কোন মেসেজ নেই। প্রথম মেসেজ পাঠান!
+                        </p>
+                      </div>
+                    ) : (
+                      messages.map((msg) => (
                         <div
-                          className={`max-w-[80%] p-3 rounded-2xl ${
-                            msg.is_admin
-                              ? "bg-white/10 text-white"
-                              : "bg-red-500 text-white"
+                          key={msg.id}
+                          className={`flex ${
+                            msg.is_admin ? "justify-start" : "justify-end"
                           }`}
                         >
-                          <p className="text-sm">{msg.content}</p>
-                          <p className="text-xs text-white/60 mt-1">
-                            {new Date(msg.created_at).toLocaleTimeString("bn-BD")}
-                          </p>
+                          <div
+                            className={`max-w-[80%] p-3 rounded-2xl ${
+                              msg.is_admin
+                                ? "bg-white/10 text-white"
+                                : "bg-red-500 text-white"
+                            }`}
+                          >
+                            <p className="text-sm">{msg.content}</p>
+                            <p className="text-xs text-white/60 mt-1">
+                              {new Date(msg.created_at).toLocaleTimeString("bn-BD")}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))
+                    )}
                   </div>
 
                   {/* Input */}
@@ -568,6 +675,7 @@ export default function ClientDashboard() {
                       <Button
                         onClick={sendMessage}
                         className="bg-red-500 hover:bg-red-600"
+                        disabled={!newMessage.trim()}
                       >
                         <Send className="w-5 h-5" />
                       </Button>

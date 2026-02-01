@@ -23,6 +23,8 @@ export type Database = {
           id: string
           notes: string | null
           payment_method: string
+          payment_screenshot_url: string | null
+          sender_number: string | null
           services: Json
           status: string
           total_price: number
@@ -38,6 +40,8 @@ export type Database = {
           id?: string
           notes?: string | null
           payment_method: string
+          payment_screenshot_url?: string | null
+          sender_number?: string | null
           services?: Json
           status?: string
           total_price?: number
@@ -53,6 +57,8 @@ export type Database = {
           id?: string
           notes?: string | null
           payment_method?: string
+          payment_screenshot_url?: string | null
+          sender_number?: string | null
           services?: Json
           status?: string
           total_price?: number

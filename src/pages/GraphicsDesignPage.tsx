@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { 
   Palette, ArrowLeft, CheckCircle, Star, TrendingUp, 
   Target, Layers, Users, Zap, Award, Clock, Shield, Eye,
-  X
+  X, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
@@ -10,58 +10,67 @@ import { Footer } from "@/components/Footer";
 import { Chatbot } from "@/components/Chatbot";
 import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
 } from "@/components/ui/dialog";
 import { AddToCartButton } from "@/components/AddToCartButton";
+import { supabase } from "@/integrations/supabase/client";
 
-// Portfolio Items
-const portfolioItems = [
+// Fallback Portfolio Items (used when database is empty)
+const fallbackPortfolioItems = [
   {
-    id: 1,
+    id: "gd1",
     title: "ব্র্যান্ড লোগো",
-    image: "https://images.unsplash.com/photo-1626785774625-ddcddc3445e9?w=800&h=600&fit=crop",
-    result: "ইউনিক আইডেন্টিটি",
-    category: "লোগো ডিজাইন"
+    image_url: "https://images.unsplash.com/photo-1626785774625-ddcddc3445e9?w=800&h=600&fit=crop",
+    description: "ইউনিক আইডেন্টিটি",
+    category: "graphics-design"
   },
   {
-    id: 2,
+    id: "gd2",
     title: "সোশ্যাল মিডিয়া পোস্ট",
-    image: "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800&h=600&fit=crop",
-    result: "৫০০% এনগেজমেন্ট",
-    category: "সোশ্যাল মিডিয়া"
+    image_url: "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800&h=600&fit=crop",
+    description: "৫০০% এনগেজমেন্ট",
+    category: "graphics-design"
   },
   {
-    id: 3,
+    id: "gd3",
     title: "ব্র্যান্ড গাইডলাইন",
-    image: "https://images.unsplash.com/photo-1558655146-9f40138edfeb?w=800&h=600&fit=crop",
-    result: "কম্প্লিট ব্র্যান্ডিং",
-    category: "ব্র্যান্ড আইডেন্টিটি"
+    image_url: "https://images.unsplash.com/photo-1558655146-9f40138edfeb?w=800&h=600&fit=crop",
+    description: "কম্প্লিট ব্র্যান্ডিং",
+    category: "graphics-design"
   },
   {
-    id: 4,
+    id: "gd4",
     title: "বিজনেস কার্ড",
-    image: "https://images.unsplash.com/photo-1586717791821-3f44a563fa4c?w=800&h=600&fit=crop",
-    result: "প্রিমিয়াম ফিনিশ",
-    category: "প্রিন্ট ডিজাইন"
+    image_url: "https://images.unsplash.com/photo-1586717791821-3f44a563fa4c?w=800&h=600&fit=crop",
+    description: "প্রিমিয়াম ফিনিশ",
+    category: "graphics-design"
   },
   {
-    id: 5,
+    id: "gd5",
     title: "পোস্টার ডিজাইন",
-    image: "https://images.unsplash.com/photo-1609921212029-bb5a28e60960?w=800&h=600&fit=crop",
-    result: "আই-ক্যাচিং",
-    category: "মার্কেটিং"
+    image_url: "https://images.unsplash.com/photo-1609921212029-bb5a28e60960?w=800&h=600&fit=crop",
+    description: "আই-ক্যাচিং",
+    category: "graphics-design"
   },
   {
-    id: 6,
+    id: "gd6",
     title: "প্যাকেজিং ডিজাইন",
-    image: "https://images.unsplash.com/photo-1634942537034-2531766767d1?w=800&h=600&fit=crop",
-    result: "শেল্ফ-রেডি",
-    category: "প্যাকেজিং"
+    image_url: "https://images.unsplash.com/photo-1634942537034-2531766767d1?w=800&h=600&fit=crop",
+    description: "শেল্ফ-রেডি",
+    category: "graphics-design"
   },
 ];
+
+type PortfolioItem = {
+  id: string;
+  title: string;
+  image_url: string;
+  description: string | null;
+  category: string;
+};
 
 // Reviews for sliding
 const reviewsRow1 = [
@@ -318,8 +327,38 @@ const InfiniteSlider = ({
 };
 
 const GraphicsDesignPage = () => {
-  const [selectedItem, setSelectedItem] = useState<typeof portfolioItems[0] | null>(null);
+  const [selectedItem, setSelectedItem] = useState<PortfolioItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>(fallbackPortfolioItems);
+  const [loadingPortfolio, setLoadingPortfolio] = useState(true);
+
+  // Fetch portfolio items from database
+  useEffect(() => {
+    const fetchPortfolio = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("portfolio_items")
+          .select("*")
+          .eq("category", "graphics-design")
+          .order("created_at", { ascending: false });
+
+        if (error) {
+          console.error("Portfolio fetch error:", error);
+          return;
+        }
+
+        if (data && data.length > 0) {
+          setPortfolioItems(data);
+        }
+      } catch (err) {
+        console.error("Portfolio fetch error:", err);
+      } finally {
+        setLoadingPortfolio(false);
+      }
+    };
+
+    fetchPortfolio();
+  }, []);
 
   return (
     <div className="min-h-screen bg-black">
@@ -484,6 +523,11 @@ const GraphicsDesignPage = () => {
             </p>
           </motion.div>
           
+          {loadingPortfolio ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="w-8 h-8 animate-spin text-purple-400" />
+            </div>
+          ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {portfolioItems.map((item, index) => (
               <motion.div
@@ -500,7 +544,7 @@ const GraphicsDesignPage = () => {
               >
                 <div className="aspect-[4/3] overflow-hidden">
                   <img
-                    src={item.image}
+                    src={item.image_url}
                     alt={item.title}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   />
@@ -508,14 +552,17 @@ const GraphicsDesignPage = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover:opacity-100 transition-opacity" />
                 <div className="absolute bottom-0 left-0 right-0 p-6">
                   <span className="inline-block px-3 py-1 text-xs rounded-full bg-gradient-to-r from-purple-500 to-pink-400 text-white font-medium mb-2">
-                    {item.category}
+                    গ্রাফিক্স ডিজাইন
                   </span>
                   <h3 className="text-xl font-bengali font-bold text-white mb-1">{item.title}</h3>
-                  <p className="text-purple-300 font-bengali text-sm">{item.result}</p>
+                  {item.description && (
+                    <p className="text-purple-300 font-bengali text-sm">{item.description}</p>
+                  )}
                 </div>
               </motion.div>
             ))}
           </div>
+          )}
         </div>
       </section>
 
@@ -641,16 +688,18 @@ const GraphicsDesignPage = () => {
                 <X className="w-6 h-6 text-white" />
               </button>
               <img
-                src={selectedItem.image}
+                src={selectedItem.image_url}
                 alt={selectedItem.title}
                 className="w-full h-auto"
               />
               <div className="p-6 bg-gradient-to-t from-black to-transparent">
                 <span className="inline-block px-3 py-1 text-xs rounded-full bg-gradient-to-r from-purple-500 to-pink-400 text-white font-medium mb-2">
-                  {selectedItem.category}
+                  গ্রাফিক্স ডিজাইন
                 </span>
                 <h3 className="text-2xl font-bengali font-bold text-white mb-2">{selectedItem.title}</h3>
-                <p className="text-purple-300 font-bengali">{selectedItem.result}</p>
+                {selectedItem.description && (
+                  <p className="text-purple-300 font-bengali">{selectedItem.description}</p>
+                )}
               </div>
             </div>
           )}

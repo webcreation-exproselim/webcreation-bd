@@ -61,12 +61,12 @@ export function MobileDrawer({
         <SheetHeader>
           <SheetTitle className="text-left">
             <div className="relative inline-block">
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 rounded-full opacity-70 blur-sm" />
-              <div className="relative w-12 h-12 rounded-full bg-white p-0.5 shadow-lg overflow-hidden">
+              <div className="absolute -inset-1 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 rounded-full opacity-80" />
+              <div className="relative w-14 h-14 rounded-full bg-white p-1 shadow-xl ring-2 ring-white overflow-hidden">
                 <img 
                   src={logo} 
                   alt="Web Creation BD" 
-                  className="w-full h-full object-cover rounded-full"
+                  className="w-full h-full object-contain rounded-full"
                   loading="lazy"
                 />
               </div>

@@ -62,12 +62,12 @@ export function Header() {
             {/* Logo */}
             <Link to="/" className="flex-shrink-0 group">
               <div className="relative">
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 rounded-full opacity-70 group-hover:opacity-100 blur-sm transition-opacity duration-300" />
-                <div className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white p-0.5 shadow-lg overflow-hidden">
+                <div className="absolute -inset-1 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 rounded-full opacity-80 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white p-1 shadow-xl ring-2 ring-white overflow-hidden">
                   <img 
                     src={logo} 
                     alt="Web Creation BD Logo" 
-                    className="w-full h-full object-cover rounded-full"
+                    className="w-full h-full object-contain rounded-full"
                     loading="eager"
                   />
                 </div>

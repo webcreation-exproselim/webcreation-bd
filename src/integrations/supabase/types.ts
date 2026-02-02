@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      customer_reviews: {
+        Row: {
+          created_at: string
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          name: string
+          photo: string | null
+          rating: number
+          review: string
+          service: string
+          service_gradient: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          photo?: string | null
+          rating?: number
+          review: string
+          service: string
+          service_gradient?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          photo?: string | null
+          rating?: number
+          review?: string
+          service?: string
+          service_gradient?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       invoices: {
         Row: {
           amount: number

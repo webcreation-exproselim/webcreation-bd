@@ -13,48 +13,46 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
-// Payment methods
-const paymentMethods = [
-  {
-    id: "bkash",
-    name: "বিকাশ",
+// Payment method icon and color mapping
+const paymentMethodConfig: Record<string, {
+  icon: typeof Smartphone;
+  color: string;
+  bgColor: string;
+  borderColor: string;
+}> = {
+  bkash: {
     icon: Smartphone,
     color: "from-pink-500 to-pink-600",
     bgColor: "bg-pink-50",
     borderColor: "border-pink-200",
-    number: "01332052874",
   },
-  {
-    id: "nagad",
-    name: "নগদ",
+  nagad: {
     icon: Smartphone,
     color: "from-orange-500 to-orange-600",
     bgColor: "bg-orange-50",
     borderColor: "border-orange-200",
-    number: "01332052874",
   },
-  {
-    id: "rocket",
-    name: "রকেট",
+  rocket: {
     icon: Smartphone,
     color: "from-purple-500 to-purple-600",
     bgColor: "bg-purple-50",
     borderColor: "border-purple-200",
-    number: "013320528741",
   },
-  {
-    id: "bank",
-    name: "ব্যাংক ট্রান্সফার",
+  bank: {
     icon: Building2,
     color: "from-blue-500 to-blue-600",
     bgColor: "bg-blue-50",
     borderColor: "border-blue-200",
-    details: {
-      bankName: "Dutch Bangla Bank",
-      accountNumber: "1234567890123",
-    },
   },
-];
+};
+
+interface PaymentMethod {
+  id: string;
+  method: string;
+  account_number: string;
+  account_name: string | null;
+  is_active: boolean;
+}
 
 // Quick services
 const quickServices = [
@@ -87,8 +85,28 @@ const CheckoutPage = () => {
   const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
   const [uploadingScreenshot, setUploadingScreenshot] = useState(false);
   const [invoiceData, setInvoiceData] = useState<any>(null);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
+  const [loadingPayments, setLoadingPayments] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  // Fetch active payment methods from database
+  useEffect(() => {
+    const fetchPaymentMethods = async () => {
+      const { data, error } = await supabase
+        .from("payment_settings")
+        .select("*")
+        .eq("is_active", true)
+        .order("method");
+
+      if (!error && data) {
+        setPaymentMethods(data);
+      }
+      setLoadingPayments(false);
+    };
+
+    fetchPaymentMethods();
+  }, []);
 
   // Fetch invoice data if invoice payment
   useEffect(() => {
@@ -553,142 +571,181 @@ const CheckoutPage = () => {
               পেমেন্ট মেথড
             </h3>
             
-            <div className="grid grid-cols-2 gap-3 mb-5">
-              {paymentMethods.map((method) => (
-                <button
-                  key={method.id}
-                  onClick={() => setSelectedPayment(method.id)}
-                  className={`p-4 rounded-xl border-2 transition-all ${
-                    selectedPayment === method.id
-                      ? `${method.borderColor} ${method.bgColor} shadow-md`
-                      : "border-gray-100 hover:border-gray-200 bg-gray-50"
-                  }`}
-                >
-                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-r ${method.color} flex items-center justify-center mx-auto mb-3 shadow-md`}>
-                    <method.icon className="w-5 h-5 text-white" />
-                  </div>
-                  <div className="text-sm font-bengali font-semibold text-gray-900 text-center">{method.name}</div>
-                </button>
-              ))}
-            </div>
-
-            {/* Selected Payment Details */}
-            <AnimatePresence>
-              {selectedPayment && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="overflow-hidden"
-                >
-                  <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 mb-4">
-                    {selectedPayment !== "bank" ? (
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-bengali text-gray-600">এই নম্বরে টাকা পাঠান:</span>
-                        </div>
-                        <button
-                          onClick={() => copyNumber(paymentMethods.find(p => p.id === selectedPayment)?.number || "")}
-                          className="w-full flex items-center justify-between bg-white px-4 py-3 rounded-xl border-2 border-dashed border-gray-300 hover:border-red-300 transition-colors"
-                        >
-                          <span className="font-mono text-lg font-bold text-gray-900">
-                            {paymentMethods.find(p => p.id === selectedPayment)?.number}
-                          </span>
-                          <div className="flex items-center gap-2 text-red-600">
-                            <Copy className="w-4 h-4" />
-                            <span className="text-sm font-bengali">কপি</span>
-                          </div>
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                          <span className="text-sm text-gray-500 font-bengali">ব্যাংক:</span>
-                          <span className="font-semibold text-gray-900">Dutch Bangla Bank</span>
-                        </div>
-                        <div className="flex justify-between items-center py-2">
-                          <span className="text-sm text-gray-500 font-bengali">একাউন্ট নম্বর:</span>
-                          <span className="font-mono font-semibold text-gray-900">1234567890123</span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Payment Details Input */}
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-bengali text-gray-600 mb-2">
-                        যে নম্বর থেকে পাঠিয়েছেন
-                      </label>
-                      <Input
-                        placeholder="01XXXXXXXXX"
-                        value={senderNumber}
-                        onChange={(e) => setSenderNumber(e.target.value)}
-                        className="font-bengali rounded-xl border-gray-200 focus:border-red-300 focus:ring-red-200 h-12"
-                      />
-                    </div>
+            {loadingPayments ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="w-6 h-6 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : paymentMethods.length === 0 ? (
+              <div className="text-center py-8 text-gray-500 font-bengali">
+                কোনো পেমেন্ট মেথড সক্রিয় নেই। অ্যাডমিনের সাথে যোগাযোগ করুন।
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-2 gap-3 mb-5">
+                  {paymentMethods.map((method) => {
+                    const config = paymentMethodConfig[method.method] || paymentMethodConfig.bkash;
+                    const methodName = method.method === "bkash" ? "বিকাশ" 
+                      : method.method === "nagad" ? "নগদ" 
+                      : method.method === "rocket" ? "রকেট" 
+                      : method.method === "bank" ? "ব্যাংক ট্রান্সফার" 
+                      : method.method;
+                    const Icon = config.icon;
                     
-                    <div>
-                      <label className="block text-sm font-bengali text-gray-600 mb-2">
-                        ট্রানজেকশন আইডি (ঐচ্ছিক)
-                      </label>
-                      <Input
-                        placeholder="TrxID"
-                        value={transactionId}
-                        onChange={(e) => setTransactionId(e.target.value)}
-                        className="font-bengali rounded-xl border-gray-200 focus:border-red-300 focus:ring-red-200 h-12"
-                      />
-                    </div>
-
-                    {/* Screenshot Upload */}
-                    <div>
-                      <label className="block text-sm font-bengali text-gray-600 mb-2">
-                        পেমেন্ট স্ক্রিনশট (প্রমাণ)
-                      </label>
-                      
-                      {screenshotPreview ? (
-                        <div className="relative">
-                          <img 
-                            src={screenshotPreview} 
-                            alt="Payment proof" 
-                            className="w-full h-48 object-cover rounded-xl border-2 border-green-200"
-                          />
-                          <button
-                            onClick={removeScreenshot}
-                            className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-lg"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                          <div className="absolute bottom-2 left-2 bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bengali flex items-center gap-1">
-                            <Check className="w-3 h-3" />
-                            আপলোড রেডি
-                          </div>
+                    return (
+                      <button
+                        key={method.id}
+                        onClick={() => setSelectedPayment(method.method)}
+                        className={`p-4 rounded-xl border-2 transition-all ${
+                          selectedPayment === method.method
+                            ? `${config.borderColor} ${config.bgColor} shadow-md`
+                            : "border-gray-100 hover:border-gray-200 bg-gray-50"
+                        }`}
+                      >
+                        <div className={`w-10 h-10 rounded-xl bg-gradient-to-r ${config.color} flex items-center justify-center mx-auto mb-3 shadow-md`}>
+                          <Icon className="w-5 h-5 text-white" />
                         </div>
-                      ) : (
-                        <button
-                          onClick={() => fileInputRef.current?.click()}
-                          className="w-full h-32 border-2 border-dashed border-gray-300 rounded-xl hover:border-red-300 hover:bg-red-50 transition-colors flex flex-col items-center justify-center gap-2"
-                        >
-                          <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
-                            <Upload className="w-6 h-6 text-gray-400" />
-                          </div>
-                          <span className="text-sm font-bengali text-gray-500">স্ক্রিনশট আপলোড করুন</span>
-                          <span className="text-xs text-gray-400">PNG, JPG (সর্বোচ্চ ৫MB)</span>
-                        </button>
-                      )}
-                      
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*"
-                        onChange={handleFileSelect}
-                        className="hidden"
-                      />
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                        <div className="text-sm font-bengali font-semibold text-gray-900 text-center">{methodName}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Selected Payment Details */}
+                <AnimatePresence>
+                  {selectedPayment && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 mb-4">
+                        {(() => {
+                          const selectedMethod = paymentMethods.find(p => p.method === selectedPayment);
+                          if (!selectedMethod) return null;
+                          
+                          if (selectedPayment !== "bank") {
+                            return (
+                              <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm font-bengali text-gray-600">এই নম্বরে টাকা পাঠান:</span>
+                                </div>
+                                <button
+                                  onClick={() => copyNumber(selectedMethod.account_number)}
+                                  className="w-full flex items-center justify-between bg-white px-4 py-3 rounded-xl border-2 border-dashed border-gray-300 hover:border-red-300 transition-colors"
+                                >
+                                  <span className="font-mono text-lg font-bold text-gray-900">
+                                    {selectedMethod.account_number}
+                                  </span>
+                                  <div className="flex items-center gap-2 text-red-600">
+                                    <Copy className="w-4 h-4" />
+                                    <span className="text-sm font-bengali">কপি</span>
+                                  </div>
+                                </button>
+                              </div>
+                            );
+                          } else {
+                            return (
+                              <div className="space-y-2">
+                                {selectedMethod.account_name && (
+                                  <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                                    <span className="text-sm text-gray-500 font-bengali">ব্যাংক:</span>
+                                    <span className="font-semibold text-gray-900">{selectedMethod.account_name}</span>
+                                  </div>
+                                )}
+                                <div className="flex justify-between items-center py-2">
+                                  <span className="text-sm text-gray-500 font-bengali">একাউন্ট নম্বর:</span>
+                                  <button
+                                    onClick={() => copyNumber(selectedMethod.account_number)}
+                                    className="flex items-center gap-2"
+                                  >
+                                    <span className="font-mono font-semibold text-gray-900">{selectedMethod.account_number}</span>
+                                    <Copy className="w-4 h-4 text-red-500" />
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          }
+                        })()}
+                      </div>
+
+                      {/* Payment Details Input */}
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-bengali text-gray-600 mb-2">
+                            যে নম্বর থেকে পাঠিয়েছেন
+                          </label>
+                          <Input
+                            placeholder="01XXXXXXXXX"
+                            value={senderNumber}
+                            onChange={(e) => setSenderNumber(e.target.value)}
+                            className="font-bengali rounded-xl border-gray-200 focus:border-red-300 focus:ring-red-200 h-12"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-bengali text-gray-600 mb-2">
+                            ট্রানজেকশন আইডি (ঐচ্ছিক)
+                          </label>
+                          <Input
+                            placeholder="TrxID"
+                            value={transactionId}
+                            onChange={(e) => setTransactionId(e.target.value)}
+                            className="font-bengali rounded-xl border-gray-200 focus:border-red-300 focus:ring-red-200 h-12"
+                          />
+                        </div>
+
+                        {/* Screenshot Upload */}
+                        <div>
+                          <label className="block text-sm font-bengali text-gray-600 mb-2">
+                            পেমেন্ট স্ক্রিনশট (প্রমাণ)
+                          </label>
+                          
+                          {screenshotPreview ? (
+                            <div className="relative">
+                              <img 
+                                src={screenshotPreview} 
+                                alt="Payment proof" 
+                                className="w-full h-48 object-cover rounded-xl border-2 border-green-200"
+                              />
+                              <button
+                                onClick={removeScreenshot}
+                                className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-lg"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                              <div className="absolute bottom-2 left-2 bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bengali flex items-center gap-1">
+                                <Check className="w-3 h-3" />
+                                আপলোড রেডি
+                              </div>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => fileInputRef.current?.click()}
+                              className="w-full h-32 border-2 border-dashed border-gray-300 rounded-xl hover:border-red-300 hover:bg-red-50 transition-colors flex flex-col items-center justify-center gap-2"
+                            >
+                              <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
+                                <Upload className="w-6 h-6 text-gray-400" />
+                              </div>
+                              <span className="text-sm font-bengali text-gray-500">স্ক্রিনশট আপলোড করুন</span>
+                              <span className="text-xs text-gray-400">PNG, JPG (সর্বোচ্চ ৫MB)</span>
+                            </button>
+                          )}
+                          
+                          <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={handleFileSelect}
+                            className="hidden"
+                          />
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </>
+            )}
           </motion.div>
 
           {/* Submit Button */}

@@ -5,7 +5,7 @@ import {
   Package, Phone, User, CreditCard, ExternalLink,
   Users, FileImage, FileText, Trash2,
   Plus, Upload, X, Edit2, Loader2, Search, MessageCircle, Send,
-  LayoutDashboard
+  LayoutDashboard, UserPlus
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -172,6 +182,10 @@ const AdminDashboard = () => {
   const [selectedOrderChat, setSelectedOrderChat] = useState<Order | null>(null);
   const [newMessage, setNewMessage] = useState("");
   
+  // Delete confirmations
+  const [deleteOrderConfirm, setDeleteOrderConfirm] = useState<string | null>(null);
+  const [deleteUserConfirm, setDeleteUserConfirm] = useState<string | null>(null);
+  
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -306,6 +320,28 @@ const AdminDashboard = () => {
     if (!error) {
       toast({ title: "প্রগ্রেস আপডেট হয়েছে" });
       fetchOrders();
+    }
+  };
+
+  const deleteOrder = async (orderId: string) => {
+    // First delete related invoices
+    await supabase.from("invoices").delete().eq("order_id", orderId);
+    // Then delete related messages
+    await supabase.from("messages").delete().eq("order_id", orderId);
+    // Finally delete the order
+    const { error } = await supabase
+      .from("orders")
+      .delete()
+      .eq("id", orderId);
+
+    if (!error) {
+      toast({ title: "অর্ডার ডিলিট হয়েছে" });
+      setDeleteOrderConfirm(null);
+      setSelectedOrder(null);
+      fetchOrders();
+      fetchInvoices();
+    } else {
+      toast({ title: "সমস্যা হয়েছে", variant: "destructive" });
     }
   };
 
@@ -624,7 +660,7 @@ const AdminDashboard = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => deleteUser(userProfile.user_id)}
+                          onClick={() => setDeleteUserConfirm(userProfile.user_id)}
                           className="text-red-500 hover:text-red-600 hover:bg-red-50"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -973,10 +1009,18 @@ const AdminDashboard = () => {
                 <Button
                   onClick={() => updateOrderStatus(selectedOrder.id, "cancelled")}
                   variant="outline"
-                  className="text-red-600 border-red-200 hover:bg-red-50 font-bengali col-span-2"
+                  className="text-amber-600 border-amber-200 hover:bg-amber-50 font-bengali"
                   disabled={selectedOrder.status === "cancelled"}
                 >
                   বাতিল করুন
+                </Button>
+                <Button
+                  onClick={() => setDeleteOrderConfirm(selectedOrder.id)}
+                  variant="outline"
+                  className="text-red-600 border-red-200 hover:bg-red-50 font-bengali"
+                >
+                  <Trash2 className="w-4 h-4 mr-1" />
+                  ডিলিট
                 </Button>
               </div>
             </div>
@@ -1097,6 +1141,53 @@ const AdminDashboard = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Order Confirmation */}
+      <AlertDialog open={!!deleteOrderConfirm} onOpenChange={() => setDeleteOrderConfirm(null)}>
+        <AlertDialogContent className="bg-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-bengali">অর্ডার ডিলিট করবেন?</AlertDialogTitle>
+            <AlertDialogDescription className="font-bengali">
+              এই অর্ডার এবং সম্পর্কিত সমস্ত ইনভয়েস ও মেসেজ স্থায়ীভাবে ডিলিট হয়ে যাবে। এই কাজটি পূর্বাবস্থায় ফেরানো যাবে না।
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="font-bengali">বাতিল</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteOrderConfirm && deleteOrder(deleteOrderConfirm)}
+              className="bg-red-600 hover:bg-red-700 font-bengali"
+            >
+              ডিলিট করুন
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete User Confirmation */}
+      <AlertDialog open={!!deleteUserConfirm} onOpenChange={() => setDeleteUserConfirm(null)}>
+        <AlertDialogContent className="bg-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-bengali">ইউজার ডিলিট করবেন?</AlertDialogTitle>
+            <AlertDialogDescription className="font-bengali">
+              এই ইউজারের প্রোফাইল এবং রোল স্থায়ীভাবে ডিলিট হয়ে যাবে। এই কাজটি পূর্বাবস্থায় ফেরানো যাবে না।
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="font-bengali">বাতিল</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteUserConfirm) {
+                  deleteUser(deleteUserConfirm);
+                  setDeleteUserConfirm(null);
+                }
+              }}
+              className="bg-red-600 hover:bg-red-700 font-bengali"
+            >
+              ডিলিট করুন
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

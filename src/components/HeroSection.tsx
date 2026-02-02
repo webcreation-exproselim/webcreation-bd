@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { ParticleNetwork } from "./ParticleNetwork";
 import { ConsultationModal } from "./ConsultationModal";
+import { EditableText } from "./EditableText";
 import heroProfessional from "@/assets/hero-professional.png";
 import { useSiteContent } from "@/hooks/useSiteContent";
 
@@ -72,22 +73,51 @@ export function HeroSection() {
             {/* Badge */}
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 mb-6">
               <span className="text-orange-500">🚀</span>
-              <span className="text-white font-bengali text-sm font-medium">{content.badge_text}</span>
+              <EditableText 
+                page="home" 
+                section="hero" 
+                contentKey="badge_text"
+                value={content.badge_text}
+                className="text-white font-bengali text-sm font-medium"
+              />
               <span className="text-orange-500">🚀</span>
             </div>
 
             {/* Main Headline */}
             <h1 className="font-bengali text-4xl sm:text-5xl md:text-6xl lg:text-6xl xl:text-7xl font-bold mb-6 leading-[1.1] text-white drop-shadow-lg">
-              {content.title_line1}
+              <EditableText 
+                page="home" 
+                section="hero" 
+                contentKey="title_line1"
+                value={content.title_line1}
+              />
               <br />
-              <span className="text-gradient-orange">{content.title_line2}</span>
+              <span className="text-gradient-orange">
+                <EditableText 
+                  page="home" 
+                  section="hero" 
+                  contentKey="title_line2"
+                  value={content.title_line2}
+                />
+              </span>
               <br />
-              {content.title_line3}
+              <EditableText 
+                page="home" 
+                section="hero" 
+                contentKey="title_line3"
+                value={content.title_line3}
+              />
             </h1>
 
             {/* Sub-headline */}
             <p className="text-base sm:text-lg md:text-xl text-white/90 max-w-lg mb-8 font-bengali font-medium leading-relaxed">
-              {content.subtitle}
+              <EditableText 
+                page="home" 
+                section="hero" 
+                contentKey="subtitle"
+                value={content.subtitle}
+                multiline
+              />
             </p>
 
             {/* Primary CTA */}
@@ -100,7 +130,12 @@ export function HeroSection() {
                 onClick={() => setIsConsultationOpen(true)}
                 className="bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 text-white font-bengali font-bold text-base sm:text-lg px-8 sm:px-10 py-5 sm:py-6 rounded-lg hover:from-orange-300 hover:via-orange-400 hover:to-orange-500 transition-all duration-300 shadow-xl shadow-orange-500/30"
               >
-                {content.button_text}
+                <EditableText 
+                  page="home" 
+                  section="hero" 
+                  contentKey="button_text"
+                  value={content.button_text}
+                />
               </Button>
             </motion.div>
           </motion.div>

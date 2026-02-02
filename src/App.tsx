@@ -4,7 +4,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { CartProvider } from "@/context/CartContext";
+import { EditModeProvider } from "@/context/EditModeContext";
 import ScrollToTop from "@/components/ScrollToTop";
+import { EditModeToggle } from "@/components/EditModeToggle";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import FacebookAdsPage from "./pages/FacebookAdsPage";
@@ -24,29 +26,32 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <CartProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <ScrollToTop />
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/facebook-ads" element={<FacebookAdsPage />} />
-            <Route path="/web-development" element={<WebDevelopmentPage />} />
-            <Route path="/graphics-design" element={<GraphicsDesignPage />} />
-            <Route path="/video-editing" element={<VideoEditingPage />} />
-            <Route path="/motion-graphics" element={<MotionGraphicsPage />} />
-            <Route path="/landing-page" element={<LandingPageDesignPage />} />
-            <Route path="/checkout" element={<CheckoutPage />} />
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/admin-login" element={<AdminLoginPage />} />
-            <Route path="/auth" element={<AuthPage />} />
-            <Route path="/dashboard" element={<ClientDashboard />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+      <EditModeProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <ScrollToTop />
+            <EditModeToggle />
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/facebook-ads" element={<FacebookAdsPage />} />
+              <Route path="/web-development" element={<WebDevelopmentPage />} />
+              <Route path="/graphics-design" element={<GraphicsDesignPage />} />
+              <Route path="/video-editing" element={<VideoEditingPage />} />
+              <Route path="/motion-graphics" element={<MotionGraphicsPage />} />
+              <Route path="/landing-page" element={<LandingPageDesignPage />} />
+              <Route path="/checkout" element={<CheckoutPage />} />
+              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/admin-login" element={<AdminLoginPage />} />
+              <Route path="/auth" element={<AuthPage />} />
+              <Route path="/dashboard" element={<ClientDashboard />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </EditModeProvider>
     </CartProvider>
   </QueryClientProvider>
 );

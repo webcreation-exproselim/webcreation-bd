@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { useMemo } from "react";
 import logo from "@/assets/logo.png";
 import { useSiteContent } from "@/hooks/useSiteContent";
+import { EditableText } from "./EditableText";
 
 const services = [
   { name: "ওয়েব ডেভেলপমেন্ট", href: "/web-development" },
@@ -76,7 +77,7 @@ export function Footer() {
             </div>
             
             <p className="font-bengali text-white/60 text-sm leading-relaxed mb-6">
-              {content.company_description}
+              <EditableText page="home" section="footer" contentKey="company_description" value={content.company_description} multiline />
             </p>
 
             <div className="flex items-center gap-3">
@@ -181,7 +182,7 @@ export function Footer() {
                 <div>
                   <p className="font-bengali text-white/50 text-xs mb-1">WhatsApp / কল</p>
                   <p className="font-bengali text-white text-sm group-hover:text-green-400 transition-colors">
-                    {content.phone_number}
+                    <EditableText page="home" section="footer" contentKey="phone_number" value={content.phone_number} />
                   </p>
                 </div>
               </a>
@@ -197,7 +198,7 @@ export function Footer() {
                 <div>
                   <p className="font-bengali text-white/50 text-xs mb-1">ইমেইল</p>
                   <p className="font-bengali text-white text-sm group-hover:text-orange-400 transition-colors break-all">
-                    {content.email}
+                    <EditableText page="home" section="footer" contentKey="email" value={content.email} />
                   </p>
                 </div>
               </a>
@@ -215,7 +216,7 @@ export function Footer() {
                 <div>
                   <p className="font-bengali text-white/50 text-xs mb-1">ফেসবুক পেজ</p>
                   <p className="font-bengali text-white text-sm group-hover:text-blue-400 transition-colors">
-                    {content.facebook_page}
+                    <EditableText page="home" section="footer" contentKey="facebook_page" value={content.facebook_page} />
                   </p>
                 </div>
               </a>
@@ -228,7 +229,7 @@ export function Footer() {
                 <div>
                   <p className="font-bengali text-white/50 text-xs mb-1">ঠিকানা</p>
                   <p className="font-bengali text-white text-sm">
-                    {content.address}
+                    <EditableText page="home" section="footer" contentKey="address" value={content.address} />
                   </p>
                 </div>
               </div>
@@ -243,7 +244,7 @@ export function Footer() {
           
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="font-bengali text-white/50 text-sm text-center sm:text-left">
-              {content.copyright_text}
+              <EditableText page="home" section="footer" contentKey="copyright_text" value={content.copyright_text} />
             </p>
             
             {/* Scroll to Top Button */}

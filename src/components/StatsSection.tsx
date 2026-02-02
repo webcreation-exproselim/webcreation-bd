@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Calendar, FolderCheck, Users, UserCheck } from "lucide-react";
 import { useMemo } from "react";
 import { useSiteContent } from "@/hooks/useSiteContent";
+import { EditableText } from "./EditableText";
 
 const defaultStats = [
   {
@@ -74,10 +75,14 @@ export const StatsSection = () => {
           className="text-center mb-12 md:mb-16"
         >
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bengali font-bold text-white">
-            {content.section_title} <span className="text-gradient-brand">{content.section_title_highlight}</span> {content.section_title_end}
+            <EditableText page="home" section="stats" contentKey="section_title" value={content.section_title} />{" "}
+            <span className="text-gradient-brand">
+              <EditableText page="home" section="stats" contentKey="section_title_highlight" value={content.section_title_highlight} />
+            </span>{" "}
+            <EditableText page="home" section="stats" contentKey="section_title_end" value={content.section_title_end} />
           </h2>
           <p className="mt-4 text-muted-foreground text-sm sm:text-base md:text-lg max-w-2xl mx-auto font-bengali">
-            {content.section_subtitle}
+            <EditableText page="home" section="stats" contentKey="section_subtitle" value={content.section_subtitle} multiline />
           </p>
         </motion.div>
         {/* Stats Grid */}
@@ -112,12 +117,22 @@ export const StatsSection = () => {
 
                   {/* Value */}
                   <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gradient-brand font-bengali mb-1 sm:mb-2">
-                    {content[stat.valueKey] || stat.defaultValue}
+                    <EditableText 
+                      page="home" 
+                      section="stats" 
+                      contentKey={stat.valueKey}
+                      value={content[stat.valueKey] || stat.defaultValue}
+                    />
                   </h3>
 
                   {/* Label */}
                   <p className="text-xs sm:text-sm md:text-base text-white/80 font-bengali font-medium">
-                    {content[stat.labelKey] || stat.defaultLabel}
+                    <EditableText 
+                      page="home" 
+                      section="stats" 
+                      contentKey={stat.labelKey}
+                      value={content[stat.labelKey] || stat.defaultLabel}
+                    />
                   </p>
 
                   {/* Corner accent */}

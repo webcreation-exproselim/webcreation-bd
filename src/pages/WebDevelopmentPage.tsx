@@ -12,6 +12,9 @@ import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AddToCartButton } from "@/components/AddToCartButton";
 import { useDynamicPortfolio } from "@/hooks/useDynamicPortfolio";
+import { useMemo } from "react";
+import { useSiteContent } from "@/hooks/useSiteContent";
+import { EditableText } from "@/components/EditableText";
 
 // Fallback Portfolio Items
 const fallbackPortfolioItems = [
@@ -322,6 +325,15 @@ const InfiniteSlider = ({
 const WebDevelopmentPage = () => {
   const { portfolioItems, loading: portfolioLoading } = useDynamicPortfolio("web-development", fallbackPortfolioItems);
   
+  const fallbackContent = useMemo(() => ({
+    badge_text: "মডার্ন ওয়েব ডেভেলপমেন্ট",
+    hero_title_start: "প্রফেশনাল",
+    hero_title_highlight: "ওয়েবসাইট ডেভেলপমেন্ট",
+    hero_subtitle: "আপনার ব্যবসার জন্য কাস্টম ওয়েবসাইট তৈরি করি যা মোবাইল ফ্রেন্ডলি, ফাস্ট এবং SEO অপটিমাইজড। React, Next.js সহ আধুনিক টেকনোলজি ব্যবহার করে স্কেলেবল সল্যুশন ডেভেলপ করি।",
+  }), []);
+  
+  const { content } = useSiteContent("web-development", "hero", fallbackContent);
+  
   return (
     <div className="min-h-screen bg-black">
       <Header />
@@ -351,19 +363,20 @@ const WebDevelopmentPage = () => {
               {/* Badge */}
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-400/30 mb-6">
                 <Code className="w-5 h-5 text-green-400" />
-                <span className="text-green-300 font-bengali font-medium">মডার্ন ওয়েব ডেভেলপমেন্ট</span>
+                <span className="text-green-300 font-bengali font-medium">
+                  <EditableText page="web-development" section="hero" contentKey="badge_text" value={content.badge_text} />
+                </span>
               </div>
               
               <h1 className="text-4xl sm:text-5xl md:text-6xl font-bengali font-bold text-white mb-6 leading-tight">
-                প্রফেশনাল{" "}
+                <EditableText page="web-development" section="hero" contentKey="hero_title_start" value={content.hero_title_start} />{" "}
                 <span className="bg-gradient-to-r from-green-400 via-emerald-400 to-green-500 bg-clip-text text-transparent">
-                  ওয়েবসাইট ডেভেলপমেন্ট
+                  <EditableText page="web-development" section="hero" contentKey="hero_title_highlight" value={content.hero_title_highlight} />
                 </span>
               </h1>
               
               <p className="text-lg sm:text-xl text-green-100/80 font-bengali mb-8 leading-relaxed">
-                আপনার ব্যবসার জন্য কাস্টম ওয়েবসাইট তৈরি করি যা মোবাইল ফ্রেন্ডলি, ফাস্ট এবং SEO অপটিমাইজড। 
-                React, Next.js সহ আধুনিক টেকনোলজি ব্যবহার করে স্কেলেবল সল্যুশন ডেভেলপ করি।
+                <EditableText page="web-development" section="hero" contentKey="hero_subtitle" value={content.hero_subtitle} multiline />
               </p>
               
               {/* Quick Features */}

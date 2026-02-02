@@ -9,10 +9,12 @@ import { Footer } from "@/components/Footer";
 import { Chatbot } from "@/components/Chatbot";
 import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { VideoPlayerModal, getRandomDemoVideo } from "@/components/VideoPlayerModal";
 import { AddToCartButton } from "@/components/AddToCartButton";
 import { useDynamicPortfolio } from "@/hooks/useDynamicPortfolio";
+import { useSiteContent } from "@/hooks/useSiteContent";
+import { EditableText } from "@/components/EditableText";
 
 // Fallback Portfolio Items
 const fallbackPortfolioItems = [
@@ -319,6 +321,15 @@ const MotionGraphicsPage = () => {
   const [selectedItem, setSelectedItem] = useState<typeof fallbackPortfolioItems[0] | null>(null);
   const [isVideoOpen, setIsVideoOpen] = useState(false);
   const [videoUrl, setVideoUrl] = useState("");
+  
+  const fallbackContent = useMemo(() => ({
+    badge_text: "ক্রিয়েটিভ মোশন স্টুডিও",
+    hero_title_start: "আই-ক্যাচিং",
+    hero_title_highlight: "মোশন গ্রাফিক্স",
+    hero_subtitle: "ক্রিয়েটিভ মোশন গ্রাফিক্স যা আপনার মেসেজকে জীবন্ত করে তোলে। অ্যানিমেটেড লোগো, এক্সপ্লেইনার ভিডিও, কিনেটিক টাইপোগ্রাফি থেকে শুরু করে 3D অ্যানিমেশন পর্যন্ত সব ধরনের মোশন ওয়ার্ক করি।",
+  }), []);
+  
+  const { content } = useSiteContent("motion-graphics", "hero", fallbackContent);
 
   const handlePlayVideo = (item: typeof fallbackPortfolioItems[0]) => {
     setSelectedItem(item);
@@ -355,19 +366,20 @@ const MotionGraphicsPage = () => {
               {/* Badge */}
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-yellow-500/20 to-amber-500/20 border border-yellow-400/30 mb-6">
                 <Activity className="w-5 h-5 text-yellow-400" />
-                <span className="text-yellow-300 font-bengali font-medium">ক্রিয়েটিভ মোশন স্টুডিও</span>
+                <span className="text-yellow-300 font-bengali font-medium">
+                  <EditableText page="motion-graphics" section="hero" contentKey="badge_text" value={content.badge_text} />
+                </span>
               </div>
               
               <h1 className="text-4xl sm:text-5xl md:text-6xl font-bengali font-bold text-white mb-6 leading-tight">
-                আই-ক্যাচিং{" "}
+                <EditableText page="motion-graphics" section="hero" contentKey="hero_title_start" value={content.hero_title_start} />{" "}
                 <span className="bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500 bg-clip-text text-transparent">
-                  মোশন গ্রাফিক্স
+                  <EditableText page="motion-graphics" section="hero" contentKey="hero_title_highlight" value={content.hero_title_highlight} />
                 </span>
               </h1>
               
               <p className="text-lg sm:text-xl text-yellow-100/80 font-bengali mb-8 leading-relaxed">
-                ক্রিয়েটিভ মোশন গ্রাফিক্স যা আপনার মেসেজকে জীবন্ত করে তোলে। অ্যানিমেটেড লোগো, এক্সপ্লেইনার ভিডিও, 
-                কিনেটিক টাইপোগ্রাফি থেকে শুরু করে 3D অ্যানিমেশন পর্যন্ত সব ধরনের মোশন ওয়ার্ক করি।
+                <EditableText page="motion-graphics" section="hero" contentKey="hero_subtitle" value={content.hero_subtitle} multiline />
               </p>
               
               {/* Quick Features */}

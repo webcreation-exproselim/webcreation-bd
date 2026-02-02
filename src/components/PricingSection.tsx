@@ -1,10 +1,12 @@
 import { motion } from "framer-motion";
 import { Code, Palette, Video, Activity, Layout, Check, Star, Zap, Crown, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "@/context/CartContext";
 import { useToast } from "@/hooks/use-toast";
+import { useSiteContent } from "@/hooks/useSiteContent";
+import { EditableText } from "./EditableText";
 
 type ServicePricing = {
   id: string;
@@ -567,6 +569,19 @@ export const PricingSection = () => {
   const navigate = useNavigate();
   const { addItem, isInCart } = useCart();
   const { toast } = useToast();
+  
+  const fallbackContent = useMemo(() => ({
+    badge_text: "সাশ্রয়ী মূল্যে সেরা সার্ভিস",
+    section_title_start: "আমাদের",
+    section_title_highlight: "প্রাইসিং",
+    section_title_end: "প্ল্যান",
+    section_subtitle: "আপনার বাজেট অনুযায়ী সেরা প্ল্যান বেছে নিন",
+    custom_title: "কাস্টম প্যাকেজ দরকার?",
+    custom_description: "আপনার প্রয়োজন অনুযায়ী কাস্টম প্যাকেজ তৈরি করতে আমাদের সাথে যোগাযোগ করুন",
+    custom_button: "যোগাযোগ করুন 01332052874",
+  }), []);
+  
+  const { content } = useSiteContent("home", "pricing", fallbackContent);
 
   const handleOrder = (plan: PricingPlan, serviceId: string, serviceLabel: string) => {
     const itemId = `${serviceId}-${plan.name}`;
@@ -611,15 +626,19 @@ export const PricingSection = () => {
           >
             <span className="text-yellow-400">💰</span>
             <span className="text-sm sm:text-base text-white font-bengali font-medium">
-              সাশ্রয়ী মূল্যে সেরা সার্ভিস
+              <EditableText page="home" section="pricing" contentKey="badge_text" value={content.badge_text} />
             </span>
           </motion.div>
 
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bengali font-bold text-white mb-4">
-            আমাদের <span className="text-gradient-gold">প্রাইসিং</span> প্ল্যান
+            <EditableText page="home" section="pricing" contentKey="section_title_start" value={content.section_title_start} />{" "}
+            <span className="text-gradient-gold">
+              <EditableText page="home" section="pricing" contentKey="section_title_highlight" value={content.section_title_highlight} />
+            </span>{" "}
+            <EditableText page="home" section="pricing" contentKey="section_title_end" value={content.section_title_end} />
           </h2>
           <p className="text-muted-foreground text-sm sm:text-base md:text-lg max-w-2xl mx-auto font-bengali">
-            আপনার বাজেট অনুযায়ী সেরা প্ল্যান বেছে নিন
+            <EditableText page="home" section="pricing" contentKey="section_subtitle" value={content.section_subtitle} multiline />
           </p>
         </motion.div>
 
@@ -684,17 +703,17 @@ export const PricingSection = () => {
         >
           <div className="inline-block p-6 sm:p-8 rounded-2xl bg-gradient-to-r from-yellow-400/10 to-red-500/10 border border-yellow-400/30">
             <h3 className="text-xl sm:text-2xl font-bengali font-bold text-white mb-3">
-              কাস্টম প্যাকেজ দরকার?
+              <EditableText page="home" section="pricing" contentKey="custom_title" value={content.custom_title} />
             </h3>
             <p className="text-white/70 font-bengali text-sm sm:text-base mb-4 max-w-md">
-              আপনার প্রয়োজন অনুযায়ী কাস্টম প্যাকেজ তৈরি করতে আমাদের সাথে যোগাযোগ করুন
+              <EditableText page="home" section="pricing" contentKey="custom_description" value={content.custom_description} multiline />
             </p>
             <Button 
               asChild
               className="bg-gradient-to-r from-yellow-400 to-red-500 text-black font-bengali hover:shadow-lg hover:shadow-yellow-400/30 transition-all duration-300"
             >
               <a href="https://wa.me/8801332052874" target="_blank" rel="noopener noreferrer">
-                যোগাযোগ করুন 01332052874
+                <EditableText page="home" section="pricing" contentKey="custom_button" value={content.custom_button} />
               </a>
             </Button>
           </div>

@@ -9,10 +9,12 @@ import { Footer } from "@/components/Footer";
 import { Chatbot } from "@/components/Chatbot";
 import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { VideoPlayerModal, getRandomDemoVideo } from "@/components/VideoPlayerModal";
 import { AddToCartButton } from "@/components/AddToCartButton";
 import { useDynamicPortfolio } from "@/hooks/useDynamicPortfolio";
+import { useSiteContent } from "@/hooks/useSiteContent";
+import { EditableText } from "@/components/EditableText";
 
 // Fallback Portfolio Items
 const fallbackPortfolioItems = [
@@ -319,6 +321,15 @@ const VideoEditingPage = () => {
   const [selectedItem, setSelectedItem] = useState<typeof fallbackPortfolioItems[0] | null>(null);
   const [isVideoOpen, setIsVideoOpen] = useState(false);
   const [videoUrl, setVideoUrl] = useState("");
+  
+  const fallbackContent = useMemo(() => ({
+    badge_text: "প্রফেশনাল ভিডিও এডিটিং",
+    hero_title_start: "সিনেমাটিক",
+    hero_title_highlight: "ভিডিও এডিটিং",
+    hero_subtitle: "প্রফেশনাল ভিডিও এডিটিং সার্ভিস যা আপনার কন্টেন্টকে পরবর্তী স্তরে নিয়ে যাবে। YouTube ভিডিও থেকে শুরু করে কর্পোরেট প্রেজেন্টেশন, সোশ্যাল মিডিয়া রিলস - সব ধরনের ভিডিও এডিট করি।",
+  }), []);
+  
+  const { content } = useSiteContent("video-editing", "hero", fallbackContent);
 
   const handlePlayVideo = (item: typeof fallbackPortfolioItems[0]) => {
     setSelectedItem(item);
@@ -355,19 +366,20 @@ const VideoEditingPage = () => {
               {/* Badge */}
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-red-500/20 to-orange-500/20 border border-red-400/30 mb-6">
                 <Video className="w-5 h-5 text-red-400" />
-                <span className="text-red-300 font-bengali font-medium">প্রফেশনাল ভিডিও এডিটিং</span>
+                <span className="text-red-300 font-bengali font-medium">
+                  <EditableText page="video-editing" section="hero" contentKey="badge_text" value={content.badge_text} />
+                </span>
               </div>
               
               <h1 className="text-4xl sm:text-5xl md:text-6xl font-bengali font-bold text-white mb-6 leading-tight">
-                সিনেমাটিক{" "}
+                <EditableText page="video-editing" section="hero" contentKey="hero_title_start" value={content.hero_title_start} />{" "}
                 <span className="bg-gradient-to-r from-red-400 via-orange-400 to-red-500 bg-clip-text text-transparent">
-                  ভিডিও এডিটিং
+                  <EditableText page="video-editing" section="hero" contentKey="hero_title_highlight" value={content.hero_title_highlight} />
                 </span>
               </h1>
               
               <p className="text-lg sm:text-xl text-red-100/80 font-bengali mb-8 leading-relaxed">
-                প্রফেশনাল ভিডিও এডিটিং সার্ভিস যা আপনার কন্টেন্টকে পরবর্তী স্তরে নিয়ে যাবে। 
-                YouTube ভিডিও থেকে শুরু করে কর্পোরেট প্রেজেন্টেশন, সোশ্যাল মিডিয়া রিলস - সব ধরনের ভিডিও এডিট করি।
+                <EditableText page="video-editing" section="hero" contentKey="hero_subtitle" value={content.hero_subtitle} multiline />
               </p>
               
               {/* Quick Features */}

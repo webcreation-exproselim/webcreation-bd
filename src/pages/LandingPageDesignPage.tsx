@@ -12,6 +12,9 @@ import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AddToCartButton } from "@/components/AddToCartButton";
 import { useDynamicPortfolio } from "@/hooks/useDynamicPortfolio";
+import { useMemo } from "react";
+import { useSiteContent } from "@/hooks/useSiteContent";
+import { EditableText } from "@/components/EditableText";
 
 // Fallback Portfolio Items
 const fallbackPortfolioItems = [
@@ -322,6 +325,15 @@ const InfiniteSlider = ({
 const LandingPageDesignPage = () => {
   const { portfolioItems, loading: portfolioLoading } = useDynamicPortfolio("landing-page", fallbackPortfolioItems);
   
+  const fallbackContent = useMemo(() => ({
+    badge_text: "কনভার্সন এক্সপার্ট",
+    hero_title_start: "হাই-কনভার্টিং",
+    hero_title_highlight: "ল্যান্ডিং পেজ",
+    hero_subtitle: "কনভার্সন অপটিমাইজড ল্যান্ডিং পেজ যা আপনার ভিজিটরদের কাস্টমারে রূপান্তর করবে। প্রফেশনাল ডিজাইন, ফাস্ট লোডিং এবং মোবাইল ফ্রেন্ডলি ল্যান্ডিং পেজ তৈরি করি।",
+  }), []);
+  
+  const { content } = useSiteContent("landing-page", "hero", fallbackContent);
+  
   return (
     <div className="min-h-screen bg-black">
       <Header />
@@ -351,19 +363,20 @@ const LandingPageDesignPage = () => {
               {/* Badge */}
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-teal-500/20 to-cyan-500/20 border border-teal-400/30 mb-6">
                 <Layout className="w-5 h-5 text-teal-400" />
-                <span className="text-teal-300 font-bengali font-medium">কনভার্সন এক্সপার্ট</span>
+                <span className="text-teal-300 font-bengali font-medium">
+                  <EditableText page="landing-page" section="hero" contentKey="badge_text" value={content.badge_text} />
+                </span>
               </div>
               
               <h1 className="text-4xl sm:text-5xl md:text-6xl font-bengali font-bold text-white mb-6 leading-tight">
-                হাই-কনভার্টিং{" "}
+                <EditableText page="landing-page" section="hero" contentKey="hero_title_start" value={content.hero_title_start} />{" "}
                 <span className="bg-gradient-to-r from-teal-400 via-cyan-400 to-teal-500 bg-clip-text text-transparent">
-                  ল্যান্ডিং পেজ
+                  <EditableText page="landing-page" section="hero" contentKey="hero_title_highlight" value={content.hero_title_highlight} />
                 </span>
               </h1>
               
               <p className="text-lg sm:text-xl text-teal-100/80 font-bengali mb-8 leading-relaxed">
-                কনভার্সন অপটিমাইজড ল্যান্ডিং পেজ যা আপনার ভিজিটরদের কাস্টমারে রূপান্তর করবে। 
-                প্রফেশনাল ডিজাইন, ফাস্ট লোডিং এবং মোবাইল ফ্রেন্ডলি ল্যান্ডিং পেজ তৈরি করি।
+                <EditableText page="landing-page" section="hero" contentKey="hero_subtitle" value={content.hero_subtitle} multiline />
               </p>
               
               {/* Quick Features */}

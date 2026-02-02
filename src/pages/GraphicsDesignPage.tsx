@@ -10,13 +10,15 @@ import { Footer } from "@/components/Footer";
 import { Chatbot } from "@/components/Chatbot";
 import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
 } from "@/components/ui/dialog";
 import { AddToCartButton } from "@/components/AddToCartButton";
 import { supabase } from "@/integrations/supabase/client";
+import { useSiteContent } from "@/hooks/useSiteContent";
+import { EditableText } from "@/components/EditableText";
 
 // Fallback Portfolio Items (used when database is empty)
 const fallbackPortfolioItems = [
@@ -331,6 +333,15 @@ const GraphicsDesignPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>(fallbackPortfolioItems);
   const [loadingPortfolio, setLoadingPortfolio] = useState(true);
+  
+  const fallbackContent = useMemo(() => ({
+    badge_text: "ক্রিয়েটিভ ডিজাইন এজেন্সি",
+    hero_title_start: "গ্রাফিক্স ডিজাইন দিয়ে",
+    hero_title_highlight: "ব্র্যান্ড বিল্ড করুন",
+    hero_subtitle: "প্রফেশনাল গ্রাফিক্স ডিজাইন সার্ভিস যা আপনার ব্র্যান্ড আইডেন্টিটি তৈরি করে।",
+  }), []);
+  
+  const { content } = useSiteContent("graphics-design", "hero", fallbackContent);
 
   // Fetch portfolio items from database
   useEffect(() => {
@@ -389,19 +400,20 @@ const GraphicsDesignPage = () => {
               {/* Badge */}
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-400/30 mb-6">
                 <Palette className="w-5 h-5 text-purple-400" />
-                <span className="text-purple-300 font-bengali font-medium">ক্রিয়েটিভ ডিজাইন এজেন্সি</span>
+                <span className="text-purple-300 font-bengali font-medium">
+                  <EditableText page="graphics-design" section="hero" contentKey="badge_text" value={content.badge_text} />
+                </span>
               </div>
               
               <h1 className="text-4xl sm:text-5xl md:text-6xl font-bengali font-bold text-white mb-6 leading-tight">
-                গ্রাফিক্স ডিজাইন দিয়ে{" "}
+                <EditableText page="graphics-design" section="hero" contentKey="hero_title_start" value={content.hero_title_start} />{" "}
                 <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-purple-500 bg-clip-text text-transparent">
-                  ব্র্যান্ড বিল্ড করুন
+                  <EditableText page="graphics-design" section="hero" contentKey="hero_title_highlight" value={content.hero_title_highlight} />
                 </span>
               </h1>
               
               <p className="text-lg sm:text-xl text-purple-100/80 font-bengali mb-8 leading-relaxed">
-                প্রফেশনাল গ্রাফিক্স ডিজাইন সার্ভিস যা আপনার ব্র্যান্ড আইডেন্টিটি তৈরি করে। 
-                লোগো থেকে শুরু করে সোশ্যাল মিডিয়া পোস্ট, ব্যানার, ব্রোশিওর - সবকিছু আধুনিক ও আকর্ষণীয়ভাবে ডিজাইন করি।
+                <EditableText page="graphics-design" section="hero" contentKey="hero_subtitle" value={content.hero_subtitle} multiline />
               </p>
               
               {/* Quick Features */}

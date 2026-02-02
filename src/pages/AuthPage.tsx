@@ -15,12 +15,15 @@ export default function AuthPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   // Form states
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
 
@@ -42,6 +45,14 @@ export default function AuthPage() {
 
   // Check if already logged in
   useEffect(() => {
+    // Detect password recovery flow from URL hash
+    // Supabase recovery links typically arrive with a hash like: #access_token=...&type=recovery
+    const hash = window.location.hash;
+    if (hash && hash.includes("type=recovery")) {
+      setIsPasswordRecovery(true);
+      setIsLogin(true);
+    }
+
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
@@ -61,6 +72,94 @@ export default function AuthPage() {
 
     return () => subscription.unsubscribe();
   }, [navigate]);
+
+  const handleSendResetEmail = async () => {
+    if (!email) {
+      toast({
+        title: "ইমেইল দিন",
+        description: "পাসওয়ার্ড রিসেট লিংক পাঠাতে ইমেইল প্রয়োজন",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth`,
+      });
+      if (error) {
+        toast({
+          title: "ত্রুটি",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+      toast({
+        title: "লিংক পাঠানো হয়েছে",
+        description: "ইমেইল চেক করুন—পাসওয়ার্ড রিসেট লিংক পাঠানো হয়েছে",
+      });
+    } catch {
+      toast({
+        title: "ত্রুটি",
+        description: "কিছু ভুল হয়েছে, আবার চেষ্টা করুন",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword.length < 6) {
+      toast({
+        title: "পাসওয়ার্ড দুর্বল",
+        description: "কমপক্ষে ৬ অক্ষরের পাসওয়ার্ড দিন",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast({
+        title: "মিলছে না",
+        description: "দুইবার একই পাসওয়ার্ড দিন",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) {
+        toast({
+          title: "ত্রুটি",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+      toast({
+        title: "সফল!",
+        description: "পাসওয়ার্ড আপডেট হয়েছে—এখন লগইন করুন",
+      });
+      // Clear recovery hash and state
+      window.location.hash = "";
+      setIsPasswordRecovery(false);
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch {
+      toast({
+        title: "ত্রুটি",
+        description: "কিছু ভুল হয়েছে, আবার চেষ্টা করুন",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -250,8 +349,8 @@ export default function AuthPage() {
             </div>
           </div>
 
-          {/* Email Form */}
-          <form onSubmit={handleEmailAuth} className="space-y-4">
+           {/* Email Form */}
+           <form onSubmit={isPasswordRecovery ? handleUpdatePassword : handleEmailAuth} className="space-y-4">
             {!isLogin && (
               <>
                 <div>
@@ -311,15 +410,19 @@ export default function AuthPage() {
 
             <div>
               <Label htmlFor="password" className="text-white/80 font-bengali">
-                পাসওয়ার্ড
+                 {isPasswordRecovery ? "নতুন পাসওয়ার্ড" : "পাসওয়ার্ড"}
               </Label>
               <div className="relative mt-1">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                   value={isPasswordRecovery ? newPassword : password}
+                   onChange={(e) =>
+                     isPasswordRecovery
+                       ? setNewPassword(e.target.value)
+                       : setPassword(e.target.value)
+                   }
                   placeholder="••••••••"
                   className="pl-10 pr-10 bg-white/5 border-white/10 text-white placeholder:text-white/40"
                   required
@@ -335,6 +438,27 @@ export default function AuthPage() {
               </div>
             </div>
 
+             {isPasswordRecovery && (
+               <div>
+                 <Label htmlFor="confirmPassword" className="text-white/80 font-bengali">
+                   পাসওয়ার্ড নিশ্চিত করুন
+                 </Label>
+                 <div className="relative mt-1">
+                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+                   <Input
+                     id="confirmPassword"
+                     type={showPassword ? "text" : "password"}
+                     value={confirmPassword}
+                     onChange={(e) => setConfirmPassword(e.target.value)}
+                     placeholder="••••••••"
+                     className="pl-10 pr-10 bg-white/5 border-white/10 text-white placeholder:text-white/40"
+                     required
+                     minLength={6}
+                   />
+                 </div>
+               </div>
+             )}
+
             <Button
               type="submit"
               disabled={loading}
@@ -342,22 +466,36 @@ export default function AuthPage() {
             >
               {loading
                 ? "লোড হচ্ছে..."
-                : isLogin
+                 : isPasswordRecovery
+                 ? "পাসওয়ার্ড আপডেট করুন"
+                 : isLogin
                 ? "লগইন করুন"
                 : "অ্যাকাউন্ট তৈরি করুন"}
             </Button>
+
+             {isLogin && !isPasswordRecovery && (
+               <button
+                 type="button"
+                 onClick={handleSendResetEmail}
+                 className="w-full text-sm text-white/60 hover:text-white font-bengali underline underline-offset-4"
+               >
+                 পাসওয়ার্ড ভুলে গেছেন?
+               </button>
+             )}
           </form>
 
           {/* Toggle Login/Signup */}
-          <p className="text-center text-white/60 font-bengali mt-6">
-            {isLogin ? "অ্যাকাউন্ট নেই?" : "ইতিমধ্যে অ্যাকাউন্ট আছে?"}{" "}
-            <button
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-yellow-400 hover:text-yellow-300 font-medium"
-            >
-              {isLogin ? "সাইন আপ করুন" : "লগইন করুন"}
-            </button>
-          </p>
+           {!isPasswordRecovery && (
+             <p className="text-center text-white/60 font-bengali mt-6">
+               {isLogin ? "অ্যাকাউন্ট নেই?" : "ইতিমধ্যে অ্যাকাউন্ট আছে?"}{" "}
+               <button
+                 onClick={() => setIsLogin(!isLogin)}
+                 className="text-yellow-400 hover:text-yellow-300 font-medium"
+               >
+                 {isLogin ? "সাইন আপ করুন" : "লগইন করুন"}
+               </button>
+             </p>
+           )}
         </div>
       </motion.div>
     </div>

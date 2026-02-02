@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { 
   FileText, Plus, Download, Send, Eye, Printer, 
   CheckCircle, Clock, XCircle, Phone, Mail, 
-  MessageCircle, Building2, Calendar, Globe
+  MessageCircle, Building2, Calendar, Globe, Trash2, Edit2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +22,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import companyLogo from "@/assets/company-logo.jpg";
@@ -60,6 +70,9 @@ export function InvoiceSystem({ invoices, orders, onRefresh }: InvoiceSystemProp
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [invoiceType, setInvoiceType] = useState<"order" | "custom">("order");
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const { toast } = useToast();
   
   // Order-based invoice form
@@ -78,6 +91,14 @@ export function InvoiceSystem({ invoices, orders, onRefresh }: InvoiceSystemProp
     services: [{ name: "", description: "", price: 0 }],
     due_date: "",
     notes: "",
+  });
+
+  // Edit form
+  const [editForm, setEditForm] = useState({
+    amount: 0,
+    paid_amount: 0,
+    status: "unpaid",
+    due_date: "",
   });
 
   const addService = () => {
@@ -221,6 +242,55 @@ export function InvoiceSystem({ invoices, orders, onRefresh }: InvoiceSystemProp
     }
   };
 
+  const openEditModal = (invoice: Invoice) => {
+    setEditingInvoice(invoice);
+    setEditForm({
+      amount: invoice.amount,
+      paid_amount: invoice.paid_amount,
+      status: invoice.status,
+      due_date: invoice.due_date ? invoice.due_date.split('T')[0] : "",
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const saveEdit = async () => {
+    if (!editingInvoice) return;
+    
+    const { error } = await supabase
+      .from("invoices")
+      .update({
+        amount: editForm.amount,
+        paid_amount: editForm.paid_amount,
+        status: editForm.status,
+        due_date: editForm.due_date || null,
+      })
+      .eq("id", editingInvoice.id);
+    
+    if (!error) {
+      toast({ title: "ইনভয়েস আপডেট হয়েছে" });
+      setIsEditModalOpen(false);
+      setEditingInvoice(null);
+      onRefresh();
+    } else {
+      toast({ title: "সমস্যা হয়েছে", variant: "destructive" });
+    }
+  };
+
+  const deleteInvoice = async (id: string) => {
+    const { error } = await supabase
+      .from("invoices")
+      .delete()
+      .eq("id", id);
+    
+    if (!error) {
+      toast({ title: "ইনভয়েস ডিলিট হয়েছে" });
+      setDeleteConfirm(null);
+      onRefresh();
+    } else {
+      toast({ title: "সমস্যা হয়েছে", variant: "destructive" });
+    }
+  };
+
   const openPreview = (invoice: Invoice) => {
     const order = orders.find(o => o.id === invoice.order_id);
     setSelectedInvoice(invoice);
@@ -232,12 +302,21 @@ export function InvoiceSystem({ invoices, orders, onRefresh }: InvoiceSystemProp
     const order = orders.find(o => o.id === invoice.order_id);
     if (!order) return;
     
+    const servicesText = order.services?.map((s: any, i: number) => 
+      `${i + 1}. ${s.serviceName} - ৳${s.price?.toLocaleString()}`
+    ).join('\n') || '';
+
     const message = `🧾 *ইনভয়েস - Web Creation BD*
 
 ইনভয়েস নং: ${invoice.invoice_number}
 তারিখ: ${new Date(invoice.created_at).toLocaleDateString("bn-BD")}
 
 *ক্লায়েন্ট:* ${order.customer_name}
+*ফোন:* ${order.customer_phone}
+${order.customer_email ? `*ইমেইল:* ${order.customer_email}` : ''}
+
+*সার্ভিস সমূহ:*
+${servicesText}
 
 *পরিমাণ:* ৳${Number(invoice.amount).toLocaleString()}
 *পরিশোধিত:* ৳${Number(invoice.paid_amount).toLocaleString()}
@@ -354,7 +433,10 @@ export function InvoiceSystem({ invoices, orders, onRefresh }: InvoiceSystemProp
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => openPreview(invoice)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openPreview(invoice);
+                    }}
                     className="text-gray-600 hover:text-gray-900"
                   >
                     <Eye className="w-4 h-4 mr-1" />
@@ -363,17 +445,47 @@ export function InvoiceSystem({ invoices, orders, onRefresh }: InvoiceSystemProp
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => sendViaWhatsApp(invoice)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      sendViaWhatsApp(invoice);
+                    }}
                     className="text-green-600 hover:text-green-700 hover:bg-green-50"
                   >
                     <MessageCircle className="w-4 h-4 mr-1" />
                     WhatsApp
                   </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openEditModal(invoice);
+                    }}
+                    className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                  >
+                    <Edit2 className="w-4 h-4 mr-1" />
+                    এডিট
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDeleteConfirm(invoice.id);
+                    }}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <Trash2 className="w-4 h-4 mr-1" />
+                    ডিলিট
+                  </Button>
                   <div className="flex-1" />
                   {invoice.status !== "paid" && (
                     <Button
                       size="sm"
-                      onClick={() => updateInvoiceStatus(invoice.id, "paid", invoice.amount)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        updateInvoiceStatus(invoice.id, "paid", invoice.amount);
+                      }}
                       className="bg-emerald-600 hover:bg-emerald-700 font-bengali"
                     >
                       <CheckCircle className="w-4 h-4 mr-1" />
@@ -706,18 +818,26 @@ export function InvoiceSystem({ invoices, orders, onRefresh }: InvoiceSystemProp
                     </tr>
                   </thead>
                   <tbody>
-                    {selectedOrder?.services?.map((service: any, idx: number) => (
-                      <tr key={idx} className={`border-b border-gray-100 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
-                        <td className="py-4 px-5 text-gray-400 font-mono text-sm">{String(idx + 1).padStart(2, '0')}</td>
-                        <td className="py-4 px-5">
-                          <p className="font-bengali font-semibold text-gray-900">{service.serviceName}</p>
-                          <p className="text-sm text-gray-500 mt-0.5">{service.packageName}</p>
-                        </td>
-                        <td className="py-4 px-5 text-right">
-                          <span className="font-bold text-gray-900 text-lg">৳{service.price?.toLocaleString()}</span>
+                    {selectedOrder?.services && selectedOrder.services.length > 0 ? (
+                      selectedOrder.services.map((service: any, idx: number) => (
+                        <tr key={idx} className={`border-b border-gray-100 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
+                          <td className="py-4 px-5 text-gray-400 font-mono text-sm">{String(idx + 1).padStart(2, '0')}</td>
+                          <td className="py-4 px-5">
+                            <p className="font-bengali font-semibold text-gray-900">{service.serviceName || service.name || 'সার্ভিস'}</p>
+                            <p className="text-sm text-gray-500 mt-0.5">{service.packageName || service.description || ''}</p>
+                          </td>
+                          <td className="py-4 px-5 text-right">
+                            <span className="font-bold text-gray-900 text-lg">৳{Number(service.price || 0).toLocaleString()}</span>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr className="bg-white">
+                        <td colSpan={3} className="py-6 px-5 text-center text-gray-400 font-bengali">
+                          কোনো সার্ভিস তথ্য পাওয়া যায়নি
                         </td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -793,6 +913,92 @@ export function InvoiceSystem({ invoices, orders, onRefresh }: InvoiceSystemProp
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Edit Invoice Modal */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="max-w-md bg-white">
+          <DialogHeader>
+            <DialogTitle className="font-bengali text-xl">ইনভয়েস এডিট করুন</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 mt-4">
+            <div>
+              <Label className="font-bengali">পরিমাণ (৳)</Label>
+              <Input
+                type="number"
+                value={editForm.amount}
+                onChange={(e) => setEditForm(prev => ({ ...prev, amount: Number(e.target.value) }))}
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label className="font-bengali">পরিশোধিত (৳)</Label>
+              <Input
+                type="number"
+                value={editForm.paid_amount}
+                onChange={(e) => setEditForm(prev => ({ ...prev, paid_amount: Number(e.target.value) }))}
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label className="font-bengali">স্ট্যাটাস</Label>
+              <Select
+                value={editForm.status}
+                onValueChange={(val) => setEditForm(prev => ({ ...prev, status: val }))}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="unpaid" className="font-bengali">বাকি</SelectItem>
+                  <SelectItem value="partial" className="font-bengali">আংশিক</SelectItem>
+                  <SelectItem value="paid" className="font-bengali">পরিশোধিত</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label className="font-bengali">পরিশোধের শেষ তারিখ</Label>
+              <Input
+                type="date"
+                value={editForm.due_date}
+                onChange={(e) => setEditForm(prev => ({ ...prev, due_date: e.target.value }))}
+                className="mt-1"
+              />
+            </div>
+
+            <Button
+              onClick={saveEdit}
+              className="w-full bg-red-600 hover:bg-red-700 font-bengali"
+            >
+              সেভ করুন
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
+        <AlertDialogContent className="bg-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-bengali">ইনভয়েস ডিলিট করবেন?</AlertDialogTitle>
+            <AlertDialogDescription className="font-bengali">
+              এই ইনভয়েসটি স্থায়ীভাবে ডিলিট হয়ে যাবে। এই কাজটি পূর্বাবস্থায় ফেরানো যাবে না।
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="font-bengali">বাতিল</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteConfirm && deleteInvoice(deleteConfirm)}
+              className="bg-red-600 hover:bg-red-700 font-bengali"
+            >
+              ডিলিট করুন
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -204,52 +204,18 @@ const pricingPlans = [
   },
 ];
 
-// Stats
-const stats = [
-  { value: "৮০০+", label: "ভিডিও এডিট", icon: TrendingUp },
-  { value: "৫০M+", label: "টোটাল ভিউ", icon: Play },
-  { value: "২০০+", label: "হ্যাপি ক্লায়েন্ট", icon: Users },
-  { value: "২৪/৭", label: "সাপোর্ট", icon: Clock },
-];
+// Stats icons
+const statsIcons = [TrendingUp, Play, Users, Clock];
 
-// Features
-const features = [
-  {
-    icon: Film,
-    title: "প্রফেশনাল কাটিং",
-    description: "স্টোরিটেলিং এর জন্য পারফেক্ট কাটিং এবং ট্রান্সিশন যা ভিউয়ারদের এনগেজড রাখে।",
-    gradient: "from-red-500 to-orange-400"
-  },
-  {
-    icon: Sparkles,
-    title: "কালার গ্রেডিং",
-    description: "সিনেমাটিক লুক দেওয়ার জন্য প্রফেশনাল কালার করেকশন এবং গ্রেডিং।",
-    gradient: "from-orange-500 to-amber-400"
-  },
-  {
-    icon: Zap,
-    title: "মোশন গ্রাফিক্স",
-    description: "আই-ক্যাচিং মোশন গ্রাফিক্স এবং অ্যানিমেশন যা ভিডিওকে প্রফেশনাল করে তোলে।",
-    gradient: "from-amber-500 to-yellow-400"
-  },
-  {
-    icon: Award,
-    title: "সাউন্ড ডিজাইন",
-    description: "ক্লিয়ার অডিও, ব্যাকগ্রাউন্ড মিউজিক এবং সাউন্ড ইফেক্টস যা ভিডিওর কোয়ালিটি বাড়ায়।",
-    gradient: "from-rose-500 to-red-400"
-  },
-  {
-    icon: Play,
-    title: "VFX ইফেক্টস",
-    description: "ভিজ্যুয়াল ইফেক্টস এবং কম্পোজিটিং যা সাধারণ ভিডিওকে অসাধারণ করে তোলে।",
-    gradient: "from-red-600 to-rose-500"
-  },
-  {
-    icon: Users,
-    title: "ফাস্ট ডেলিভারি",
-    description: "সময়মতো ডেলিভারি নিশ্চিত করি। আর্জেন্ট প্রজেক্টের জন্য এক্সপ্রেস অপশনও আছে।",
-    gradient: "from-orange-600 to-red-500"
-  },
+// Features icons and gradients
+const featuresIcons = [Film, Sparkles, Zap, Award, Play, Users];
+const featuresGradients = [
+  "from-red-500 to-orange-400",
+  "from-orange-500 to-amber-400",
+  "from-amber-500 to-yellow-400",
+  "from-rose-500 to-red-400",
+  "from-red-600 to-rose-500",
+  "from-orange-600 to-red-500",
 ];
 
 // Review Card Component
@@ -327,6 +293,31 @@ const VideoEditingPage = () => {
     hero_title_start: "সিনেমাটিক",
     hero_title_highlight: "ভিডিও এডিটিং",
     hero_subtitle: "প্রফেশনাল ভিডিও এডিটিং সার্ভিস যা আপনার কন্টেন্টকে পরবর্তী স্তরে নিয়ে যাবে। YouTube ভিডিও থেকে শুরু করে কর্পোরেট প্রেজেন্টেশন, সোশ্যাল মিডিয়া রিলস - সব ধরনের ভিডিও এডিট করি।",
+    // Stats
+    stat_0_value: "৮০০+",
+    stat_0_label: "ভিডিও এডিট",
+    stat_1_value: "৫০M+",
+    stat_1_label: "টোটাল ভিউ",
+    stat_2_value: "২০০+",
+    stat_2_label: "হ্যাপি ক্লায়েন্ট",
+    stat_3_value: "২৪/৭",
+    stat_3_label: "সাপোর্ট",
+    // Features
+    feature_0_title: "প্রফেশনাল কাটিং",
+    feature_0_description: "স্টোরিটেলিং এর জন্য পারফেক্ট কাটিং এবং ট্রান্সিশন যা ভিউয়ারদের এনগেজড রাখে।",
+    feature_1_title: "কালার গ্রেডিং",
+    feature_1_description: "সিনেমাটিক লুক দেওয়ার জন্য প্রফেশনাল কালার করেকশন এবং গ্রেডিং।",
+    feature_2_title: "মোশন গ্রাফিক্স",
+    feature_2_description: "আই-ক্যাচিং মোশন গ্রাফিক্স এবং অ্যানিমেশন যা ভিডিওকে প্রফেশনাল করে তোলে।",
+    feature_3_title: "সাউন্ড ডিজাইন",
+    feature_3_description: "ক্লিয়ার অডিও, ব্যাকগ্রাউন্ড মিউজিক এবং সাউন্ড ইফেক্টস যা ভিডিওর কোয়ালিটি বাড়ায়।",
+    feature_4_title: "VFX ইফেক্টস",
+    feature_4_description: "ভিজ্যুয়াল ইফেক্টস এবং কম্পোজিটিং যা সাধারণ ভিডিওকে অসাধারণ করে তোলে।",
+    feature_5_title: "ফাস্ট ডেলিভারি",
+    feature_5_description: "সময়মতো ডেলিভারি নিশ্চিত করি। আর্জেন্ট প্রজেক্টের জন্য এক্সপ্রেস অপশনও আছে।",
+    // Section headers
+    features_section_title: "কেন আমাদের বেছে নেবেন?",
+    features_section_subtitle: "আমরা শুধু ভিডিও এডিট করি না, গল্প বলি যা দর্শকদের মন জয় করে",
   }), []);
   
   const { content } = useSiteContent("video-editing", "hero", fallbackContent);
@@ -424,19 +415,26 @@ const VideoEditingPage = () => {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="grid grid-cols-2 gap-4"
             >
-              {stats.map((stat, index) => (
-                <motion.div
-                  key={stat.label}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.3 + index * 0.1 }}
-                  className="p-6 rounded-2xl bg-gradient-to-br from-red-900/50 to-orange-900/30 backdrop-blur-sm border border-red-400/20 hover:border-red-400/50 transition-all duration-300 group"
-                >
-                  <stat.icon className="w-8 h-8 text-red-400 mb-3 group-hover:scale-110 transition-transform" />
-                  <div className="text-3xl font-bold text-white mb-1">{stat.value}</div>
-                  <div className="text-red-200/80 font-bengali text-sm">{stat.label}</div>
-                </motion.div>
-              ))}
+              {[0, 1, 2, 3].map((index) => {
+                const IconComponent = statsIcons[index];
+                return (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.3 + index * 0.1 }}
+                    className="p-6 rounded-2xl bg-gradient-to-br from-red-900/50 to-orange-900/30 backdrop-blur-sm border border-red-400/20 hover:border-red-400/50 transition-all duration-300 group"
+                  >
+                    <IconComponent className="w-8 h-8 text-red-400 mb-3 group-hover:scale-110 transition-transform" />
+                    <div className="text-3xl font-bold text-white mb-1">
+                      <EditableText page="video-editing" section="hero" contentKey={`stat_${index}_value`} value={content[`stat_${index}_value`]} />
+                    </div>
+                    <div className="text-red-200/80 font-bengali text-sm">
+                      <EditableText page="video-editing" section="hero" contentKey={`stat_${index}_label`} value={content[`stat_${index}_label`]} />
+                    </div>
+                  </motion.div>
+                );
+              })}
             </motion.div>
           </div>
         </div>
@@ -454,30 +452,37 @@ const VideoEditingPage = () => {
             className="text-center mb-16"
           >
             <h2 className="text-3xl sm:text-4xl font-bengali font-bold text-white mb-4">
-              কেন আমাদের বেছে নেবেন?
+              <EditableText page="video-editing" section="hero" contentKey="features_section_title" value={content.features_section_title} />
             </h2>
             <p className="text-red-200/80 font-bengali max-w-2xl mx-auto">
-              আমরা শুধু ভিডিও এডিট করি না, গল্প বলি যা দর্শকদের মন জয় করে
+              <EditableText page="video-editing" section="hero" contentKey="features_section_subtitle" value={content.features_section_subtitle} />
             </p>
           </motion.div>
           
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((feature, index) => (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className="p-6 rounded-2xl bg-gradient-to-br from-red-900/30 to-orange-900/20 backdrop-blur-sm border border-red-400/20 hover:border-red-400/50 transition-all duration-300 group hover:-translate-y-2"
-              >
-                <div className={`w-14 h-14 rounded-xl bg-gradient-to-r ${feature.gradient} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-lg`}>
-                  <feature.icon className="w-7 h-7 text-white" />
-                </div>
-                <h3 className="text-xl font-bengali font-bold text-white mb-2">{feature.title}</h3>
-                <p className="text-red-200/70 font-bengali text-sm leading-relaxed">{feature.description}</p>
-              </motion.div>
-            ))}
+            {[0, 1, 2, 3, 4, 5].map((index) => {
+              const IconComponent = featuresIcons[index];
+              return (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                  className="p-6 rounded-2xl bg-gradient-to-br from-red-900/30 to-orange-900/20 backdrop-blur-sm border border-red-400/20 hover:border-red-400/50 transition-all duration-300 group hover:-translate-y-2"
+                >
+                  <div className={`w-14 h-14 rounded-xl bg-gradient-to-r ${featuresGradients[index]} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-lg`}>
+                    <IconComponent className="w-7 h-7 text-white" />
+                  </div>
+                  <h3 className="text-xl font-bengali font-bold text-white mb-2">
+                    <EditableText page="video-editing" section="hero" contentKey={`feature_${index}_title`} value={content[`feature_${index}_title`]} />
+                  </h3>
+                  <p className="text-red-200/70 font-bengali text-sm leading-relaxed">
+                    <EditableText page="video-editing" section="hero" contentKey={`feature_${index}_description`} value={content[`feature_${index}_description`]} multiline />
+                  </p>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </section>

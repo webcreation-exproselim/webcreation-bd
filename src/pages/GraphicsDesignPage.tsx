@@ -216,52 +216,18 @@ const pricingPlans = [
   },
 ];
 
-// Stats
-const stats = [
-  { value: "১০০০+", label: "ডিজাইন প্রজেক্ট", icon: TrendingUp },
-  { value: "৫০০+", label: "ব্র্যান্ড তৈরি", icon: Layers },
-  { value: "২০০+", label: "সন্তুষ্ট ক্লায়েন্ট", icon: Users },
-  { value: "২৪/৭", label: "সাপোর্ট", icon: Clock },
-];
+// Stats icons
+const statsIcons = [TrendingUp, Layers, Users, Clock];
 
-// Features
-const features = [
-  {
-    icon: Target,
-    title: "ইউনিক ডিজাইন",
-    description: "প্রতিটি প্রজেক্টের জন্য ইউনিক এবং কাস্টম ডিজাইন তৈরি করি যা আপনার ব্র্যান্ডকে আলাদা করে।",
-    gradient: "from-purple-500 to-pink-400"
-  },
-  {
-    icon: Layers,
-    title: "ব্র্যান্ড কনসিস্টেন্সি",
-    description: "সব প্ল্যাটফর্মে একই ব্র্যান্ড আইডেন্টিটি মেইনটেইন করি যাতে কাস্টমাররা সহজে চিনতে পারে।",
-    gradient: "from-pink-500 to-rose-400"
-  },
-  {
-    icon: Zap,
-    title: "ফাস্ট ডেলিভারি",
-    description: "সময়মতো ডেলিভারি নিশ্চিত করি। আর্জেন্ট প্রজেক্টের জন্য এক্সপ্রেস অপশনও আছে।",
-    gradient: "from-orange-500 to-amber-400"
-  },
-  {
-    icon: Award,
-    title: "প্রিমিয়াম কোয়ালিটি",
-    description: "হাই-রেজোলিউশন ফাইল এবং প্রিন্ট-রেডি আউটপুট যা সব জায়গায় পারফেক্ট দেখায়।",
-    gradient: "from-emerald-500 to-teal-400"
-  },
-  {
-    icon: Shield,
-    title: "আনলিমিটেড রিভিশন",
-    description: "আপনি সন্তুষ্ট না হওয়া পর্যন্ত রিভিশন দিই। কোনো হিডেন চার্জ নেই।",
-    gradient: "from-violet-500 to-purple-400"
-  },
-  {
-    icon: Eye,
-    title: "মডার্ন ট্রেন্ড",
-    description: "লেটেস্ট ডিজাইন ট্রেন্ড ফলো করি যাতে আপনার ব্র্যান্ড আপ-টু-ডেট থাকে।",
-    gradient: "from-cyan-500 to-blue-400"
-  },
+// Features icons and gradients
+const featuresIcons = [Target, Layers, Zap, Award, Shield, Eye];
+const featuresGradients = [
+  "from-purple-500 to-pink-400",
+  "from-pink-500 to-rose-400",
+  "from-orange-500 to-amber-400",
+  "from-emerald-500 to-teal-400",
+  "from-violet-500 to-purple-400",
+  "from-cyan-500 to-blue-400",
 ];
 
 // Review Card Component
@@ -339,6 +305,31 @@ const GraphicsDesignPage = () => {
     hero_title_start: "গ্রাফিক্স ডিজাইন দিয়ে",
     hero_title_highlight: "ব্র্যান্ড বিল্ড করুন",
     hero_subtitle: "প্রফেশনাল গ্রাফিক্স ডিজাইন সার্ভিস যা আপনার ব্র্যান্ড আইডেন্টিটি তৈরি করে।",
+    // Stats
+    stat_0_value: "১০০০+",
+    stat_0_label: "ডিজাইন প্রজেক্ট",
+    stat_1_value: "৫০০+",
+    stat_1_label: "ব্র্যান্ড তৈরি",
+    stat_2_value: "২০০+",
+    stat_2_label: "সন্তুষ্ট ক্লায়েন্ট",
+    stat_3_value: "২৪/৭",
+    stat_3_label: "সাপোর্ট",
+    // Features
+    feature_0_title: "ইউনিক ডিজাইন",
+    feature_0_description: "প্রতিটি প্রজেক্টের জন্য ইউনিক এবং কাস্টম ডিজাইন তৈরি করি যা আপনার ব্র্যান্ডকে আলাদা করে।",
+    feature_1_title: "ব্র্যান্ড কনসিস্টেন্সি",
+    feature_1_description: "সব প্ল্যাটফর্মে একই ব্র্যান্ড আইডেন্টিটি মেইনটেইন করি যাতে কাস্টমাররা সহজে চিনতে পারে।",
+    feature_2_title: "ফাস্ট ডেলিভারি",
+    feature_2_description: "সময়মতো ডেলিভারি নিশ্চিত করি। আর্জেন্ট প্রজেক্টের জন্য এক্সপ্রেস অপশনও আছে।",
+    feature_3_title: "প্রিমিয়াম কোয়ালিটি",
+    feature_3_description: "হাই-রেজোলিউশন ফাইল এবং প্রিন্ট-রেডি আউটপুট যা সব জায়গায় পারফেক্ট দেখায়।",
+    feature_4_title: "আনলিমিটেড রিভিশন",
+    feature_4_description: "আপনি সন্তুষ্ট না হওয়া পর্যন্ত রিভিশন দিই। কোনো হিডেন চার্জ নেই।",
+    feature_5_title: "মডার্ন ট্রেন্ড",
+    feature_5_description: "লেটেস্ট ডিজাইন ট্রেন্ড ফলো করি যাতে আপনার ব্র্যান্ড আপ-টু-ডেট থাকে।",
+    // Section headers
+    features_section_title: "কেন আমাদের বেছে নেবেন?",
+    features_section_subtitle: "আমরা শুধু ডিজাইন করি না, ব্র্যান্ড তৈরি করি যা মানুষের মনে গেঁথে থাকে",
   }), []);
   
   const { content } = useSiteContent("graphics-design", "hero", fallbackContent);
@@ -458,19 +449,26 @@ const GraphicsDesignPage = () => {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="grid grid-cols-2 gap-4"
             >
-              {stats.map((stat, index) => (
-                <motion.div
-                  key={stat.label}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.3 + index * 0.1 }}
-                  className="p-6 rounded-2xl bg-gradient-to-br from-purple-900/50 to-pink-900/30 backdrop-blur-sm border border-purple-400/20 hover:border-purple-400/50 transition-all duration-300 group"
-                >
-                  <stat.icon className="w-8 h-8 text-purple-400 mb-3 group-hover:scale-110 transition-transform" />
-                  <div className="text-3xl font-bold text-white mb-1">{stat.value}</div>
-                  <div className="text-purple-200/80 font-bengali text-sm">{stat.label}</div>
-                </motion.div>
-              ))}
+              {[0, 1, 2, 3].map((index) => {
+                const IconComponent = statsIcons[index];
+                return (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.3 + index * 0.1 }}
+                    className="p-6 rounded-2xl bg-gradient-to-br from-purple-900/50 to-pink-900/30 backdrop-blur-sm border border-purple-400/20 hover:border-purple-400/50 transition-all duration-300 group"
+                  >
+                    <IconComponent className="w-8 h-8 text-purple-400 mb-3 group-hover:scale-110 transition-transform" />
+                    <div className="text-3xl font-bold text-white mb-1">
+                      <EditableText page="graphics-design" section="hero" contentKey={`stat_${index}_value`} value={content[`stat_${index}_value`]} />
+                    </div>
+                    <div className="text-purple-200/80 font-bengali text-sm">
+                      <EditableText page="graphics-design" section="hero" contentKey={`stat_${index}_label`} value={content[`stat_${index}_label`]} />
+                    </div>
+                  </motion.div>
+                );
+              })}
             </motion.div>
           </div>
         </div>
@@ -488,30 +486,37 @@ const GraphicsDesignPage = () => {
             className="text-center mb-16"
           >
             <h2 className="text-3xl sm:text-4xl font-bengali font-bold text-white mb-4">
-              কেন আমাদের বেছে নেবেন?
+              <EditableText page="graphics-design" section="hero" contentKey="features_section_title" value={content.features_section_title} />
             </h2>
             <p className="text-purple-200/80 font-bengali max-w-2xl mx-auto">
-              আমরা শুধু ডিজাইন করি না, ব্র্যান্ড তৈরি করি যা মানুষের মনে গেঁথে থাকে
+              <EditableText page="graphics-design" section="hero" contentKey="features_section_subtitle" value={content.features_section_subtitle} />
             </p>
           </motion.div>
           
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((feature, index) => (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className="p-6 rounded-2xl bg-gradient-to-br from-purple-900/30 to-pink-900/20 backdrop-blur-sm border border-purple-400/20 hover:border-purple-400/50 transition-all duration-300 group hover:-translate-y-2"
-              >
-                <div className={`w-14 h-14 rounded-xl bg-gradient-to-r ${feature.gradient} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-lg`}>
-                  <feature.icon className="w-7 h-7 text-white" />
-                </div>
-                <h3 className="text-xl font-bengali font-bold text-white mb-2">{feature.title}</h3>
-                <p className="text-purple-200/70 font-bengali text-sm leading-relaxed">{feature.description}</p>
-              </motion.div>
-            ))}
+            {[0, 1, 2, 3, 4, 5].map((index) => {
+              const IconComponent = featuresIcons[index];
+              return (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                  className="p-6 rounded-2xl bg-gradient-to-br from-purple-900/30 to-pink-900/20 backdrop-blur-sm border border-purple-400/20 hover:border-purple-400/50 transition-all duration-300 group hover:-translate-y-2"
+                >
+                  <div className={`w-14 h-14 rounded-xl bg-gradient-to-r ${featuresGradients[index]} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-lg`}>
+                    <IconComponent className="w-7 h-7 text-white" />
+                  </div>
+                  <h3 className="text-xl font-bengali font-bold text-white mb-2">
+                    <EditableText page="graphics-design" section="hero" contentKey={`feature_${index}_title`} value={content[`feature_${index}_title`]} />
+                  </h3>
+                  <p className="text-purple-200/70 font-bengali text-sm leading-relaxed">
+                    <EditableText page="graphics-design" section="hero" contentKey={`feature_${index}_description`} value={content[`feature_${index}_description`]} multiline />
+                  </p>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </section>

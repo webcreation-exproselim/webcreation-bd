@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { 
   FileText, Plus, Download, Send, Eye, Printer, 
   CheckCircle, Clock, XCircle, Phone, Mail, 
-  MessageCircle, Building2, Calendar
+  MessageCircle, Building2, Calendar, Globe
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import companyLogo from "@/assets/company-logo.jpg";
 
 interface Order {
   id: string;
@@ -594,117 +595,185 @@ export function InvoiceSystem({ invoices, orders, onRefresh }: InvoiceSystemProp
         </DialogContent>
       </Dialog>
 
-      {/* Invoice Preview Modal */}
+      {/* Professional Invoice Preview Modal */}
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-        <DialogContent className="max-w-2xl bg-white print:shadow-none">
-          <div className="print:p-8" id="invoice-preview">
-            {/* Invoice Header */}
-            <div className="flex items-start justify-between mb-8">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center shadow-lg">
-                  <span className="text-white font-bold text-2xl">W</span>
+        <DialogContent className="max-w-3xl bg-white p-0 print:shadow-none overflow-hidden">
+          <div className="print:p-0" id="invoice-preview">
+            {/* Top Accent Bar */}
+            <div className="h-2 bg-gradient-to-r from-red-600 via-red-500 to-yellow-500" />
+            
+            <div className="p-8">
+              {/* Invoice Header - Professional Layout */}
+              <div className="flex items-start justify-between mb-10">
+                {/* Company Info with Circular Logo */}
+                <div className="flex items-center gap-5">
+                  <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-red-100 shadow-lg shadow-red-500/20">
+                    <img 
+                      src={companyLogo} 
+                      alt="Web Creation BD" 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div>
+                    <h1 className="font-bengali font-bold text-2xl text-gray-900">Web Creation BD</h1>
+                    <p className="text-sm text-gray-500 mt-1">Professional Digital Agency</p>
+                    <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
+                      <span className="flex items-center gap-1">
+                        <Phone className="w-3 h-3" />
+                        +880 1234-567890
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Globe className="w-3 h-3" />
+                        webcreation-bd.lovable.app
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <h1 className="font-bengali font-bold text-xl text-gray-900">Web Creation BD</h1>
-                  <p className="text-sm text-gray-500">Professional Digital Agency</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <h2 className="text-2xl font-bold text-gray-900 font-bengali">ইনভয়েস</h2>
-                <p className="font-mono text-sm text-gray-500">{selectedInvoice?.invoice_number}</p>
-                <p className="text-sm text-gray-400 mt-1">
-                  {selectedInvoice && new Date(selectedInvoice.created_at).toLocaleDateString("bn-BD")}
-                </p>
-              </div>
-            </div>
 
-            {/* Client Info */}
-            <div className="grid grid-cols-2 gap-8 mb-8 p-6 bg-gray-50 rounded-2xl">
-              <div>
-                <p className="text-xs text-gray-400 uppercase tracking-wider mb-2">বিল প্রাপক</p>
-                <p className="font-bengali font-semibold text-gray-900">{selectedOrder?.customer_name}</p>
-                <p className="text-sm text-gray-600">{selectedOrder?.customer_phone}</p>
-                {selectedOrder?.customer_email && (
-                  <p className="text-sm text-gray-600">{selectedOrder.customer_email}</p>
-                )}
+                {/* Invoice Number & Date */}
+                <div className="text-right">
+                  <div className="inline-block bg-gradient-to-r from-red-600 to-red-500 text-white px-6 py-3 rounded-xl shadow-lg">
+                    <p className="text-xs uppercase tracking-wider opacity-80">ইনভয়েস</p>
+                    <p className="font-mono font-bold text-lg">{selectedInvoice?.invoice_number}</p>
+                  </div>
+                  <div className="mt-3 text-sm text-gray-500">
+                    <p>তারিখ: {selectedInvoice && new Date(selectedInvoice.created_at).toLocaleDateString("bn-BD")}</p>
+                    {selectedInvoice?.due_date && (
+                      <p className="text-red-500">শেষ তারিখ: {new Date(selectedInvoice.due_date).toLocaleDateString("bn-BD")}</p>
+                    )}
+                  </div>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="text-xs text-gray-400 uppercase tracking-wider mb-2">স্ট্যাটাস</p>
-                <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${
+
+              {/* Client & Status Section */}
+              <div className="grid grid-cols-3 gap-6 mb-8">
+                {/* Client Info Card */}
+                <div className="col-span-2 bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-2xl p-5 border border-gray-100">
+                  <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold mb-3 flex items-center gap-2">
+                    <Building2 className="w-3.5 h-3.5" />
+                    বিল প্রাপক
+                  </p>
+                  <p className="font-bengali font-bold text-lg text-gray-900">{selectedOrder?.customer_name}</p>
+                  <div className="mt-2 space-y-1">
+                    <p className="text-sm text-gray-600 flex items-center gap-2">
+                      <Phone className="w-3.5 h-3.5 text-gray-400" />
+                      {selectedOrder?.customer_phone}
+                    </p>
+                    {selectedOrder?.customer_email && (
+                      <p className="text-sm text-gray-600 flex items-center gap-2">
+                        <Mail className="w-3.5 h-3.5 text-gray-400" />
+                        {selectedOrder.customer_email}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Status Card */}
+                <div className={`rounded-2xl p-5 border ${
                   selectedInvoice?.status === "paid" 
-                    ? "bg-emerald-100 text-emerald-700" 
+                    ? "bg-emerald-50 border-emerald-200" 
                     : selectedInvoice?.status === "partial"
-                    ? "bg-amber-100 text-amber-700"
-                    : "bg-red-100 text-red-700"
+                    ? "bg-amber-50 border-amber-200"
+                    : "bg-red-50 border-red-200"
                 }`}>
-                  {selectedInvoice?.status === "paid" ? "✅ পরিশোধিত" : selectedInvoice?.status === "partial" ? "⏳ আংশিক" : "❌ বাকি"}
-                </span>
+                  <p className="text-xs uppercase tracking-wider font-semibold mb-3 text-gray-500">স্ট্যাটাস</p>
+                  <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold ${
+                    selectedInvoice?.status === "paid" 
+                      ? "bg-emerald-500 text-white" 
+                      : selectedInvoice?.status === "partial"
+                      ? "bg-amber-500 text-white"
+                      : "bg-red-500 text-white"
+                  }`}>
+                    {selectedInvoice?.status === "paid" ? (
+                      <><CheckCircle className="w-4 h-4" /> পরিশোধিত</>
+                    ) : selectedInvoice?.status === "partial" ? (
+                      <><Clock className="w-4 h-4" /> আংশিক</>
+                    ) : (
+                      <><XCircle className="w-4 h-4" /> বাকি</>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
 
-            {/* Services */}
-            <div className="mb-8">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b-2 border-gray-200">
-                    <th className="text-left py-3 text-xs text-gray-400 uppercase tracking-wider font-bengali">সার্ভিস</th>
-                    <th className="text-right py-3 text-xs text-gray-400 uppercase tracking-wider">মূল্য</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {selectedOrder?.services?.map((service: any, idx: number) => (
-                    <tr key={idx} className="border-b border-gray-100">
-                      <td className="py-4">
-                        <p className="font-bengali font-medium text-gray-900">{service.serviceName}</p>
-                        <p className="text-sm text-gray-500">{service.packageName}</p>
-                      </td>
-                      <td className="py-4 text-right font-semibold text-gray-900">
-                        ৳{service.price?.toLocaleString()}
-                      </td>
+              {/* Services Table - Professional Design */}
+              <div className="mb-8 overflow-hidden rounded-2xl border border-gray-200">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-gradient-to-r from-gray-800 to-gray-900 text-white">
+                      <th className="text-left py-4 px-5 text-xs uppercase tracking-wider font-semibold">#</th>
+                      <th className="text-left py-4 px-5 text-xs uppercase tracking-wider font-semibold font-bengali">সার্ভিস বিবরণ</th>
+                      <th className="text-right py-4 px-5 text-xs uppercase tracking-wider font-semibold">মূল্য</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {selectedOrder?.services?.map((service: any, idx: number) => (
+                      <tr key={idx} className={`border-b border-gray-100 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
+                        <td className="py-4 px-5 text-gray-400 font-mono text-sm">{String(idx + 1).padStart(2, '0')}</td>
+                        <td className="py-4 px-5">
+                          <p className="font-bengali font-semibold text-gray-900">{service.serviceName}</p>
+                          <p className="text-sm text-gray-500 mt-0.5">{service.packageName}</p>
+                        </td>
+                        <td className="py-4 px-5 text-right">
+                          <span className="font-bold text-gray-900 text-lg">৳{service.price?.toLocaleString()}</span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Total Section - Premium Design */}
+              <div className="flex justify-end mb-8">
+                <div className="w-80 space-y-3">
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                    <span className="text-gray-500 font-bengali">সাবটোটাল</span>
+                    <span className="font-semibold text-gray-900">
+                      ৳{selectedInvoice && Number(selectedInvoice.amount).toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                    <span className="text-gray-500 font-bengali">পরিশোধিত</span>
+                    <span className="font-semibold text-emerald-600">
+                      - ৳{selectedInvoice && Number(selectedInvoice.paid_amount).toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center py-4 bg-gradient-to-r from-red-600 to-red-500 rounded-xl px-5 -mx-2">
+                    <span className="text-white font-bengali font-bold text-lg">মোট বাকি</span>
+                    <span className="text-white font-bold text-2xl">
+                      ৳{selectedInvoice && (Number(selectedInvoice.amount) - Number(selectedInvoice.paid_amount)).toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer - Professional */}
+              <div className="border-t-2 border-dashed border-gray-200 pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 font-bengali font-medium">
+                      আপনার সাথে কাজ করতে পেরে আমরা সম্মানিত! 🙏
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      যেকোনো প্রশ্নের জন্য যোগাযোগ করুন
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-gray-400 uppercase tracking-wider">Powered by</p>
+                    <p className="font-bold text-gray-700">Web Creation BD</p>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            {/* Total */}
-            <div className="border-t-2 border-gray-200 pt-4">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-gray-600 font-bengali">মোট পরিমাণ</span>
-                <span className="text-2xl font-bold text-gray-900">
-                  ৳{selectedInvoice && Number(selectedInvoice.amount).toLocaleString()}
-                </span>
-              </div>
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-gray-600 font-bengali">পরিশোধিত</span>
-                <span className="text-lg font-semibold text-emerald-600">
-                  ৳{selectedInvoice && Number(selectedInvoice.paid_amount).toLocaleString()}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-900 font-bold font-bengali">বাকি</span>
-                <span className="text-xl font-bold text-red-600">
-                  ৳{selectedInvoice && (Number(selectedInvoice.amount) - Number(selectedInvoice.paid_amount)).toLocaleString()}
-                </span>
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="mt-8 pt-6 border-t border-gray-100 text-center">
-              <p className="text-sm text-gray-500 font-bengali">
-                আপনার সাথে কাজ করতে পেরে আমরা সম্মানিত 🙏
-              </p>
-              <p className="text-xs text-gray-400 mt-2">
-                Web Creation BD | webcreationbd.com
-              </p>
-            </div>
+            {/* Bottom Accent Bar */}
+            <div className="h-2 bg-gradient-to-r from-yellow-500 via-red-500 to-red-600" />
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-2 mt-6 pt-4 border-t print:hidden">
+          <div className="flex items-center gap-3 p-4 bg-gray-50 border-t print:hidden">
             <Button variant="outline" onClick={printInvoice} className="font-bengali">
               <Printer className="w-4 h-4 mr-2" />
-              প্রিন্ট করুন
+              প্রিন্ট / PDF
             </Button>
             <Button
               variant="outline"
@@ -713,6 +782,13 @@ export function InvoiceSystem({ invoices, orders, onRefresh }: InvoiceSystemProp
             >
               <MessageCircle className="w-4 h-4 mr-2" />
               WhatsApp এ পাঠান
+            </Button>
+            <div className="flex-1" />
+            <Button
+              onClick={() => setIsPreviewOpen(false)}
+              className="bg-red-600 hover:bg-red-700 font-bengali"
+            >
+              বন্ধ করুন
             </Button>
           </div>
         </DialogContent>

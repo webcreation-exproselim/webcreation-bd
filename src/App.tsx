@@ -17,6 +17,7 @@ import CheckoutPage from "./pages/CheckoutPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import AuthPage from "./pages/AuthPage";
 import ClientDashboard from "./pages/ClientDashboard";
+import AdminLoginPage from "./pages/AdminLoginPage";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +39,7 @@ const App = () => (
             <Route path="/landing-page" element={<LandingPageDesignPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin-login" element={<AdminLoginPage />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/dashboard" element={<ClientDashboard />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

@@ -13,7 +13,7 @@ type ServicePricing = {
   label: string;
   icon: typeof Code;
   gradient: string;
-  plans: PricingPlan[];
+  planCount: number;
 };
 
 type PricingPlan = {
@@ -31,414 +31,205 @@ type PricingPlan = {
   note?: string;
 };
 
-const servicePricingData: ServicePricing[] = [
-  {
-    id: "web-development",
-    label: "ওয়েব ডেভেলপমেন্ট",
-    icon: Code,
-    gradient: "from-green-500 to-emerald-400",
-    plans: [
-      {
-        name: "Starter Package",
-        price: "৫,০০০",
-        priceNum: 5000,
-        originalPrice: "৮,০০০",
-        originalPriceNum: 8000,
-        discount: "37%",
-        period: "টাকা",
-        description: "ছোট ব্যবসার জন্য পারফেক্ট",
-        icon: Star,
-        note: "No Advanced Payment",
-        features: [
-          ".SHOP Domain - 01 Year",
-          "10 GB Bdix NVME Hosting SSD",
-          "Hosting 01 Year",
-          "cPanel & Full Access",
-          "Fraud Customer Checker",
-          "Courier Integration",
-          "Order Invoice Print",
-          "Live Chat Setup",
-          "Pixel & Conversation API Setup",
-          "Sales Converting Unique Design",
-          "Fast Loading Speed",
-          "Easy Order Management",
-          "Easy Checkout",
-          "Limited Categories",
-          "Limited Product",
-          "24/7 Priority Support",
-          "Video Tutorial",
-        ],
-      },
-      {
-        name: "Premium Package",
-        price: "১৫,০০০",
-        priceNum: 15000,
-        originalPrice: "২০,০০০",
-        originalPriceNum: 20000,
-        discount: "25%",
-        period: "টাকা",
-        description: "সেরা ভ্যালু প্যাকেজ",
-        icon: Zap,
-        popular: true,
-        note: "Domain Hosting Fee in Advance",
-        features: [
-          ".COM Domain - 01 Year",
-          "20 GB Bdix NVME Hosting SSD",
-          "Hosting 01 Year",
-          "cPanel & Full Access",
-          "Fraud Customer Checker",
-          "Courier Integration",
-          "Order Invoice Print",
-          "Live Chat Setup",
-          "Pixel & Conversation API Setup",
-          "Mobile Friendly & Unique Design",
-          "Super Fast Loading Speed",
-          "In Stock Management",
-          "Easy Order Management",
-          "Easy Checkout",
-          "Unlimited Categories",
-          "Unlimited Product",
-          "Advanced Security System",
-          "Facebook Page Full Setup",
-          "Facebook Page Logo Cover Setup",
-          "Website Banner & Logo Setup",
-          "Premium Theme & Pro Plugin",
-          "24/7 Priority Support",
-          "Video Tutorial",
-        ],
-      },
-      {
-        name: "Business Package",
-        price: "৮,০০০",
-        priceNum: 8000,
-        originalPrice: "১৫,০০০",
-        originalPriceNum: 15000,
-        discount: "47%",
-        period: "টাকা",
-        description: "বিজনেস গ্রোথের জন্য",
-        icon: Crown,
-        note: "Domain Hosting Fee in Advance",
-        features: [
-          ".COM Domain - 01 Year",
-          "20 GB Bdix NVME Hosting SSD",
-          "Hosting 01 Year",
-          "cPanel & Full Access",
-          "Fraud Customer Checker",
-          "Courier Integration",
-          "Order Invoice Print",
-          "Live Chat Setup",
-          "Pixel & Conversation API Setup",
-          "Mobile Friendly & Unique Design",
-          "Super Fast Loading Speed",
-          "In Stock Management",
-          "Easy Order Management",
-          "Easy Checkout",
-          "Unlimited Categories",
-          "Unlimited Product",
-          "Facebook Page Logo Cover Setup",
-          "Website Banner & Logo Setup",
-          "Video Tutorial",
-          "Premium Theme & Pro Plugin",
-          "24/7 Priority Support",
-        ],
-      },
-    ],
-  },
-  {
-    id: "graphics-design",
-    label: "গ্রাফিক্স ডিজাইন",
-    icon: Palette,
-    gradient: "from-purple-500 to-pink-400",
-    plans: [
-      {
-        name: "Startup Package",
-        price: "১,৭০০",
-        priceNum: 1700,
-        originalPrice: "২,০০০",
-        originalPriceNum: 2000,
-        discount: "15%",
-        period: "টাকা",
-        description: "স্টার্টআপ বিজনেসের জন্য",
-        icon: Star,
-        note: "7 Days money back guarantee",
-        features: [
-          "Logo Design Concept 2",
-          "Business Card Concept 1",
-          "Facebook Cover Photo",
-          "Facebook Post Image 1",
-          "Facebook boost Photo 1",
-          "PNG/JPG/PDF File Formats",
-          "1 Correction Revisions",
-          "All Source File",
-          "3 Days Delivery",
-          "100% Satisfaction Guarantee",
-        ],
-      },
-      {
-        name: "Business Package",
-        price: "৩,০০০",
-        priceNum: 3000,
-        originalPrice: "৪,০০০",
-        originalPriceNum: 4000,
-        discount: "25%",
-        period: "টাকা",
-        description: "গ্রোয়িং বিজনেসের জন্য",
-        icon: Zap,
-        popular: true,
-        note: "7 Days money back guarantee",
-        features: [
-          "Logo Design Concept 3",
-          "Business Card Concept 2",
-          "Facebook Cover Photo 3",
-          "Facebook Post Image 3",
-          "Facebook boost Photo 3",
-          "Promotion Animation Video 10s",
-          "PNG/JPG/PDF File Formats",
-          "1 Correction Revisions",
-          "All Source File",
-          "2 Days Delivery",
-          "100% Satisfaction Guarantee",
-        ],
-      },
-      {
-        name: "Corporate Package",
-        price: "৫,০০০",
-        priceNum: 5000,
-        originalPrice: "৭,০০০",
-        originalPriceNum: 7000,
-        discount: "29%",
-        period: "টাকা",
-        description: "বড় প্রতিষ্ঠানের জন্য",
-        icon: Crown,
-        note: "7 Days money back guarantee",
-        features: [
-          "Logo Design Concept 5",
-          "Business Card Concept 3",
-          "Facebook Cover Photo 4",
-          "Facebook boost Photo 5",
-          "Promotion Animation Video 20s",
-          "Social Media Banner 7",
-          "PNG/JPG/PDF File Formats",
-          "All Source File",
-          "3 Days Delivery",
-          "100% Satisfaction Guarantee",
-        ],
-      },
-    ],
-  },
-  {
-    id: "video-editing",
-    label: "ভিডিও এডিটিং",
-    icon: Video,
-    gradient: "from-red-500 to-orange-400",
-    plans: [
-      {
-        name: "বেসিক",
-        price: "৩,০০০",
-        priceNum: 3000,
-        period: "টাকা",
-        description: "সিম্পল ভিডিও এডিট",
-        icon: Star,
-        features: [
-          "৩ মিনিট পর্যন্ত",
-          "বেসিক কাট ও ট্রানজিশন",
-          "ব্যাকগ্রাউন্ড মিউজিক",
-          "টেক্সট অ্যানিমেশন",
-          "২টি রিভিশন",
-        ],
-      },
-      {
-        name: "স্ট্যান্ডার্ড",
-        price: "৭,০০০",
-        priceNum: 7000,
-        period: "টাকা",
-        description: "প্রফেশনাল এডিটিং",
-        icon: Zap,
-        popular: true,
-        features: [
-          "৫ মিনিট পর্যন্ত",
-          "অ্যাডভান্সড ট্রানজিশন",
-          "কালার গ্রেডিং",
-          "সাউন্ড ডিজাইন",
-          "মোশন টেক্সট",
-          "৫টি রিভিশন",
-        ],
-      },
-      {
-        name: "প্রিমিয়াম",
-        price: "১৫,০০০+",
-        priceNum: 15000,
-        period: "টাকা",
-        description: "সিনেমাটিক কোয়ালিটি",
-        icon: Crown,
-        features: [
-          "১০+ মিনিট ভিডিও",
-          "VFX ও স্পেশাল ইফেক্ট",
-          "প্রফেশনাল কালার গ্রেড",
-          "কাস্টম মিউজিক",
-          "3D এলিমেন্ট",
-          "আনলিমিটেড রিভিশন",
-        ],
-      },
-    ],
-  },
-  {
-    id: "motion-graphics",
-    label: "মোশন গ্রাফিক্স",
-    icon: Activity,
-    gradient: "from-yellow-500 to-amber-400",
-    plans: [
-      {
-        name: "বেসিক",
-        price: "৫,০০০",
-        priceNum: 5000,
-        period: "টাকা",
-        description: "সিম্পল অ্যানিমেশন",
-        icon: Star,
-        features: [
-          "লোগো অ্যানিমেশন",
-          "১৫ সেকেন্ড পর্যন্ত",
-          "HD কোয়ালিটি",
-          "২টি রিভিশন",
-        ],
-      },
-      {
-        name: "স্ট্যান্ডার্ড",
-        price: "১২,০০০",
-        priceNum: 12000,
-        period: "টাকা",
-        description: "এক্সপ্লেইনার ভিডিও",
-        icon: Zap,
-        popular: true,
-        features: [
-          "৬০ সেকেন্ড পর্যন্ত",
-          "2D অ্যানিমেশন",
-          "ভয়েসওভার সাপোর্ট",
-          "কাস্টম ক্যারেক্টার",
-          "৪K কোয়ালিটি",
-          "৫টি রিভিশন",
-        ],
-      },
-      {
-        name: "প্রিমিয়াম",
-        price: "২৫,০০০+",
-        priceNum: 25000,
-        period: "টাকা",
-        description: "ফুল প্রোডাকশন",
-        icon: Crown,
-        features: [
-          "২+ মিনিট ভিডিও",
-          "3D অ্যানিমেশন",
-          "কাস্টম ক্যারেক্টার ডিজাইন",
-          "প্রফেশনাল ভয়েসওভার",
-          "সাউন্ড ইফেক্ট ও মিউজিক",
-          "আনলিমিটেড রিভিশন",
-        ],
-      },
-    ],
-  },
-  {
-    id: "landing-page",
-    label: "ল্যান্ডিং পেজ",
-    icon: Layout,
-    gradient: "from-teal-500 to-cyan-400",
-    plans: [
-      {
-        name: "Premium Package",
-        price: "২,০০০",
-        priceNum: 2000,
-        originalPrice: "৩,২০০",
-        originalPriceNum: 3200,
-        discount: "40%",
-        period: "টাকা",
-        description: "ফুল ফিচার ল্যান্ডিং পেজ",
-        icon: Crown,
-        note: "No Advanced Payment",
-        features: [
-          ".SHOP Domain - 01 Year",
-          "10 GB Bdix NVME Hosting SSD",
-          "Hosting 01 Year",
-          "cPanel & Full Access",
-          "Fraud Customer Checker",
-          "Courier Integration",
-          "Order Invoice Print",
-          "Live Chat Setup",
-          "Pixel & Conversation API Setup",
-          "Sales Converting Unique Design",
-          "Fast Loading Speed",
-          "Easy Order Management",
-          "Easy Checkout",
-          "Thank You Page",
-          "Pro Plugin",
-          "24/7 Priority Support",
-          "Video Tutorial",
-        ],
-      },
-      {
-        name: "Business Package",
-        price: "৩,০০০",
-        priceNum: 3000,
-        originalPrice: "৪,২০০",
-        originalPriceNum: 4200,
-        discount: "30%",
-        period: "টাকা",
-        description: "বিজনেস গ্রোথের জন্য আদর্শ",
-        icon: Zap,
-        popular: true,
-        note: "Domain Hosting Fee in Advance",
-        features: [
-          ".COM Domain - 01 Year",
-          "10 GB Bdix NVME Hosting SSD",
-          "Hosting 01 Year",
-          "cPanel & Full Access",
-          "Fraud Customer Checker",
-          "Courier Integration",
-          "Order Invoice Print",
-          "Live Chat Setup",
-          "Pixel & Conversation API Setup",
-          "Sales Converting Unique Design",
-          "Super Fast Loading Speed",
-          "Easy Order Management",
-          "Easy Checkout",
-          "Thank You Page",
-          "Pro Plugin",
-          "24/7 Priority Support",
-          "2 Time Revision",
-          "Video Tutorial",
-        ],
-      },
-      {
-        name: "Starter Package",
-        price: "১,৫০০",
-        priceNum: 1500,
-        originalPrice: "২,০০০",
-        originalPriceNum: 2000,
-        discount: "40%",
-        period: "টাকা",
-        description: "বেসিক ল্যান্ডিং পেজ",
-        icon: Star,
-        note: "No Advanced Payment",
-        features: [
-          "Domain ❌",
-          "Hosting ❌",
-          "Fraud Customer Checker ❌",
-          "Courier Integration",
-          "Order Invoice Print",
-          "Live Chat Setup",
-          "Pixel & Conversation API Setup",
-          "Sales Converting Unique Design",
-          "Easy Order Management",
-          "Easy Checkout",
-          "Thank You Page",
-          "Pro Plugin",
-          "24/7 Support",
-          "3 Time Revision",
-          "Video Tutorial",
-        ],
-      },
-    ],
-  },
+const servicePricingMeta: ServicePricing[] = [
+  { id: "web-development", label: "ওয়েব ডেভেলপমেন্ট", icon: Code, gradient: "from-green-500 to-emerald-400", planCount: 3 },
+  { id: "graphics-design", label: "গ্রাফিক্স ডিজাইন", icon: Palette, gradient: "from-purple-500 to-pink-400", planCount: 3 },
+  { id: "video-editing", label: "ভিডিও এডিটিং", icon: Video, gradient: "from-red-500 to-orange-400", planCount: 3 },
+  { id: "motion-graphics", label: "মোশন গ্রাফিক্স", icon: Activity, gradient: "from-yellow-500 to-amber-400", planCount: 3 },
+  { id: "landing-page", label: "ল্যান্ডিং পেজ", icon: Layout, gradient: "from-teal-500 to-cyan-400", planCount: 3 },
 ];
+
+// Default plan data for fallback
+const defaultPlansData: Record<string, PricingPlan[]> = {
+  "web-development": [
+    {
+      name: "Starter Package",
+      price: "৫,০০০",
+      priceNum: 5000,
+      originalPrice: "৮,০০০",
+      originalPriceNum: 8000,
+      discount: "37%",
+      period: "টাকা",
+      description: "ছোট ব্যবসার জন্য পারফেক্ট",
+      icon: Star,
+      note: "No Advanced Payment",
+      features: [".SHOP Domain - 01 Year", "10 GB Bdix NVME Hosting SSD", "Hosting 01 Year", "cPanel & Full Access", "Fraud Customer Checker", "Courier Integration", "Order Invoice Print", "Live Chat Setup", "Pixel & Conversation API Setup", "Sales Converting Unique Design", "Fast Loading Speed", "Easy Order Management", "Easy Checkout", "Limited Categories", "Limited Product", "24/7 Priority Support", "Video Tutorial"],
+    },
+    {
+      name: "Premium Package",
+      price: "১৫,০০০",
+      priceNum: 15000,
+      originalPrice: "২০,০০০",
+      originalPriceNum: 20000,
+      discount: "25%",
+      period: "টাকা",
+      description: "সেরা ভ্যালু প্যাকেজ",
+      icon: Zap,
+      popular: true,
+      note: "Domain Hosting Fee in Advance",
+      features: [".COM Domain - 01 Year", "20 GB Bdix NVME Hosting SSD", "Hosting 01 Year", "cPanel & Full Access", "Fraud Customer Checker", "Courier Integration", "Order Invoice Print", "Live Chat Setup", "Pixel & Conversation API Setup", "Mobile Friendly & Unique Design", "Super Fast Loading Speed", "In Stock Management", "Easy Order Management", "Easy Checkout", "Unlimited Categories", "Unlimited Product", "Advanced Security System", "Facebook Page Full Setup", "Facebook Page Logo Cover Setup", "Website Banner & Logo Setup", "Premium Theme & Pro Plugin", "24/7 Priority Support", "Video Tutorial"],
+    },
+    {
+      name: "Business Package",
+      price: "৮,০০০",
+      priceNum: 8000,
+      originalPrice: "১৫,০০০",
+      originalPriceNum: 15000,
+      discount: "47%",
+      period: "টাকা",
+      description: "বিজনেস গ্রোথের জন্য",
+      icon: Crown,
+      note: "Domain Hosting Fee in Advance",
+      features: [".COM Domain - 01 Year", "20 GB Bdix NVME Hosting SSD", "Hosting 01 Year", "cPanel & Full Access", "Fraud Customer Checker", "Courier Integration", "Order Invoice Print", "Live Chat Setup", "Pixel & Conversation API Setup", "Mobile Friendly & Unique Design", "Super Fast Loading Speed", "In Stock Management", "Easy Order Management", "Easy Checkout", "Unlimited Categories", "Unlimited Product", "Facebook Page Logo Cover Setup", "Website Banner & Logo Setup", "Video Tutorial", "Premium Theme & Pro Plugin", "24/7 Priority Support"],
+    },
+  ],
+  "graphics-design": [
+    {
+      name: "Startup Package",
+      price: "১,৭০০",
+      priceNum: 1700,
+      originalPrice: "২,০০০",
+      originalPriceNum: 2000,
+      discount: "15%",
+      period: "টাকা",
+      description: "স্টার্টআপ বিজনেসের জন্য",
+      icon: Star,
+      note: "7 Days money back guarantee",
+      features: ["Logo Design Concept 2", "Business Card Concept 1", "Facebook Cover Photo", "Facebook Post Image 1", "Facebook boost Photo 1", "PNG/JPG/PDF File Formats", "1 Correction Revisions", "All Source File", "3 Days Delivery", "100% Satisfaction Guarantee"],
+    },
+    {
+      name: "Business Package",
+      price: "৩,০০০",
+      priceNum: 3000,
+      originalPrice: "৪,০০০",
+      originalPriceNum: 4000,
+      discount: "25%",
+      period: "টাকা",
+      description: "গ্রোয়িং বিজনেসের জন্য",
+      icon: Zap,
+      popular: true,
+      note: "7 Days money back guarantee",
+      features: ["Logo Design Concept 3", "Business Card Concept 2", "Facebook Cover Photo 3", "Facebook Post Image 3", "Facebook boost Photo 3", "Promotion Animation Video 10s", "PNG/JPG/PDF File Formats", "1 Correction Revisions", "All Source File", "2 Days Delivery", "100% Satisfaction Guarantee"],
+    },
+    {
+      name: "Corporate Package",
+      price: "৫,০০০",
+      priceNum: 5000,
+      originalPrice: "৭,০০০",
+      originalPriceNum: 7000,
+      discount: "29%",
+      period: "টাকা",
+      description: "বড় প্রতিষ্ঠানের জন্য",
+      icon: Crown,
+      note: "7 Days money back guarantee",
+      features: ["Logo Design Concept 5", "Business Card Concept 3", "Facebook Cover Photo 4", "Facebook boost Photo 5", "Promotion Animation Video 20s", "Social Media Banner 7", "PNG/JPG/PDF File Formats", "All Source File", "3 Days Delivery", "100% Satisfaction Guarantee"],
+    },
+  ],
+  "video-editing": [
+    {
+      name: "বেসিক",
+      price: "৩,০০০",
+      priceNum: 3000,
+      period: "টাকা",
+      description: "সিম্পল ভিডিও এডিট",
+      icon: Star,
+      features: ["৩ মিনিট পর্যন্ত", "বেসিক কাট ও ট্রানজিশন", "ব্যাকগ্রাউন্ড মিউজিক", "টেক্সট অ্যানিমেশন", "২টি রিভিশন"],
+    },
+    {
+      name: "স্ট্যান্ডার্ড",
+      price: "৭,০০০",
+      priceNum: 7000,
+      period: "টাকা",
+      description: "প্রফেশনাল এডিটিং",
+      icon: Zap,
+      popular: true,
+      features: ["৫ মিনিট পর্যন্ত", "অ্যাডভান্সড ট্রানজিশন", "কালার গ্রেডিং", "সাউন্ড ডিজাইন", "মোশন টেক্সট", "৫টি রিভিশন"],
+    },
+    {
+      name: "প্রিমিয়াম",
+      price: "১৫,০০০+",
+      priceNum: 15000,
+      period: "টাকা",
+      description: "সিনেমাটিক কোয়ালিটি",
+      icon: Crown,
+      features: ["১০+ মিনিট ভিডিও", "VFX ও স্পেশাল ইফেক্ট", "প্রফেশনাল কালার গ্রেড", "কাস্টম মিউজিক", "3D এলিমেন্ট", "আনলিমিটেড রিভিশন"],
+    },
+  ],
+  "motion-graphics": [
+    {
+      name: "বেসিক",
+      price: "৫,০০০",
+      priceNum: 5000,
+      period: "টাকা",
+      description: "সিম্পল অ্যানিমেশন",
+      icon: Star,
+      features: ["লোগো অ্যানিমেশন", "১৫ সেকেন্ড পর্যন্ত", "HD কোয়ালিটি", "২টি রিভিশন"],
+    },
+    {
+      name: "স্ট্যান্ডার্ড",
+      price: "১২,০০০",
+      priceNum: 12000,
+      period: "টাকা",
+      description: "এক্সপ্লেইনার ভিডিও",
+      icon: Zap,
+      popular: true,
+      features: ["৬০ সেকেন্ড পর্যন্ত", "2D অ্যানিমেশন", "ভয়েসওভার সাপোর্ট", "কাস্টম ক্যারেক্টার", "৪K কোয়ালিটি", "৫টি রিভিশন"],
+    },
+    {
+      name: "প্রিমিয়াম",
+      price: "২৫,০০০+",
+      priceNum: 25000,
+      period: "টাকা",
+      description: "ফুল প্রোডাকশন",
+      icon: Crown,
+      features: ["২+ মিনিট ভিডিও", "3D অ্যানিমেশন", "কাস্টম ক্যারেক্টার ডিজাইন", "প্রফেশনাল ভয়েসওভার", "সাউন্ড ইফেক্ট ও মিউজিক", "আনলিমিটেড রিভিশন"],
+    },
+  ],
+  "landing-page": [
+    {
+      name: "Premium Package",
+      price: "২,০০০",
+      priceNum: 2000,
+      originalPrice: "৩,২০০",
+      originalPriceNum: 3200,
+      discount: "40%",
+      period: "টাকা",
+      description: "ফুল ফিচার ল্যান্ডিং পেজ",
+      icon: Crown,
+      note: "No Advanced Payment",
+      features: [".SHOP Domain - 01 Year", "10 GB Bdix NVME Hosting SSD", "Hosting 01 Year", "cPanel & Full Access", "Fraud Customer Checker", "Courier Integration", "Order Invoice Print", "Live Chat Setup", "Pixel & Conversation API Setup", "Sales Converting Unique Design", "Fast Loading Speed", "Easy Order Management", "Easy Checkout", "Thank You Page", "Pro Plugin", "24/7 Priority Support", "Video Tutorial"],
+    },
+    {
+      name: "Business Package",
+      price: "৩,০০০",
+      priceNum: 3000,
+      originalPrice: "৪,২০০",
+      originalPriceNum: 4200,
+      discount: "30%",
+      period: "টাকা",
+      description: "বিজনেস গ্রোথের জন্য আদর্শ",
+      icon: Zap,
+      popular: true,
+      note: "Domain Hosting Fee in Advance",
+      features: [".COM Domain - 01 Year", "10 GB Bdix NVME Hosting SSD", "Hosting 01 Year", "cPanel & Full Access", "Fraud Customer Checker", "Courier Integration", "Order Invoice Print", "Live Chat Setup", "Pixel & Conversation API Setup", "Sales Converting Unique Design", "Super Fast Loading Speed", "Easy Order Management", "Easy Checkout", "Thank You Page", "Pro Plugin", "24/7 Priority Support", "2 Time Revision", "Video Tutorial"],
+    },
+    {
+      name: "Starter Package",
+      price: "১,৫০০",
+      priceNum: 1500,
+      originalPrice: "২,০০০",
+      originalPriceNum: 2000,
+      discount: "40%",
+      period: "টাকা",
+      description: "বেসিক ল্যান্ডিং পেজ",
+      icon: Star,
+      note: "No Advanced Payment",
+      features: ["Domain ❌", "Hosting ❌", "Fraud Customer Checker ❌", "Courier Integration", "Order Invoice Print", "Live Chat Setup", "Pixel & Conversation API Setup", "Sales Converting Unique Design", "Easy Order Management", "Easy Checkout", "Thank You Page", "Pro Plugin", "24/7 Support", "3 Time Revision", "Video Tutorial"],
+    },
+  ],
+};
+
+const planIcons = [Star, Zap, Crown];
 
 const PricingCard = ({ 
   plan, 
@@ -446,7 +237,8 @@ const PricingCard = ({
   index, 
   serviceId,
   serviceLabel,
-  onOrder 
+  onOrder,
+  content,
 }: { 
   plan: PricingPlan; 
   gradient: string; 
@@ -454,7 +246,18 @@ const PricingCard = ({
   serviceId: string;
   serviceLabel: string;
   onOrder: (plan: PricingPlan, serviceId: string, serviceLabel: string) => void;
+  content: Record<string, string>;
 }) => {
+  const planKey = `${serviceId}_plan_${index}`;
+  
+  // Get editable values from content
+  const planName = content[`${planKey}_name`] || plan.name;
+  const planPrice = content[`${planKey}_price`] || plan.price;
+  const planOriginalPrice = content[`${planKey}_original_price`] || plan.originalPrice || "";
+  const planDiscount = content[`${planKey}_discount`] || plan.discount || "";
+  const planDescription = content[`${planKey}_description`] || plan.description;
+  const planNote = content[`${planKey}_note`] || plan.note || "";
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 30 }}
@@ -465,11 +268,13 @@ const PricingCard = ({
       className={`relative group h-full ${plan.popular ? 'z-10' : ''}`}
     >
       {/* Discount Badge */}
-      {plan.discount && (
+      {planDiscount && (
         <div className="absolute -top-5 -right-3 z-20">
           <div className="relative">
             <div className="w-16 h-16 rounded-full bg-gradient-to-br from-red-500 to-red-600 flex flex-col items-center justify-center shadow-lg shadow-red-500/40 border-2 border-red-400">
-              <span className="text-white font-bold text-lg leading-none">{plan.discount}</span>
+              <span className="text-white font-bold text-lg leading-none">
+                <EditableText page="home" section="pricing" contentKey={`${planKey}_discount`} value={planDiscount} />
+              </span>
               <span className="text-white text-xs font-bold">OFF</span>
             </div>
           </div>
@@ -505,21 +310,29 @@ const PricingCard = ({
         </div>
 
         {/* Plan Name */}
-        <h4 className="text-lg font-bengali font-bold text-white mb-2">{plan.name}</h4>
+        <h4 className="text-lg font-bengali font-bold text-white mb-2">
+          <EditableText page="home" section="pricing" contentKey={`${planKey}_name`} value={planName} />
+        </h4>
         
         {/* Price */}
         <div className="mb-4">
           <div className="flex items-center gap-2 flex-wrap">
-            {plan.originalPrice && (
-              <span className="text-lg text-white/40 line-through font-bengali">৳{plan.originalPrice}</span>
+            {planOriginalPrice && (
+              <span className="text-lg text-white/40 line-through font-bengali">
+                ৳<EditableText page="home" section="pricing" contentKey={`${planKey}_original_price`} value={planOriginalPrice} />
+              </span>
             )}
-            <span className="text-3xl sm:text-4xl font-bold text-gradient-gold">৳{plan.price}</span>
+            <span className="text-3xl sm:text-4xl font-bold text-gradient-gold">
+              ৳<EditableText page="home" section="pricing" contentKey={`${planKey}_price`} value={planPrice} />
+            </span>
           </div>
           <span className="text-white/60 font-bengali text-sm">{plan.period}</span>
         </div>
 
         {/* Description */}
-        <p className="text-white/70 font-bengali text-sm mb-4">{plan.description}</p>
+        <p className="text-white/70 font-bengali text-sm mb-4">
+          <EditableText page="home" section="pricing" contentKey={`${planKey}_description`} value={planDescription} />
+        </p>
 
         {/* Features with scroll */}
         <div className="mb-4 flex-grow max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent pr-2">
@@ -536,13 +349,13 @@ const PricingCard = ({
         </div>
 
         {/* Note */}
-        {plan.note && (
+        {planNote && (
           <div className={`mb-4 px-3 py-2 rounded-lg text-center text-xs font-bengali ${
-            plan.note.includes("No Advanced") 
+            planNote.includes("No Advanced") 
               ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
               : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
           }`}>
-            {plan.note}
+            <EditableText page="home" section="pricing" contentKey={`${planKey}_note`} value={planNote} />
           </div>
         )}
 
@@ -565,23 +378,44 @@ const PricingCard = ({
 
 export const PricingSection = () => {
   const [activeService, setActiveService] = useState("web-development");
-  const currentService = servicePricingData.find(s => s.id === activeService);
   const navigate = useNavigate();
   const { addItem, isInCart } = useCart();
   const { toast } = useToast();
   
-  const fallbackContent = useMemo(() => ({
-    badge_text: "সাশ্রয়ী মূল্যে সেরা সার্ভিস",
-    section_title_start: "আমাদের",
-    section_title_highlight: "প্রাইসিং",
-    section_title_end: "প্ল্যান",
-    section_subtitle: "আপনার বাজেট অনুযায়ী সেরা প্ল্যান বেছে নিন",
-    custom_title: "কাস্টম প্যাকেজ দরকার?",
-    custom_description: "আপনার প্রয়োজন অনুযায়ী কাস্টম প্যাকেজ তৈরি করতে আমাদের সাথে যোগাযোগ করুন",
-    custom_button: "যোগাযোগ করুন 01332052874",
-  }), []);
+  // Build fallback content dynamically for all services and plans
+  const fallbackContent = useMemo(() => {
+    const content: Record<string, string> = {
+      badge_text: "সাশ্রয়ী মূল্যে সেরা সার্ভিস",
+      section_title_start: "আমাদের",
+      section_title_highlight: "প্রাইসিং",
+      section_title_end: "প্ল্যান",
+      section_subtitle: "আপনার বাজেট অনুযায়ী সেরা প্ল্যান বেছে নিন",
+      custom_title: "কাস্টম প্যাকেজ দরকার?",
+      custom_description: "আপনার প্রয়োজন অনুযায়ী কাস্টম প্যাকেজ তৈরি করতে আমাদের সাথে যোগাযোগ করুন",
+      custom_button: "যোগাযোগ করুন 01332052874",
+    };
+    
+    // Add fallback for each service's plans
+    Object.entries(defaultPlansData).forEach(([serviceId, plans]) => {
+      plans.forEach((plan, idx) => {
+        const planKey = `${serviceId}_plan_${idx}`;
+        content[`${planKey}_name`] = plan.name;
+        content[`${planKey}_price`] = plan.price;
+        content[`${planKey}_original_price`] = plan.originalPrice || "";
+        content[`${planKey}_discount`] = plan.discount || "";
+        content[`${planKey}_description`] = plan.description;
+        content[`${planKey}_note`] = plan.note || "";
+      });
+    });
+    
+    return content;
+  }, []);
   
   const { content } = useSiteContent("home", "pricing", fallbackContent);
+
+  // Get current service and its plans
+  const currentServiceMeta = servicePricingMeta.find(s => s.id === activeService);
+  const currentPlans = defaultPlansData[activeService] || [];
 
   const handleOrder = (plan: PricingPlan, serviceId: string, serviceLabel: string) => {
     const itemId = `${serviceId}-${plan.name}`;
@@ -650,7 +484,7 @@ export const PricingSection = () => {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-10 md:mb-12"
         >
-          {servicePricingData.map((service) => (
+          {servicePricingMeta.map((service) => (
             <button
               key={service.id}
               onClick={() => setActiveService(service.id)}
@@ -671,7 +505,7 @@ export const PricingSection = () => {
         </motion.div>
 
         {/* Pricing Cards */}
-        {currentService && (
+        {currentServiceMeta && (
           <motion.div
             key={activeService}
             initial={{ opacity: 0 }}
@@ -679,15 +513,16 @@ export const PricingSection = () => {
             transition={{ duration: 0.4 }}
             className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8"
           >
-            {currentService.plans.map((plan, index) => (
+            {currentPlans.map((plan, index) => (
               <PricingCard
-                key={plan.name}
+                key={`${activeService}-${index}`}
                 plan={plan}
-                gradient={currentService.gradient}
+                gradient={currentServiceMeta.gradient}
                 index={index}
-                serviceId={currentService.id}
-                serviceLabel={currentService.label}
+                serviceId={currentServiceMeta.id}
+                serviceLabel={currentServiceMeta.label}
                 onOrder={handleOrder}
+                content={content}
               />
             ))}
           </motion.div>

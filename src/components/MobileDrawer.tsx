@@ -60,12 +60,15 @@ export function MobileDrawer({
       >
         <SheetHeader>
           <SheetTitle className="text-left">
-            <img 
-              src={logo} 
-              alt="Web Creation BD" 
-              className="h-10 w-auto object-contain"
-              loading="lazy"
-            />
+            <div className="relative inline-block">
+              <div className="absolute -inset-1 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 rounded-xl blur-sm opacity-60" />
+              <img 
+                src={logo} 
+                alt="Web Creation BD" 
+                className="relative h-10 w-auto object-contain rounded-lg shadow-lg"
+                loading="lazy"
+              />
+            </div>
           </SheetTitle>
         </SheetHeader>
         <nav className="flex flex-col gap-1 mt-8">

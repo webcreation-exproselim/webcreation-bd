@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Star } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
+import { useSiteContent } from "@/hooks/useSiteContent";
+import { EditableText } from "./EditableText";
 
 type Review = {
   id: string;
@@ -196,6 +198,16 @@ export const CustomerReviewSection = () => {
   const [reviewsRow2, setReviewsRow2] = useState<Review[]>(fallbackReviewsRow2);
   const [totalCount, setTotalCount] = useState(1500);
 
+  // Fallback content
+  const fallbackContent = useMemo(() => ({
+    badge_text: "+ সন্তুষ্ট ক্লায়েন্ট",
+    section_title_start: "আমাদের ক্লায়েন্টদের",
+    section_title_highlight: "মতামত",
+    section_subtitle: "আমাদের সেবা গ্রহণকারী ক্লায়েন্টদের অভিজ্ঞতা ও মতামত দেখুন",
+  }), []);
+
+  const { content } = useSiteContent("home", "reviews", fallbackContent);
+
   useEffect(() => {
     const fetchReviews = async () => {
       const { data, error } = await supabase
@@ -254,16 +266,16 @@ export const CustomerReviewSection = () => {
             transition={{ duration: 0.6 }}
           >
             <span className="inline-block px-4 py-2 rounded-full bg-gradient-to-r from-yellow-400/20 to-red-500/20 border border-yellow-400/30 text-yellow-400 text-sm font-medium mb-4">
-              {totalCount}+ সন্তুষ্ট ক্লায়েন্ট
+              {totalCount}<EditableText page="home" section="reviews" contentKey="badge_text" value={content.badge_text} />
             </span>
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 font-bengali">
-              আমাদের ক্লায়েন্টদের{" "}
+              <EditableText page="home" section="reviews" contentKey="section_title_start" value={content.section_title_start} />{" "}
               <span className="bg-gradient-to-r from-yellow-300 via-yellow-400 to-yellow-500 bg-clip-text text-transparent">
-                মতামত
+                <EditableText page="home" section="reviews" contentKey="section_title_highlight" value={content.section_title_highlight} />
               </span>
             </h2>
             <p className="text-gray-400 max-w-2xl mx-auto font-bengali">
-              আমাদের সেবা গ্রহণকারী ক্লায়েন্টদের অভিজ্ঞতা ও মতামত দেখুন
+              <EditableText page="home" section="reviews" contentKey="section_subtitle" value={content.section_subtitle} multiline />
             </p>
           </motion.div>
         </div>

@@ -2,6 +2,9 @@ import { motion } from "framer-motion";
 import { Megaphone, Code, Palette, Video, Activity, Layout, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { useMemo } from "react";
+import { useSiteContent } from "@/hooks/useSiteContent";
+import { EditableText } from "./EditableText";
 
 const services = [
   {
@@ -117,6 +120,16 @@ const ServiceCard = ({ service, index }: { service: typeof services[0]; index: n
 };
 
 export const ServicesSection = () => {
+  // Fallback content
+  const fallbackContent = useMemo(() => ({
+    section_title_start: "আমাদের",
+    section_title_highlight: "সার্ভিস",
+    section_title_end: "সমূহ",
+    section_subtitle: "আপনার ব্যবসার ডিজিটাল সাফল্যের জন্য আমাদের প্রফেশনাল সার্ভিস গুলো",
+  }), []);
+
+  const { content } = useSiteContent("home", "services", fallbackContent);
+
   return (
     <section id="services" className="py-16 md:py-24 bg-dark-gradient relative overflow-hidden">
       {/* Background Pattern */}
@@ -140,10 +153,14 @@ export const ServicesSection = () => {
           className="text-center mb-12 md:mb-16"
         >
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bengali font-bold text-white">
-            আমাদের <span className="text-gradient-brand">সার্ভিস</span> সমূহ
+            <EditableText page="home" section="services" contentKey="section_title_start" value={content.section_title_start} />{" "}
+            <span className="text-gradient-brand">
+              <EditableText page="home" section="services" contentKey="section_title_highlight" value={content.section_title_highlight} />
+            </span>{" "}
+            <EditableText page="home" section="services" contentKey="section_title_end" value={content.section_title_end} />
           </h2>
           <p className="mt-4 text-muted-foreground text-sm sm:text-base md:text-lg max-w-2xl mx-auto font-bengali">
-            আপনার ব্যবসার ডিজিটাল সাফল্যের জন্য আমাদের প্রফেশনাল সার্ভিস গুলো
+            <EditableText page="home" section="services" contentKey="section_subtitle" value={content.section_subtitle} multiline />
           </p>
         </motion.div>
 

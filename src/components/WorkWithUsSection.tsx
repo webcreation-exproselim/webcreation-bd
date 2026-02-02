@@ -1,6 +1,9 @@
 import { motion } from "framer-motion";
 import { CheckCircle, ArrowRight, Phone, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useMemo } from "react";
+import { useSiteContent } from "@/hooks/useSiteContent";
+import { EditableText } from "./EditableText";
 
 const benefits = [
   "১০০% সন্তুষ্টি গ্যারান্টি",
@@ -21,6 +24,20 @@ const services = [
 ];
 
 export function WorkWithUsSection() {
+  // Fallback content
+  const fallbackContent = useMemo(() => ({
+    badge_text: "আমাদের সাথে কাজ করুন",
+    section_title_start: "আপনার ব্যবসার",
+    section_title_highlight: "ডিজিটাল সাফল্যের",
+    section_title_end: "অংশীদার",
+    section_description: "Web Creation BD আপনার ব্যবসার জন্য সেরা মানের ডিজিটাল সার্ভিস প্রদান করে। আমাদের অভিজ্ঞ টিম আপনার প্রতিটি প্রজেক্টে সর্বোচ্চ মনোযোগ দিয়ে কাজ করে।",
+    stats_badge: "১৫০০+ সফল প্রজেক্ট সম্পন্ন",
+    whatsapp_button: "হোয়াটসঅ্যাপে মেসেজ করুন",
+    call_button: "কল করুন",
+  }), []);
+
+  const { content } = useSiteContent("home", "work-with-us", fallbackContent);
+
   return (
     <section className="relative py-16 md:py-24 bg-gradient-to-br from-black via-red-950/20 to-black overflow-hidden">
       {/* Background Pattern */}
@@ -78,7 +95,7 @@ export function WorkWithUsSection() {
                 >
                   <div className="bg-gradient-to-r from-yellow-400/20 to-red-500/20 backdrop-blur-sm rounded-full px-6 py-3 border border-yellow-400/30">
                     <span className="font-bengali text-yellow-400 font-bold text-sm md:text-base">
-                      ১৫০০+ সফল প্রজেক্ট সম্পন্ন
+                      <EditableText page="home" section="work-with-us" contentKey="stats_badge" value={content.stats_badge} />
                     </span>
                   </div>
                 </motion.div>
@@ -103,21 +120,22 @@ export function WorkWithUsSection() {
             >
               <span className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse" />
               <span className="font-bengali text-yellow-400 text-sm font-medium">
-                আমাদের সাথে কাজ করুন
+                <EditableText page="home" section="work-with-us" contentKey="badge_text" value={content.badge_text} />
               </span>
             </motion.div>
 
             {/* Title */}
             <h2 className="font-bengali text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">
-              আপনার ব্যবসার{" "}
-              <span className="text-gradient-gold">ডিজিটাল সাফল্যের</span>{" "}
-              অংশীদার
+              <EditableText page="home" section="work-with-us" contentKey="section_title_start" value={content.section_title_start} />{" "}
+              <span className="text-gradient-gold">
+                <EditableText page="home" section="work-with-us" contentKey="section_title_highlight" value={content.section_title_highlight} />
+              </span>{" "}
+              <EditableText page="home" section="work-with-us" contentKey="section_title_end" value={content.section_title_end} />
             </h2>
 
             {/* Description */}
             <p className="font-bengali text-white/70 text-base md:text-lg mb-8 leading-relaxed">
-              Web Creation BD আপনার ব্যবসার জন্য সেরা মানের ডিজিটাল সার্ভিস প্রদান করে। 
-              আমাদের অভিজ্ঞ টিম আপনার প্রতিটি প্রজেক্টে সর্বোচ্চ মনোযোগ দিয়ে কাজ করে।
+              <EditableText page="home" section="work-with-us" contentKey="section_description" value={content.section_description} multiline />
             </p>
 
             {/* Benefits List */}

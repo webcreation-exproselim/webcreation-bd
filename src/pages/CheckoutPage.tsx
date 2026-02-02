@@ -1,13 +1,13 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   ArrowLeft, ShoppingCart, Trash2, Plus, Check, 
-  Smartphone, Building2, CheckCircle, Upload, Image, X, Copy, CreditCard
+  Smartphone, Building2, CheckCircle, Upload, Image, X, Copy, CreditCard, FileText
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { useCart } from "@/context/CartContext";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -68,6 +68,13 @@ const quickServices = [
 
 const CheckoutPage = () => {
   const { items, removeItem, clearCart, totalPrice, totalSavings, addItem, isInCart } = useCart();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  
+  // Check if this is an invoice payment
+  const invoiceId = searchParams.get("invoice");
+  const invoiceAmount = searchParams.get("amount");
+  
   const [selectedPayment, setSelectedPayment] = useState<string | null>(null);
   const [transactionId, setTransactionId] = useState("");
   const [senderNumber, setSenderNumber] = useState("");
@@ -79,8 +86,48 @@ const CheckoutPage = () => {
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
   const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
   const [uploadingScreenshot, setUploadingScreenshot] = useState(false);
+  const [invoiceData, setInvoiceData] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  // Fetch invoice data if invoice payment
+  useEffect(() => {
+    const fetchInvoiceAndUser = async () => {
+      if (invoiceId) {
+        const { data: invoice } = await supabase
+          .from("invoices")
+          .select("*, orders(*)")
+          .eq("id", invoiceId)
+          .single();
+        
+        if (invoice) {
+          setInvoiceData(invoice);
+          // Pre-fill customer info from order
+          if (invoice.orders) {
+            setCustomerName(invoice.orders.customer_name || "");
+            setCustomerPhone(invoice.orders.customer_phone || "");
+          }
+        }
+      }
+      
+      // Also fetch current user info
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user && !invoiceId) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("user_id", user.id)
+          .single();
+        
+        if (profile) {
+          setCustomerName(profile.full_name || "");
+          setCustomerPhone(profile.phone || "");
+        }
+      }
+    };
+    
+    fetchInvoiceAndUser();
+  }, [invoiceId]);
 
   const copyNumber = (num: string) => {
     navigator.clipboard.writeText(num);
@@ -161,7 +208,9 @@ const CheckoutPage = () => {
       toast({ title: "পেমেন্ট মেথড সিলেক্ট করুন", variant: "destructive" });
       return;
     }
-    if (items.length === 0) {
+    
+    // For regular orders, check if cart has items
+    if (!invoiceId && items.length === 0) {
       toast({ title: "কার্ট খালি", description: "সার্ভিস যোগ করুন", variant: "destructive" });
       return;
     }
@@ -177,32 +226,56 @@ const CheckoutPage = () => {
         screenshotUrl = await uploadScreenshot();
       }
 
-      const { error } = await supabase.from('orders').insert([{
-        customer_name: customerName.trim(),
-        customer_phone: customerPhone.trim(),
-        services: JSON.parse(JSON.stringify(items)),
-        total_price: totalPrice,
-        total_savings: totalSavings,
-        payment_method: selectedPayment,
-        transaction_id: transactionId || null,
-        sender_number: senderNumber || null,
-        payment_screenshot_url: screenshotUrl,
-        status: 'pending',
-        user_id: user?.id || null, // Link order to logged-in user
-      }]);
+      // If this is an invoice payment
+      if (invoiceId && invoiceData) {
+        const paymentAmount = Number(invoiceAmount) || 0;
+        const newPaidAmount = Number(invoiceData.paid_amount) + paymentAmount;
+        const newStatus = newPaidAmount >= Number(invoiceData.amount) ? "paid" : "partial";
 
-      if (error) throw error;
+        const { error } = await supabase
+          .from("invoices")
+          .update({ 
+            paid_amount: newPaidAmount,
+            status: newStatus 
+          })
+          .eq("id", invoiceId);
 
-      setOrderPlaced(true);
-      clearCart();
-      toast({ title: "অর্ডার সফল! 🎉", description: "শীঘ্রই যোগাযোগ করা হবে" });
+        if (error) throw error;
+
+        setOrderPlaced(true);
+        toast({ title: "পেমেন্ট সফল! 🎉", description: "ধন্যবাদ আপনার পেমেন্টের জন্য" });
+      } else {
+        // Regular order
+        const { error } = await supabase.from('orders').insert([{
+          customer_name: customerName.trim(),
+          customer_phone: customerPhone.trim(),
+          services: JSON.parse(JSON.stringify(items)),
+          total_price: totalPrice,
+          total_savings: totalSavings,
+          payment_method: selectedPayment,
+          transaction_id: transactionId || null,
+          sender_number: senderNumber || null,
+          payment_screenshot_url: screenshotUrl,
+          status: 'pending',
+          user_id: user?.id || null,
+        }]);
+
+        if (error) throw error;
+
+        setOrderPlaced(true);
+        clearCart();
+        toast({ title: "অর্ডার সফল! 🎉", description: "শীঘ্রই যোগাযোগ করা হবে" });
+      }
     } catch (error) {
-      console.error('Order error:', error);
+      console.error('Order/Payment error:', error);
       toast({ title: "সমস্যা হয়েছে", description: "আবার চেষ্টা করুন", variant: "destructive" });
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  // Calculate the amount to display
+  const displayAmount = invoiceId ? Number(invoiceAmount) : totalPrice;
 
   // Success Screen
   if (orderPlaced) {
@@ -224,15 +297,18 @@ const CheckoutPage = () => {
               <CheckCircle className="w-12 h-12 text-white" />
             </motion.div>
             <h1 className="text-3xl font-bengali font-bold text-gray-900 mb-4">
-              অর্ডার সম্পন্ন! 🎉
+              {invoiceId ? "পেমেন্ট সম্পন্ন! 🎉" : "অর্ডার সম্পন্ন! 🎉"}
             </h1>
             <p className="text-gray-600 font-bengali mb-8 text-lg">
-              ধন্যবাদ! আমরা শীঘ্রই আপনার সাথে যোগাযোগ করব।
+              {invoiceId 
+                ? "ধন্যবাদ আপনার পেমেন্টের জন্য! আপনার ইনভয়েস আপডেট হয়েছে।"
+                : "ধন্যবাদ! আমরা শীঘ্রই আপনার সাথে যোগাযোগ করব।"
+              }
             </p>
-            <Link to="/">
+            <Link to={invoiceId ? "/dashboard" : "/"}>
               <Button className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-bengali px-8 py-6 text-lg rounded-xl shadow-lg">
                 <ArrowLeft className="w-5 h-5 mr-2" />
-                হোমে ফিরুন
+                {invoiceId ? "ড্যাশবোর্ডে ফিরুন" : "হোমে ফিরুন"}
               </Button>
             </Link>
           </motion.div>
@@ -254,69 +330,108 @@ const CheckoutPage = () => {
             animate={{ opacity: 1, y: 0 }}
             className="mb-8"
           >
-            <Link to="/" className="inline-flex items-center gap-2 text-red-600 hover:text-red-700 mb-4 text-sm font-bengali transition-colors">
+            <Link 
+              to={invoiceId ? "/dashboard" : "/"} 
+              className="inline-flex items-center gap-2 text-red-600 hover:text-red-700 mb-4 text-sm font-bengali transition-colors"
+            >
               <ArrowLeft className="w-4 h-4" />
-              হোম পেজে ফিরুন
+              {invoiceId ? "ড্যাশবোর্ডে ফিরুন" : "হোম পেজে ফিরুন"}
             </Link>
 
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-r from-red-500 to-red-600 flex items-center justify-center shadow-lg shadow-red-200">
-                  <ShoppingCart className="w-6 h-6 text-white" />
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg ${
+                  invoiceId 
+                    ? "bg-gradient-to-r from-yellow-500 to-orange-500 shadow-yellow-200" 
+                    : "bg-gradient-to-r from-red-500 to-red-600 shadow-red-200"
+                }`}>
+                  {invoiceId ? <FileText className="w-6 h-6 text-white" /> : <ShoppingCart className="w-6 h-6 text-white" />}
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bengali font-bold text-gray-900">চেকআউট</h1>
-                  <p className="text-sm text-gray-500 font-bengali">{items.length}টি সার্ভিস</p>
+                  <h1 className="text-2xl font-bengali font-bold text-gray-900">
+                    {invoiceId ? "ইনভয়েস পেমেন্ট" : "চেকআউট"}
+                  </h1>
+                  <p className="text-sm text-gray-500 font-bengali">
+                    {invoiceId 
+                      ? `ইনভয়েস: ${invoiceData?.invoice_number || "লোড হচ্ছে..."}`
+                      : `${items.length}টি সার্ভিস`
+                    }
+                  </p>
                 </div>
               </div>
-              <button
-                onClick={() => setShowServices(!showServices)}
-                className="flex items-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 px-4 py-2 rounded-xl text-sm font-bengali transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-                সার্ভিস যোগ করুন
-              </button>
+              {!invoiceId && (
+                <button
+                  onClick={() => setShowServices(!showServices)}
+                  className="flex items-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 px-4 py-2 rounded-xl text-sm font-bengali transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  সার্ভিস যোগ করুন
+                </button>
+              )}
             </div>
           </motion.div>
 
-          {/* Quick Add Services */}
-          <AnimatePresence>
-            {showServices && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className="mb-6 overflow-hidden"
-              >
-                <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
-                  <h3 className="font-bengali font-semibold text-gray-900 mb-3">দ্রুত যোগ করুন</h3>
-                  <div className="grid grid-cols-2 gap-3">
-                    {quickServices.map((s) => (
-                      <button
-                        key={s.id}
-                        onClick={() => handleAddQuickService(s)}
-                        disabled={isInCart(s.id)}
-                        className={`p-4 rounded-xl text-left transition-all ${
-                          isInCart(s.id)
-                            ? "bg-green-50 border-2 border-green-200"
-                            : "bg-gray-50 border-2 border-transparent hover:border-red-200 hover:bg-red-50"
-                        }`}
-                      >
-                        <div className="font-bengali font-medium text-gray-900 text-sm mb-2 line-clamp-2">{s.name}</div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-red-600 font-bold">৳{s.price.toLocaleString()}</span>
-                          {isInCart(s.id) && <Check className="w-4 h-4 text-green-500" />}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
+          {/* Invoice Payment Summary */}
+          {invoiceId && invoiceData && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-gradient-to-r from-yellow-500 to-orange-500 rounded-2xl p-5 mb-6 text-white shadow-lg shadow-yellow-200"
+            >
+              <div className="flex justify-between items-center">
+                <div>
+                  <span className="font-bengali text-yellow-100 text-sm">বাকি পরিমাণ</span>
+                  <div className="text-3xl font-bold">৳{Number(invoiceAmount).toLocaleString()}</div>
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                <div className="text-right">
+                  <span className="font-bengali text-yellow-100 text-sm">মোট ইনভয়েস</span>
+                  <div className="text-xl font-bold">৳{Number(invoiceData.amount).toLocaleString()}</div>
+                </div>
+              </div>
+            </motion.div>
+          )}
 
-          {/* Cart Items */}
-          <motion.div
+          {/* Quick Add Services - Only show for regular checkout */}
+          {!invoiceId && (
+            <AnimatePresence>
+              {showServices && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="mb-6 overflow-hidden"
+                >
+                  <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
+                    <h3 className="font-bengali font-semibold text-gray-900 mb-3">দ্রুত যোগ করুন</h3>
+                    <div className="grid grid-cols-2 gap-3">
+                      {quickServices.map((s) => (
+                        <button
+                          key={s.id}
+                          onClick={() => handleAddQuickService(s)}
+                          disabled={isInCart(s.id)}
+                          className={`p-4 rounded-xl text-left transition-all ${
+                            isInCart(s.id)
+                              ? "bg-green-50 border-2 border-green-200"
+                              : "bg-gray-50 border-2 border-transparent hover:border-red-200 hover:bg-red-50"
+                          }`}
+                        >
+                          <div className="font-bengali font-medium text-gray-900 text-sm mb-2 line-clamp-2">{s.name}</div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-red-600 font-bold">৳{s.price.toLocaleString()}</span>
+                            {isInCart(s.id) && <Check className="w-4 h-4 text-green-500" />}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          )}
+
+          {/* Cart Items - Only show for regular checkout */}
+          {!invoiceId && (
+            <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
@@ -368,9 +483,10 @@ const CheckoutPage = () => {
               </div>
             )}
           </motion.div>
+          )}
 
-          {/* Total Summary */}
-          {items.length > 0 && (
+          {/* Total Summary - Only show for regular checkout with items */}
+          {!invoiceId && items.length > 0 && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -583,7 +699,7 @@ const CheckoutPage = () => {
           >
             <Button
               onClick={handlePlaceOrder}
-              disabled={isSubmitting || items.length === 0 || uploadingScreenshot}
+              disabled={isSubmitting || (!invoiceId && items.length === 0) || uploadingScreenshot}
               className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-bengali font-bold py-7 text-lg rounded-2xl shadow-xl shadow-red-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting || uploadingScreenshot ? (
@@ -598,13 +714,13 @@ const CheckoutPage = () => {
               ) : (
                 <span className="flex items-center gap-2">
                   <CreditCard className="w-5 h-5" />
-                  অর্ডার কনফার্ম করুন
+                  {invoiceId ? "পেমেন্ট কনফার্ম করুন" : "অর্ডার কনফার্ম করুন"}
                 </span>
               )}
             </Button>
 
             <p className="text-center text-sm text-gray-500 mt-4 font-bengali">
-              🔒 আপনার তথ্য সম্পূর্ণ নিরাপদ। অর্ডার করলে আমরা শীঘ্রই কল করব।
+              🔒 আপনার তথ্য সম্পূর্ণ নিরাপদ। {invoiceId ? "পেমেন্ট করলে ইনভয়েস আপডেট হবে।" : "অর্ডার করলে আমরা শীঘ্রই কল করব।"}
             </p>
           </motion.div>
         </div>

@@ -652,79 +652,106 @@ export default function ClientDashboard() {
                 <p className="text-white/60 font-bengali">কোন ইনভয়েস নেই</p>
               </div>
             ) : (
-              invoices.map((invoice, idx) => (
-                <motion.div
-                  key={invoice.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.1 }}
-                  className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-xl bg-yellow-500/20 flex items-center justify-center">
-                        <FileText className="w-6 h-6 text-yellow-400" />
-                      </div>
-                      <div>
-                        <p className="text-white font-medium font-mono">
-                          #{invoice.invoice_number}
-                        </p>
-                        <p className="text-white/60 text-sm font-bengali">
-                          {new Date(invoice.created_at).toLocaleDateString("bn-BD")}
-                        </p>
-                      </div>
-                    </div>
+              invoices.map((invoice, idx) => {
+                const dueAmount = Number(invoice.amount) - Number(invoice.paid_amount);
+                const StatusIcon = invoice.status === "paid" 
+                  ? CheckCircle 
+                  : invoice.status === "partial" 
+                  ? Clock 
+                  : XCircle;
+                const statusColor = invoice.status === "paid"
+                  ? "bg-green-500/20 text-green-400"
+                  : invoice.status === "partial"
+                  ? "bg-yellow-500/20 text-yellow-400"
+                  : "bg-red-500/20 text-red-400";
+                const statusText = invoice.status === "paid" 
+                  ? "পরিশোধিত" 
+                  : invoice.status === "partial"
+                  ? "আংশিক"
+                  : "বাকি";
 
-                    <div className="flex items-center gap-3">
-                      <div className="text-right">
-                        <p className="text-white font-bold text-lg">
-                          ৳{Number(invoice.amount).toLocaleString()}
-                        </p>
-                        <span
-                          className={`text-sm font-bengali ${
-                            invoice.status === "paid"
-                              ? "text-green-400"
-                              : invoice.status === "partial"
-                              ? "text-yellow-400"
-                              : "text-red-400"
-                          }`}
-                        >
-                          {invoice.status === "paid" 
-                            ? "পরিশোধিত" 
-                            : invoice.status === "partial"
-                            ? `আংশিক (৳${Number(invoice.paid_amount).toLocaleString()})`
-                            : "বাকি"}
-                        </span>
+                return (
+                  <motion.div
+                    key={invoice.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.1 }}
+                    className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-2xl border border-white/10 overflow-hidden"
+                  >
+                    {/* Header Accent Bar */}
+                    <div className="h-1.5 bg-gradient-to-r from-red-500 to-yellow-500" />
+                    
+                    <div className="p-6">
+                      {/* Top Row */}
+                      <div className="flex items-start justify-between mb-6">
+                        <div className="flex items-center gap-4">
+                          <div className={`w-14 h-14 rounded-2xl ${statusColor} flex items-center justify-center`}>
+                            <StatusIcon className="w-7 h-7" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-3 mb-1">
+                              <span className="font-mono text-lg font-bold text-white">
+                                {invoice.invoice_number}
+                              </span>
+                              <span className={`px-3 py-1 rounded-full text-xs font-bold ${statusColor}`}>
+                                {statusText}
+                              </span>
+                            </div>
+                            <p className="text-white/50 text-sm font-bengali">
+                              তারিখ: {new Date(invoice.created_at).toLocaleDateString("bn-BD")}
+                            </p>
+                          </div>
+                        </div>
                       </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => downloadInvoice(invoice)}
-                        className="text-blue-400 border-blue-400/30 hover:bg-blue-400/10 font-bengali"
-                      >
-                        <Download className="w-4 h-4 mr-2" />
-                        ডাউনলোড
-                      </Button>
-                      {invoice.status !== "paid" && (
-                        <a
-                          href={`https://wa.me/8801234567890?text=ইনভয়েস%20${invoice.invoice_number}%20এর%20পেমেন্ট%20করতে%20চাই`}
-                          target="_blank"
-                          rel="noopener noreferrer"
+
+                      {/* Amount Details */}
+                      <div className="grid grid-cols-3 gap-4 mb-6 p-4 bg-black/20 rounded-xl">
+                        <div className="text-center">
+                          <p className="text-white/50 text-xs font-bengali mb-1">মোট</p>
+                          <p className="text-white font-bold text-lg">৳{Number(invoice.amount).toLocaleString()}</p>
+                        </div>
+                        <div className="text-center border-x border-white/10">
+                          <p className="text-white/50 text-xs font-bengali mb-1">পরিশোধিত</p>
+                          <p className="text-green-400 font-bold text-lg">৳{Number(invoice.paid_amount).toLocaleString()}</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-white/50 text-xs font-bengali mb-1">বাকি</p>
+                          <p className={`font-bold text-lg ${dueAmount > 0 ? 'text-red-400' : 'text-green-400'}`}>
+                            ৳{dueAmount.toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex flex-wrap items-center gap-3">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => downloadInvoice(invoice)}
+                          className="flex-1 sm:flex-none text-blue-400 border-blue-400/30 hover:bg-blue-400/10 font-bengali"
                         >
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-green-400 border-green-400/30 hover:bg-green-400/10 font-bengali"
+                          <Download className="w-4 h-4 mr-2" />
+                          ডাউনলোড
+                        </Button>
+                        {invoice.status !== "paid" && (
+                          <Link 
+                            to={`/checkout?invoice=${invoice.id}&amount=${dueAmount}`}
+                            className="flex-1 sm:flex-none"
                           >
-                            <CreditCard className="w-4 h-4 mr-2" />
-                            পেমেন্ট
-                          </Button>
-                        </a>
-                      )}
+                            <Button
+                              size="sm"
+                              className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-bengali"
+                            >
+                              <CreditCard className="w-4 h-4 mr-2" />
+                              পেমেন্ট করুন
+                            </Button>
+                          </Link>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </motion.div>
-              ))
+                  </motion.div>
+                );
+              })
             )}
           </motion.div>
         )}

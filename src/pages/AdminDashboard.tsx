@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
-  Package, Clock, CheckCircle, XCircle, Phone, User, 
-  CreditCard, Calendar, TrendingUp, Eye, RefreshCw, Image, ExternalLink,
-  Users, FileImage, FileText, Settings, BarChart3, Trash2, Ban,
-  Plus, Upload, X, Edit2, Home, LogOut, Loader2, Search, MessageCircle, Send
+  Package, Phone, User, CreditCard, ExternalLink,
+  Users, FileImage, FileText, Trash2,
+  Plus, Upload, X, Edit2, Loader2, Search, MessageCircle, Send,
+  LayoutDashboard
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,29 +27,14 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-} from "recharts";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
+
+// Components
+import { AdminHeader } from "@/components/admin/AdminHeader";
+import { StatsCards } from "@/components/admin/StatsCards";
+import { AnalyticsCharts } from "@/components/admin/AnalyticsCharts";
+import { InvoiceSystem } from "@/components/admin/InvoiceSystem";
 
 interface OrderService {
   id: string;
@@ -118,10 +103,10 @@ interface Message {
 }
 
 const statusColors: Record<string, string> = {
-  pending: "bg-yellow-100 text-yellow-700 border-yellow-200",
-  processing: "bg-blue-100 text-blue-700 border-blue-200",
-  completed: "bg-green-100 text-green-700 border-green-200",
-  cancelled: "bg-red-100 text-red-700 border-red-200",
+  pending: "bg-amber-50 text-amber-700 border-amber-200",
+  processing: "bg-blue-50 text-blue-700 border-blue-200",
+  completed: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  cancelled: "bg-red-50 text-red-700 border-red-200",
 };
 
 const statusLabels: Record<string, string> = {
@@ -147,13 +132,13 @@ const categoryLabels: Record<string, string> = {
   "landing-page": "ল্যান্ডিং পেজ",
 };
 
-const CHART_COLORS = ["#ef4444", "#f59e0b", "#22c55e", "#3b82f6", "#8b5cf6", "#ec4899"];
+type TabType = "overview" | "orders" | "users" | "portfolio" | "invoices" | "messages";
 
 const AdminDashboard = () => {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("orders");
+  const [activeTab, setActiveTab] = useState<TabType>("overview");
   
   // Orders
   const [orders, setOrders] = useState<Order[]>([]);
@@ -181,12 +166,6 @@ const AdminDashboard = () => {
   
   // Invoices
   const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
-  const [invoiceForm, setInvoiceForm] = useState({
-    order_id: "",
-    amount: 0,
-    client_id: "",
-  });
   
   // Messages
   const [messages, setMessages] = useState<Message[]>([]);
@@ -214,7 +193,7 @@ const AdminDashboard = () => {
         .select("role")
         .eq("user_id", session.user.id)
         .eq("role", "admin")
-        .single();
+        .maybeSingle();
       
       if (!roleData) {
         toast({
@@ -340,7 +319,7 @@ const AdminDashboard = () => {
     const fileName = `${Date.now()}.${fileExt}`;
     const filePath = `portfolio/${fileName}`;
     
-    const { error: uploadError, data } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from("payment-screenshots")
       .upload(filePath, file);
     
@@ -414,49 +393,6 @@ const AdminDashboard = () => {
     }
   };
 
-  // Invoice actions
-  const createInvoice = async () => {
-    if (!invoiceForm.order_id || !invoiceForm.amount) {
-      toast({ title: "অর্ডার এবং পরিমাণ দিন", variant: "destructive" });
-      return;
-    }
-    
-    const order = orders.find(o => o.id === invoiceForm.order_id);
-    const invoiceNumber = `INV-${Date.now().toString().slice(-8)}`;
-    
-    const { error } = await supabase
-      .from("invoices")
-      .insert({
-        invoice_number: invoiceNumber,
-        order_id: invoiceForm.order_id,
-        client_id: order?.user_id || null,
-        amount: invoiceForm.amount,
-        status: "unpaid",
-      });
-    
-    if (!error) {
-      toast({ title: "ইনভয়েস তৈরি হয়েছে" });
-      setIsInvoiceModalOpen(false);
-      setInvoiceForm({ order_id: "", amount: 0, client_id: "" });
-      fetchInvoices();
-    }
-  };
-
-  const updateInvoiceStatus = async (id: string, status: string, paidAmount?: number) => {
-    const updateData: any = { status };
-    if (paidAmount !== undefined) updateData.paid_amount = paidAmount;
-    
-    const { error } = await supabase
-      .from("invoices")
-      .update(updateData)
-      .eq("id", id);
-    
-    if (!error) {
-      toast({ title: "ইনভয়েস আপডেট হয়েছে" });
-      fetchInvoices();
-    }
-  };
-
   // Message actions
   const sendAdminMessage = async () => {
     if (!newMessage.trim() || !selectedOrderChat || !user) return;
@@ -476,7 +412,6 @@ const AdminDashboard = () => {
 
   // User actions
   const deleteUser = async (userId: string) => {
-    // Just delete profile and roles - auth user deletion requires admin API
     await supabase.from("profiles").delete().eq("user_id", userId);
     await supabase.from("user_roles").delete().eq("user_id", userId);
     toast({ title: "ইউজার ডিলিট হয়েছে" });
@@ -503,34 +438,6 @@ const AdminDashboard = () => {
     unpaidInvoices: invoices.filter(i => i.status === "unpaid").reduce((sum, i) => sum + Number(i.amount), 0),
   };
 
-  // Chart data
-  const getMonthlyRevenue = () => {
-    const monthlyData: Record<string, number> = {};
-    orders
-      .filter(o => o.status === "completed")
-      .forEach(order => {
-        const month = new Date(order.created_at).toLocaleDateString("bn-BD", { month: "short", year: "numeric" });
-        monthlyData[month] = (monthlyData[month] || 0) + Number(order.total_price);
-      });
-    
-    return Object.entries(monthlyData).map(([month, amount]) => ({
-      month,
-      amount,
-    })).slice(-6);
-  };
-
-  const getServiceDistribution = () => {
-    const serviceCount: Record<string, number> = {};
-    orders.forEach(order => {
-      order.services?.forEach((service: OrderService) => {
-        const name = service.serviceName || "অন্যান্য";
-        serviceCount[name] = (serviceCount[name] || 0) + 1;
-      });
-    });
-    
-    return Object.entries(serviceCount).map(([name, value]) => ({ name, value }));
-  };
-
   const filteredUsers = users.filter(u => 
     u.full_name?.toLowerCase().includes(userSearch.toLowerCase()) ||
     u.phone?.includes(userSearch)
@@ -540,10 +447,22 @@ const AdminDashboard = () => {
     ? portfolioItems
     : portfolioItems.filter(p => p.category === portfolioFilter);
 
+  const tabs = [
+    { id: "overview" as TabType, label: "ওভারভিউ", icon: LayoutDashboard },
+    { id: "orders" as TabType, label: "অর্ডার", icon: Package },
+    { id: "users" as TabType, label: "ইউজার", icon: Users },
+    { id: "portfolio" as TabType, label: "পোর্টফোলিও", icon: FileImage },
+    { id: "invoices" as TabType, label: "ইনভয়েস", icon: FileText },
+    { id: "messages" as TabType, label: "মেসেজ", icon: MessageCircle },
+  ];
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-red-500" />
+        <div className="text-center">
+          <Loader2 className="w-10 h-10 animate-spin text-red-500 mx-auto mb-4" />
+          <p className="text-gray-500 font-bengali">লোড হচ্ছে...</p>
+        </div>
       </div>
     );
   }
@@ -554,109 +473,52 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center">
-              <span className="text-white font-bold">W</span>
-            </div>
-            <div>
-              <h1 className="font-bengali font-bold text-gray-900">অ্যাডমিন ড্যাশবোর্ড</h1>
-              <p className="text-xs text-gray-500">Web Creation BD</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Link to="/">
-              <Button variant="ghost" size="sm">
-                <Home className="w-4 h-4" />
-              </Button>
-            </Link>
-            <Button onClick={fetchAllData} variant="outline" size="sm">
-              <RefreshCw className="w-4 h-4" />
-            </Button>
-            <Button onClick={handleLogout} variant="ghost" size="sm">
-              <LogOut className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-      </header>
+      <AdminHeader onRefresh={fetchAllData} onLogout={handleLogout} />
 
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-6">
-          <div className="bg-white rounded-xl p-4 border border-gray-200">
-            <Package className="w-5 h-5 text-blue-600 mb-2" />
-            <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-            <p className="text-xs text-gray-500 font-bengali">মোট অর্ডার</p>
-          </div>
-          <div className="bg-white rounded-xl p-4 border border-gray-200">
-            <Clock className="w-5 h-5 text-yellow-600 mb-2" />
-            <p className="text-2xl font-bold text-gray-900">{stats.pending}</p>
-            <p className="text-xs text-gray-500 font-bengali">অপেক্ষমান</p>
-          </div>
-          <div className="bg-white rounded-xl p-4 border border-gray-200">
-            <CheckCircle className="w-5 h-5 text-green-600 mb-2" />
-            <p className="text-2xl font-bold text-gray-900">{stats.completed}</p>
-            <p className="text-xs text-gray-500 font-bengali">সম্পন্ন</p>
-          </div>
-          <div className="bg-white rounded-xl p-4 border border-gray-200">
-            <TrendingUp className="w-5 h-5 text-red-600 mb-2" />
-            <p className="text-2xl font-bold text-gray-900">৳{stats.revenue.toLocaleString()}</p>
-            <p className="text-xs text-gray-500 font-bengali">মোট আয়</p>
-          </div>
-          <div className="bg-white rounded-xl p-4 border border-gray-200">
-            <Users className="w-5 h-5 text-purple-600 mb-2" />
-            <p className="text-2xl font-bold text-gray-900">{users.length}</p>
-            <p className="text-xs text-gray-500 font-bengali">মোট ইউজার</p>
-          </div>
-          <div className="bg-white rounded-xl p-4 border border-gray-200">
-            <FileText className="w-5 h-5 text-orange-600 mb-2" />
-            <p className="text-2xl font-bold text-gray-900">৳{stats.unpaidInvoices.toLocaleString()}</p>
-            <p className="text-xs text-gray-500 font-bengali">বাকি আছে</p>
-          </div>
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Navigation Tabs */}
+        <div className="flex gap-2 overflow-x-auto pb-4 mb-6 scrollbar-hide">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-bengali whitespace-nowrap transition-all duration-200 ${
+                  isActive
+                    ? "bg-red-600 text-white shadow-lg shadow-red-600/20"
+                    : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-100"
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                {tab.label}
+              </button>
+            );
+          })}
         </div>
 
-        {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="bg-white border border-gray-200 p-1 rounded-xl flex-wrap">
-            <TabsTrigger value="orders" className="font-bengali rounded-lg">
-              <Package className="w-4 h-4 mr-2" />
-              অর্ডার
-            </TabsTrigger>
-            <TabsTrigger value="users" className="font-bengali rounded-lg">
-              <Users className="w-4 h-4 mr-2" />
-              ইউজার
-            </TabsTrigger>
-            <TabsTrigger value="portfolio" className="font-bengali rounded-lg">
-              <FileImage className="w-4 h-4 mr-2" />
-              পোর্টফোলিও
-            </TabsTrigger>
-            <TabsTrigger value="invoices" className="font-bengali rounded-lg">
-              <FileText className="w-4 h-4 mr-2" />
-              ইনভয়েস
-            </TabsTrigger>
-            <TabsTrigger value="messages" className="font-bengali rounded-lg">
-              <MessageCircle className="w-4 h-4 mr-2" />
-              মেসেজ
-            </TabsTrigger>
-            <TabsTrigger value="charts" className="font-bengali rounded-lg">
-              <BarChart3 className="w-4 h-4 mr-2" />
-              চার্ট
-            </TabsTrigger>
-          </TabsList>
+        {/* Stats Cards - Always visible */}
+        <div className="mb-8">
+          <StatsCards stats={stats} usersCount={users.length} />
+        </div>
 
-          {/* Orders Tab */}
-          <TabsContent value="orders" className="space-y-4">
+        {/* Tab Content */}
+        {activeTab === "overview" && (
+          <AnalyticsCharts orders={orders} usersCount={users.length} />
+        )}
+
+        {activeTab === "orders" && (
+          <div className="space-y-4">
             <div className="flex gap-2 overflow-x-auto pb-2">
               {["all", "pending", "processing", "completed", "cancelled"].map((f) => (
                 <button
                   key={f}
                   onClick={() => setOrderFilter(f)}
-                  className={`px-4 py-2 rounded-lg text-sm font-bengali whitespace-nowrap transition-all ${
+                  className={`px-4 py-2 rounded-xl text-sm font-bengali whitespace-nowrap transition-all ${
                     orderFilter === f
-                      ? "bg-red-600 text-white"
-                      : "bg-white text-gray-700 border border-gray-200 hover:border-red-300"
+                      ? "bg-gray-900 text-white"
+                      : "bg-white text-gray-600 border border-gray-100 hover:border-gray-200"
                   }`}
                 >
                   {f === "all" ? "সব" : statusLabels[f]}
@@ -665,18 +527,19 @@ const AdminDashboard = () => {
             </div>
 
             {filteredOrders.length === 0 ? (
-              <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-                <Package className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <div className="bg-white rounded-2xl border border-gray-100 p-16 text-center">
+                <Package className="w-16 h-16 text-gray-200 mx-auto mb-4" />
                 <p className="text-gray-500 font-bengali">কোনো অর্ডার নেই</p>
               </div>
             ) : (
               <div className="space-y-3">
-                {filteredOrders.map((order) => (
+                {filteredOrders.map((order, index) => (
                   <motion.div
                     key={order.id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md transition-shadow cursor-pointer"
+                    transition={{ delay: index * 0.03 }}
+                    className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-lg hover:shadow-gray-100/50 transition-all duration-300 cursor-pointer"
                     onClick={() => {
                       setSelectedOrder(order);
                       setOrderProgress(order.progress || 0);
@@ -684,84 +547,85 @@ const AdminDashboard = () => {
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium border ${statusColors[order.status]}`}>
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium border ${statusColors[order.status]}`}>
                             {statusLabels[order.status]}
                           </span>
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-gray-400">
                             {new Date(order.created_at).toLocaleDateString("bn-BD")}
                           </span>
                         </div>
                         <div className="flex items-center gap-2 mb-1">
                           <User className="w-4 h-4 text-gray-400" />
-                          <span className="font-bengali font-medium text-gray-900">{order.customer_name}</span>
+                          <span className="font-bengali font-semibold text-gray-900">{order.customer_name}</span>
                         </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <div className="flex items-center gap-2 text-sm text-gray-500">
                           <Phone className="w-3 h-3" />
                           <span>{order.customer_phone}</span>
                         </div>
                         {/* Progress Bar */}
-                        <div className="mt-3">
-                          <div className="flex justify-between text-xs mb-1">
+                        <div className="mt-4">
+                          <div className="flex justify-between text-xs mb-2">
                             <span className="text-gray-500 font-bengali">অগ্রগতি</span>
-                            <span className="font-medium">{order.progress || 0}%</span>
+                            <span className="font-semibold text-gray-700">{order.progress || 0}%</span>
                           </div>
                           <Progress value={order.progress || 0} className="h-2" />
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-lg font-bold text-red-600">৳{Number(order.total_price).toLocaleString()}</p>
-                        <p className="text-xs text-gray-500 font-bengali">{order.services?.length || 0} সার্ভিস</p>
+                      <div className="text-right ml-4">
+                        <p className="text-xl font-bold text-gray-900">৳{Number(order.total_price).toLocaleString()}</p>
+                        <p className="text-xs text-gray-400 font-bengali">{order.services?.length || 0} সার্ভিস</p>
                       </div>
                     </div>
                   </motion.div>
                 ))}
               </div>
             )}
-          </TabsContent>
+          </div>
+        )}
 
-          {/* Users Tab */}
-          <TabsContent value="users" className="space-y-4">
+        {activeTab === "users" && (
+          <div className="space-y-4">
             <div className="flex gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
                   placeholder="ইউজার খুঁজুন..."
                   value={userSearch}
                   onChange={(e) => setUserSearch(e.target.value)}
-                  className="pl-10 font-bengali"
+                  className="pl-11 font-bengali bg-white border-gray-100 rounded-xl h-11"
                 />
               </div>
             </div>
 
-            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="bg-gray-50 border-b border-gray-100">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-bengali font-medium text-gray-500">নাম</th>
-                    <th className="px-4 py-3 text-left text-xs font-bengali font-medium text-gray-500">ফোন</th>
-                    <th className="px-4 py-3 text-left text-xs font-bengali font-medium text-gray-500">যোগদান</th>
-                    <th className="px-4 py-3 text-right text-xs font-bengali font-medium text-gray-500">অ্যাকশন</th>
+                    <th className="px-6 py-4 text-left text-xs font-bengali font-semibold text-gray-500 uppercase tracking-wider">নাম</th>
+                    <th className="px-6 py-4 text-left text-xs font-bengali font-semibold text-gray-500 uppercase tracking-wider">ফোন</th>
+                    <th className="px-6 py-4 text-left text-xs font-bengali font-semibold text-gray-500 uppercase tracking-wider">যোগদান</th>
+                    <th className="px-6 py-4 text-right text-xs font-bengali font-semibold text-gray-500 uppercase tracking-wider">অ্যাকশন</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-gray-50">
                   {filteredUsers.map((userProfile) => (
-                    <tr key={userProfile.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3">
+                    <tr key={userProfile.id} className="hover:bg-gray-50/50 transition-colors">
+                      <td className="px-6 py-4">
                         <span className="font-bengali font-medium text-gray-900">
                           {userProfile.full_name || "নাম নেই"}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-gray-600">{userProfile.phone || "-"}</td>
-                      <td className="px-4 py-3 text-sm text-gray-500">
+                      <td className="px-6 py-4 text-gray-600">{userProfile.phone || "-"}</td>
+                      <td className="px-6 py-4 text-sm text-gray-500">
                         {new Date(userProfile.created_at).toLocaleDateString("bn-BD")}
                       </td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="px-6 py-4 text-right">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => deleteUser(userProfile.user_id)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          className="text-red-500 hover:text-red-600 hover:bg-red-50"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -771,25 +635,26 @@ const AdminDashboard = () => {
                 </tbody>
               </table>
               {filteredUsers.length === 0 && (
-                <div className="p-8 text-center text-gray-500 font-bengali">
+                <div className="p-12 text-center text-gray-400 font-bengali">
                   কোনো ইউজার পাওয়া যায়নি
                 </div>
               )}
             </div>
-          </TabsContent>
+          </div>
+        )}
 
-          {/* Portfolio Tab */}
-          <TabsContent value="portfolio" className="space-y-4">
+        {activeTab === "portfolio" && (
+          <div className="space-y-4">
             <div className="flex flex-wrap gap-2 items-center justify-between">
               <div className="flex gap-2 overflow-x-auto">
                 {["all", ...Object.keys(categoryLabels)].map((cat) => (
                   <button
                     key={cat}
                     onClick={() => setPortfolioFilter(cat)}
-                    className={`px-4 py-2 rounded-lg text-sm font-bengali whitespace-nowrap transition-all ${
+                    className={`px-4 py-2 rounded-xl text-sm font-bengali whitespace-nowrap transition-all ${
                       portfolioFilter === cat
-                        ? "bg-red-600 text-white"
-                        : "bg-white text-gray-700 border border-gray-200 hover:border-red-300"
+                        ? "bg-gray-900 text-white"
+                        : "bg-white text-gray-600 border border-gray-100 hover:border-gray-200"
                     }`}
                   >
                     {cat === "all" ? "সব" : categoryLabels[cat]}
@@ -802,7 +667,7 @@ const AdminDashboard = () => {
                   setPortfolioForm({ title: "", description: "", category: "graphics-design", image_url: "", live_url: "" });
                   setIsPortfolioModalOpen(true);
                 }}
-                className="bg-red-600 hover:bg-red-700 font-bengali"
+                className="bg-red-600 hover:bg-red-700 font-bengali shadow-lg shadow-red-600/20"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 নতুন যোগ করুন
@@ -810,15 +675,21 @@ const AdminDashboard = () => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredPortfolio.map((item) => (
-                <div key={item.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden group">
-                  <div className="aspect-video relative overflow-hidden">
+              {filteredPortfolio.map((item, index) => (
+                <motion.div
+                  key={item.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.03 }}
+                  className="bg-white rounded-2xl border border-gray-100 overflow-hidden group hover:shadow-lg hover:shadow-gray-100/50 transition-all duration-300"
+                >
+                  <div className="aspect-video relative overflow-hidden bg-gray-100">
                     <img
                       src={item.image_url}
                       alt={item.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
-                    <div className="absolute top-2 right-2 flex gap-1">
+                    <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => {
                           setEditingPortfolio(item);
@@ -831,279 +702,147 @@ const AdminDashboard = () => {
                           });
                           setIsPortfolioModalOpen(true);
                         }}
-                        className="p-2 bg-white rounded-lg shadow-md hover:bg-gray-100"
+                        className="p-2 bg-white rounded-xl shadow-lg hover:bg-gray-50 transition-colors"
                       >
                         <Edit2 className="w-4 h-4 text-gray-600" />
                       </button>
                       <button
                         onClick={() => deletePortfolio(item.id)}
-                        className="p-2 bg-white rounded-lg shadow-md hover:bg-red-50"
+                        className="p-2 bg-white rounded-xl shadow-lg hover:bg-red-50 transition-colors"
                       >
-                        <Trash2 className="w-4 h-4 text-red-600" />
+                        <Trash2 className="w-4 h-4 text-red-500" />
                       </button>
                     </div>
                   </div>
                   <div className="p-4">
-                    <span className="text-xs px-2 py-1 bg-red-100 text-red-600 rounded-full font-bengali">
+                    <span className="text-xs px-2.5 py-1 bg-red-50 text-red-600 rounded-full font-bengali">
                       {categoryLabels[item.category] || item.category}
                     </span>
-                    <h3 className="font-bengali font-semibold text-gray-900 mt-2">{item.title}</h3>
+                    <h3 className="font-bengali font-semibold text-gray-900 mt-3">{item.title}</h3>
                     {item.description && (
                       <p className="text-sm text-gray-500 mt-1 line-clamp-2">{item.description}</p>
                     )}
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
 
             {filteredPortfolio.length === 0 && (
-              <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-                <FileImage className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <div className="bg-white rounded-2xl border border-gray-100 p-16 text-center">
+                <FileImage className="w-16 h-16 text-gray-200 mx-auto mb-4" />
                 <p className="text-gray-500 font-bengali">কোনো পোর্টফোলিও আইটেম নেই</p>
               </div>
             )}
-          </TabsContent>
+          </div>
+        )}
 
-          {/* Invoices Tab */}
-          <TabsContent value="invoices" className="space-y-4">
-            <div className="flex justify-end">
-              <Button
-                onClick={() => setIsInvoiceModalOpen(true)}
-                className="bg-red-600 hover:bg-red-700 font-bengali"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                নতুন ইনভয়েস
-              </Button>
-            </div>
+        {activeTab === "invoices" && (
+          <InvoiceSystem invoices={invoices} orders={orders} onRefresh={fetchInvoices} />
+        )}
 
-            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-bengali font-medium text-gray-500">ইনভয়েস নং</th>
-                    <th className="px-4 py-3 text-left text-xs font-bengali font-medium text-gray-500">পরিমাণ</th>
-                    <th className="px-4 py-3 text-left text-xs font-bengali font-medium text-gray-500">পেমেন্ট</th>
-                    <th className="px-4 py-3 text-left text-xs font-bengali font-medium text-gray-500">স্ট্যাটাস</th>
-                    <th className="px-4 py-3 text-left text-xs font-bengali font-medium text-gray-500">তারিখ</th>
-                    <th className="px-4 py-3 text-right text-xs font-bengali font-medium text-gray-500">অ্যাকশন</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {invoices.map((invoice) => (
-                    <tr key={invoice.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 font-mono text-sm">{invoice.invoice_number}</td>
-                      <td className="px-4 py-3 font-bold text-red-600">৳{Number(invoice.amount).toLocaleString()}</td>
-                      <td className="px-4 py-3 text-green-600">৳{Number(invoice.paid_amount).toLocaleString()}</td>
-                      <td className="px-4 py-3">
-                        <span className={`px-2 py-1 rounded-full text-xs ${
-                          invoice.status === "paid" 
-                            ? "bg-green-100 text-green-700" 
-                            : invoice.status === "partial"
-                            ? "bg-yellow-100 text-yellow-700"
-                            : "bg-red-100 text-red-700"
-                        }`}>
-                          {invoice.status === "paid" ? "পরিশোধিত" : invoice.status === "partial" ? "আংশিক" : "বাকি"}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-500">
-                        {new Date(invoice.created_at).toLocaleDateString("bn-BD")}
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => updateInvoiceStatus(invoice.id, "paid", invoice.amount)}
-                          disabled={invoice.status === "paid"}
-                          className="text-green-600 hover:text-green-700"
-                        >
-                          <CheckCircle className="w-4 h-4" />
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {invoices.length === 0 && (
-                <div className="p-8 text-center text-gray-500 font-bengali">
-                  কোনো ইনভয়েস নেই
-                </div>
-              )}
-            </div>
-          </TabsContent>
-
-          {/* Messages Tab */}
-          <TabsContent value="messages" className="space-y-4">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              {/* Order List */}
-              <div className="bg-white rounded-xl border border-gray-200 p-4 max-h-[600px] overflow-y-auto">
-                <h3 className="font-bengali font-bold mb-4">অর্ডার সিলেক্ট করুন</h3>
-                <div className="space-y-2">
-                  {orders.filter(o => o.user_id).map((order) => (
-                    <button
-                      key={order.id}
-                      onClick={() => {
-                        setSelectedOrderChat(order);
-                        fetchMessages(order.id);
-                      }}
-                      className={`w-full p-3 rounded-xl text-left transition-colors ${
-                        selectedOrderChat?.id === order.id
-                          ? "bg-red-100 border border-red-300"
-                          : "bg-gray-50 hover:bg-gray-100"
-                      }`}
-                    >
-                      <p className="font-medium text-sm">{order.customer_name}</p>
-                      <p className="text-xs text-gray-500">#{order.id.slice(0, 8)}</p>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Chat Area */}
-              <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 flex flex-col h-[600px]">
-                {selectedOrderChat ? (
-                  <>
-                    <div className="p-4 border-b border-gray-200">
-                      <p className="font-bengali font-bold">{selectedOrderChat.customer_name}</p>
-                      <p className="text-xs text-gray-500">অর্ডার #{selectedOrderChat.id.slice(0, 8)}</p>
-                    </div>
-                    <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                      {messages.map((msg) => (
-                        <div
-                          key={msg.id}
-                          className={`flex ${msg.is_admin ? "justify-end" : "justify-start"}`}
-                        >
-                          <div
-                            className={`max-w-[80%] p-3 rounded-2xl ${
-                              msg.is_admin
-                                ? "bg-red-500 text-white"
-                                : "bg-gray-100 text-gray-900"
-                            }`}
-                          >
-                            <p className="text-sm">{msg.content}</p>
-                            <p className={`text-xs mt-1 ${msg.is_admin ? "text-white/70" : "text-gray-500"}`}>
-                              {new Date(msg.created_at).toLocaleTimeString("bn-BD")}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="p-4 border-t border-gray-200">
-                      <div className="flex gap-2">
-                        <Input
-                          value={newMessage}
-                          onChange={(e) => setNewMessage(e.target.value)}
-                          placeholder="মেসেজ লিখুন..."
-                          className="font-bengali"
-                          onKeyPress={(e) => e.key === "Enter" && sendAdminMessage()}
-                        />
-                        <Button onClick={sendAdminMessage} className="bg-red-600 hover:bg-red-700">
-                          <Send className="w-5 h-5" />
-                        </Button>
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <div className="flex-1 flex items-center justify-center">
-                    <div className="text-center">
-                      <MessageCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                      <p className="text-gray-500 font-bengali">চ্যাট করতে একটি অর্ডার সিলেক্ট করুন</p>
-                    </div>
-                  </div>
+        {activeTab === "messages" && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* Order List */}
+            <div className="bg-white rounded-2xl border border-gray-100 p-4 max-h-[600px] overflow-y-auto">
+              <h3 className="font-bengali font-bold mb-4 text-gray-900">অর্ডার সিলেক্ট করুন</h3>
+              <div className="space-y-2">
+                {orders.filter(o => o.user_id).map((order) => (
+                  <button
+                    key={order.id}
+                    onClick={() => {
+                      setSelectedOrderChat(order);
+                      fetchMessages(order.id);
+                    }}
+                    className={`w-full p-4 rounded-xl text-left transition-all duration-200 ${
+                      selectedOrderChat?.id === order.id
+                        ? "bg-red-50 border-2 border-red-200"
+                        : "bg-gray-50 hover:bg-gray-100 border-2 border-transparent"
+                    }`}
+                  >
+                    <p className="font-medium text-sm text-gray-900">{order.customer_name}</p>
+                    <p className="text-xs text-gray-500 mt-1">#{order.id.slice(0, 8)}</p>
+                  </button>
+                ))}
+                {orders.filter(o => o.user_id).length === 0 && (
+                  <p className="text-center text-gray-400 py-8 font-bengali">কোনো চ্যাট নেই</p>
                 )}
               </div>
             </div>
-          </TabsContent>
 
-          {/* Charts Tab */}
-          <TabsContent value="charts" className="space-y-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {/* Monthly Revenue Chart */}
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h3 className="font-bengali font-bold text-gray-900 mb-4">মাসিক আয়</h3>
-                <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={getMonthlyRevenue()}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="month" className="font-bengali text-xs" />
-                      <YAxis />
-                      <Tooltip
-                        formatter={(value: number) => [`৳${value.toLocaleString()}`, "আয়"]}
-                        labelClassName="font-bengali"
-                      />
-                      <Bar dataKey="amount" fill="#ef4444" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-
-              {/* Service Distribution */}
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h3 className="font-bengali font-bold text-gray-900 mb-4">সার্ভিস বিতরণ</h3>
-                <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={getServiceDistribution()}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                        outerRadius={100}
-                        fill="#8884d8"
-                        dataKey="value"
+            {/* Chat Area */}
+            <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 flex flex-col h-[600px]">
+              {selectedOrderChat ? (
+                <>
+                  <div className="p-5 border-b border-gray-100">
+                    <p className="font-bengali font-bold text-gray-900">{selectedOrderChat.customer_name}</p>
+                    <p className="text-xs text-gray-500">অর্ডার #{selectedOrderChat.id.slice(0, 8)}</p>
+                  </div>
+                  <div className="flex-1 overflow-y-auto p-5 space-y-4">
+                    {messages.map((msg) => (
+                      <div
+                        key={msg.id}
+                        className={`flex ${msg.is_admin ? "justify-end" : "justify-start"}`}
                       >
-                        {getServiceDistribution().map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
+                        <div
+                          className={`max-w-[75%] p-4 rounded-2xl ${
+                            msg.is_admin
+                              ? "bg-red-600 text-white"
+                              : "bg-gray-100 text-gray-900"
+                          }`}
+                        >
+                          <p className="text-sm">{msg.content}</p>
+                          <p className={`text-xs mt-2 ${msg.is_admin ? "text-white/60" : "text-gray-400"}`}>
+                            {new Date(msg.created_at).toLocaleTimeString("bn-BD")}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                    {messages.length === 0 && (
+                      <div className="flex-1 flex items-center justify-center h-full">
+                        <p className="text-gray-400 font-bengali">কোনো মেসেজ নেই</p>
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-4 border-t border-gray-100">
+                    <div className="flex gap-2">
+                      <Input
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        placeholder="মেসেজ লিখুন..."
+                        className="font-bengali bg-gray-50 border-gray-100 rounded-xl"
+                        onKeyPress={(e) => e.key === "Enter" && sendAdminMessage()}
+                      />
+                      <Button onClick={sendAdminMessage} className="bg-red-600 hover:bg-red-700 rounded-xl px-4">
+                        <Send className="w-5 h-5" />
+                      </Button>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="flex-1 flex items-center justify-center">
+                  <div className="text-center">
+                    <MessageCircle className="w-16 h-16 text-gray-200 mx-auto mb-4" />
+                    <p className="text-gray-400 font-bengali">চ্যাট করতে একটি অর্ডার সিলেক্ট করুন</p>
+                  </div>
                 </div>
-              </div>
-
-              {/* Order Status Overview */}
-              <div className="bg-white rounded-xl border border-gray-200 p-6 lg:col-span-2">
-                <h3 className="font-bengali font-bold text-gray-900 mb-4">অর্ডার সারসংক্ষেপ</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="text-center p-4 bg-yellow-50 rounded-xl">
-                    <p className="text-3xl font-bold text-yellow-600">{stats.pending}</p>
-                    <p className="font-bengali text-sm text-yellow-700">অপেক্ষমান</p>
-                  </div>
-                  <div className="text-center p-4 bg-blue-50 rounded-xl">
-                    <p className="text-3xl font-bold text-blue-600">{stats.processing}</p>
-                    <p className="font-bengali text-sm text-blue-700">প্রসেসিং</p>
-                  </div>
-                  <div className="text-center p-4 bg-green-50 rounded-xl">
-                    <p className="text-3xl font-bold text-green-600">{stats.completed}</p>
-                    <p className="font-bengali text-sm text-green-700">সম্পন্ন</p>
-                  </div>
-                  <div className="text-center p-4 bg-red-50 rounded-xl">
-                    <p className="text-3xl font-bold text-red-600">{stats.cancelled}</p>
-                    <p className="font-bengali text-sm text-red-700">বাতিল</p>
-                  </div>
-                </div>
-              </div>
+              )}
             </div>
-          </TabsContent>
-        </Tabs>
+          </div>
+        )}
       </div>
 
       {/* Order Detail Modal */}
       <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
-        <DialogContent className="max-w-lg w-[95vw] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-lg bg-white">
           <DialogHeader>
-            <DialogTitle className="font-bengali">অর্ডার বিবরণ</DialogTitle>
-            <DialogDescription className="font-bengali text-sm">
-              অর্ডার #{selectedOrder?.id.slice(0, 8)}
-            </DialogDescription>
+            <DialogTitle className="font-bengali text-xl">অর্ডার বিস্তারিত</DialogTitle>
           </DialogHeader>
           
           {selectedOrder && (
-            <div className="space-y-4">
+            <div className="space-y-5 mt-2">
               {/* Status */}
               <div className="flex items-center justify-between">
-                <span className={`px-3 py-1 rounded-full text-sm font-medium border ${statusColors[selectedOrder.status]}`}>
+                <span className={`px-3 py-1.5 rounded-full text-sm font-medium border ${statusColors[selectedOrder.status]}`}>
                   {statusLabels[selectedOrder.status]}
                 </span>
                 <span className="text-sm text-gray-500">
@@ -1112,36 +851,32 @@ const AdminDashboard = () => {
               </div>
 
               {/* Customer Info */}
-              <div className="bg-gray-50 rounded-lg p-4 space-y-2">
-                <div className="flex items-center gap-2">
-                  <User className="w-4 h-4 text-gray-400" />
-                  <span className="font-bengali font-medium">{selectedOrder.customer_name}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Phone className="w-4 h-4 text-gray-400" />
-                  <a href={`tel:${selectedOrder.customer_phone}`} className="text-blue-600">
-                    {selectedOrder.customer_phone}
-                  </a>
+              <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+                    <User className="w-5 h-5 text-gray-500" />
+                  </div>
+                  <div>
+                    <span className="font-bengali font-semibold text-gray-900 block">{selectedOrder.customer_name}</span>
+                    <a href={`tel:${selectedOrder.customer_phone}`} className="text-sm text-blue-600">
+                      {selectedOrder.customer_phone}
+                    </a>
+                  </div>
                   <a
                     href={`https://wa.me/88${selectedOrder.customer_phone.replace(/\D/g, '')}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="ml-2 text-green-600 text-sm underline"
+                    className="ml-auto px-3 py-1.5 bg-green-50 text-green-600 rounded-lg text-sm font-medium hover:bg-green-100 transition-colors"
                   >
                     WhatsApp
                   </a>
                 </div>
-                <div className="flex items-center gap-2">
-                  <CreditCard className="w-4 h-4 text-gray-400" />
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <CreditCard className="w-4 h-4" />
                   <span>{paymentLabels[selectedOrder.payment_method] || selectedOrder.payment_method}</span>
                 </div>
-                {selectedOrder.sender_number && (
-                  <div className="text-sm text-gray-600">
-                    প্রেরক: {selectedOrder.sender_number}
-                  </div>
-                )}
                 {selectedOrder.transaction_id && (
-                  <div className="text-sm font-mono">
+                  <div className="text-sm font-mono text-gray-500">
                     TrxID: {selectedOrder.transaction_id}
                   </div>
                 )}
@@ -1149,12 +884,16 @@ const AdminDashboard = () => {
 
               {/* Progress Slider */}
               <div className="space-y-3">
-                <Label className="font-bengali">প্রজেক্ট অগ্রগতি: {orderProgress}%</Label>
+                <div className="flex items-center justify-between">
+                  <Label className="font-bengali font-medium">প্রজেক্ট অগ্রগতি</Label>
+                  <span className="text-lg font-bold text-red-600">{orderProgress}%</span>
+                </div>
                 <Slider
                   value={[orderProgress]}
                   onValueChange={(val) => setOrderProgress(val[0])}
                   max={100}
                   step={5}
+                  className="my-4"
                 />
                 <Button
                   onClick={() => updateOrderProgress(selectedOrder.id, orderProgress)}
@@ -1169,18 +908,18 @@ const AdminDashboard = () => {
               {/* Payment Screenshot */}
               {selectedOrder.payment_screenshot_url && (
                 <div>
-                  <Label className="font-bengali">পেমেন্ট প্রমাণ</Label>
-                  <div className="relative mt-2">
+                  <Label className="font-bengali font-medium mb-2 block">পেমেন্ট প্রমাণ</Label>
+                  <div className="relative">
                     <img 
                       src={selectedOrder.payment_screenshot_url} 
                       alt="Payment proof" 
-                      className="w-full h-48 object-cover rounded-lg border"
+                      className="w-full h-40 object-cover rounded-xl border"
                     />
                     <a
                       href={selectedOrder.payment_screenshot_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="absolute top-2 right-2 p-2 bg-white rounded-lg shadow-md"
+                      className="absolute top-2 right-2 p-2 bg-white rounded-lg shadow-md hover:bg-gray-50"
                     >
                       <ExternalLink className="w-4 h-4" />
                     </a>
@@ -1190,32 +929,32 @@ const AdminDashboard = () => {
 
               {/* Services */}
               <div>
-                <Label className="font-bengali">সার্ভিস সমূহ</Label>
-                <div className="space-y-2 mt-2">
+                <Label className="font-bengali font-medium mb-2 block">সার্ভিস সমূহ</Label>
+                <div className="space-y-2">
                   {selectedOrder.services?.map((service, idx) => (
-                    <div key={idx} className="bg-gray-50 rounded-lg p-3 flex justify-between">
+                    <div key={idx} className="bg-gray-50 rounded-xl p-3 flex justify-between items-center">
                       <div>
                         <span className="text-xs px-2 py-0.5 bg-red-100 text-red-600 rounded-full">
                           {service.serviceName}
                         </span>
-                        <span className="ml-2 font-bengali">{service.packageName}</span>
+                        <span className="ml-2 font-bengali text-gray-700">{service.packageName}</span>
                       </div>
-                      <span className="font-bold text-red-600">৳{service.price?.toLocaleString()}</span>
+                      <span className="font-bold text-gray-900">৳{service.price?.toLocaleString()}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
               {/* Total */}
-              <div className="flex justify-between items-center pt-3 border-t">
-                <span className="font-bengali font-semibold">মোট</span>
-                <span className="text-xl font-bold text-red-600">
+              <div className="flex justify-between items-center pt-4 border-t">
+                <span className="font-bengali font-semibold text-gray-900">মোট</span>
+                <span className="text-2xl font-bold text-red-600">
                   ৳{Number(selectedOrder.total_price).toLocaleString()}
                 </span>
               </div>
 
               {/* Actions */}
-              <div className="grid grid-cols-2 gap-2 pt-3">
+              <div className="grid grid-cols-2 gap-2 pt-2">
                 <Button
                   onClick={() => updateOrderStatus(selectedOrder.id, "processing")}
                   variant="outline"
@@ -1226,7 +965,7 @@ const AdminDashboard = () => {
                 </Button>
                 <Button
                   onClick={() => updateOrderStatus(selectedOrder.id, "completed")}
-                  className="bg-green-600 hover:bg-green-700 font-bengali"
+                  className="bg-emerald-600 hover:bg-emerald-700 font-bengali"
                   disabled={selectedOrder.status === "completed"}
                 >
                   সম্পন্ন
@@ -1247,14 +986,14 @@ const AdminDashboard = () => {
 
       {/* Portfolio Modal */}
       <Dialog open={isPortfolioModalOpen} onOpenChange={setIsPortfolioModalOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md bg-white">
           <DialogHeader>
-            <DialogTitle className="font-bengali">
+            <DialogTitle className="font-bengali text-xl">
               {editingPortfolio ? "পোর্টফোলিও এডিট করুন" : "নতুন পোর্টফোলিও"}
             </DialogTitle>
           </DialogHeader>
           
-          <div className="space-y-4">
+          <div className="space-y-4 mt-4">
             <div>
               <Label className="font-bengali">ক্যাটাগরি</Label>
               <Select
@@ -1297,12 +1036,12 @@ const AdminDashboard = () => {
 
             <div>
               <Label className="font-bengali">ছবি</Label>
-              <div className="mt-1 space-y-2">
+              <div className="mt-2 space-y-2">
                 {portfolioForm.image_url && (
                   <img
                     src={portfolioForm.image_url}
                     alt="Preview"
-                    className="w-full h-32 object-cover rounded-lg"
+                    className="w-full h-32 object-cover rounded-xl"
                   />
                 )}
                 <div className="flex gap-2">
@@ -1313,7 +1052,7 @@ const AdminDashboard = () => {
                     className="flex-1"
                   />
                   <Label className="cursor-pointer">
-                    <div className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center gap-2">
+                    <div className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-xl flex items-center gap-2 transition-colors">
                       {uploading ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
                       ) : (
@@ -1328,6 +1067,7 @@ const AdminDashboard = () => {
                       disabled={uploading}
                     />
                   </Label>
+                </div>
               </div>
             </div>
 
@@ -1346,7 +1086,6 @@ const AdminDashboard = () => {
                 </p>
               </div>
             )}
-            </div>
 
             <Button
               onClick={savePortfolio}
@@ -1354,60 +1093,6 @@ const AdminDashboard = () => {
               disabled={uploading}
             >
               {editingPortfolio ? "আপডেট করুন" : "যোগ করুন"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Invoice Modal */}
-      <Dialog open={isInvoiceModalOpen} onOpenChange={setIsInvoiceModalOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="font-bengali">নতুন ইনভয়েস</DialogTitle>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            <div>
-              <Label className="font-bengali">অর্ডার সিলেক্ট করুন</Label>
-              <Select
-                value={invoiceForm.order_id}
-                onValueChange={(val) => {
-                  const order = orders.find(o => o.id === val);
-                  setInvoiceForm(prev => ({
-                    ...prev,
-                    order_id: val,
-                    amount: order ? Number(order.total_price) : 0,
-                  }));
-                }}
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="অর্ডার সিলেক্ট করুন" />
-                </SelectTrigger>
-                <SelectContent>
-                  {orders.map((order) => (
-                    <SelectItem key={order.id} value={order.id}>
-                      {order.customer_name} - ৳{Number(order.total_price).toLocaleString()}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label className="font-bengali">পরিমাণ (৳)</Label>
-              <Input
-                type="number"
-                value={invoiceForm.amount}
-                onChange={(e) => setInvoiceForm(prev => ({ ...prev, amount: Number(e.target.value) }))}
-                className="mt-1"
-              />
-            </div>
-
-            <Button
-              onClick={createInvoice}
-              className="w-full bg-red-600 hover:bg-red-700 font-bengali"
-            >
-              ইনভয়েস তৈরি করুন
             </Button>
           </div>
         </DialogContent>

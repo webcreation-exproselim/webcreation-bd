@@ -220,6 +220,110 @@ export default function ClientDashboard() {
     navigate("/");
   };
 
+  const downloadInvoice = (invoice: Invoice) => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      toast({ 
+        title: "পপ-আপ ব্লকার বন্ধ করুন", 
+        variant: "destructive" 
+      });
+      return;
+    }
+
+    const invoiceNumber = invoice.invoice_number;
+    
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Invoice - ${invoiceNumber}</title>
+          <meta charset="UTF-8">
+          <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { 
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+              background: white;
+              padding: 20px;
+            }
+            .accent-bar { height: 6px; background: linear-gradient(to right, #dc2626, #eab308); }
+            .header { display: flex; justify-content: space-between; align-items: flex-start; margin: 20px 0; }
+            .logo-section { display: flex; align-items: center; gap: 12px; }
+            .company-name { font-weight: bold; font-size: 18px; }
+            .company-sub { color: #9ca3af; font-size: 12px; }
+            .invoice-badge { background: linear-gradient(to right, #dc2626, #ef4444); color: white; padding: 8px 16px; border-radius: 8px; text-align: center; }
+            .invoice-label { font-size: 10px; text-transform: uppercase; opacity: 0.8; }
+            .invoice-number { font-family: monospace; font-weight: bold; font-size: 14px; }
+            .info-box { background: #f9fafb; padding: 12px; border-radius: 12px; border: 1px solid #e5e7eb; margin: 16px 0; }
+            .info-label { font-size: 10px; color: #9ca3af; text-transform: uppercase; margin-bottom: 6px; }
+            .info-value { font-weight: 600; font-size: 14px; }
+            .total-section { margin: 16px 0; }
+            .total-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f3f4f6; }
+            .total-final { background: linear-gradient(to right, #dc2626, #ef4444); color: white; padding: 12px 16px; border-radius: 12px; display: flex; justify-content: space-between; margin-top: 8px; }
+            .total-final-label { font-weight: bold; }
+            .total-final-value { font-weight: bold; font-size: 18px; }
+            .footer { border-top: 1px dashed #e5e7eb; padding-top: 16px; margin-top: 16px; display: flex; justify-content: space-between; }
+            .footer-thanks { font-size: 14px; color: #374151; }
+            .footer-company { font-size: 10px; color: #9ca3af; }
+            @media print {
+              body { padding: 0; }
+              @page { margin: 0.5cm; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="accent-bar"></div>
+          <div class="header">
+            <div class="logo-section">
+              <div>
+                <div class="company-name">Web Creation BD</div>
+                <div class="company-sub">Professional Digital Agency</div>
+              </div>
+            </div>
+            <div class="invoice-badge">
+              <div class="invoice-label">ইনভয়েস</div>
+              <div class="invoice-number">${invoiceNumber}</div>
+            </div>
+          </div>
+          
+          <div class="info-box">
+            <div class="info-label">তারিখ</div>
+            <div class="info-value">${new Date(invoice.created_at).toLocaleDateString('bn-BD')}</div>
+          </div>
+          
+          <div class="total-section">
+            <div class="total-row">
+              <span>মোট পরিমাণ</span>
+              <span>৳${Number(invoice.amount).toLocaleString()}</span>
+            </div>
+            <div class="total-row">
+              <span>পরিশোধিত</span>
+              <span style="color: #10b981;">- ৳${Number(invoice.paid_amount).toLocaleString()}</span>
+            </div>
+            <div class="total-final">
+              <span class="total-final-label">মোট বাকি</span>
+              <span class="total-final-value">৳${(Number(invoice.amount) - Number(invoice.paid_amount)).toLocaleString()}</span>
+            </div>
+          </div>
+          
+          <div class="footer">
+            <div class="footer-thanks">ধন্যবাদ! 🙏</div>
+            <div class="footer-company">Web Creation BD</div>
+          </div>
+          
+          <div class="accent-bar" style="margin-top: 20px;"></div>
+          
+          <script>
+            window.onload = function() {
+              window.print();
+              window.onafterprint = function() { window.close(); };
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "completed":
@@ -530,7 +634,7 @@ export default function ClientDashboard() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3">
                       <div className="text-right">
                         <p className="text-white font-bold text-lg">
                           ৳{Number(invoice.amount).toLocaleString()}
@@ -551,6 +655,15 @@ export default function ClientDashboard() {
                             : "বাকি"}
                         </span>
                       </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => downloadInvoice(invoice)}
+                        className="text-blue-400 border-blue-400/30 hover:bg-blue-400/10 font-bengali"
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        ডাউনলোড
+                      </Button>
                       {invoice.status !== "paid" && (
                         <a
                           href={`https://wa.me/8801234567890?text=ইনভয়েস%20${invoice.invoice_number}%20এর%20পেমেন্ট%20করতে%20চাই`}

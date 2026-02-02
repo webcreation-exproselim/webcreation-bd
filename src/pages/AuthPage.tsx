@@ -24,19 +24,38 @@ export default function AuthPage() {
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
 
+  // Function to check role and redirect
+  const checkRoleAndRedirect = async (userId: string) => {
+    const { data: roleData } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("role", "admin")
+      .single();
+    
+    if (roleData) {
+      navigate("/admin");
+    } else {
+      navigate("/dashboard");
+    }
+  };
+
   // Check if already logged in
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        navigate("/dashboard");
+        checkRoleAndRedirect(session.user.id);
       }
     };
     checkAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
-        navigate("/dashboard");
+        // Defer to avoid potential deadlock
+        setTimeout(() => {
+          checkRoleAndRedirect(session.user.id);
+        }, 0);
       }
     });
 

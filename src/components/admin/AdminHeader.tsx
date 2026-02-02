@@ -14,12 +14,12 @@ export function AdminHeader({ onRefresh, onLogout }: AdminHeaderProps) {
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="relative">
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 rounded-full opacity-60 blur-sm" />
-            <div className="relative w-10 h-10 rounded-full bg-white p-0.5 shadow-md overflow-hidden">
+            <div className="absolute -inset-1 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 rounded-full opacity-70" />
+            <div className="relative w-12 h-12 rounded-full bg-white p-1 shadow-lg ring-2 ring-white overflow-hidden">
               <img 
                 src={logo} 
                 alt="Web Creation BD" 
-                className="w-full h-full object-cover rounded-full"
+                className="w-full h-full object-contain rounded-full"
                 loading="lazy"
               />
             </div>

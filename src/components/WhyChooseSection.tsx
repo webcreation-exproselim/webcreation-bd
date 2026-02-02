@@ -1,5 +1,7 @@
 import { motion } from "framer-motion";
 import { Shield, Headphones, Package, Zap, Award, Users } from "lucide-react";
+import { useMemo } from "react";
+import { useSiteContent } from "@/hooks/useSiteContent";
 
 const features = [
   {
@@ -78,6 +80,16 @@ const FeatureCard = ({ feature, index }: { feature: typeof features[0]; index: n
 };
 
 export const WhyChooseSection = () => {
+  // Fallback content
+  const fallbackContent = useMemo(() => ({
+    badge_text: "২০০০+ প্রজেক্টে বিশ্বস্ত",
+    section_title_start: "কেন",
+    section_title_highlight: "Web Creation BD",
+    section_title_end: "থেকে সার্ভিস নিবেন?",
+    section_subtitle: "বেশি সেল জেনারেট করতে পারে এমন ফাংশনাল ওয়েবসাইট ডিজাইন করে থাকে আমাদের টিম Web Creation BD!",
+  }), []);
+
+  const { content } = useSiteContent("home", "why-choose", fallbackContent);
   return (
     <section className="py-16 md:py-24 bg-dark-gradient relative overflow-hidden">
       {/* Background Pattern */}
@@ -106,18 +118,18 @@ export const WhyChooseSection = () => {
           >
             <span className="text-cyan-400">★</span>
             <span className="text-sm sm:text-base text-white font-bengali font-medium">
-              ২০০০+ প্রজেক্টে বিশ্বস্ত
+              {content.badge_text}
             </span>
           </motion.div>
 
           {/* Title */}
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bengali font-bold text-white mb-4">
-            কেন <span className="text-gradient-brand">Web Creation BD</span> থেকে সার্ভিস নিবেন?
+            {content.section_title_start} <span className="text-gradient-brand">{content.section_title_highlight}</span> {content.section_title_end}
           </h2>
 
           {/* Subtitle */}
           <p className="text-muted-foreground text-sm sm:text-base md:text-lg max-w-3xl mx-auto font-bengali">
-            বেশি সেল জেনারেট করতে পারে এমন ফাংশনাল ওয়েবসাইট ডিজাইন করে থাকে আমাদের টিম Web Creation BD!
+            {content.section_subtitle}
           </p>
         </motion.div>
 

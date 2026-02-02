@@ -1,7 +1,9 @@
 import { motion } from "framer-motion";
 import { Phone, Mail, Facebook, MessageCircle, MapPin, ArrowUp } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useMemo } from "react";
 import logo from "@/assets/logo.png";
+import { useSiteContent } from "@/hooks/useSiteContent";
 
 const services = [
   { name: "ওয়েব ডেভেলপমেন্ট", href: "/web-development" },
@@ -24,6 +26,20 @@ export function Footer() {
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
+  // Fallback content
+  const fallbackContent = useMemo(() => ({
+    company_description: "আমরা বাংলাদেশের অন্যতম সেরা ডিজিটাল সার্ভিস প্রোভাইডার। আপনার ব্যবসার সফলতাই আমাদের লক্ষ্য।",
+    phone_number: "০১৩৩২০৫২৮৭৪",
+    whatsapp_link: "https://wa.me/8801332052874",
+    email: "webcreationbd99@gmail.com",
+    facebook_page: "@websitecreationbd",
+    facebook_link: "https://www.facebook.com/websitecreationbd",
+    address: "সাভার, পাকিজা",
+    copyright_text: "© ২০২৫ Web Creation BD। সর্বস্বত্ব সংরক্ষিত।",
+  }), []);
+
+  const { content } = useSiteContent("home", "footer", fallbackContent);
 
   return (
     <footer className="relative bg-gradient-to-b from-slate-900 via-slate-950 to-black pt-16 md:pt-24 pb-8">
@@ -60,14 +76,12 @@ export function Footer() {
             </div>
             
             <p className="font-bengali text-white/60 text-sm leading-relaxed mb-6">
-              আমরা বাংলাদেশের অন্যতম সেরা ডিজিটাল সার্ভিস প্রোভাইডার। 
-              আপনার ব্যবসার সফলতাই আমাদের লক্ষ্য।
+              {content.company_description}
             </p>
 
-            {/* Social Links */}
             <div className="flex items-center gap-3">
               <a
-                href="https://www.facebook.com/websitecreationbd"
+                href={content.facebook_link}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/70 hover:bg-blue-500/20 hover:border-blue-500/50 hover:text-blue-400 transition-all duration-300"
@@ -75,7 +89,7 @@ export function Footer() {
                 <Facebook className="w-5 h-5" />
               </a>
               <a
-                href="https://wa.me/8801332052874"
+                href={content.whatsapp_link}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/70 hover:bg-green-500/20 hover:border-green-500/50 hover:text-green-400 transition-all duration-300"
@@ -83,7 +97,7 @@ export function Footer() {
                 <MessageCircle className="w-5 h-5" />
               </a>
               <a
-                href="mailto:webcreationbd99@gmail.com"
+                href={`mailto:${content.email}`}
                 className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/70 hover:bg-orange-500/20 hover:border-orange-500/50 hover:text-orange-400 transition-all duration-300"
               >
                 <Mail className="w-5 h-5" />
@@ -156,7 +170,7 @@ export function Footer() {
             <div className="space-y-4">
               {/* Phone/WhatsApp */}
               <a
-                href="https://wa.me/8801332052874"
+                href={content.whatsapp_link}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-start gap-3 group"
@@ -167,14 +181,14 @@ export function Footer() {
                 <div>
                   <p className="font-bengali text-white/50 text-xs mb-1">WhatsApp / কল</p>
                   <p className="font-bengali text-white text-sm group-hover:text-green-400 transition-colors">
-                    ০১৩৩২০৫২৮৭৪
+                    {content.phone_number}
                   </p>
                 </div>
               </a>
 
               {/* Email */}
               <a
-                href="mailto:webcreationbd99@gmail.com"
+                href={`mailto:${content.email}`}
                 className="flex items-start gap-3 group"
               >
                 <div className="w-10 h-10 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center justify-center flex-shrink-0 group-hover:bg-orange-500/20 transition-colors">
@@ -183,14 +197,14 @@ export function Footer() {
                 <div>
                   <p className="font-bengali text-white/50 text-xs mb-1">ইমেইল</p>
                   <p className="font-bengali text-white text-sm group-hover:text-orange-400 transition-colors break-all">
-                    webcreationbd99@gmail.com
+                    {content.email}
                   </p>
                 </div>
               </a>
 
               {/* Facebook */}
               <a
-                href="https://www.facebook.com/websitecreationbd"
+                href={content.facebook_link}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-start gap-3 group"
@@ -201,7 +215,7 @@ export function Footer() {
                 <div>
                   <p className="font-bengali text-white/50 text-xs mb-1">ফেসবুক পেজ</p>
                   <p className="font-bengali text-white text-sm group-hover:text-blue-400 transition-colors">
-                    @websitecreationbd
+                    {content.facebook_page}
                   </p>
                 </div>
               </a>
@@ -214,7 +228,7 @@ export function Footer() {
                 <div>
                   <p className="font-bengali text-white/50 text-xs mb-1">ঠিকানা</p>
                   <p className="font-bengali text-white text-sm">
-                    সাভার, পাকিজা
+                    {content.address}
                   </p>
                 </div>
               </div>
@@ -229,7 +243,7 @@ export function Footer() {
           
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="font-bengali text-white/50 text-sm text-center sm:text-left">
-              © ২০২৫ Web Creation BD। সর্বস্বত্ব সংরক্ষিত।
+              {content.copyright_text}
             </p>
             
             {/* Scroll to Top Button */}

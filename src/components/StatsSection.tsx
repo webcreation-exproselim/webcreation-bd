@@ -1,34 +1,61 @@
 import { motion } from "framer-motion";
 import { Calendar, FolderCheck, Users, UserCheck } from "lucide-react";
+import { useMemo } from "react";
+import { useSiteContent } from "@/hooks/useSiteContent";
 
-const stats = [
+const defaultStats = [
   {
     icon: Calendar,
-    value: "৪+",
-    label: "বছরের অভিজ্ঞতা",
+    valueKey: "stat1_value",
+    labelKey: "stat1_label",
+    defaultValue: "৪+",
+    defaultLabel: "বছরের অভিজ্ঞতা",
     color: "from-orange-400 to-orange-600",
   },
   {
     icon: FolderCheck,
-    value: "২০০০+",
-    label: "সম্পন্ন প্রজেক্ট",
+    valueKey: "stat2_value",
+    labelKey: "stat2_label",
+    defaultValue: "২০০০+",
+    defaultLabel: "সম্পন্ন প্রজেক্ট",
     color: "from-green-400 to-emerald-500",
   },
   {
     icon: Users,
-    value: "১৫০০+",
-    label: "সন্তুষ্ট ক্লায়েন্ট",
+    valueKey: "stat3_value",
+    labelKey: "stat3_label",
+    defaultValue: "১৫০০+",
+    defaultLabel: "সন্তুষ্ট ক্লায়েন্ট",
     color: "from-cyan-400 to-blue-500",
   },
   {
     icon: UserCheck,
-    value: "৫০০+",
-    label: "চলমান ক্লায়েন্ট",
+    valueKey: "stat4_value",
+    labelKey: "stat4_label",
+    defaultValue: "৫০০+",
+    defaultLabel: "চলমান ক্লায়েন্ট",
     color: "from-purple-400 to-pink-500",
   },
 ];
 
 export const StatsSection = () => {
+  // Fallback content
+  const fallbackContent = useMemo(() => ({
+    section_title: "আমাদের",
+    section_title_highlight: "সাফল্যের",
+    section_title_end: "গল্প",
+    section_subtitle: "বছরের পর বছর ক্লায়েন্টদের বিশ্বাস অর্জন করে আমরা তৈরি করেছি সাফল্যের এক অনন্য ইতিহাস",
+    stat1_value: "৪+",
+    stat1_label: "বছরের অভিজ্ঞতা",
+    stat2_value: "২০০০+",
+    stat2_label: "সম্পন্ন প্রজেক্ট",
+    stat3_value: "১৫০০+",
+    stat3_label: "সন্তুষ্ট ক্লায়েন্ট",
+    stat4_value: "৫০০+",
+    stat4_label: "চলমান ক্লায়েন্ট",
+  }), []);
+
+  const { content } = useSiteContent("home", "stats", fallbackContent);
   return (
     <section className="py-16 md:py-24 bg-slate-950 relative overflow-hidden">
       {/* Background Pattern */}
@@ -47,18 +74,17 @@ export const StatsSection = () => {
           className="text-center mb-12 md:mb-16"
         >
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bengali font-bold text-white">
-            আমাদের <span className="text-gradient-brand">সাফল্যের</span> গল্প
+            {content.section_title} <span className="text-gradient-brand">{content.section_title_highlight}</span> {content.section_title_end}
           </h2>
           <p className="mt-4 text-muted-foreground text-sm sm:text-base md:text-lg max-w-2xl mx-auto font-bengali">
-            বছরের পর বছর ক্লায়েন্টদের বিশ্বাস অর্জন করে আমরা তৈরি করেছি সাফল্যের এক অনন্য ইতিহাস
+            {content.section_subtitle}
           </p>
         </motion.div>
-
         {/* Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
-          {stats.map((stat, index) => (
+          {defaultStats.map((stat, index) => (
             <motion.div
-              key={stat.label}
+              key={stat.valueKey}
               initial={{ opacity: 0, y: 30, scale: 0.9 }}
               whileInView={{ opacity: 1, y: 0, scale: 1 }}
               viewport={{ once: true }}
@@ -86,12 +112,12 @@ export const StatsSection = () => {
 
                   {/* Value */}
                   <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gradient-brand font-bengali mb-1 sm:mb-2">
-                    {stat.value}
+                    {content[stat.valueKey] || stat.defaultValue}
                   </h3>
 
                   {/* Label */}
                   <p className="text-xs sm:text-sm md:text-base text-white/80 font-bengali font-medium">
-                    {stat.label}
+                    {content[stat.labelKey] || stat.defaultLabel}
                   </p>
 
                   {/* Corner accent */}

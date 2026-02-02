@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Shield, Headphones, Package, Zap, Award, Users } from "lucide-react";
 import { useMemo } from "react";
 import { useSiteContent } from "@/hooks/useSiteContent";
+import { EditableText } from "./EditableText";
 
 const features = [
   {
@@ -118,18 +119,22 @@ export const WhyChooseSection = () => {
           >
             <span className="text-cyan-400">★</span>
             <span className="text-sm sm:text-base text-white font-bengali font-medium">
-              {content.badge_text}
+              <EditableText page="home" section="why-choose" contentKey="badge_text" value={content.badge_text} />
             </span>
           </motion.div>
 
           {/* Title */}
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bengali font-bold text-white mb-4">
-            {content.section_title_start} <span className="text-gradient-brand">{content.section_title_highlight}</span> {content.section_title_end}
+            <EditableText page="home" section="why-choose" contentKey="section_title_start" value={content.section_title_start} />{" "}
+            <span className="text-gradient-brand">
+              <EditableText page="home" section="why-choose" contentKey="section_title_highlight" value={content.section_title_highlight} />
+            </span>{" "}
+            <EditableText page="home" section="why-choose" contentKey="section_title_end" value={content.section_title_end} />
           </h2>
 
           {/* Subtitle */}
           <p className="text-muted-foreground text-sm sm:text-base md:text-lg max-w-3xl mx-auto font-bengali">
-            {content.section_subtitle}
+            <EditableText page="home" section="why-choose" contentKey="section_subtitle" value={content.section_subtitle} multiline />
           </p>
         </motion.div>
 

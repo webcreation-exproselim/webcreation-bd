@@ -6,7 +6,15 @@ interface Particle {
   vx: number;
   vy: number;
   radius: number;
+  color: string;
 }
+
+const colors = [
+  "rgba(34, 211, 238, 0.6)",  // cyan
+  "rgba(59, 130, 246, 0.5)",  // blue
+  "rgba(168, 85, 247, 0.4)",  // purple
+  "rgba(249, 115, 22, 0.4)",  // orange
+];
 
 export function ParticleNetwork() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -29,16 +37,17 @@ export function ParticleNetwork() {
     window.addEventListener("resize", resizeCanvas);
 
     // Initialize particles
-    const particleCount = Math.min(80, Math.floor(window.innerWidth / 15));
+    const particleCount = Math.min(60, Math.floor(window.innerWidth / 20));
     particlesRef.current = [];
 
     for (let i = 0; i < particleCount; i++) {
       particlesRef.current.push({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
-        vx: (Math.random() - 0.5) * 0.5,
-        vy: (Math.random() - 0.5) * 0.5,
+        vx: (Math.random() - 0.5) * 0.4,
+        vy: (Math.random() - 0.5) * 0.4,
         radius: Math.random() * 2 + 1,
+        color: colors[Math.floor(Math.random() * colors.length)],
       });
     }
 
@@ -57,10 +66,10 @@ export function ParticleNetwork() {
         if (particle.x < 0 || particle.x > canvas.width) particle.vx *= -1;
         if (particle.y < 0 || particle.y > canvas.height) particle.vy *= -1;
 
-        // Draw particle
+        // Draw particle with glow
         ctx.beginPath();
         ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(251, 191, 36, 0.4)";
+        ctx.fillStyle = particle.color;
         ctx.fill();
 
         // Draw connections
@@ -69,11 +78,11 @@ export function ParticleNetwork() {
           const dy = particle.y - otherParticle.y;
           const distance = Math.sqrt(dx * dx + dy * dy);
 
-          if (distance < 150) {
+          if (distance < 120) {
             ctx.beginPath();
             ctx.moveTo(particle.x, particle.y);
             ctx.lineTo(otherParticle.x, otherParticle.y);
-            ctx.strokeStyle = `rgba(251, 191, 36, ${0.15 * (1 - distance / 150)})`;
+            ctx.strokeStyle = `rgba(255, 255, 255, ${0.12 * (1 - distance / 120)})`;
             ctx.lineWidth = 0.5;
             ctx.stroke();
           }
@@ -97,7 +106,7 @@ export function ParticleNetwork() {
     <canvas
       ref={canvasRef}
       className="absolute inset-0 pointer-events-none z-0"
-      style={{ opacity: 0.6 }}
+      style={{ opacity: 0.5 }}
     />
   );
 }

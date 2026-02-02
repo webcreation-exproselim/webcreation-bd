@@ -5,6 +5,7 @@ import { MobileDrawer } from "./MobileDrawer";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { CartButton } from "./CartButton";
 import { Link, useNavigate } from "react-router-dom";
+import logo from "@/assets/logo.png";
 
 const serviceItems = [
   { label: "ফেসবুক অ্যাডস", href: "/facebook-ads" },
@@ -61,12 +62,12 @@ export function Header() {
             {/* Logo */}
             <Link to="/" className="flex-shrink-0">
               <div className="flex items-center gap-2">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center shadow-lg">
-                  <span className="text-white font-bold text-xl font-bengali">W</span>
-                </div>
-                <span className="font-bengali text-xl font-bold hidden sm:block text-red-600">
-                  Web Creation BD
-                </span>
+                <img 
+                  src={logo} 
+                  alt="Web Creation BD Logo" 
+                  className="h-10 sm:h-12 w-auto object-contain"
+                  loading="eager"
+                />
               </div>
             </Link>
 
@@ -82,7 +83,7 @@ export function Header() {
                       onMouseLeave={() => setServiceDropdownOpen(false)}
                     >
                       <button
-                        className="relative px-4 py-2 text-sm font-bengali font-medium transition-all duration-300 flex items-center gap-1 text-gray-700 hover:text-red-600"
+                        className="relative px-4 py-2 text-sm font-bengali font-medium transition-all duration-300 flex items-center gap-1 text-gray-700 hover:text-blue-600"
                       >
                         {item.label}
                         <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${serviceDropdownOpen ? 'rotate-180' : ''}`} />
@@ -100,7 +101,7 @@ export function Header() {
                           <Link
                             key={subItem.href}
                             to={subItem.href}
-                            className="block px-5 py-3 font-bengali text-sm transition-all duration-200 text-gray-700 hover:bg-red-50 hover:text-red-600 hover:pl-7"
+                            className="block px-5 py-3 font-bengali text-sm transition-all duration-200 text-gray-700 hover:bg-blue-50 hover:text-blue-600 hover:pl-7"
                           >
                             {subItem.label}
                           </Link>
@@ -111,10 +112,10 @@ export function Header() {
                     <a
                       key={item.href}
                       href={item.href}
-                      className="relative px-4 py-2 text-sm font-bengali font-medium transition-all duration-300 group text-gray-700 hover:text-red-600"
+                      className="relative px-4 py-2 text-sm font-bengali font-medium transition-all duration-300 group text-gray-700 hover:text-blue-600"
                     >
                       {item.label}
-                      <span className="absolute bottom-0 left-4 right-4 h-0.5 scale-x-0 transition-transform duration-300 group-hover:scale-x-100 origin-left bg-red-500" />
+                      <span className="absolute bottom-0 left-4 right-4 h-0.5 scale-x-0 transition-transform duration-300 group-hover:scale-x-100 origin-left bg-gradient-to-r from-cyan-500 to-blue-500" />
                     </a>
                   )
                 ))}
@@ -127,13 +128,13 @@ export function Header() {
               <Button
                 variant="outline"
                 onClick={handleLoginClick}
-                className="font-bengali font-medium transition-all duration-300 border-red-500 text-red-600 hover:bg-red-50 text-xs sm:text-sm px-2 sm:px-4"
+                className="font-bengali font-medium transition-all duration-300 border-blue-500 text-blue-600 hover:bg-blue-50 text-xs sm:text-sm px-2 sm:px-4"
               >
                 লগইন
               </Button>
               <Button
                 onClick={handleSignupClick}
-                className="bg-gradient-to-r from-red-500 to-red-700 text-white font-bengali font-semibold hover:from-red-600 hover:to-red-800 hover:scale-[1.03] transition-all duration-300 shadow-lg text-xs sm:text-sm px-2 sm:px-4"
+                className="bg-gradient-to-r from-cyan-500 via-blue-500 to-blue-600 text-white font-bengali font-semibold hover:from-cyan-400 hover:via-blue-400 hover:to-blue-500 hover:scale-[1.03] transition-all duration-300 shadow-lg text-xs sm:text-sm px-2 sm:px-4"
               >
                 সাইন আপ
               </Button>
@@ -144,7 +145,7 @@ export function Header() {
                   variant="ghost"
                   size="icon"
                   onClick={() => setDrawerOpen(true)}
-                  className="text-red-600 hover:bg-red-50 ml-1"
+                  className="text-blue-600 hover:bg-blue-50 ml-1"
                 >
                   <Menu className="h-5 w-5" />
                 </Button>

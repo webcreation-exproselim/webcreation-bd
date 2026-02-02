@@ -175,7 +175,7 @@ export default function ClientDashboard() {
 
     if (!error) {
       setNewMessage("");
-      fetchMessages(selectedOrder.id);
+      // Messages will be updated by realtime subscription
       toast({ title: "মেসেজ পাঠানো হয়েছে" });
     } else {
       console.error("Message send error:", error);
@@ -190,8 +190,11 @@ export default function ClientDashboard() {
   useEffect(() => {
     if (!selectedOrder) return;
 
+    // Initial fetch
+    fetchMessages(selectedOrder.id);
+
     const channel = supabase
-      .channel(`messages-${selectedOrder.id}`)
+      .channel(`client-messages-${selectedOrder.id}`)
       .on(
         "postgres_changes",
         {
@@ -200,8 +203,9 @@ export default function ClientDashboard() {
           table: "messages",
           filter: `order_id=eq.${selectedOrder.id}`,
         },
-        () => {
-          fetchMessages(selectedOrder.id);
+        (payload) => {
+          // Add new message to the list
+          setMessages((prev) => [...prev, payload.new as Message]);
         }
       )
       .subscribe();

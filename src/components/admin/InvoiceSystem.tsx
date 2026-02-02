@@ -335,6 +335,159 @@ ${servicesText}
     window.print();
   };
 
+  const downloadInvoiceAsPDF = () => {
+    // Create a printable version and trigger download
+    const invoiceEl = document.getElementById('invoice-preview');
+    if (!invoiceEl) return;
+
+    // Open print dialog which can be saved as PDF
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      toast({ title: "পপ-আপ ব্লকার বন্ধ করুন", variant: "destructive" });
+      return;
+    }
+
+    const invoiceNumber = selectedInvoice?.invoice_number || 'invoice';
+    
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Invoice - ${invoiceNumber}</title>
+          <meta charset="UTF-8">
+          <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { 
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+              background: white;
+              padding: 20px;
+            }
+            .accent-bar { height: 6px; background: linear-gradient(to right, #dc2626, #eab308); }
+            .header { display: flex; justify-content: space-between; align-items: flex-start; margin: 20px 0; }
+            .logo-section { display: flex; align-items: center; gap: 12px; }
+            .logo { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #fee2e2; }
+            .company-name { font-weight: bold; font-size: 18px; }
+            .company-sub { color: #9ca3af; font-size: 12px; }
+            .invoice-badge { background: linear-gradient(to right, #dc2626, #ef4444); color: white; padding: 8px 16px; border-radius: 8px; text-align: center; }
+            .invoice-label { font-size: 10px; text-transform: uppercase; opacity: 0.8; }
+            .invoice-number { font-family: monospace; font-weight: bold; font-size: 14px; }
+            .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
+            .info-box { background: #f9fafb; padding: 12px; border-radius: 12px; border: 1px solid #e5e7eb; }
+            .info-label { font-size: 10px; color: #9ca3af; text-transform: uppercase; margin-bottom: 6px; }
+            .info-value { font-weight: 600; font-size: 14px; }
+            .info-sub { font-size: 12px; color: #6b7280; margin-top: 4px; }
+            .status-paid { background: #10b981; color: white; }
+            .status-partial { background: #f59e0b; color: white; }
+            .status-unpaid { background: #ef4444; color: white; }
+            .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+            table { width: 100%; border-collapse: collapse; margin: 16px 0; border-radius: 12px; overflow: hidden; }
+            th { background: linear-gradient(to right, #1f2937, #111827); color: white; padding: 12px; text-align: left; font-size: 10px; text-transform: uppercase; }
+            th:last-child { text-align: right; }
+            td { padding: 12px; border-bottom: 1px solid #f3f4f6; }
+            td:last-child { text-align: right; font-weight: bold; }
+            tr:nth-child(even) { background: #f9fafb; }
+            .total-section { margin: 16px 0; }
+            .total-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f3f4f6; }
+            .total-final { background: linear-gradient(to right, #dc2626, #ef4444); color: white; padding: 12px 16px; border-radius: 12px; display: flex; justify-content: space-between; margin-top: 8px; }
+            .total-final-label { font-weight: bold; }
+            .total-final-value { font-weight: bold; font-size: 18px; }
+            .footer { border-top: 1px dashed #e5e7eb; padding-top: 16px; margin-top: 16px; display: flex; justify-content: space-between; }
+            .footer-thanks { font-size: 14px; color: #374151; }
+            .footer-company { font-size: 10px; color: #9ca3af; }
+            @media print {
+              body { padding: 0; }
+              @page { margin: 0.5cm; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="accent-bar"></div>
+          <div class="header">
+            <div class="logo-section">
+              <img src="${selectedOrder ? window.location.origin + '/logo.png' : ''}" alt="Logo" class="logo" onerror="this.style.display='none'">
+              <div>
+                <div class="company-name">Web Creation BD</div>
+                <div class="company-sub">Professional Digital Agency</div>
+              </div>
+            </div>
+            <div class="invoice-badge">
+              <div class="invoice-label">ইনভয়েস</div>
+              <div class="invoice-number">${invoiceNumber}</div>
+            </div>
+          </div>
+          
+          <div class="info-grid">
+            <div class="info-box">
+              <div class="info-label">বিল প্রাপক</div>
+              <div class="info-value">${selectedOrder?.customer_name || 'N/A'}</div>
+              <div class="info-sub">${selectedOrder?.customer_phone || ''}</div>
+              ${selectedOrder?.customer_email ? `<div class="info-sub">${selectedOrder.customer_email}</div>` : ''}
+            </div>
+            <div class="info-box">
+              <div class="info-label">স্ট্যাটাস</div>
+              <span class="status-badge status-${selectedInvoice?.status || 'unpaid'}">
+                ${selectedInvoice?.status === 'paid' ? '✓ পরিশোধিত' : selectedInvoice?.status === 'partial' ? '⏳ আংশিক' : '✕ বাকি'}
+              </span>
+              <div class="info-sub" style="margin-top: 8px;">তারিখ: ${selectedInvoice ? new Date(selectedInvoice.created_at).toLocaleDateString('bn-BD') : ''}</div>
+            </div>
+          </div>
+          
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>সার্ভিস বিবরণ</th>
+                <th>মূল্য</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${selectedOrder?.services?.map((s: any, i: number) => `
+                <tr>
+                  <td>${String(i + 1).padStart(2, '0')}</td>
+                  <td>
+                    <strong>${s.serviceName || s.name || 'সার্ভিস'}</strong>
+                    <div style="font-size: 12px; color: #9ca3af;">${s.packageName || s.description || ''}</div>
+                  </td>
+                  <td>৳${Number(s.price || 0).toLocaleString()}</td>
+                </tr>
+              `).join('') || '<tr><td colspan="3" style="text-align: center;">কোনো সার্ভিস নেই</td></tr>'}
+            </tbody>
+          </table>
+          
+          <div class="total-section">
+            <div class="total-row">
+              <span>সাবটোটাল</span>
+              <span>৳${selectedInvoice ? Number(selectedInvoice.amount).toLocaleString() : '0'}</span>
+            </div>
+            <div class="total-row">
+              <span>পরিশোধিত</span>
+              <span style="color: #10b981;">- ৳${selectedInvoice ? Number(selectedInvoice.paid_amount).toLocaleString() : '0'}</span>
+            </div>
+            <div class="total-final">
+              <span class="total-final-label">মোট বাকি</span>
+              <span class="total-final-value">৳${selectedInvoice ? (Number(selectedInvoice.amount) - Number(selectedInvoice.paid_amount)).toLocaleString() : '0'}</span>
+            </div>
+          </div>
+          
+          <div class="footer">
+            <div class="footer-thanks">ধন্যবাদ আপনার সাথে কাজ করতে পেরে! 🙏</div>
+            <div class="footer-company">Web Creation BD</div>
+          </div>
+          
+          <div class="accent-bar" style="margin-top: 20px;"></div>
+          
+          <script>
+            window.onload = function() {
+              window.print();
+              window.onafterprint = function() { window.close(); };
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
   const statusConfig: Record<string, { bg: string; text: string; icon: any; label: string }> = {
     unpaid: { bg: "bg-red-50", text: "text-red-600", icon: XCircle, label: "বাকি" },
     partial: { bg: "bg-amber-50", text: "text-amber-600", icon: Clock, label: "আংশিক" },
@@ -876,6 +1029,15 @@ ${servicesText}
             <Button variant="outline" size="sm" onClick={printInvoice} className="font-bengali text-xs">
               <Printer className="w-3.5 h-3.5 mr-1.5" />
               প্রিন্ট
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={downloadInvoiceAsPDF}
+              className="text-blue-600 border-blue-200 hover:bg-blue-50 font-bengali text-xs"
+            >
+              <Download className="w-3.5 h-3.5 mr-1.5" />
+              ডাউনলোড
             </Button>
             <Button
               variant="outline"

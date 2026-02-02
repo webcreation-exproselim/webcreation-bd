@@ -53,20 +53,20 @@ export default function AuthPage() {
       setIsLogin(true);
     }
 
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        checkRoleAndRedirect(session.user.id);
-      }
-    };
-    checkAuth();
-
+    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session) {
+      if (event === "SIGNED_IN" && session) {
         // Defer to avoid potential deadlock
         setTimeout(() => {
           checkRoleAndRedirect(session.user.id);
-        }, 0);
+        }, 100);
+      }
+    });
+
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        checkRoleAndRedirect(session.user.id);
       }
     });
 

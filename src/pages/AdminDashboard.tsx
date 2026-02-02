@@ -45,6 +45,7 @@ import { AdminHeader } from "@/components/admin/AdminHeader";
 import { StatsCards } from "@/components/admin/StatsCards";
 import { AnalyticsCharts } from "@/components/admin/AnalyticsCharts";
 import { InvoiceSystem } from "@/components/admin/InvoiceSystem";
+import { PaymentSettings } from "@/components/admin/PaymentSettings";
 
 interface OrderService {
   id: string;
@@ -142,7 +143,7 @@ const categoryLabels: Record<string, string> = {
   "landing-page": "ল্যান্ডিং পেজ",
 };
 
-type TabType = "overview" | "orders" | "users" | "portfolio" | "invoices" | "messages";
+type TabType = "overview" | "orders" | "users" | "portfolio" | "invoices" | "messages" | "payments";
 
 const AdminDashboard = () => {
   const [user, setUser] = useState<SupabaseUser | null>(null);
@@ -442,9 +443,38 @@ const AdminDashboard = () => {
 
     if (!error) {
       setNewMessage("");
-      fetchMessages(selectedOrderChat.id);
+      // Messages will be updated by realtime subscription
     }
   };
+
+  // Subscribe to realtime messages for admin
+  useEffect(() => {
+    if (!selectedOrderChat) return;
+
+    // Initial fetch
+    fetchMessages(selectedOrderChat.id);
+
+    const channel = supabase
+      .channel(`admin-messages-${selectedOrderChat.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `order_id=eq.${selectedOrderChat.id}`,
+        },
+        (payload) => {
+          // Add new message to the list
+          setMessages((prev) => [...prev, payload.new as Message]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [selectedOrderChat?.id]);
 
   // User actions
   const deleteUser = async (userId: string) => {
@@ -490,6 +520,7 @@ const AdminDashboard = () => {
     { id: "portfolio" as TabType, label: "পোর্টফোলিও", icon: FileImage },
     { id: "invoices" as TabType, label: "ইনভয়েস", icon: FileText },
     { id: "messages" as TabType, label: "মেসেজ", icon: MessageCircle },
+    { id: "payments" as TabType, label: "পেমেন্ট", icon: CreditCard },
   ];
 
   if (loading) {
@@ -864,6 +895,10 @@ const AdminDashboard = () => {
               )}
             </div>
           </div>
+        )}
+
+        {activeTab === "payments" && (
+          <PaymentSettings />
         )}
       </div>
 

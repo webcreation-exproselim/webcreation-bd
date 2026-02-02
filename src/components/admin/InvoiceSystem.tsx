@@ -707,89 +707,71 @@ ${servicesText}
         </DialogContent>
       </Dialog>
 
-      {/* Professional Invoice Preview Modal */}
+      {/* Professional Invoice Preview Modal - Compact & Responsive */}
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-        <DialogContent className="max-w-3xl bg-white p-0 print:shadow-none overflow-hidden">
+        <DialogContent className="max-w-md sm:max-w-lg bg-white p-0 print:shadow-none overflow-hidden max-h-[90vh] overflow-y-auto">
           <div className="print:p-0" id="invoice-preview">
             {/* Top Accent Bar */}
-            <div className="h-2 bg-gradient-to-r from-red-600 via-red-500 to-yellow-500" />
+            <div className="h-1.5 bg-gradient-to-r from-red-600 via-red-500 to-yellow-500" />
             
-            <div className="p-8">
-              {/* Invoice Header - Professional Layout */}
-              <div className="flex items-start justify-between mb-10">
+            <div className="p-4 sm:p-5">
+              {/* Invoice Header - Compact Layout */}
+              <div className="flex items-start justify-between gap-3 mb-5">
                 {/* Company Info with Circular Logo */}
-                <div className="flex items-center gap-5">
-                  <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-red-100 shadow-lg shadow-red-500/20">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden border-2 border-red-100 shadow-md shadow-red-500/20 flex-shrink-0">
                     <img 
                       src={companyLogo} 
                       alt="Web Creation BD" 
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  <div>
-                    <h1 className="font-bengali font-bold text-2xl text-gray-900">Web Creation BD</h1>
-                    <p className="text-sm text-gray-500 mt-1">Professional Digital Agency</p>
-                    <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
-                      <span className="flex items-center gap-1">
-                        <Phone className="w-3 h-3" />
-                        +880 1234-567890
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Globe className="w-3 h-3" />
-                        webcreation-bd.lovable.app
-                      </span>
-                    </div>
+                  <div className="min-w-0">
+                    <h1 className="font-bengali font-bold text-base sm:text-lg text-gray-900 truncate">Web Creation BD</h1>
+                    <p className="text-xs text-gray-400">Professional Digital Agency</p>
                   </div>
                 </div>
 
-                {/* Invoice Number & Date */}
-                <div className="text-right">
-                  <div className="inline-block bg-gradient-to-r from-red-600 to-red-500 text-white px-6 py-3 rounded-xl shadow-lg">
-                    <p className="text-xs uppercase tracking-wider opacity-80">ইনভয়েস</p>
-                    <p className="font-mono font-bold text-lg">{selectedInvoice?.invoice_number}</p>
-                  </div>
-                  <div className="mt-3 text-sm text-gray-500">
-                    <p>তারিখ: {selectedInvoice && new Date(selectedInvoice.created_at).toLocaleDateString("bn-BD")}</p>
-                    {selectedInvoice?.due_date && (
-                      <p className="text-red-500">শেষ তারিখ: {new Date(selectedInvoice.due_date).toLocaleDateString("bn-BD")}</p>
-                    )}
+                {/* Invoice Number Badge */}
+                <div className="flex-shrink-0">
+                  <div className="bg-gradient-to-r from-red-600 to-red-500 text-white px-3 py-1.5 rounded-lg shadow text-center">
+                    <p className="text-[10px] uppercase tracking-wider opacity-80">ইনভয়েস</p>
+                    <p className="font-mono font-bold text-xs">{selectedInvoice?.invoice_number}</p>
                   </div>
                 </div>
               </div>
 
-              {/* Client & Status Section */}
-              <div className="grid grid-cols-3 gap-6 mb-8">
-                {/* Client Info Card */}
-                <div className="col-span-2 bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-2xl p-5 border border-gray-100">
-                  <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold mb-3 flex items-center gap-2">
-                    <Building2 className="w-3.5 h-3.5" />
+              {/* Client & Status - Compact Grid */}
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                {/* Client Info */}
+                <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                  <p className="text-[10px] text-gray-400 uppercase tracking-wider font-semibold mb-1.5 flex items-center gap-1">
+                    <Building2 className="w-3 h-3" />
                     বিল প্রাপক
                   </p>
-                  <p className="font-bengali font-bold text-lg text-gray-900">{selectedOrder?.customer_name}</p>
-                  <div className="mt-2 space-y-1">
-                    <p className="text-sm text-gray-600 flex items-center gap-2">
-                      <Phone className="w-3.5 h-3.5 text-gray-400" />
-                      {selectedOrder?.customer_phone}
+                  <p className="font-bengali font-bold text-sm text-gray-900 truncate">{selectedOrder?.customer_name}</p>
+                  <p className="text-xs text-gray-500 flex items-center gap-1 mt-1 truncate">
+                    <Phone className="w-3 h-3 flex-shrink-0" />
+                    {selectedOrder?.customer_phone}
+                  </p>
+                  {selectedOrder?.customer_email && (
+                    <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5 truncate">
+                      <Mail className="w-3 h-3 flex-shrink-0" />
+                      {selectedOrder.customer_email}
                     </p>
-                    {selectedOrder?.customer_email && (
-                      <p className="text-sm text-gray-600 flex items-center gap-2">
-                        <Mail className="w-3.5 h-3.5 text-gray-400" />
-                        {selectedOrder.customer_email}
-                      </p>
-                    )}
-                  </div>
+                  )}
                 </div>
 
                 {/* Status Card */}
-                <div className={`rounded-2xl p-5 border ${
+                <div className={`rounded-xl p-3 border ${
                   selectedInvoice?.status === "paid" 
                     ? "bg-emerald-50 border-emerald-200" 
                     : selectedInvoice?.status === "partial"
                     ? "bg-amber-50 border-amber-200"
                     : "bg-red-50 border-red-200"
                 }`}>
-                  <p className="text-xs uppercase tracking-wider font-semibold mb-3 text-gray-500">স্ট্যাটাস</p>
-                  <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold ${
+                  <p className="text-[10px] uppercase tracking-wider font-semibold mb-1.5 text-gray-500">স্ট্যাটাস</p>
+                  <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${
                     selectedInvoice?.status === "paid" 
                       ? "bg-emerald-500 text-white" 
                       : selectedInvoice?.status === "partial"
@@ -797,43 +779,49 @@ ${servicesText}
                       : "bg-red-500 text-white"
                   }`}>
                     {selectedInvoice?.status === "paid" ? (
-                      <><CheckCircle className="w-4 h-4" /> পরিশোধিত</>
+                      <><CheckCircle className="w-3 h-3" /> পরিশোধিত</>
                     ) : selectedInvoice?.status === "partial" ? (
-                      <><Clock className="w-4 h-4" /> আংশিক</>
+                      <><Clock className="w-3 h-3" /> আংশিক</>
                     ) : (
-                      <><XCircle className="w-4 h-4" /> বাকি</>
+                      <><XCircle className="w-3 h-3" /> বাকি</>
+                    )}
+                  </div>
+                  <div className="mt-2 text-[10px] text-gray-500 space-y-0.5">
+                    <p>তারিখ: {selectedInvoice && new Date(selectedInvoice.created_at).toLocaleDateString("bn-BD")}</p>
+                    {selectedInvoice?.due_date && (
+                      <p className="text-red-500">শেষ: {new Date(selectedInvoice.due_date).toLocaleDateString("bn-BD")}</p>
                     )}
                   </div>
                 </div>
               </div>
 
-              {/* Services Table - Professional Design */}
-              <div className="mb-8 overflow-hidden rounded-2xl border border-gray-200">
-                <table className="w-full">
+              {/* Services Table - Compact Design */}
+              <div className="mb-4 overflow-hidden rounded-xl border border-gray-200">
+                <table className="w-full text-sm">
                   <thead>
                     <tr className="bg-gradient-to-r from-gray-800 to-gray-900 text-white">
-                      <th className="text-left py-4 px-5 text-xs uppercase tracking-wider font-semibold">#</th>
-                      <th className="text-left py-4 px-5 text-xs uppercase tracking-wider font-semibold font-bengali">সার্ভিস বিবরণ</th>
-                      <th className="text-right py-4 px-5 text-xs uppercase tracking-wider font-semibold">মূল্য</th>
+                      <th className="text-left py-2.5 px-3 text-[10px] uppercase tracking-wider font-semibold">#</th>
+                      <th className="text-left py-2.5 px-3 text-[10px] uppercase tracking-wider font-semibold font-bengali">সার্ভিস বিবরণ</th>
+                      <th className="text-right py-2.5 px-3 text-[10px] uppercase tracking-wider font-semibold">মূল্য</th>
                     </tr>
                   </thead>
                   <tbody>
                     {selectedOrder?.services && selectedOrder.services.length > 0 ? (
                       selectedOrder.services.map((service: any, idx: number) => (
                         <tr key={idx} className={`border-b border-gray-100 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
-                          <td className="py-4 px-5 text-gray-400 font-mono text-sm">{String(idx + 1).padStart(2, '0')}</td>
-                          <td className="py-4 px-5">
-                            <p className="font-bengali font-semibold text-gray-900">{service.serviceName || service.name || 'সার্ভিস'}</p>
-                            <p className="text-sm text-gray-500 mt-0.5">{service.packageName || service.description || ''}</p>
+                          <td className="py-2.5 px-3 text-gray-400 font-mono text-xs">{String(idx + 1).padStart(2, '0')}</td>
+                          <td className="py-2.5 px-3">
+                            <p className="font-bengali font-semibold text-gray-900 text-sm">{service.serviceName || service.name || 'সার্ভিস'}</p>
+                            <p className="text-xs text-gray-400">{service.packageName || service.description || ''}</p>
                           </td>
-                          <td className="py-4 px-5 text-right">
-                            <span className="font-bold text-gray-900 text-lg">৳{Number(service.price || 0).toLocaleString()}</span>
+                          <td className="py-2.5 px-3 text-right">
+                            <span className="font-bold text-gray-900">৳{Number(service.price || 0).toLocaleString()}</span>
                           </td>
                         </tr>
                       ))
                     ) : (
                       <tr className="bg-white">
-                        <td colSpan={3} className="py-6 px-5 text-center text-gray-400 font-bengali">
+                        <td colSpan={3} className="py-4 px-3 text-center text-gray-400 font-bengali text-xs">
                           কোনো সার্ভিস তথ্য পাওয়া যায়নি
                         </td>
                       </tr>
@@ -842,71 +830,67 @@ ${servicesText}
                 </table>
               </div>
 
-              {/* Total Section - Premium Design */}
-              <div className="flex justify-end mb-8">
-                <div className="w-80 space-y-3">
-                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                    <span className="text-gray-500 font-bengali">সাবটোটাল</span>
-                    <span className="font-semibold text-gray-900">
-                      ৳{selectedInvoice && Number(selectedInvoice.amount).toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                    <span className="text-gray-500 font-bengali">পরিশোধিত</span>
-                    <span className="font-semibold text-emerald-600">
-                      - ৳{selectedInvoice && Number(selectedInvoice.paid_amount).toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center py-4 bg-gradient-to-r from-red-600 to-red-500 rounded-xl px-5 -mx-2">
-                    <span className="text-white font-bengali font-bold text-lg">মোট বাকি</span>
-                    <span className="text-white font-bold text-2xl">
-                      ৳{selectedInvoice && (Number(selectedInvoice.amount) - Number(selectedInvoice.paid_amount)).toLocaleString()}
-                    </span>
-                  </div>
+              {/* Total Section - Compact Design */}
+              <div className="space-y-2 mb-4">
+                <div className="flex justify-between items-center py-1.5 border-b border-gray-100 text-sm">
+                  <span className="text-gray-500 font-bengali">সাবটোটাল</span>
+                  <span className="font-semibold text-gray-900">
+                    ৳{selectedInvoice && Number(selectedInvoice.amount).toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center py-1.5 border-b border-gray-100 text-sm">
+                  <span className="text-gray-500 font-bengali">পরিশোধিত</span>
+                  <span className="font-semibold text-emerald-600">
+                    - ৳{selectedInvoice && Number(selectedInvoice.paid_amount).toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center py-3 bg-gradient-to-r from-red-600 to-red-500 rounded-xl px-4">
+                  <span className="text-white font-bengali font-bold">মোট বাকি</span>
+                  <span className="text-white font-bold text-lg">
+                    ৳{selectedInvoice && (Number(selectedInvoice.amount) - Number(selectedInvoice.paid_amount)).toLocaleString()}
+                  </span>
                 </div>
               </div>
 
-              {/* Footer - Professional */}
-              <div className="border-t-2 border-dashed border-gray-200 pt-6">
+              {/* Footer - Compact */}
+              <div className="border-t border-dashed border-gray-200 pt-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600 font-bengali font-medium">
-                      আপনার সাথে কাজ করতে পেরে আমরা সম্মানিত! 🙏
-                    </p>
-                    <p className="text-xs text-gray-400 mt-1">
-                      যেকোনো প্রশ্নের জন্য যোগাযোগ করুন
+                    <p className="text-xs text-gray-600 font-bengali font-medium">
+                      ধন্যবাদ আপনার সাথে কাজ করতে পেরে! 🙏
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs text-gray-400 uppercase tracking-wider">Powered by</p>
-                    <p className="font-bold text-gray-700">Web Creation BD</p>
+                    <p className="text-[10px] text-gray-400">Web Creation BD</p>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Bottom Accent Bar */}
-            <div className="h-2 bg-gradient-to-r from-yellow-500 via-red-500 to-red-600" />
+            <div className="h-1.5 bg-gradient-to-r from-yellow-500 via-red-500 to-red-600" />
           </div>
 
-          {/* Actions */}
-          <div className="flex items-center gap-3 p-4 bg-gray-50 border-t print:hidden">
-            <Button variant="outline" onClick={printInvoice} className="font-bengali">
-              <Printer className="w-4 h-4 mr-2" />
-              প্রিন্ট / PDF
+          {/* Actions - Compact */}
+          <div className="flex flex-wrap items-center gap-2 p-3 bg-gray-50 border-t print:hidden">
+            <Button variant="outline" size="sm" onClick={printInvoice} className="font-bengali text-xs">
+              <Printer className="w-3.5 h-3.5 mr-1.5" />
+              প্রিন্ট
             </Button>
             <Button
               variant="outline"
+              size="sm"
               onClick={() => selectedInvoice && sendViaWhatsApp(selectedInvoice)}
-              className="text-green-600 border-green-200 hover:bg-green-50 font-bengali"
+              className="text-green-600 border-green-200 hover:bg-green-50 font-bengali text-xs"
             >
-              <MessageCircle className="w-4 h-4 mr-2" />
-              WhatsApp এ পাঠান
+              <MessageCircle className="w-3.5 h-3.5 mr-1.5" />
+              WhatsApp
             </Button>
             <div className="flex-1" />
             <Button
+              size="sm"
               onClick={() => setIsPreviewOpen(false)}
-              className="bg-red-600 hover:bg-red-700 font-bengali"
+              className="bg-red-600 hover:bg-red-700 font-bengali text-xs"
             >
               বন্ধ করুন
             </Button>

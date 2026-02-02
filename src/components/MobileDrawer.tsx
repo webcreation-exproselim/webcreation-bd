@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
+import logo from "@/assets/logo.png";
 
 const serviceItems = [
   { label: "ফেসবুক অ্যাডস", href: "/facebook-ads" },
@@ -58,7 +59,14 @@ export function MobileDrawer({
         className="w-80 bg-white border-l border-gray-200 overflow-y-auto"
       >
         <SheetHeader>
-          <SheetTitle className="text-red-600 text-left font-bengali font-bold text-xl">Web Creation BD</SheetTitle>
+          <SheetTitle className="text-left">
+            <img 
+              src={logo} 
+              alt="Web Creation BD" 
+              className="h-10 w-auto object-contain"
+              loading="lazy"
+            />
+          </SheetTitle>
         </SheetHeader>
         <nav className="flex flex-col gap-1 mt-8">
           {navItems.map((item) => (
@@ -66,7 +74,7 @@ export function MobileDrawer({
               <div key={item.href}>
                 <button
                   onClick={() => setServicesOpen(!servicesOpen)}
-                  className="w-full px-4 py-3 text-gray-700 font-bengali font-medium transition-all duration-300 hover:text-red-600 hover:bg-red-50 rounded-lg flex items-center justify-between"
+                  className="w-full px-4 py-3 text-gray-700 font-bengali font-medium transition-all duration-300 hover:text-blue-600 hover:bg-blue-50 rounded-lg flex items-center justify-between"
                 >
                   {item.label}
                   <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${servicesOpen ? 'rotate-180' : ''}`} />
@@ -79,7 +87,7 @@ export function MobileDrawer({
                       <button
                         key={subItem.href}
                         onClick={() => handleNavClick(subItem.href)}
-                        className="block w-full text-left px-4 py-2.5 text-gray-600 font-bengali text-sm transition-all duration-200 hover:text-red-600 hover:bg-red-50 rounded-lg hover:pl-6"
+                        className="block w-full text-left px-4 py-2.5 text-gray-600 font-bengali text-sm transition-all duration-200 hover:text-blue-600 hover:bg-blue-50 rounded-lg hover:pl-6"
                       >
                         {subItem.label}
                       </button>
@@ -91,10 +99,10 @@ export function MobileDrawer({
               <button
                 key={item.href}
                 onClick={() => handleNavClick(item.href)}
-                className="px-4 py-3 text-left text-gray-700 font-bengali font-medium transition-all duration-300 hover:text-red-600 hover:bg-red-50 rounded-lg group relative"
+                className="px-4 py-3 text-left text-gray-700 font-bengali font-medium transition-all duration-300 hover:text-blue-600 hover:bg-blue-50 rounded-lg group relative"
               >
                 {item.label}
-                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-0 bg-gradient-to-b from-red-500 to-red-700 rounded-full transition-all duration-300 group-hover:h-6" />
+                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-0 bg-gradient-to-b from-cyan-500 to-blue-600 rounded-full transition-all duration-300 group-hover:h-6" />
               </button>
             )
           ))}
@@ -103,13 +111,13 @@ export function MobileDrawer({
           <Button
             variant="outline"
             onClick={onLoginClick}
-            className="w-full border-red-500 text-red-600 font-bengali font-medium hover:bg-red-50"
+            className="w-full border-blue-500 text-blue-600 font-bengali font-medium hover:bg-blue-50"
           >
             লগইন
           </Button>
           <Button
             onClick={onSignupClick}
-            className="w-full bg-gradient-to-r from-red-500 to-red-700 text-white font-bengali font-semibold hover:from-red-600 hover:to-red-800"
+            className="w-full bg-gradient-to-r from-cyan-500 via-blue-500 to-blue-600 text-white font-bengali font-semibold hover:from-cyan-400 hover:via-blue-400 hover:to-blue-500"
           >
             সাইন আপ
           </Button>

@@ -6,7 +6,7 @@ const stats = [
     icon: Calendar,
     value: "৪+",
     label: "বছরের অভিজ্ঞতা",
-    color: "from-yellow-400 to-orange-500",
+    color: "from-orange-400 to-orange-600",
   },
   {
     icon: FolderCheck,
@@ -18,7 +18,7 @@ const stats = [
     icon: Users,
     value: "১৫০০+",
     label: "সন্তুষ্ট ক্লায়েন্ট",
-    color: "from-blue-400 to-cyan-500",
+    color: "from-cyan-400 to-blue-500",
   },
   {
     icon: UserCheck,
@@ -30,12 +30,12 @@ const stats = [
 
 export const StatsSection = () => {
   return (
-    <section className="py-16 md:py-24 bg-black relative overflow-hidden">
+    <section className="py-16 md:py-24 bg-slate-950 relative overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 hex-pattern opacity-30" />
       
       {/* Gradient Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/50 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-slate-950/50 to-transparent" />
 
       <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-16 relative z-10">
         {/* Section Title */}
@@ -47,7 +47,7 @@ export const StatsSection = () => {
           className="text-center mb-12 md:mb-16"
         >
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bengali font-bold text-white">
-            আমাদের <span className="text-gradient-gold">সাফল্যের</span> গল্প
+            আমাদের <span className="text-gradient-brand">সাফল্যের</span> গল্প
           </h2>
           <p className="mt-4 text-muted-foreground text-sm sm:text-base md:text-lg max-w-2xl mx-auto font-bengali">
             বছরের পর বছর ক্লায়েন্টদের বিশ্বাস অর্জন করে আমরা তৈরি করেছি সাফল্যের এক অনন্য ইতিহাস
@@ -70,11 +70,11 @@ export const StatsSection = () => {
               className="relative group"
             >
               {/* Card with animated border */}
-              <div className="relative p-1 rounded-2xl bg-gradient-to-br from-yellow-400/50 via-transparent to-red-500/50 group-hover:from-yellow-400 group-hover:to-red-500 transition-all duration-500">
+              <div className="relative p-1 rounded-2xl bg-gradient-to-br from-cyan-400/50 via-transparent to-blue-500/50 group-hover:from-cyan-400 group-hover:to-blue-500 transition-all duration-500">
                 {/* Inner card */}
-                <div className="bg-black/90 backdrop-blur-xl rounded-xl p-4 sm:p-6 md:p-8 text-center relative overflow-hidden">
+                <div className="bg-slate-900/90 backdrop-blur-xl rounded-xl p-4 sm:p-6 md:p-8 text-center relative overflow-hidden">
                   {/* Background glow on hover */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/5 to-red-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                   
                   {/* Icon */}
                   <motion.div
@@ -85,7 +85,7 @@ export const StatsSection = () => {
                   </motion.div>
 
                   {/* Value */}
-                  <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gradient-gold font-bengali mb-1 sm:mb-2">
+                  <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gradient-brand font-bengali mb-1 sm:mb-2">
                     {stat.value}
                   </h3>
 
@@ -95,12 +95,12 @@ export const StatsSection = () => {
                   </p>
 
                   {/* Corner accent */}
-                  <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-yellow-400/10 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-cyan-400/10 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 </div>
               </div>
 
               {/* Outer glow effect */}
-              <div className="absolute -inset-0.5 bg-gradient-to-br from-yellow-400/20 to-red-500/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-60 transition-opacity duration-500 -z-10" />
+              <div className="absolute -inset-0.5 bg-gradient-to-br from-cyan-400/20 to-blue-500/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-60 transition-opacity duration-500 -z-10" />
             </motion.div>
           ))}
         </div>

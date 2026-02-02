@@ -34,17 +34,17 @@ export function HeroSection() {
   return (
     <>
     <section className="relative min-h-screen flex items-center overflow-hidden">
-      {/* Bright Red Gradient Background */}
-      <div className="absolute inset-0 bg-bnp-gradient" />
+      {/* Fresh Cyan Gradient Background - Like Logo */}
+      <div className="absolute inset-0 bg-wcbd-gradient" />
       
-      {/* Golden/Orange gradient overlay on right side */}
-      <div className="absolute inset-0 bg-gradient-to-l from-yellow-500/30 via-orange-500/10 to-transparent pointer-events-none" />
+      {/* Blue/Purple gradient overlay on right side */}
+      <div className="absolute inset-0 bg-gradient-to-l from-blue-500/30 via-purple-500/10 to-transparent pointer-events-none" />
       
       {/* Particle Network Animation */}
       <ParticleNetwork />
 
       {/* Subtle vignette overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
 
       {/* Content */}
       <div className="relative z-10 max-w-6xl mx-auto px-6 sm:px-8 lg:px-16 pt-28 pb-16">
@@ -57,17 +57,17 @@ export function HeroSection() {
             transition={{ duration: 0.8, ease: "easeOut" }}
           >
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 mb-6">
-              <span className="text-yellow-400">🚀</span>
-              <span className="text-white/90 font-bengali text-sm">সবার আগে বাংলাদেশ</span>
-              <span className="text-yellow-400">🚀</span>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 mb-6">
+              <span className="text-orange-500">🚀</span>
+              <span className="text-white font-bengali text-sm font-medium">সবার আগে বাংলাদেশ</span>
+              <span className="text-orange-500">🚀</span>
             </div>
 
             {/* Main Headline */}
-            <h1 className="font-bengali text-4xl sm:text-5xl md:text-6xl lg:text-6xl xl:text-7xl font-bold mb-6 leading-[1.1] text-white">
+            <h1 className="font-bengali text-4xl sm:text-5xl md:text-6xl lg:text-6xl xl:text-7xl font-bold mb-6 leading-[1.1] text-white drop-shadow-lg">
               আপনার ব্যবসার
               <br />
-              <span className="text-gradient-gold">ডিজিটাল রূপান্তর</span>
+              <span className="text-gradient-orange">ডিজিটাল রূপান্তর</span>
               <br />
               শুরু হোক
             </h1>
@@ -85,7 +85,7 @@ export function HeroSection() {
               <Button 
                 size="lg" 
                 onClick={() => setIsConsultationOpen(true)}
-                className="bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 text-black font-bengali font-bold text-base sm:text-lg px-8 sm:px-10 py-5 sm:py-6 rounded-lg hover:from-yellow-300 hover:via-yellow-400 hover:to-yellow-500 transition-all duration-300 shadow-xl"
+                className="bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 text-white font-bengali font-bold text-base sm:text-lg px-8 sm:px-10 py-5 sm:py-6 rounded-lg hover:from-orange-300 hover:via-orange-400 hover:to-orange-500 transition-all duration-300 shadow-xl shadow-orange-500/30"
               >
                 ফ্রি কনসালটেশন নিন
               </Button>
@@ -109,9 +109,9 @@ export function HeroSection() {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.4, delay: 0.6 + index * 0.1 }}
                     whileHover={{ scale: 1.1 }}
-                    className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-black/80 backdrop-blur-sm border border-white/10 flex items-center justify-center shadow-lg cursor-pointer hover:border-yellow-400/60 transition-all"
+                    className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-white/90 backdrop-blur-sm border border-white/50 flex items-center justify-center shadow-lg cursor-pointer hover:border-blue-400 transition-all"
                   >
-                    <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-400" />
+                    <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
                   </motion.div>
                 ))}
               </div>
@@ -124,8 +124,8 @@ export function HeroSection() {
                 transition={{ duration: 0.4, delay: 0.9 }}
                 whileHover={{ scale: 1.1 }}
               >
-                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-black/80 backdrop-blur-sm border border-white/10 flex items-center justify-center shadow-lg cursor-pointer hover:border-yellow-400/60 transition-all">
-                  <Activity className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-400" />
+                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-white/90 backdrop-blur-sm border border-white/50 flex items-center justify-center shadow-lg cursor-pointer hover:border-blue-400 transition-all">
+                  <Activity className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
                 </div>
               </motion.div>
 
@@ -137,8 +137,8 @@ export function HeroSection() {
                 transition={{ duration: 0.4, delay: 1.0 }}
                 whileHover={{ scale: 1.1 }}
               >
-                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-black/80 backdrop-blur-sm border border-white/10 flex items-center justify-center shadow-lg cursor-pointer hover:border-yellow-400/60 transition-all">
-                  <Megaphone className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-400" />
+                <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-white/90 backdrop-blur-sm border border-white/50 flex items-center justify-center shadow-lg cursor-pointer hover:border-orange-400 transition-all">
+                  <Megaphone className="w-5 h-5 sm:w-6 sm:h-6 text-orange-500" />
                 </div>
               </motion.div>
 
@@ -146,7 +146,8 @@ export function HeroSection() {
               <img 
                 src={heroProfessional} 
                 alt="Professional Digital Agency Expert" 
-                className="relative z-10 w-60 sm:w-72 md:w-80 lg:w-[340px] xl:w-[400px] h-auto object-contain" 
+                className="relative z-10 w-60 sm:w-72 md:w-80 lg:w-[340px] xl:w-[400px] h-auto object-contain drop-shadow-2xl"
+                loading="eager"
               />
             </div>
           </motion.div>
@@ -163,11 +164,11 @@ export function HeroSection() {
             <motion.a 
               key={service.href} 
               href={service.href} 
-              className="group relative p-4 sm:p-6 rounded-xl glass-card transition-all duration-300"
+              className="group relative p-4 sm:p-6 rounded-xl bg-white/20 backdrop-blur-md border border-white/30 transition-all duration-300"
               whileHover={{
                 y: -8,
                 scale: 1.02,
-                boxShadow: "0 0 15px rgba(251, 191, 36, 0.5), 0 0 30px rgba(220, 38, 38, 0.3)"
+                boxShadow: "0 0 20px rgba(59, 130, 246, 0.4), 0 0 40px rgba(34, 211, 238, 0.2)"
               }}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -175,18 +176,18 @@ export function HeroSection() {
             >
               {/* Icon Container */}
               <div className="mb-3 sm:mb-4 flex justify-center">
-                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-black/50 border border-white/10 flex items-center justify-center group-hover:border-yellow-400/50 group-hover:bg-yellow-500/10 transition-all duration-300">
-                  <service.icon className="w-6 h-6 sm:w-7 sm:h-7 text-yellow-400 group-hover:text-yellow-300 transition-all duration-300 group-hover:icon-spin" />
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-white/50 border border-white/40 flex items-center justify-center group-hover:border-blue-400 group-hover:bg-white/70 transition-all duration-300">
+                  <service.icon className="w-6 h-6 sm:w-7 sm:h-7 text-blue-600 group-hover:text-blue-700 transition-all duration-300 group-hover:icon-spin" />
                 </div>
               </div>
               
               {/* Label */}
-              <p className="text-white/90 font-bengali font-medium text-xs sm:text-sm text-center group-hover:text-yellow-400 transition-colors duration-300">
+              <p className="text-white font-bengali font-medium text-xs sm:text-sm text-center group-hover:text-white transition-colors duration-300 drop-shadow">
                 {service.label}
               </p>
 
               {/* Hover border glow */}
-              <div className="absolute inset-0 rounded-xl border-2 border-transparent group-hover:border-yellow-400 transition-all duration-300 pointer-events-none" />
+              <div className="absolute inset-0 rounded-xl border-2 border-transparent group-hover:border-white/50 transition-all duration-300 pointer-events-none" />
             </motion.a>
           ))}
         </motion.div>
@@ -200,8 +201,8 @@ export function HeroSection() {
       repeat: Infinity,
       ease: "easeInOut"
     }}>
-        <div className="w-6 h-10 border-2 border-yellow-500/40 rounded-full flex justify-center pt-2">
-          <div className="w-1 h-3 bg-yellow-400/70 rounded-full" />
+        <div className="w-6 h-10 border-2 border-white/50 rounded-full flex justify-center pt-2">
+          <div className="w-1 h-3 bg-white/80 rounded-full" />
         </div>
       </motion.div>
     </section>

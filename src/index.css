@@ -2,55 +2,60 @@
 @tailwind components;
 @tailwind utilities;
 
-/* BNP Style Premium Agency Design System */
+/* Web Creation BD - Fresh Modern Design System */
+/* Colors inspired by logo: Cyan, Blue, Purple, Orange gradient */
 
 @layer base {
   :root {
-    --background: 0 0% 0%;
+    --background: 200 30% 6%;
     --foreground: 0 0% 100%;
 
-    --card: 0 100% 2%;
+    --card: 200 30% 8%;
     --card-foreground: 0 0% 100%;
 
-    --popover: 0 100% 2%;
+    --popover: 200 30% 8%;
     --popover-foreground: 0 0% 100%;
 
-    --primary: 48 96% 53%;
-    --primary-foreground: 0 0% 0%;
+    /* Primary - Vibrant Blue from logo */
+    --primary: 220 90% 56%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 75% 10%;
-    --secondary-foreground: 0 0% 100%;
+    /* Secondary - Cyan/Turquoise */
+    --secondary: 187 85% 53%;
+    --secondary-foreground: 200 30% 6%;
 
-    --muted: 0 70% 15%;
-    --muted-foreground: 0 0% 70%;
+    /* Muted - Deep blue-gray */
+    --muted: 210 30% 20%;
+    --muted-foreground: 210 20% 65%;
 
-    --accent: 0 84% 50%;
+    /* Accent - Orange from logo */
+    --accent: 24 95% 53%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 20%;
-    --input: 0 0% 15%;
-    --ring: 48 96% 53%;
+    --border: 210 20% 25%;
+    --input: 210 20% 18%;
+    --ring: 220 90% 56%;
 
     --radius: 0.5rem;
 
-    /* BNP Style Premium brand colors */
-    --bnp-deep-red: 0 85% 20%;
-    --bnp-dark-red: 0 90% 8%;
-    --bnp-gold: 43 96% 56%;
-    --bnp-gold-light: 45 93% 58%;
-    --bnp-gold-dark: 43 96% 45%;
+    /* Web Creation BD brand colors */
+    --wcbd-cyan: 187 85% 53%;
+    --wcbd-blue: 220 90% 56%;
+    --wcbd-purple: 280 80% 55%;
+    --wcbd-orange: 24 95% 53%;
+    --wcbd-dark: 200 30% 6%;
 
-    --sidebar-background: 0 0% 5%;
+    --sidebar-background: 200 30% 8%;
     --sidebar-foreground: 0 0% 95%;
-    --sidebar-primary: 48 96% 53%;
-    --sidebar-primary-foreground: 0 0% 0%;
-    --sidebar-accent: 0 75% 15%;
+    --sidebar-primary: 220 90% 56%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 187 85% 20%;
     --sidebar-accent-foreground: 0 0% 95%;
-    --sidebar-border: 0 0% 20%;
-    --sidebar-ring: 48 96% 53%;
+    --sidebar-border: 210 20% 25%;
+    --sidebar-ring: 220 90% 56%;
   }
 }
 
@@ -69,50 +74,86 @@
   }
 }
 
-/* BNP Style Utility Classes */
+/* Web Creation BD Utility Classes */
 @layer utilities {
   .font-bengali {
     font-family: 'Hind Siliguri', sans-serif;
   }
 
+  /* Brand gradient text - matches logo colors */
+  .text-gradient-brand {
+    @apply bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 bg-clip-text text-transparent;
+  }
+
+  .text-gradient-orange {
+    @apply bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 bg-clip-text text-transparent;
+  }
+
+  /* Legacy gold gradient for backwards compatibility */
   .text-gradient-gold {
-    @apply bg-gradient-to-r from-yellow-300 via-yellow-400 to-yellow-500 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 bg-clip-text text-transparent;
   }
 
   .bg-gradient-gold {
-    @apply bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600;
+    @apply bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600;
   }
 
-  /* Bright Red Gradient Background - Like BNP Reference */
-  .bg-bnp-gradient {
-    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 30%, #7f1d1d 60%, #450a0a 100%);
+  /* Brand Gradient Background - Cyan to Blue to Purple */
+  .bg-brand-gradient {
+    background: linear-gradient(135deg, 
+      hsl(187, 85%, 53%) 0%, 
+      hsl(220, 90%, 56%) 50%, 
+      hsl(280, 80%, 55%) 100%
+    );
+  }
+
+  /* Fresh Cyan Background Gradient - Like the logo */
+  .bg-wcbd-gradient {
+    background: radial-gradient(ellipse at center, 
+      hsl(187, 85%, 65%) 0%, 
+      hsl(187, 85%, 53%) 40%,
+      hsl(200, 75%, 45%) 100%
+    );
+  }
+
+  /* Dark gradient for sections */
+  .bg-dark-gradient {
+    background: linear-gradient(180deg, 
+      hsl(200, 30%, 6%) 0%, 
+      hsl(210, 35%, 10%) 50%,
+      hsl(200, 30%, 6%) 100%
+    );
   }
 
   /* Glassmorphism - Frosted Glass */
   .glass-card {
-    @apply bg-black/40 backdrop-blur-md border border-white/10;
+    @apply bg-white/10 backdrop-blur-md border border-white/20;
   }
 
   .glassmorphism-nav {
-    @apply backdrop-blur-lg bg-black/50 border-b border-white/10;
+    @apply backdrop-blur-lg bg-white/90 border-b border-gray-200;
   }
 
   /* Glow Effects */
-  .glow-gold {
-    box-shadow: 0 0 20px rgba(251, 191, 36, 0.5);
+  .glow-blue {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
   }
 
-  .glow-gold-red {
-    box-shadow: 0 0 15px rgba(251, 191, 36, 0.5), 0 0 30px rgba(220, 38, 38, 0.3);
+  .glow-cyan {
+    box-shadow: 0 0 20px rgba(34, 211, 238, 0.5);
+  }
+
+  .glow-brand {
+    box-shadow: 0 0 15px rgba(34, 211, 238, 0.4), 0 0 30px rgba(59, 130, 246, 0.3);
   }
 
   /* Animations */
-  @keyframes pulse-gold {
+  @keyframes pulse-brand {
     0%, 100% {
-      box-shadow: 0 0 20px rgba(251, 191, 36, 0.4), 0 0 40px rgba(251, 191, 36, 0.2);
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.4), 0 0 40px rgba(34, 211, 238, 0.2);
     }
     50% {
-      box-shadow: 0 0 35px rgba(251, 191, 36, 0.6), 0 0 70px rgba(251, 191, 36, 0.3);
+      box-shadow: 0 0 35px rgba(59, 130, 246, 0.6), 0 0 70px rgba(34, 211, 238, 0.3);
     }
   }
 
@@ -134,8 +175,8 @@
     }
   }
 
-  .animate-pulse-gold {
-    animation: pulse-gold 2s ease-in-out infinite;
+  .animate-pulse-brand {
+    animation: pulse-brand 2s ease-in-out infinite;
   }
 
   .animate-float {
@@ -149,10 +190,10 @@
 
 /* Technology Grid Pattern */
 .tech-grid-pattern {
-  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg stroke='%23facc15' stroke-opacity='0.05' stroke-width='0.5'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg stroke='%2322d3ee' stroke-opacity='0.08' stroke-width='0.5'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
 }
 
 /* Hexagon Network Pattern */
 .hex-pattern {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49' viewBox='0 0 28 49'%3E%3Cg fill-rule='evenodd'%3E%3Cg fill='%23facc15' fill-opacity='0.04'%3E%3Cpath d='M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.9v12.7l10.99 6.34 11-6.35V17.9l-11-6.34L3 17.9zM0 15l12.98-7.5V0h-2v6.35L0 12.69v2.3zm0 18.5L12.98 41v8h-2v-6.85L0 35.81v-2.3zM15 0v7.5L27.99 15H28v-2.31h-.01L17 6.35V0h-2zm0 49v-8l12.99-7.5H28v2.31h-.01L17 42.15V49h-2z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49' viewBox='0 0 28 49'%3E%3Cg fill-rule='evenodd'%3E%3Cg fill='%233b82f6' fill-opacity='0.06'%3E%3Cpath d='M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.9v12.7l10.99 6.34 11-6.35V17.9l-11-6.34L3 17.9zM0 15l12.98-7.5V0h-2v6.35L0 12.69v2.3zm0 18.5L12.98 41v8h-2v-6.85L0 35.81v-2.3zM15 0v7.5L27.99 15H28v-2.31h-.01L17 6.35V0h-2zm0 49v-8l12.99-7.5H28v2.31h-.01L17 42.15V49h-2z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
 }

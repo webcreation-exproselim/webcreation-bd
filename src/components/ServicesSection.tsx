@@ -33,7 +33,7 @@ const services = [
     title: "ভিডিও এডিটিং",
     description: "প্রফেশনাল ভিডিও এডিটিং সার্ভিস যা আপনার কন্টেন্টকে পরবর্তী স্তরে নিয়ে যাবে। সিনেমাটিক কোয়ালিটি।",
     features: ["প্রফেশনাল কাট", "কালার গ্রেডিং", "সাউন্ড ডিজাইন", "মোশন গ্রাফিক্স"],
-    gradient: "from-red-500 to-orange-400",
+    gradient: "from-orange-500 to-amber-400",
     href: "/video-editing",
   },
   {
@@ -41,7 +41,7 @@ const services = [
     title: "মোশন গ্রাফিক্স",
     description: "আই-ক্যাচিং মোশন গ্রাফিক্স যা আপনার মেসেজকে জীবন্ত করে তুলবে। অ্যানিমেটেড লোগো থেকে এক্সপ্লেইনার ভিডিও।",
     features: ["অ্যানিমেটেড লোগো", "এক্সপ্লেইনার ভিডিও", "ইনফোগ্রাফিক্স", "3D অ্যানিমেশন"],
-    gradient: "from-yellow-500 to-amber-400",
+    gradient: "from-cyan-500 to-blue-400",
     href: "/motion-graphics",
   },
   {
@@ -67,7 +67,7 @@ const ServiceCard = ({ service, index }: { service: typeof services[0]; index: n
       {/* Animated gradient border */}
       <div className="absolute -inset-[1px] rounded-2xl overflow-hidden">
         <div 
-          className="absolute inset-0 bg-[conic-gradient(from_0deg,#facc15,#ef4444,#facc15,#ef4444,#facc15)] opacity-50 group-hover:opacity-100 transition-opacity duration-500"
+          className="absolute inset-0 bg-[conic-gradient(from_0deg,#22d3ee,#3b82f6,#a855f7,#f97316,#22d3ee)] opacity-50 group-hover:opacity-100 transition-opacity duration-500"
           style={{
             animation: "spin 4s linear infinite",
           }}
@@ -75,14 +75,14 @@ const ServiceCard = ({ service, index }: { service: typeof services[0]; index: n
       </div>
       
       {/* Card */}
-      <div className="relative bg-black rounded-2xl p-6 sm:p-8 border border-white/5 h-full flex flex-col">
+      <div className="relative bg-slate-900 rounded-2xl p-6 sm:p-8 border border-white/5 h-full flex flex-col">
         {/* Icon */}
         <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-gradient-to-br ${service.gradient} p-3.5 sm:p-4 mb-4 sm:mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
           <service.icon className="w-full h-full text-white" />
         </div>
 
         {/* Title */}
-        <h3 className="text-xl sm:text-2xl font-bengali font-bold text-white mb-3 group-hover:text-gradient-gold transition-all duration-300">
+        <h3 className="text-xl sm:text-2xl font-bengali font-bold text-white mb-3 group-hover:text-gradient-brand transition-all duration-300">
           {service.title}
         </h3>
 
@@ -95,7 +95,7 @@ const ServiceCard = ({ service, index }: { service: typeof services[0]; index: n
         <ul className="space-y-2 mb-6">
           {service.features.map((feature) => (
             <li key={feature} className="flex items-center gap-2 text-xs sm:text-sm text-white/60 font-bengali">
-              <span className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-yellow-400 to-red-500" />
+              <span className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500" />
               {feature}
             </li>
           ))}
@@ -105,7 +105,7 @@ const ServiceCard = ({ service, index }: { service: typeof services[0]; index: n
         <Link to={service.href}>
           <Button
             variant="outline"
-            className="w-full font-bengali border-yellow-400/30 text-yellow-400 hover:bg-yellow-400/10 hover:border-yellow-400 group/btn transition-all duration-300"
+            className="w-full font-bengali border-cyan-400/30 text-cyan-400 hover:bg-cyan-400/10 hover:border-cyan-400 group/btn transition-all duration-300"
           >
             বিস্তারিত দেখুন
             <ArrowRight className="w-4 h-4 ml-2 group-hover/btn:translate-x-1 transition-transform" />
@@ -118,7 +118,7 @@ const ServiceCard = ({ service, index }: { service: typeof services[0]; index: n
 
 export const ServicesSection = () => {
   return (
-    <section id="services" className="py-16 md:py-24 bg-gradient-to-b from-black via-black/95 to-black relative overflow-hidden">
+    <section id="services" className="py-16 md:py-24 bg-dark-gradient relative overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 tech-grid-pattern opacity-20" />
 
@@ -140,7 +140,7 @@ export const ServicesSection = () => {
           className="text-center mb-12 md:mb-16"
         >
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bengali font-bold text-white">
-            আমাদের <span className="text-gradient-gold">সার্ভিস</span> সমূহ
+            আমাদের <span className="text-gradient-brand">সার্ভিস</span> সমূহ
           </h2>
           <p className="mt-4 text-muted-foreground text-sm sm:text-base md:text-lg max-w-2xl mx-auto font-bengali">
             আপনার ব্যবসার ডিজিটাল সাফল্যের জন্য আমাদের প্রফেশনাল সার্ভিস গুলো

@@ -57,15 +57,12 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
-        premium: {
-          black: "hsl(var(--premium-black))",
-          maroon: "hsl(var(--premium-maroon))",
-          "maroon-deep": "hsl(var(--premium-maroon-deep))",
-          gold: "hsl(var(--premium-gold))",
-          "gold-light": "hsl(var(--premium-gold-light))",
-          "gold-dark": "hsl(var(--premium-gold-dark))",
-          red: "hsl(var(--premium-red))",
-          "red-glow": "hsl(var(--premium-red-glow))",
+        wcbd: {
+          cyan: "hsl(var(--wcbd-cyan))",
+          blue: "hsl(var(--wcbd-blue))",
+          purple: "hsl(var(--wcbd-purple))",
+          orange: "hsl(var(--wcbd-orange))",
+          dark: "hsl(var(--wcbd-dark))",
         },
       },
       fontFamily: {

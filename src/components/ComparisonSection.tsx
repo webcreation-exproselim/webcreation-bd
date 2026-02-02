@@ -1,5 +1,8 @@
 import { motion } from "framer-motion";
 import { X, Check, AlertTriangle, Zap, Shield, TrendingUp, Smartphone, Gauge } from "lucide-react";
+import { useMemo } from "react";
+import { useSiteContent } from "@/hooks/useSiteContent";
+import { EditableText } from "./EditableText";
 import comparisonIllustration1 from "@/assets/comparison-illustration-1.png";
 import comparisonIllustration2 from "@/assets/comparison-illustration-2.png";
 const regularWebsitePoints = [{
@@ -41,6 +44,20 @@ const webCreationPoints = [{
   text: "সেলস জেনারেটিং ফোকাস"
 }];
 export const ComparisonSection = () => {
+  // Fallback content
+  const fallbackContent = useMemo(() => ({
+    badge_text: "পার্থক্য দেখুন",
+    title_regular: "সাধারণ ওয়েবসাইট",
+    title_vs: "vs",
+    title_brand: "Web Creation BD",
+    title_brand_suffix: "ওয়েবসাইট",
+    section_subtitle: "সঠিক সিদ্ধান্ত নিন এবং আপনার ব্যবসাকে এগিয়ে নিয়ে যান",
+    cta_text: "আপনার ব্যবসার জন্য সেরা ওয়েবসাইট তৈরি করতে আজই যোগাযোগ করুন",
+    cta_button: "ফ্রি কনসালটেশন নিন",
+  }), []);
+
+  const { content } = useSiteContent("home", "comparison", fallbackContent);
+
   return <section className="py-16 md:py-24 bg-gradient-to-b from-black via-black/95 to-black relative overflow-hidden">
       {/* Background Effects */}
       <div className="absolute inset-0 tech-grid-pattern opacity-10" />
@@ -75,26 +92,32 @@ export const ComparisonSection = () => {
         }} className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-yellow-400/20 to-red-500/20 border border-yellow-400/30 mb-6">
             <span className="text-yellow-400">⚡</span>
             <span className="text-sm sm:text-base text-white font-bengali font-medium">
-              পার্থক্য দেখুন
+              <EditableText page="home" section="comparison" contentKey="badge_text" value={content.badge_text} />
             </span>
           </motion.div>
 
           {/* Title - Split into lines for better readability */}
           <h2 className="font-bengali font-bold text-white mb-4">
             <span className="block text-xl sm:text-2xl md:text-3xl lg:text-4xl text-white/80 mb-2">
-              সাধারণ ওয়েবসাইট
+              <EditableText page="home" section="comparison" contentKey="title_regular" value={content.title_regular} />
             </span>
             <span className="block text-2xl sm:text-3xl md:text-4xl lg:text-5xl">
-              <span className="text-gradient-gold">vs</span>
+              <span className="text-gradient-gold">
+                <EditableText page="home" section="comparison" contentKey="title_vs" value={content.title_vs} />
+              </span>
             </span>
             <span className="block text-xl sm:text-2xl md:text-3xl lg:text-4xl mt-2">
-              <span className="text-gradient-gold">Web Creation BD</span>
-              <span className="text-white/80"> ওয়েবসাইট</span>
+              <span className="text-gradient-gold">
+                <EditableText page="home" section="comparison" contentKey="title_brand" value={content.title_brand} />
+              </span>
+              <span className="text-white/80">
+                {" "}<EditableText page="home" section="comparison" contentKey="title_brand_suffix" value={content.title_brand_suffix} />
+              </span>
             </span>
           </h2>
 
           <p className="text-muted-foreground text-sm sm:text-base md:text-lg max-w-2xl mx-auto font-bengali">
-            সঠিক সিদ্ধান্ত নিন এবং আপনার ব্যবসাকে এগিয়ে নিয়ে যান
+            <EditableText page="home" section="comparison" contentKey="section_subtitle" value={content.section_subtitle} multiline />
           </p>
         </motion.div>
 

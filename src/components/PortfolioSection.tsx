@@ -1,8 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Megaphone, Code, Palette, Video, Activity, Layout, ExternalLink, X, Play, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { useSiteContent } from "@/hooks/useSiteContent";
+import { EditableText } from "./EditableText";
 import {
   Dialog,
   DialogContent,
@@ -176,6 +178,17 @@ export const PortfolioSection = () => {
   const [portfolioData, setPortfolioData] = useState<Record<string, PortfolioItem[]>>(fallbackData);
   const [loading, setLoading] = useState(true);
 
+  // Fallback content
+  const fallbackContent = useMemo(() => ({
+    badge_text: "আমাদের কাজ দেখুন",
+    section_title_start: "আমাদের",
+    section_title_highlight: "পোর্টফোলিও",
+    section_subtitle: "বিভিন্ন সার্ভিসের সফল প্রজেক্ট গুলো দেখুন",
+    view_more_button: "আরও দেখুন",
+  }), []);
+
+  const { content } = useSiteContent("home", "portfolio", fallbackContent);
+
   // Fetch portfolio items from database
   useEffect(() => {
     const fetchPortfolio = async () => {
@@ -282,15 +295,18 @@ export const PortfolioSection = () => {
           >
             <span className="text-yellow-400">🎨</span>
             <span className="text-sm sm:text-base text-white font-bengali font-medium">
-              আমাদের কাজ দেখুন
+              <EditableText page="home" section="portfolio" contentKey="badge_text" value={content.badge_text} />
             </span>
           </motion.div>
 
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bengali font-bold text-white mb-4">
-            আমাদের <span className="text-gradient-gold">পোর্টফোলিও</span>
+            <EditableText page="home" section="portfolio" contentKey="section_title_start" value={content.section_title_start} />{" "}
+            <span className="text-gradient-gold">
+              <EditableText page="home" section="portfolio" contentKey="section_title_highlight" value={content.section_title_highlight} />
+            </span>
           </h2>
           <p className="text-muted-foreground text-sm sm:text-base md:text-lg max-w-2xl mx-auto font-bengali">
-            বিভিন্ন সার্ভিসের সফল প্রজেক্ট গুলো দেখুন
+            <EditableText page="home" section="portfolio" contentKey="section_subtitle" value={content.section_subtitle} multiline />
           </p>
         </motion.div>
 

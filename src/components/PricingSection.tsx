@@ -291,7 +291,7 @@ const PricingCard = ({
       )}
 
       {/* Card Border Glow */}
-      <div className={`absolute -inset-[1px] rounded-2xl overflow-hidden ${plan.popular ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity duration-500`}>
+      <div className={`pointer-events-none absolute -inset-[1px] rounded-2xl overflow-hidden ${plan.popular ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity duration-500`}>
         <div 
           className={`absolute inset-0 bg-gradient-to-r ${gradient} opacity-50`}
           style={{ filter: 'blur(8px)' }}

@@ -37,10 +37,10 @@ const FeatureCard = ({ index, title, description, gradient, icon: Icon, page, se
       {/* Card */}
       <div className="relative bg-slate-900/60 backdrop-blur-sm rounded-2xl p-6 sm:p-8 border border-white/10 h-full overflow-hidden">
         {/* Bottom gradient border */}
-        <div className={`absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r ${gradient} opacity-60 group-hover:opacity-100 transition-opacity duration-300`} />
+        <div className={`pointer-events-none absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r ${gradient} opacity-60 group-hover:opacity-100 transition-opacity duration-300`} />
         
         {/* Hover glow effect */}
-        <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-500 rounded-2xl`} />
+        <div className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-500 rounded-2xl`} />
 
         {/* Icon */}
         <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-gradient-to-br ${gradient} p-3.5 sm:p-4 mb-4 sm:mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300`}>

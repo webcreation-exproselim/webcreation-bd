@@ -45,16 +45,27 @@ export default function AuthPage() {
 
   // Check if already logged in
   useEffect(() => {
-    // Detect password recovery flow from URL hash
+    // Detect password recovery flow from URL hash FIRST
     // Supabase recovery links typically arrive with a hash like: #access_token=...&type=recovery
     const hash = window.location.hash;
-    if (hash && hash.includes("type=recovery")) {
+    const isRecoveryFlow = hash && hash.includes("type=recovery");
+    
+    if (isRecoveryFlow) {
       setIsPasswordRecovery(true);
       setIsLogin(true);
+      // Don't redirect - let user set new password
+      return;
     }
 
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      // Skip redirect if in password recovery mode
+      const currentHash = window.location.hash;
+      if (currentHash && currentHash.includes("type=recovery")) {
+        setIsPasswordRecovery(true);
+        return;
+      }
+      
       if (event === "SIGNED_IN" && session) {
         // Defer to avoid potential deadlock
         setTimeout(() => {
@@ -63,8 +74,13 @@ export default function AuthPage() {
       }
     });
 
-    // THEN check for existing session
+    // THEN check for existing session (but not during recovery)
     supabase.auth.getSession().then(({ data: { session } }) => {
+      const currentHash = window.location.hash;
+      if (currentHash && currentHash.includes("type=recovery")) {
+        setIsPasswordRecovery(true);
+        return;
+      }
       if (session) {
         checkRoleAndRedirect(session.user.id);
       }

@@ -258,6 +258,11 @@ const PricingCard = ({
   const planDescription = content[`${planKey}_description`] || plan.description;
   const planNote = content[`${planKey}_note`] || plan.note || "";
 
+  const getFeatureValue = (featureIndex: number, fallback: string) => {
+    const key = `${planKey}_feature_${featureIndex}`;
+    return content[key] ?? fallback;
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 30 }}
@@ -342,7 +347,14 @@ const PricingCard = ({
                 <div className={`w-4 h-4 rounded-full bg-gradient-to-r ${gradient} flex items-center justify-center flex-shrink-0 mt-0.5`}>
                   <Check className="w-2.5 h-2.5 text-white" />
                 </div>
-                <span className="text-white/80 font-bengali text-xs">{feature}</span>
+                <span className="text-white/80 font-bengali text-xs">
+                  <EditableText
+                    page="home"
+                    section="pricing"
+                    contentKey={`${planKey}_feature_${idx}`}
+                    value={getFeatureValue(idx, feature)}
+                  />
+                </span>
               </li>
             ))}
           </ul>
@@ -405,6 +417,10 @@ export const PricingSection = () => {
         content[`${planKey}_discount`] = plan.discount || "";
         content[`${planKey}_description`] = plan.description;
         content[`${planKey}_note`] = plan.note || "";
+
+        plan.features.forEach((feature, featureIdx) => {
+          content[`${planKey}_feature_${featureIdx}`] = feature;
+        });
       });
     });
     

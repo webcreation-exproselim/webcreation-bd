@@ -204,52 +204,18 @@ const pricingPlans = [
   },
 ];
 
-// Stats
-const stats = [
-  { value: "৫০০+", label: "অ্যানিমেশন প্রজেক্ট", icon: TrendingUp },
-  { value: "১০০%", label: "ক্লায়েন্ট সন্তুষ্টি", icon: Award },
-  { value: "১৫০+", label: "হ্যাপি ক্লায়েন্ট", icon: Users },
-  { value: "২৪/৭", label: "সাপোর্ট", icon: Clock },
-];
+// Stats icons
+const statsIcons = [TrendingUp, Award, Users, Clock];
 
-// Features
-const features = [
-  {
-    icon: Wand2,
-    title: "কাস্টম অ্যানিমেশন",
-    description: "প্রতিটি প্রজেক্টের জন্য ইউনিক এবং কাস্টম অ্যানিমেশন তৈরি করি যা আপনার ব্র্যান্ডকে আলাদা করে।",
-    gradient: "from-yellow-500 to-amber-400"
-  },
-  {
-    icon: Sparkles,
-    title: "এক্সপ্লেইনার ভিডিও",
-    description: "কমপ্লেক্স আইডিয়াকে সহজে বোঝানোর জন্য এনগেজিং এক্সপ্লেইনার ভিডিও তৈরি করি।",
-    gradient: "from-amber-500 to-orange-400"
-  },
-  {
-    icon: Play,
-    title: "লোগো অ্যানিমেশন",
-    description: "আপনার লোগোকে জীবন্ত করে তুলি যা ব্র্যান্ড রিকগনিশন বাড়ায়।",
-    gradient: "from-orange-500 to-yellow-400"
-  },
-  {
-    icon: Zap,
-    title: "3D অ্যানিমেশন",
-    description: "হাই-এন্ড 3D অ্যানিমেশন যা আপনার কন্টেন্টকে প্রিমিয়াম লুক দেয়।",
-    gradient: "from-yellow-600 to-amber-500"
-  },
-  {
-    icon: Activity,
-    title: "কিনেটিক টাইপোগ্রাফি",
-    description: "টেক্সটকে অ্যানিমেট করে মেসেজকে আরও ইমপ্যাক্টফুল করে তুলি।",
-    gradient: "from-amber-600 to-yellow-500"
-  },
-  {
-    icon: Users,
-    title: "ক্যারেক্টার অ্যানিমেশন",
-    description: "এক্সপ্রেসিভ ক্যারেক্টার অ্যানিমেশন যা গল্প বলে এবং দর্শকদের এনগেজ করে।",
-    gradient: "from-orange-600 to-amber-500"
-  },
+// Features icons and gradients
+const featuresIcons = [Wand2, Sparkles, Play, Zap, Activity, Users];
+const featuresGradients = [
+  "from-yellow-500 to-amber-400",
+  "from-amber-500 to-orange-400",
+  "from-orange-500 to-yellow-400",
+  "from-yellow-600 to-amber-500",
+  "from-amber-600 to-yellow-500",
+  "from-orange-600 to-amber-500",
 ];
 
 // Review Card Component
@@ -327,6 +293,31 @@ const MotionGraphicsPage = () => {
     hero_title_start: "আই-ক্যাচিং",
     hero_title_highlight: "মোশন গ্রাফিক্স",
     hero_subtitle: "ক্রিয়েটিভ মোশন গ্রাফিক্স যা আপনার মেসেজকে জীবন্ত করে তোলে। অ্যানিমেটেড লোগো, এক্সপ্লেইনার ভিডিও, কিনেটিক টাইপোগ্রাফি থেকে শুরু করে 3D অ্যানিমেশন পর্যন্ত সব ধরনের মোশন ওয়ার্ক করি।",
+    // Stats
+    stat_0_value: "৫০০+",
+    stat_0_label: "অ্যানিমেশন প্রজেক্ট",
+    stat_1_value: "১০০%",
+    stat_1_label: "ক্লায়েন্ট সন্তুষ্টি",
+    stat_2_value: "১৫০+",
+    stat_2_label: "হ্যাপি ক্লায়েন্ট",
+    stat_3_value: "২৪/৭",
+    stat_3_label: "সাপোর্ট",
+    // Features
+    feature_0_title: "কাস্টম অ্যানিমেশন",
+    feature_0_description: "প্রতিটি প্রজেক্টের জন্য ইউনিক এবং কাস্টম অ্যানিমেশন তৈরি করি যা আপনার ব্র্যান্ডকে আলাদা করে।",
+    feature_1_title: "এক্সপ্লেইনার ভিডিও",
+    feature_1_description: "কমপ্লেক্স আইডিয়াকে সহজে বোঝানোর জন্য এনগেজিং এক্সপ্লেইনার ভিডিও তৈরি করি।",
+    feature_2_title: "লোগো অ্যানিমেশন",
+    feature_2_description: "আপনার লোগোকে জীবন্ত করে তুলি যা ব্র্যান্ড রিকগনিশন বাড়ায়।",
+    feature_3_title: "3D অ্যানিমেশন",
+    feature_3_description: "হাই-এন্ড 3D অ্যানিমেশন যা আপনার কন্টেন্টকে প্রিমিয়াম লুক দেয়।",
+    feature_4_title: "কিনেটিক টাইপোগ্রাফি",
+    feature_4_description: "টেক্সটকে অ্যানিমেট করে মেসেজকে আরও ইমপ্যাক্টফুল করে তুলি।",
+    feature_5_title: "ক্যারেক্টার অ্যানিমেশন",
+    feature_5_description: "এক্সপ্রেসিভ ক্যারেক্টার অ্যানিমেশন যা গল্প বলে এবং দর্শকদের এনগেজ করে।",
+    // Section headers
+    features_section_title: "কেন আমাদের বেছে নেবেন?",
+    features_section_subtitle: "আমরা মোশন গ্রাফিক্সকে শিল্পে পরিণত করি যা মানুষের মনে গেঁথে থাকে",
   }), []);
   
   const { content } = useSiteContent("motion-graphics", "hero", fallbackContent);
@@ -424,19 +415,26 @@ const MotionGraphicsPage = () => {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="grid grid-cols-2 gap-4"
             >
-              {stats.map((stat, index) => (
-                <motion.div
-                  key={stat.label}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.3 + index * 0.1 }}
-                  className="p-6 rounded-2xl bg-gradient-to-br from-yellow-900/50 to-amber-900/30 backdrop-blur-sm border border-yellow-400/20 hover:border-yellow-400/50 transition-all duration-300 group"
-                >
-                  <stat.icon className="w-8 h-8 text-yellow-400 mb-3 group-hover:scale-110 transition-transform" />
-                  <div className="text-3xl font-bold text-white mb-1">{stat.value}</div>
-                  <div className="text-yellow-200/80 font-bengali text-sm">{stat.label}</div>
-                </motion.div>
-              ))}
+              {[0, 1, 2, 3].map((index) => {
+                const IconComponent = statsIcons[index];
+                return (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.3 + index * 0.1 }}
+                    className="p-6 rounded-2xl bg-gradient-to-br from-yellow-900/50 to-amber-900/30 backdrop-blur-sm border border-yellow-400/20 hover:border-yellow-400/50 transition-all duration-300 group"
+                  >
+                    <IconComponent className="w-8 h-8 text-yellow-400 mb-3 group-hover:scale-110 transition-transform" />
+                    <div className="text-3xl font-bold text-white mb-1">
+                      <EditableText page="motion-graphics" section="hero" contentKey={`stat_${index}_value`} value={content[`stat_${index}_value`]} />
+                    </div>
+                    <div className="text-yellow-200/80 font-bengali text-sm">
+                      <EditableText page="motion-graphics" section="hero" contentKey={`stat_${index}_label`} value={content[`stat_${index}_label`]} />
+                    </div>
+                  </motion.div>
+                );
+              })}
             </motion.div>
           </div>
         </div>
@@ -454,30 +452,37 @@ const MotionGraphicsPage = () => {
             className="text-center mb-16"
           >
             <h2 className="text-3xl sm:text-4xl font-bengali font-bold text-white mb-4">
-              কেন আমাদের বেছে নেবেন?
+              <EditableText page="motion-graphics" section="hero" contentKey="features_section_title" value={content.features_section_title} />
             </h2>
             <p className="text-yellow-200/80 font-bengali max-w-2xl mx-auto">
-              আমরা মোশন গ্রাফিক্সকে শিল্পে পরিণত করি যা মানুষের মনে গেঁথে থাকে
+              <EditableText page="motion-graphics" section="hero" contentKey="features_section_subtitle" value={content.features_section_subtitle} />
             </p>
           </motion.div>
           
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((feature, index) => (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className="p-6 rounded-2xl bg-gradient-to-br from-yellow-900/30 to-amber-900/20 backdrop-blur-sm border border-yellow-400/20 hover:border-yellow-400/50 transition-all duration-300 group hover:-translate-y-2"
-              >
-                <div className={`w-14 h-14 rounded-xl bg-gradient-to-r ${feature.gradient} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-lg`}>
-                  <feature.icon className="w-7 h-7 text-white" />
-                </div>
-                <h3 className="text-xl font-bengali font-bold text-white mb-2">{feature.title}</h3>
-                <p className="text-yellow-200/70 font-bengali text-sm leading-relaxed">{feature.description}</p>
-              </motion.div>
-            ))}
+            {[0, 1, 2, 3, 4, 5].map((index) => {
+              const IconComponent = featuresIcons[index];
+              return (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                  className="p-6 rounded-2xl bg-gradient-to-br from-yellow-900/30 to-amber-900/20 backdrop-blur-sm border border-yellow-400/20 hover:border-yellow-400/50 transition-all duration-300 group hover:-translate-y-2"
+                >
+                  <div className={`w-14 h-14 rounded-xl bg-gradient-to-r ${featuresGradients[index]} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-lg`}>
+                    <IconComponent className="w-7 h-7 text-white" />
+                  </div>
+                  <h3 className="text-xl font-bengali font-bold text-white mb-2">
+                    <EditableText page="motion-graphics" section="hero" contentKey={`feature_${index}_title`} value={content[`feature_${index}_title`]} />
+                  </h3>
+                  <p className="text-yellow-200/70 font-bengali text-sm leading-relaxed">
+                    <EditableText page="motion-graphics" section="hero" contentKey={`feature_${index}_description`} value={content[`feature_${index}_description`]} multiline />
+                  </p>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </section>

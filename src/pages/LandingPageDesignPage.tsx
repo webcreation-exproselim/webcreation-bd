@@ -210,52 +210,18 @@ const pricingPlans = [
   },
 ];
 
-// Stats
-const stats = [
-  { value: "৩০০+", label: "ল্যান্ডিং পেজ", icon: TrendingUp },
-  { value: "৫০%+", label: "এভারেজ কনভার্সন", icon: MousePointer },
-  { value: "২০০+", label: "হ্যাপি ক্লায়েন্ট", icon: Users },
-  { value: "২৪/৭", label: "সাপোর্ট", icon: Clock },
-];
+// Stats icons
+const statsIcons = [TrendingUp, MousePointer, Users, Clock];
 
-// Features
-const features = [
-  {
-    icon: Target,
-    title: "কনভার্সন অপটিমাইজড",
-    description: "সাইকোলজিক্যাল ট্রিগার এবং বেস্ট প্র্যাকটিস ফলো করে হাই-কনভার্টিং পেজ ডিজাইন করি।",
-    gradient: "from-teal-500 to-cyan-400"
-  },
-  {
-    icon: Layers,
-    title: "A/B টেস্টিং রেডি",
-    description: "মাল্টিপল ভার্সন তৈরি করে টেস্ট করার সুযোগ রাখি যাতে বেস্ট পারফর্মার খুঁজে পান।",
-    gradient: "from-cyan-500 to-blue-400"
-  },
-  {
-    icon: Zap,
-    title: "লাইটনিং ফাস্ট",
-    description: "১ সেকেন্ডের মধ্যে লোড হওয়া পেজ যা বাউন্স রেট কমায় এবং কনভার্সন বাড়ায়।",
-    gradient: "from-blue-500 to-indigo-400"
-  },
-  {
-    icon: MousePointer,
-    title: "স্মার্ট CTA",
-    description: "স্ট্র্যাটেজিক পজিশনে CTA বাটন যা ভিজিটরদের অ্যাকশন নিতে উৎসাহিত করে।",
-    gradient: "from-teal-600 to-emerald-400"
-  },
-  {
-    icon: Award,
-    title: "ট্রাস্ট সিগন্যাল",
-    description: "টেস্টিমোনিয়াল, ব্যাজ, সার্টিফিকেট ইন্টিগ্রেশন যা ভিজিটরদের বিশ্বাস বাড়ায়।",
-    gradient: "from-emerald-500 to-teal-400"
-  },
-  {
-    icon: Users,
-    title: "লিড ক্যাপচার",
-    description: "স্মার্ট ফর্ম এবং CRM ইন্টিগ্রেশন যা অটোমেটিক লিড ক্যাপচার করে।",
-    gradient: "from-cyan-600 to-teal-400"
-  },
+// Features icons and gradients
+const featuresIcons = [Target, Layers, Zap, MousePointer, Award, Users];
+const featuresGradients = [
+  "from-teal-500 to-cyan-400",
+  "from-cyan-500 to-blue-400",
+  "from-blue-500 to-indigo-400",
+  "from-teal-600 to-emerald-400",
+  "from-emerald-500 to-teal-400",
+  "from-cyan-600 to-teal-400",
 ];
 
 // Review Card Component
@@ -330,6 +296,31 @@ const LandingPageDesignPage = () => {
     hero_title_start: "হাই-কনভার্টিং",
     hero_title_highlight: "ল্যান্ডিং পেজ",
     hero_subtitle: "কনভার্সন অপটিমাইজড ল্যান্ডিং পেজ যা আপনার ভিজিটরদের কাস্টমারে রূপান্তর করবে। প্রফেশনাল ডিজাইন, ফাস্ট লোডিং এবং মোবাইল ফ্রেন্ডলি ল্যান্ডিং পেজ তৈরি করি।",
+    // Stats
+    stat_0_value: "৩০০+",
+    stat_0_label: "ল্যান্ডিং পেজ",
+    stat_1_value: "৫০%+",
+    stat_1_label: "এভারেজ কনভার্সন",
+    stat_2_value: "২০০+",
+    stat_2_label: "হ্যাপি ক্লায়েন্ট",
+    stat_3_value: "২৪/৭",
+    stat_3_label: "সাপোর্ট",
+    // Features
+    feature_0_title: "কনভার্সন অপটিমাইজড",
+    feature_0_description: "সাইকোলজিক্যাল ট্রিগার এবং বেস্ট প্র্যাকটিস ফলো করে হাই-কনভার্টিং পেজ ডিজাইন করি।",
+    feature_1_title: "A/B টেস্টিং রেডি",
+    feature_1_description: "মাল্টিপল ভার্সন তৈরি করে টেস্ট করার সুযোগ রাখি যাতে বেস্ট পারফর্মার খুঁজে পান।",
+    feature_2_title: "লাইটনিং ফাস্ট",
+    feature_2_description: "১ সেকেন্ডের মধ্যে লোড হওয়া পেজ যা বাউন্স রেট কমায় এবং কনভার্সন বাড়ায়।",
+    feature_3_title: "স্মার্ট CTA",
+    feature_3_description: "স্ট্র্যাটেজিক পজিশনে CTA বাটন যা ভিজিটরদের অ্যাকশন নিতে উৎসাহিত করে।",
+    feature_4_title: "ট্রাস্ট সিগন্যাল",
+    feature_4_description: "টেস্টিমোনিয়াল, ব্যাজ, সার্টিফিকেট ইন্টিগ্রেশন যা ভিজিটরদের বিশ্বাস বাড়ায়।",
+    feature_5_title: "লিড ক্যাপচার",
+    feature_5_description: "স্মার্ট ফর্ম এবং CRM ইন্টিগ্রেশন যা অটোমেটিক লিড ক্যাপচার করে।",
+    // Section headers
+    features_section_title: "কেন আমাদের বেছে নেবেন?",
+    features_section_subtitle: "আমরা শুধু সুন্দর পেজ বানাই না, কনভার্সন মেশিন তৈরি করি",
   }), []);
   
   const { content } = useSiteContent("landing-page", "hero", fallbackContent);
@@ -421,19 +412,26 @@ const LandingPageDesignPage = () => {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="grid grid-cols-2 gap-4"
             >
-              {stats.map((stat, index) => (
-                <motion.div
-                  key={stat.label}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.3 + index * 0.1 }}
-                  className="p-6 rounded-2xl bg-gradient-to-br from-teal-900/50 to-cyan-900/30 backdrop-blur-sm border border-teal-400/20 hover:border-teal-400/50 transition-all duration-300 group"
-                >
-                  <stat.icon className="w-8 h-8 text-teal-400 mb-3 group-hover:scale-110 transition-transform" />
-                  <div className="text-3xl font-bold text-white mb-1">{stat.value}</div>
-                  <div className="text-teal-200/80 font-bengali text-sm">{stat.label}</div>
-                </motion.div>
-              ))}
+              {[0, 1, 2, 3].map((index) => {
+                const IconComponent = statsIcons[index];
+                return (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.3 + index * 0.1 }}
+                    className="p-6 rounded-2xl bg-gradient-to-br from-teal-900/50 to-cyan-900/30 backdrop-blur-sm border border-teal-400/20 hover:border-teal-400/50 transition-all duration-300 group"
+                  >
+                    <IconComponent className="w-8 h-8 text-teal-400 mb-3 group-hover:scale-110 transition-transform" />
+                    <div className="text-3xl font-bold text-white mb-1">
+                      <EditableText page="landing-page" section="hero" contentKey={`stat_${index}_value`} value={content[`stat_${index}_value`]} />
+                    </div>
+                    <div className="text-teal-200/80 font-bengali text-sm">
+                      <EditableText page="landing-page" section="hero" contentKey={`stat_${index}_label`} value={content[`stat_${index}_label`]} />
+                    </div>
+                  </motion.div>
+                );
+              })}
             </motion.div>
           </div>
         </div>
@@ -451,30 +449,37 @@ const LandingPageDesignPage = () => {
             className="text-center mb-16"
           >
             <h2 className="text-3xl sm:text-4xl font-bengali font-bold text-white mb-4">
-              কেন আমাদের বেছে নেবেন?
+              <EditableText page="landing-page" section="hero" contentKey="features_section_title" value={content.features_section_title} />
             </h2>
             <p className="text-teal-200/80 font-bengali max-w-2xl mx-auto">
-              আমরা শুধু সুন্দর পেজ বানাই না, কনভার্সন মেশিন তৈরি করি
+              <EditableText page="landing-page" section="hero" contentKey="features_section_subtitle" value={content.features_section_subtitle} />
             </p>
           </motion.div>
           
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((feature, index) => (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className="p-6 rounded-2xl bg-gradient-to-br from-teal-900/30 to-cyan-900/20 backdrop-blur-sm border border-teal-400/20 hover:border-teal-400/50 transition-all duration-300 group hover:-translate-y-2"
-              >
-                <div className={`w-14 h-14 rounded-xl bg-gradient-to-r ${feature.gradient} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-lg`}>
-                  <feature.icon className="w-7 h-7 text-white" />
-                </div>
-                <h3 className="text-xl font-bengali font-bold text-white mb-2">{feature.title}</h3>
-                <p className="text-teal-200/70 font-bengali text-sm leading-relaxed">{feature.description}</p>
-              </motion.div>
-            ))}
+            {[0, 1, 2, 3, 4, 5].map((index) => {
+              const IconComponent = featuresIcons[index];
+              return (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                  className="p-6 rounded-2xl bg-gradient-to-br from-teal-900/30 to-cyan-900/20 backdrop-blur-sm border border-teal-400/20 hover:border-teal-400/50 transition-all duration-300 group hover:-translate-y-2"
+                >
+                  <div className={`w-14 h-14 rounded-xl bg-gradient-to-r ${featuresGradients[index]} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-lg`}>
+                    <IconComponent className="w-7 h-7 text-white" />
+                  </div>
+                  <h3 className="text-xl font-bengali font-bold text-white mb-2">
+                    <EditableText page="landing-page" section="hero" contentKey={`feature_${index}_title`} value={content[`feature_${index}_title`]} />
+                  </h3>
+                  <p className="text-teal-200/70 font-bengali text-sm leading-relaxed">
+                    <EditableText page="landing-page" section="hero" contentKey={`feature_${index}_description`} value={content[`feature_${index}_description`]} multiline />
+                  </p>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </section>

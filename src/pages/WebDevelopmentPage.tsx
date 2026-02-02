@@ -210,52 +210,18 @@ const pricingPlans = [
   },
 ];
 
-// Stats
-const stats = [
-  { value: "২০০+", label: "ওয়েবসাইট ডেলিভারড", icon: TrendingUp },
-  { value: "৯৯%", label: "ক্লায়েন্ট সন্তুষ্টি", icon: Award },
-  { value: "১৫০+", label: "হ্যাপি ক্লায়েন্ট", icon: Users },
-  { value: "২৪/৭", label: "সাপোর্ট", icon: Clock },
-];
+// Stats icons
+const statsIcons = [TrendingUp, Award, Users, Clock];
 
-// Features
-const features = [
-  {
-    icon: Globe,
-    title: "মডার্ন টেকনোলজি",
-    description: "React, Next.js, Node.js সহ লেটেস্ট টেকনোলজি ব্যবহার করে স্কেলেবল এবং ফাস্ট ওয়েবসাইট তৈরি করি।",
-    gradient: "from-green-500 to-emerald-400"
-  },
-  {
-    icon: Smartphone,
-    title: "মোবাইল ফার্স্ট",
-    description: "সব ডিভাইসে পারফেক্ট দেখায় এমন রেস্পন্সিভ ডিজাইন যা ইউজার এক্সপেরিয়েন্স বাড়ায়।",
-    gradient: "from-emerald-500 to-teal-400"
-  },
-  {
-    icon: Zap,
-    title: "লাইটনিং ফাস্ট",
-    description: "স্পিড অপটিমাইজেশন করে লোডিং টাইম কমিয়ে ইউজার এনগেজমেন্ট এবং SEO র‍্যাংকিং বাড়াই।",
-    gradient: "from-teal-500 to-cyan-400"
-  },
-  {
-    icon: Shield,
-    title: "সিকিউর কোডিং",
-    description: "ইন্ডাস্ট্রি স্ট্যান্ডার্ড সিকিউরিটি প্র্যাকটিস ফলো করে হ্যাক-প্রুফ ওয়েবসাইট তৈরি করি।",
-    gradient: "from-lime-500 to-green-400"
-  },
-  {
-    icon: Award,
-    title: "SEO অপটিমাইজড",
-    description: "সার্চ ইঞ্জিনে র‍্যাংক করার জন্য SEO বেস্ট প্র্যাকটিস ফলো করে ওয়েবসাইট বিল্ড করি।",
-    gradient: "from-green-600 to-emerald-500"
-  },
-  {
-    icon: Users,
-    title: "ডেডিকেটেড সাপোর্ট",
-    description: "প্রজেক্ট শেষ হওয়ার পরেও ফ্রি সাপোর্ট দিই। যেকোনো সমস্যায় পাশে আছি।",
-    gradient: "from-emerald-600 to-teal-500"
-  },
+// Features icons and gradients
+const featuresIcons = [Globe, Smartphone, Zap, Shield, Award, Users];
+const featuresGradients = [
+  "from-green-500 to-emerald-400",
+  "from-emerald-500 to-teal-400",
+  "from-teal-500 to-cyan-400",
+  "from-lime-500 to-green-400",
+  "from-green-600 to-emerald-500",
+  "from-emerald-600 to-teal-500",
 ];
 
 // Review Card Component
@@ -330,6 +296,33 @@ const WebDevelopmentPage = () => {
     hero_title_start: "প্রফেশনাল",
     hero_title_highlight: "ওয়েবসাইট ডেভেলপমেন্ট",
     hero_subtitle: "আপনার ব্যবসার জন্য কাস্টম ওয়েবসাইট তৈরি করি যা মোবাইল ফ্রেন্ডলি, ফাস্ট এবং SEO অপটিমাইজড। React, Next.js সহ আধুনিক টেকনোলজি ব্যবহার করে স্কেলেবল সল্যুশন ডেভেলপ করি।",
+    // Stats
+    stat_0_value: "২০০+",
+    stat_0_label: "ওয়েবসাইট ডেলিভারড",
+    stat_1_value: "৯৯%",
+    stat_1_label: "ক্লায়েন্ট সন্তুষ্টি",
+    stat_2_value: "১৫০+",
+    stat_2_label: "হ্যাপি ক্লায়েন্ট",
+    stat_3_value: "২৪/৭",
+    stat_3_label: "সাপোর্ট",
+    // Features
+    feature_0_title: "মডার্ন টেকনোলজি",
+    feature_0_description: "React, Next.js, Node.js সহ লেটেস্ট টেকনোলজি ব্যবহার করে স্কেলেবল এবং ফাস্ট ওয়েবসাইট তৈরি করি।",
+    feature_1_title: "মোবাইল ফার্স্ট",
+    feature_1_description: "সব ডিভাইসে পারফেক্ট দেখায় এমন রেস্পন্সিভ ডিজাইন যা ইউজার এক্সপেরিয়েন্স বাড়ায়।",
+    feature_2_title: "লাইটনিং ফাস্ট",
+    feature_2_description: "স্পিড অপটিমাইজেশন করে লোডিং টাইম কমিয়ে ইউজার এনগেজমেন্ট এবং SEO র‍্যাংকিং বাড়াই।",
+    feature_3_title: "সিকিউর কোডিং",
+    feature_3_description: "ইন্ডাস্ট্রি স্ট্যান্ডার্ড সিকিউরিটি প্র্যাকটিস ফলো করে হ্যাক-প্রুফ ওয়েবসাইট তৈরি করি।",
+    feature_4_title: "SEO অপটিমাইজড",
+    feature_4_description: "সার্চ ইঞ্জিনে র‍্যাংক করার জন্য SEO বেস্ট প্র্যাকটিস ফলো করে ওয়েবসাইট বিল্ড করি।",
+    feature_5_title: "ডেডিকেটেড সাপোর্ট",
+    feature_5_description: "প্রজেক্ট শেষ হওয়ার পরেও ফ্রি সাপোর্ট দিই। যেকোনো সমস্যায় পাশে আছি।",
+    // Section headers
+    features_section_title: "কেন আমাদের বেছে নেবেন?",
+    features_section_subtitle: "আমরা শুধু ওয়েবসাইট বানাই না, বিজনেস গ্রো করার টুল তৈরি করি",
+    pricing_section_title: "প্রাইসিং প্যাকেজ",
+    pricing_section_subtitle: "আপনার বাজেট এবং প্রয়োজন অনুযায়ী প্যাকেজ বেছে নিন",
   }), []);
   
   const { content } = useSiteContent("web-development", "hero", fallbackContent);
@@ -421,19 +414,26 @@ const WebDevelopmentPage = () => {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="grid grid-cols-2 gap-4"
             >
-              {stats.map((stat, index) => (
-                <motion.div
-                  key={stat.label}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.3 + index * 0.1 }}
-                  className="p-6 rounded-2xl bg-gradient-to-br from-green-900/50 to-emerald-900/30 backdrop-blur-sm border border-green-400/20 hover:border-green-400/50 transition-all duration-300 group"
-                >
-                  <stat.icon className="w-8 h-8 text-green-400 mb-3 group-hover:scale-110 transition-transform" />
-                  <div className="text-3xl font-bold text-white mb-1">{stat.value}</div>
-                  <div className="text-green-200/80 font-bengali text-sm">{stat.label}</div>
-                </motion.div>
-              ))}
+              {[0, 1, 2, 3].map((index) => {
+                const IconComponent = statsIcons[index];
+                return (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.3 + index * 0.1 }}
+                    className="p-6 rounded-2xl bg-gradient-to-br from-green-900/50 to-emerald-900/30 backdrop-blur-sm border border-green-400/20 hover:border-green-400/50 transition-all duration-300 group"
+                  >
+                    <IconComponent className="w-8 h-8 text-green-400 mb-3 group-hover:scale-110 transition-transform" />
+                    <div className="text-3xl font-bold text-white mb-1">
+                      <EditableText page="web-development" section="hero" contentKey={`stat_${index}_value`} value={content[`stat_${index}_value`]} />
+                    </div>
+                    <div className="text-green-200/80 font-bengali text-sm">
+                      <EditableText page="web-development" section="hero" contentKey={`stat_${index}_label`} value={content[`stat_${index}_label`]} />
+                    </div>
+                  </motion.div>
+                );
+              })}
             </motion.div>
           </div>
         </div>
@@ -451,30 +451,37 @@ const WebDevelopmentPage = () => {
             className="text-center mb-16"
           >
             <h2 className="text-3xl sm:text-4xl font-bengali font-bold text-white mb-4">
-              কেন আমাদের বেছে নেবেন?
+              <EditableText page="web-development" section="hero" contentKey="features_section_title" value={content.features_section_title} />
             </h2>
             <p className="text-green-200/80 font-bengali max-w-2xl mx-auto">
-              আমরা শুধু ওয়েবসাইট বানাই না, বিজনেস গ্রো করার টুল তৈরি করি
+              <EditableText page="web-development" section="hero" contentKey="features_section_subtitle" value={content.features_section_subtitle} />
             </p>
           </motion.div>
           
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((feature, index) => (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className="p-6 rounded-2xl bg-gradient-to-br from-green-900/30 to-emerald-900/20 backdrop-blur-sm border border-green-400/20 hover:border-green-400/50 transition-all duration-300 group hover:-translate-y-2"
-              >
-                <div className={`w-14 h-14 rounded-xl bg-gradient-to-r ${feature.gradient} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-lg`}>
-                  <feature.icon className="w-7 h-7 text-white" />
-                </div>
-                <h3 className="text-xl font-bengali font-bold text-white mb-2">{feature.title}</h3>
-                <p className="text-green-200/70 font-bengali text-sm leading-relaxed">{feature.description}</p>
-              </motion.div>
-            ))}
+            {[0, 1, 2, 3, 4, 5].map((index) => {
+              const IconComponent = featuresIcons[index];
+              return (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                  className="p-6 rounded-2xl bg-gradient-to-br from-green-900/30 to-emerald-900/20 backdrop-blur-sm border border-green-400/20 hover:border-green-400/50 transition-all duration-300 group hover:-translate-y-2"
+                >
+                  <div className={`w-14 h-14 rounded-xl bg-gradient-to-r ${featuresGradients[index]} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-lg`}>
+                    <IconComponent className="w-7 h-7 text-white" />
+                  </div>
+                  <h3 className="text-xl font-bengali font-bold text-white mb-2">
+                    <EditableText page="web-development" section="hero" contentKey={`feature_${index}_title`} value={content[`feature_${index}_title`]} />
+                  </h3>
+                  <p className="text-green-200/70 font-bengali text-sm leading-relaxed">
+                    <EditableText page="web-development" section="hero" contentKey={`feature_${index}_description`} value={content[`feature_${index}_description`]} multiline />
+                  </p>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -581,10 +588,10 @@ const WebDevelopmentPage = () => {
             className="text-center mb-16"
           >
             <h2 className="text-3xl sm:text-4xl font-bengali font-bold text-white mb-4">
-              প্রাইসিং প্যাকেজ
+              <EditableText page="web-development" section="hero" contentKey="pricing_section_title" value={content.pricing_section_title} />
             </h2>
             <p className="text-green-200/80 font-bengali max-w-2xl mx-auto">
-              আপনার বাজেট এবং প্রয়োজন অনুযায়ী প্যাকেজ বেছে নিন
+              <EditableText page="web-development" section="hero" contentKey="pricing_section_subtitle" value={content.pricing_section_subtitle} />
             </p>
           </motion.div>
           

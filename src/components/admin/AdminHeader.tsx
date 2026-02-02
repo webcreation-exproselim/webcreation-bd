@@ -14,13 +14,15 @@ export function AdminHeader({ onRefresh, onLogout }: AdminHeaderProps) {
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="relative">
-            <div className="absolute -inset-1 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 rounded-xl blur-sm opacity-50" />
-            <img 
-              src={logo} 
-              alt="Web Creation BD" 
-              className="relative h-10 w-auto object-contain rounded-lg shadow-md"
-              loading="lazy"
-            />
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 rounded-full opacity-60 blur-sm" />
+            <div className="relative w-10 h-10 rounded-full bg-white p-0.5 shadow-md overflow-hidden">
+              <img 
+                src={logo} 
+                alt="Web Creation BD" 
+                className="w-full h-full object-cover rounded-full"
+                loading="lazy"
+              />
+            </div>
           </div>
           <div>
             <h1 className="font-bengali font-bold text-gray-900 text-lg">অ্যাডমিন ড্যাশবোর্ড</h1>

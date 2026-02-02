@@ -60,14 +60,14 @@ export function Header() {
         <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-16">
           <div className="flex items-center justify-between h-16 lg:h-20">
             {/* Logo */}
-            <Link to="/" className="flex-shrink-0group">
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <div className="absolute -inset-1 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 rounded-xl blur-sm opacity-60 group-hover:opacity-100 transition-opacity duration-300" />
+            <Link to="/" className="flex-shrink-0 group">
+              <div className="relative">
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 rounded-full opacity-70 group-hover:opacity-100 blur-sm transition-opacity duration-300" />
+                <div className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white p-0.5 shadow-lg overflow-hidden">
                   <img 
                     src={logo} 
                     alt="Web Creation BD Logo" 
-                    className="relative h-10 sm:h-12 w-auto object-contain rounded-lg shadow-lg"
+                    className="w-full h-full object-cover rounded-full"
                     loading="eager"
                   />
                 </div>

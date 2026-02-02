@@ -46,12 +46,17 @@ export function Footer() {
             className="sm:col-span-2 lg:col-span-1"
           >
             <div className="flex items-center gap-3 mb-6">
-              <img 
-                src={logo} 
-                alt="Web Creation BD" 
-                className="h-12 w-auto object-contain"
-                loading="lazy"
-              />
+              <div className="relative">
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 rounded-full opacity-70 blur-sm" />
+                <div className="relative w-14 h-14 rounded-full bg-white p-0.5 shadow-lg overflow-hidden">
+                  <img 
+                    src={logo} 
+                    alt="Web Creation BD" 
+                    className="w-full h-full object-cover rounded-full"
+                    loading="lazy"
+                  />
+                </div>
+              </div>
             </div>
             
             <p className="font-bengali text-white/60 text-sm leading-relaxed mb-6">

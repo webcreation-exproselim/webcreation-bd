@@ -1,10 +1,11 @@
 import { Megaphone, Code, Palette, Video, Activity } from "lucide-react";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { ParticleNetwork } from "./ParticleNetwork";
 import { ConsultationModal } from "./ConsultationModal";
 import heroProfessional from "@/assets/hero-professional.png";
+import { useSiteContent } from "@/hooks/useSiteContent";
 
 const services = [{
   icon: Megaphone,
@@ -30,6 +31,18 @@ const services = [{
 
 export function HeroSection() {
   const [isConsultationOpen, setIsConsultationOpen] = useState(false);
+
+  // Fallback content
+  const fallbackContent = useMemo(() => ({
+    badge_text: "সবার আগে বাংলাদেশ",
+    title_line1: "আপনার ব্যবসার",
+    title_line2: "ডিজিটাল রূপান্তর",
+    title_line3: "শুরু হোক",
+    subtitle: "ফেসবুক অ্যাডস, ওয়েব ডেভেলপমেন্ট, গ্রাফিক্স ডিজাইন - সব কিছু এক জায়গায়।",
+    button_text: "ফ্রি কনসালটেশন নিন",
+  }), []);
+
+  const { content } = useSiteContent("home", "hero", fallbackContent);
 
   return (
     <>
@@ -59,22 +72,22 @@ export function HeroSection() {
             {/* Badge */}
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 mb-6">
               <span className="text-orange-500">🚀</span>
-              <span className="text-white font-bengali text-sm font-medium">সবার আগে বাংলাদেশ</span>
+              <span className="text-white font-bengali text-sm font-medium">{content.badge_text}</span>
               <span className="text-orange-500">🚀</span>
             </div>
 
             {/* Main Headline */}
             <h1 className="font-bengali text-4xl sm:text-5xl md:text-6xl lg:text-6xl xl:text-7xl font-bold mb-6 leading-[1.1] text-white drop-shadow-lg">
-              আপনার ব্যবসার
+              {content.title_line1}
               <br />
-              <span className="text-gradient-orange">ডিজিটাল রূপান্তর</span>
+              <span className="text-gradient-orange">{content.title_line2}</span>
               <br />
-              শুরু হোক
+              {content.title_line3}
             </h1>
 
             {/* Sub-headline */}
             <p className="text-base sm:text-lg md:text-xl text-white/90 max-w-lg mb-8 font-bengali font-medium leading-relaxed">
-              ফেসবুক অ্যাডস, ওয়েব ডেভেলপমেন্ট, গ্রাফিক্স ডিজাইন - সব কিছু এক জায়গায়।
+              {content.subtitle}
             </p>
 
             {/* Primary CTA */}
@@ -87,7 +100,7 @@ export function HeroSection() {
                 onClick={() => setIsConsultationOpen(true)}
                 className="bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 text-white font-bengali font-bold text-base sm:text-lg px-8 sm:px-10 py-5 sm:py-6 rounded-lg hover:from-orange-300 hover:via-orange-400 hover:to-orange-500 transition-all duration-300 shadow-xl shadow-orange-500/30"
               >
-                ফ্রি কনসালটেশন নিন
+                {content.button_text}
               </Button>
             </motion.div>
           </motion.div>

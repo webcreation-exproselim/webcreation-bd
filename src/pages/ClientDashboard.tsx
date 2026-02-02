@@ -149,6 +149,47 @@ export default function ClientDashboard() {
     }
   };
 
+  // Subscribe to realtime invoice updates
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel(`client-invoices-${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "invoices",
+          filter: `client_id=eq.${user.id}`,
+        },
+        (payload) => {
+          // Add new invoice to the list
+          setInvoices((prev) => [payload.new as Invoice, ...prev]);
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "invoices",
+          filter: `client_id=eq.${user.id}`,
+        },
+        (payload) => {
+          // Update existing invoice
+          setInvoices((prev) => 
+            prev.map(inv => inv.id === payload.new.id ? payload.new as Invoice : inv)
+          );
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id]);
+
   const fetchMessages = async (orderId: string) => {
     const { data, error } = await supabase
       .from("messages")

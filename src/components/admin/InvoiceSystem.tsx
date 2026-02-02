@@ -291,6 +291,53 @@ export function InvoiceSystem({ invoices, orders, onRefresh }: InvoiceSystemProp
     }
   };
 
+  // Send invoice to client's account
+  const sendToClient = async (invoice: Invoice) => {
+    if (!invoice.order_id) {
+      toast({ title: "এই ইনভয়েসের কোনো অর্ডার নেই", variant: "destructive" });
+      return;
+    }
+
+    // Get the order to find user_id
+    const order = orders.find(o => o.id === invoice.order_id);
+    if (!order) {
+      toast({ title: "অর্ডার পাওয়া যায়নি", variant: "destructive" });
+      return;
+    }
+
+    // Check order's user_id from database
+    const { data: orderData, error: orderError } = await supabase
+      .from("orders")
+      .select("user_id")
+      .eq("id", invoice.order_id)
+      .single();
+
+    if (orderError || !orderData?.user_id) {
+      toast({ 
+        title: "ক্লায়েন্ট পাওয়া যায়নি", 
+        description: "এই অর্ডারের সাথে কোনো ক্লায়েন্ট অ্যাকাউন্ট লিংক নেই",
+        variant: "destructive" 
+      });
+      return;
+    }
+
+    // Update invoice with client_id
+    const { error } = await supabase
+      .from("invoices")
+      .update({ client_id: orderData.user_id })
+      .eq("id", invoice.id);
+
+    if (!error) {
+      toast({ 
+        title: "✅ ইনভয়েস পাঠানো হয়েছে", 
+        description: "ক্লায়েন্ট তাদের ড্যাশবোর্ডে এটি দেখতে পাবেন" 
+      });
+      onRefresh();
+    } else {
+      toast({ title: "সমস্যা হয়েছে", variant: "destructive" });
+    }
+  };
+
   const openPreview = (invoice: Invoice) => {
     const order = orders.find(o => o.id === invoice.order_id);
     setSelectedInvoice(invoice);
@@ -630,6 +677,23 @@ ${servicesText}
                   >
                     <Trash2 className="w-4 h-4 mr-1" />
                     ডিলিট
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      sendToClient(invoice);
+                    }}
+                    className={`font-bengali ${
+                      invoice.client_id 
+                        ? "text-gray-400 cursor-not-allowed" 
+                        : "text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                    }`}
+                    disabled={!!invoice.client_id}
+                  >
+                    <Send className="w-4 h-4 mr-1" />
+                    {invoice.client_id ? "পাঠানো হয়েছে" : "ক্লায়েন্টে পাঠান"}
                   </Button>
                   <div className="flex-1" />
                   {invoice.status !== "paid" && (

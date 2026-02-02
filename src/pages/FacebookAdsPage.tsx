@@ -10,7 +10,7 @@ import { Footer } from "@/components/Footer";
 import { Chatbot } from "@/components/Chatbot";
 import { Link, useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +20,8 @@ import {
 import { useCart } from "@/context/CartContext";
 import { useToast } from "@/hooks/use-toast";
 import { useDynamicPortfolio } from "@/hooks/useDynamicPortfolio";
+import { useSiteContent } from "@/hooks/useSiteContent";
+import { EditableText } from "@/components/EditableText";
 
 // Fallback Portfolio Items
 const fallbackPortfolioItems = [
@@ -328,6 +330,17 @@ const FacebookAdsPage = () => {
   const { addItem, isInCart } = useCart();
   const { toast } = useToast();
   const navigate = useNavigate();
+  
+  const fallbackContent = useMemo(() => ({
+    badge_text: "#1 ফেসবুক অ্যাডস এজেন্সি",
+    hero_title_start: "ফেসবুক অ্যাডস দিয়ে",
+    hero_title_highlight: "ব্যবসা বাড়ান",
+    hero_subtitle: "প্রফেশনাল ফেসবুক অ্যাডস ম্যানেজমেন্ট সার্ভিস যা আপনার ব্যবসায়ের জন্য সর্বোচ্চ ROI নিশ্চিত করে। টার্গেটেড মার্কেটিং, ক্রিয়েটিভ ডিজাইন এবং ডেটা-ড্রিভেন অপটিমাইজেশন।",
+    cta_order: "এখনই অর্ডার করুন",
+    cta_consultation: "ফ্রি কনসালটেশন",
+  }), []);
+  
+  const { content } = useSiteContent("facebook-ads", "hero", fallbackContent);
 
   const handleAddToCart = (plan: typeof pricingPlans[0]) => {
     if (isInCart(plan.id)) {
@@ -375,19 +388,20 @@ const FacebookAdsPage = () => {
               {/* Badge */}
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-blue-500/20 to-cyan-500/20 border border-blue-400/30 mb-6">
                 <Megaphone className="w-5 h-5 text-blue-400" />
-                <span className="text-blue-300 font-bengali font-medium">#1 ফেসবুক অ্যাডস এজেন্সি</span>
+                <span className="text-blue-300 font-bengali font-medium">
+                  <EditableText page="facebook-ads" section="hero" contentKey="badge_text" value={content.badge_text} />
+                </span>
               </div>
               
               <h1 className="text-4xl sm:text-5xl md:text-6xl font-bengali font-bold text-white mb-6 leading-tight">
-                ফেসবুক অ্যাডস দিয়ে{" "}
+                <EditableText page="facebook-ads" section="hero" contentKey="hero_title_start" value={content.hero_title_start} />{" "}
                 <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent">
-                  ব্যবসা বাড়ান
+                  <EditableText page="facebook-ads" section="hero" contentKey="hero_title_highlight" value={content.hero_title_highlight} />
                 </span>
               </h1>
               
               <p className="text-lg sm:text-xl text-blue-100/80 font-bengali mb-8 leading-relaxed">
-                প্রফেশনাল ফেসবুক অ্যাডস ম্যানেজমেন্ট সার্ভিস যা আপনার ব্যবসায়ের জন্য সর্বোচ্চ ROI নিশ্চিত করে। 
-                টার্গেটেড মার্কেটিং, ক্রিয়েটিভ ডিজাইন এবং ডেটা-ড্রিভেন অপটিমাইজেশন।
+                <EditableText page="facebook-ads" section="hero" contentKey="hero_subtitle" value={content.hero_subtitle} multiline />
               </p>
               
               {/* Quick Features */}

@@ -5,7 +5,7 @@ import {
   Package, Phone, User, CreditCard, ExternalLink,
   Users, FileImage, FileText, Trash2,
   Plus, Upload, X, Edit2, Loader2, Search, MessageCircle, Send,
-  LayoutDashboard, UserPlus
+  LayoutDashboard, UserPlus, Star
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,6 +46,7 @@ import { StatsCards } from "@/components/admin/StatsCards";
 import { AnalyticsCharts } from "@/components/admin/AnalyticsCharts";
 import { InvoiceSystem } from "@/components/admin/InvoiceSystem";
 import { PaymentSettings } from "@/components/admin/PaymentSettings";
+import { ReviewsManagement } from "@/components/admin/ReviewsManagement";
 
 interface OrderService {
   id: string;
@@ -143,7 +144,7 @@ const categoryLabels: Record<string, string> = {
   "landing-page": "ল্যান্ডিং পেজ",
 };
 
-type TabType = "overview" | "orders" | "users" | "portfolio" | "invoices" | "messages" | "payments";
+type TabType = "overview" | "orders" | "users" | "portfolio" | "invoices" | "messages" | "payments" | "reviews";
 
 const AdminDashboard = () => {
   const [user, setUser] = useState<SupabaseUser | null>(null);
@@ -521,6 +522,7 @@ const AdminDashboard = () => {
     { id: "invoices" as TabType, label: "ইনভয়েস", icon: FileText },
     { id: "messages" as TabType, label: "মেসেজ", icon: MessageCircle },
     { id: "payments" as TabType, label: "পেমেন্ট", icon: CreditCard },
+    { id: "reviews" as TabType, label: "রিভিউ", icon: Star },
   ];
 
   if (loading) {
@@ -899,6 +901,10 @@ const AdminDashboard = () => {
 
         {activeTab === "payments" && (
           <PaymentSettings />
+        )}
+
+        {activeTab === "reviews" && (
+          <ReviewsManagement />
         )}
       </div>
 

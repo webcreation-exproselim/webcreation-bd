@@ -295,12 +295,12 @@ export default function ClientDashboard() {
           
           <div style="margin: 16px 0;">
             <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f3f4f6;">
-              <span>মোট পরিমাণ</span>
-              <span>৳${Number(invoice.amount).toLocaleString()}</span>
+              <span style="color: #374151;">মোট পরিমাণ</span>
+              <span style="color: #111827; font-weight: 600;">৳${Number(invoice.amount).toLocaleString()}</span>
             </div>
             <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f3f4f6;">
-              <span>পরিশোধিত</span>
-              <span style="color: #10b981;">- ৳${Number(invoice.paid_amount).toLocaleString()}</span>
+              <span style="color: #374151;">পরিশোধিত</span>
+              <span style="color: #10b981; font-weight: 600;">- ৳${Number(invoice.paid_amount).toLocaleString()}</span>
             </div>
             <div style="background: linear-gradient(to right, #dc2626, #ef4444); color: white; padding: 12px 16px; border-radius: 12px; display: flex; justify-content: space-between; margin-top: 8px;">
               <span style="font-weight: bold;">মোট বাকি</span>

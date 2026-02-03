@@ -84,32 +84,32 @@ export function InvoiceSystem({ invoices, orders, onRefresh }: InvoiceSystemProp
     notes: "",
   });
 
-  // Predefined packages for all services
+  // Predefined packages for all services - Updated to match service pages
   const predefinedPackages = [
     // Facebook Ads
-    { service: "ফেসবুক অ্যাডস", package: "বেসিক", price: 4999, originalPrice: 6999 },
-    { service: "ফেসবুক অ্যাডস", package: "স্ট্যান্ডার্ড", price: 7999, originalPrice: 10999 },
-    { service: "ফেসবুক অ্যাডস", package: "প্রিমিয়াম", price: 14999, originalPrice: 19999 },
+    { service: "ফেসবুক অ্যাডস", package: "Starter", price: 3500, originalPrice: 5000 },
+    { service: "ফেসবুক অ্যাডস", package: "Premium", price: 7000, originalPrice: 10000 },
+    { service: "ফেসবুক অ্যাডস", package: "Business", price: 15000, originalPrice: 20000 },
     // Web Development
-    { service: "ওয়েব ডেভেলপমেন্ট", package: "বেসিক", price: 9999, originalPrice: 14999 },
-    { service: "ওয়েব ডেভেলপমেন্ট", package: "স্ট্যান্ডার্ড", price: 19999, originalPrice: 29999 },
-    { service: "ওয়েব ডেভেলপমেন্ট", package: "প্রিমিয়াম", price: 39999, originalPrice: 59999 },
+    { service: "ওয়েব ডেভেলপমেন্ট", package: "Starter", price: 5000, originalPrice: 8000 },
+    { service: "ওয়েব ডেভেলপমেন্ট", package: "Premium", price: 15000, originalPrice: 20000 },
+    { service: "ওয়েব ডেভেলপমেন্ট", package: "Business", price: 8000, originalPrice: 15000 },
     // Graphics Design
-    { service: "গ্রাফিক্স ডিজাইন", package: "বেসিক", price: 2999, originalPrice: 4999 },
-    { service: "গ্রাফিক্স ডিজাইন", package: "স্ট্যান্ডার্ড", price: 5999, originalPrice: 8999 },
-    { service: "গ্রাফিক্স ডিজাইন", package: "প্রিমিয়াম", price: 9999, originalPrice: 14999 },
+    { service: "গ্রাফিক্স ডিজাইন", package: "Startup", price: 1700, originalPrice: 2000 },
+    { service: "গ্রাফিক্স ডিজাইন", package: "Business", price: 3000, originalPrice: 4000 },
+    { service: "গ্রাফিক্স ডিজাইন", package: "Corporate", price: 5000, originalPrice: 7000 },
     // Video Editing
-    { service: "ভিডিও এডিটিং", package: "বেসিক", price: 3999, originalPrice: 5999 },
-    { service: "ভিডিও এডিটিং", package: "স্ট্যান্ডার্ড", price: 6999, originalPrice: 9999 },
-    { service: "ভিডিও এডিটিং", package: "প্রিমিয়াম", price: 12999, originalPrice: 17999 },
+    { service: "ভিডিও এডিটিং", package: "Basic", price: 2000, originalPrice: 3000 },
+    { service: "ভিডিও এডিটিং", package: "Professional", price: 5000, originalPrice: 7000 },
+    { service: "ভিডিও এডিটিং", package: "Premium", price: 10000, originalPrice: 15000 },
     // Motion Graphics
-    { service: "মোশন গ্রাফিক্স", package: "বেসিক", price: 4999, originalPrice: 6999 },
-    { service: "মোশন গ্রাফিক্স", package: "স্ট্যান্ডার্ড", price: 8999, originalPrice: 11999 },
-    { service: "মোশন গ্রাফিক্স", package: "প্রিমিয়াম", price: 14999, originalPrice: 19999 },
+    { service: "মোশন গ্রাফিক্স", package: "Starter", price: 3500, originalPrice: 5000 },
+    { service: "মোশন গ্রাফিক্স", package: "Professional", price: 8000, originalPrice: 12000 },
+    { service: "মোশন গ্রাফিক্স", package: "Enterprise", price: 18000, originalPrice: 25000 },
     // Landing Page
-    { service: "ল্যান্ডিং পেজ", package: "বেসিক", price: 4999, originalPrice: 7999 },
-    { service: "ল্যান্ডিং পেজ", package: "স্ট্যান্ডার্ড", price: 9999, originalPrice: 14999 },
-    { service: "ল্যান্ডিং পেজ", package: "প্রিমিয়াম", price: 17999, originalPrice: 24999 },
+    { service: "ল্যান্ডিং পেজ", package: "Starter", price: 1500, originalPrice: 2000 },
+    { service: "ল্যান্ডিং পেজ", package: "Premium", price: 2000, originalPrice: 3200 },
+    { service: "ল্যান্ডিং পেজ", package: "Business", price: 3000, originalPrice: 4200 },
   ];
 
   // Custom invoice form

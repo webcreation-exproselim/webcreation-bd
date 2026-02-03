@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   Megaphone, ArrowLeft, CheckCircle, ArrowRight, Star, TrendingUp, 
   Target, BarChart3, Users, Zap, Award, Clock, Shield, Play,
-  ExternalLink, X, ShoppingCart, Loader2
+  ExternalLink, X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
@@ -24,6 +24,7 @@ import { useSiteContent } from "@/hooks/useSiteContent";
 import { EditableText } from "@/components/EditableText";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobilePortfolioCarousel } from "@/components/MobilePortfolioCarousel";
+import { ServicePricingCard, PricingPlanData } from "@/components/ServicePricingCard";
 
 // Fallback Portfolio Items
 const fallbackPortfolioItems = [
@@ -158,57 +159,80 @@ const reviewsRow2 = [
   },
 ];
 
-// Pricing Plans
+// Pricing Plans - Home page style with detailed features
 const pricingPlans = [
   {
     id: "fb-starter",
-    name: "স্টার্টার",
-    originalPrice: "৳৫,০০০",
+    name: "Starter Package",
     price: "৳৩,৫০০",
     priceNum: 3500,
+    originalPrice: "৳৫,০০০",
     originalPriceNum: 5000,
-    discount: "৩০% ছাড়",
+    discount: "30%",
+    note: "No Advanced Payment",
+    icon: "star" as const,
     features: [
       "১টি ক্যাম্পেইন সেটআপ",
       "৫টি অ্যাড ক্রিয়েটিভ",
       "টার্গেট অডিয়েন্স রিসার্চ",
-      "সাপ্তাহিক রিপোর্ট",
+      "বেসিক A/B টেস্টিং",
+      "সাপ্তাহিক রিপোর্টিং",
+      "Pixel সেটআপ",
       "১ মাস সাপোর্ট",
+      "WhatsApp সাপোর্ট",
     ],
   },
   {
     id: "fb-premium",
-    name: "প্রিমিয়াম",
-    originalPrice: "৳১০,০০০",
+    name: "Premium Package",
     price: "৳৭,০০০",
     priceNum: 7000,
+    originalPrice: "৳১০,০০০",
     originalPriceNum: 10000,
-    discount: "৩০% ছাড়",
+    discount: "30%",
     popular: true,
+    note: "Most Popular Choice",
+    icon: "zap" as const,
     features: [
       "৩টি ক্যাম্পেইন সেটআপ",
       "১৫টি অ্যাড ক্রিয়েটিভ",
       "অ্যাডভান্সড টার্গেটিং",
-      "A/B টেস্টিং",
-      "দৈনিক রিপোর্ট",
+      "লুকঅ্যালাইক অডিয়েন্স",
+      "রিটার্গেটিং সেটআপ",
+      "Conversion API সেটআপ",
+      "A/B টেস্টিং Pro",
+      "দৈনিক রিপোর্টিং",
+      "কাস্টম গ্রাফিক্স",
+      "ভিডিও অ্যাড সাপোর্ট",
       "২ মাস সাপোর্ট",
+      "24/7 Priority Support",
     ],
   },
   {
     id: "fb-business",
-    name: "বিজনেস",
-    originalPrice: "৳২০,০০০",
+    name: "Business Package",
     price: "৳১৫,০০০",
     priceNum: 15000,
+    originalPrice: "৳২০,০০০",
     originalPriceNum: 20000,
-    discount: "২৫% ছাড়",
+    discount: "25%",
+    note: "For Serious Businesses",
+    icon: "crown" as const,
     features: [
       "আনলিমিটেড ক্যাম্পেইন",
       "৩০+ অ্যাড ক্রিয়েটিভ",
       "ফুল ফানেল স্ট্র্যাটেজি",
-      "রিটার্গেটিং সেটআপ",
+      "মাল্টিপল পিক্সেল সেটআপ",
+      "কাটালগ সেটআপ",
+      "ডায়নামিক অ্যাড",
+      "রিটার্গেটিং + প্রসপেক্টিং",
+      "Conversion API Pro",
       "২৪/৭ মনিটরিং",
+      "ডেডিকেটেড ম্যানেজার",
+      "মাসিক স্ট্র্যাটেজি কল",
+      "কম্পিটিটর এনালাইসিস",
       "৩ মাস সাপোর্ট",
+      "ফ্রি অ্যাড ক্রেডিট গাইড",
     ],
   },
 ];
@@ -329,9 +353,6 @@ const FacebookAdsPage = () => {
   const { portfolioItems, loading: portfolioLoading } = useDynamicPortfolio("facebook-ads", fallbackPortfolioItems);
   const [selectedItem, setSelectedItem] = useState<typeof fallbackPortfolioItems[0] | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { addItem, isInCart } = useCart();
-  const { toast } = useToast();
-  const navigate = useNavigate();
   const isMobile = useIsMobile();
   
   const fallbackContent = useMemo(() => ({
@@ -344,23 +365,6 @@ const FacebookAdsPage = () => {
   }), []);
   
   const { content } = useSiteContent("facebook-ads", "hero", fallbackContent);
-
-  const handleAddToCart = (plan: typeof pricingPlans[0]) => {
-    if (isInCart(plan.id)) {
-      navigate('/checkout');
-      return;
-    }
-    addItem({
-      id: plan.id,
-      serviceName: "ফেসবুক অ্যাডস",
-      packageName: plan.name,
-      price: plan.priceNum,
-      originalPrice: plan.originalPriceNum,
-      features: plan.features,
-    });
-    toast({ title: "কার্টে যোগ হয়েছে!", description: `ফেসবুক অ্যাডস - ${plan.name}` });
-    navigate('/checkout');
-  };
 
   return (
     <div className="min-h-screen bg-black">
@@ -647,55 +651,16 @@ const FacebookAdsPage = () => {
             <p className="text-blue-200/60 font-bengali">আপনার বাজেট অনুযায়ী প্যাকেজ বেছে নিন</p>
           </motion.div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {pricingPlans.map((plan, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                whileHover={{ y: -5 }}
-                className={`relative rounded-2xl p-6 sm:p-8 border transition-all duration-300 ${
-                  plan.popular 
-                    ? 'border-blue-400/50 bg-gradient-to-b from-blue-900/60 to-cyan-900/30 shadow-xl shadow-blue-500/20' 
-                    : 'border-blue-400/20 bg-gradient-to-b from-blue-950/40 to-black hover:border-blue-400/40'
-                }`}
-              >
-                {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-xs font-bold px-4 py-1 rounded-full font-bengali">
-                    সবচেয়ে জনপ্রিয়
-                  </div>
-                )}
-                
-                <h3 className="text-xl font-bengali font-bold text-white mb-2">{plan.name}</h3>
-                <div className="flex items-baseline gap-2 mb-4">
-                  <span className="text-blue-300/40 line-through text-sm font-bengali">{plan.originalPrice}</span>
-                  <span className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-blue-300 to-cyan-300 bg-clip-text text-transparent font-bengali">{plan.price}</span>
-                  <span className="bg-green-500/20 text-green-400 text-xs px-2 py-1 rounded font-bengali">{plan.discount}</span>
-                </div>
-                
-                <ul className="space-y-3 mb-6">
-                  {plan.features.map((feature, idx) => (
-                    <li key={idx} className="flex items-start gap-2 text-blue-100/70 text-sm font-bengali">
-                      <CheckCircle className="w-4 h-4 text-cyan-400 flex-shrink-0 mt-0.5" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-                
-                <Button 
-                  onClick={() => handleAddToCart(plan)}
-                  className={`w-full font-bengali ${
-                    plan.popular 
-                      ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-bold shadow-lg shadow-blue-500/30' 
-                      : 'bg-blue-900/50 text-blue-200 hover:bg-blue-800/50 border border-blue-400/30'
-                  }`}
-                >
-                  <ShoppingCart className="w-4 h-4 mr-2" />
-                  {isInCart(plan.id) ? 'চেকআউটে যান' : 'অর্ডার করুন'}
-                </Button>
-              </motion.div>
+              <ServicePricingCard
+                key={plan.id}
+                plan={plan as PricingPlanData}
+                serviceName="ফেসবুক অ্যাডস"
+                gradient="from-blue-500 to-cyan-400"
+                accentColor="blue"
+                index={index}
+              />
             ))}
           </div>
           

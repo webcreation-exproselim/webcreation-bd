@@ -10,13 +10,13 @@ import { Footer } from "@/components/Footer";
 import { Chatbot } from "@/components/Chatbot";
 import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { AddToCartButton } from "@/components/AddToCartButton";
 import { useDynamicPortfolio } from "@/hooks/useDynamicPortfolio";
 import { useMemo } from "react";
 import { useSiteContent } from "@/hooks/useSiteContent";
 import { EditableText } from "@/components/EditableText";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobilePortfolioCarousel } from "@/components/MobilePortfolioCarousel";
+import { ServicePricingCard, PricingPlanData } from "@/components/ServicePricingCard";
 
 // Fallback Portfolio Items
 const fallbackPortfolioItems = [
@@ -157,57 +157,107 @@ const reviewsRow2 = [
   },
 ];
 
-// Pricing Plans
+// Pricing Plans - Home page style with detailed features
 const pricingPlans = [
   {
     id: "web-starter",
-    name: "স্টার্টার",
-    originalPrice: "৳১০,০০০",
+    name: "Starter Package",
     price: "৳৫,০০০",
     priceNum: 5000,
-    originalPriceNum: 10000,
-    discount: "৫০% ছাড়",
+    originalPrice: "৳৮,০০০",
+    originalPriceNum: 8000,
+    discount: "37%",
+    note: "No Advanced Payment",
+    icon: "star" as const,
     features: [
-      "৫ পেজ ওয়েবসাইট",
-      "মোবাইল রেস্পন্সিভ",
-      "বেসিক SEO",
-      "কন্টাক্ট ফর্ম",
-      "১ মাস ফ্রি সাপোর্ট",
+      ".SHOP Domain - 01 Year",
+      "10 GB Bdix NVME Hosting SSD",
+      "Hosting 01 Year",
+      "cPanel & Full Access",
+      "Fraud Customer Checker",
+      "Courier Integration",
+      "Order Invoice Print",
+      "Live Chat Setup",
+      "Pixel & Conversion API Setup",
+      "Sales Converting Unique Design",
+      "Fast Loading Speed",
+      "Easy Order Management",
+      "Easy Checkout",
+      "Limited Categories",
+      "Limited Product",
+      "24/7 Priority Support",
+      "Video Tutorial",
     ],
   },
   {
     id: "web-premium",
-    name: "প্রিমিয়াম",
-    originalPrice: "৳২৫,০০০",
+    name: "Premium Package",
     price: "৳১৫,০০০",
     priceNum: 15000,
-    originalPriceNum: 25000,
-    discount: "৪০% ছাড়",
+    originalPrice: "৳২০,০০০",
+    originalPriceNum: 20000,
+    discount: "25%",
     popular: true,
+    note: "Domain Hosting Fee in Advance",
+    icon: "zap" as const,
     features: [
-      "১৫ পেজ ওয়েবসাইট",
-      "অ্যাডমিন প্যানেল",
-      "অ্যাডভান্সড SEO",
-      "পেমেন্ট ইন্টিগ্রেশন",
-      "স্পিড অপটিমাইজেশন",
-      "৩ মাস ফ্রি সাপোর্ট",
+      ".COM Domain - 01 Year",
+      "20 GB Bdix NVME Hosting SSD",
+      "Hosting 01 Year",
+      "cPanel & Full Access",
+      "Fraud Customer Checker",
+      "Courier Integration",
+      "Order Invoice Print",
+      "Live Chat Setup",
+      "Pixel & Conversion API Setup",
+      "Mobile Friendly & Unique Design",
+      "Super Fast Loading Speed",
+      "In Stock Management",
+      "Easy Order Management",
+      "Easy Checkout",
+      "Unlimited Categories",
+      "Unlimited Product",
+      "Advanced Security System",
+      "Facebook Page Full Setup",
+      "Facebook Page Logo Cover Setup",
+      "Website Banner & Logo Setup",
+      "Premium Theme & Pro Plugin",
+      "24/7 Priority Support",
+      "Video Tutorial",
     ],
   },
   {
     id: "web-business",
-    name: "বিজনেস",
-    originalPrice: "৳১৫,০০০",
+    name: "Business Package",
     price: "৳৮,০০০",
     priceNum: 8000,
+    originalPrice: "৳১৫,০০০",
     originalPriceNum: 15000,
-    discount: "৪৭% ছাড়",
+    discount: "47%",
+    note: "Domain Hosting Fee in Advance",
+    icon: "crown" as const,
     features: [
-      "আনলিমিটেড পেজ",
-      "কাস্টম ফিচার্স",
-      "API ইন্টিগ্রেশন",
-      "ই-কমার্স রেডি",
-      "সিকিউরিটি অডিট",
-      "৬ মাস ফ্রি সাপোর্ট",
+      ".COM Domain - 01 Year",
+      "20 GB Bdix NVME Hosting SSD",
+      "Hosting 01 Year",
+      "cPanel & Full Access",
+      "Fraud Customer Checker",
+      "Courier Integration",
+      "Order Invoice Print",
+      "Live Chat Setup",
+      "Pixel & Conversion API Setup",
+      "Mobile Friendly & Unique Design",
+      "Super Fast Loading Speed",
+      "In Stock Management",
+      "Easy Order Management",
+      "Easy Checkout",
+      "Unlimited Categories",
+      "Unlimited Product",
+      "Facebook Page Logo Cover Setup",
+      "Website Banner & Logo Setup",
+      "Video Tutorial",
+      "Premium Theme & Pro Plugin",
+      "24/7 Priority Support",
     ],
   },
 ];
@@ -602,50 +652,16 @@ const WebDevelopmentPage = () => {
             </p>
           </motion.div>
           
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {pricingPlans.map((plan, index) => (
-              <motion.div
-                key={plan.name}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className={`relative p-6 rounded-2xl ${
-                  plan.popular 
-                    ? 'bg-gradient-to-br from-green-600/40 to-emerald-600/40 border-2 border-green-400' 
-                    : 'bg-gradient-to-br from-green-900/30 to-emerald-900/20 border border-green-400/20'
-                } backdrop-blur-sm hover:border-green-400/50 transition-all duration-300`}
-              >
-                {plan.popular && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                    <span className="px-4 py-1 text-sm font-bengali font-bold bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-full">
-                      জনপ্রিয়
-                    </span>
-                  </div>
-                )}
-                
-                <div className="mb-6">
-                  <h3 className="text-2xl font-bengali font-bold text-white mb-2">{plan.name}</h3>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold text-green-400">{plan.price}</span>
-                    <span className="text-gray-400 line-through text-sm">{plan.originalPrice}</span>
-                    <span className="px-2 py-1 text-xs font-bold bg-emerald-500/20 text-emerald-300 rounded">
-                      {plan.discount}
-                    </span>
-                  </div>
-                </div>
-                
-                <ul className="space-y-3 mb-6">
-                  {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-center gap-3 text-gray-300 font-bengali text-sm">
-                      <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-                
-                <AddToCartButton plan={plan} serviceName="ওয়েব ডেভেলপমেন্ট" colorScheme="green" />
-              </motion.div>
+              <ServicePricingCard
+                key={plan.id}
+                plan={plan as PricingPlanData}
+                serviceName="ওয়েব ডেভেলপমেন্ট"
+                gradient="from-green-500 to-emerald-400"
+                accentColor="green"
+                index={index}
+              />
             ))}
           </div>
           

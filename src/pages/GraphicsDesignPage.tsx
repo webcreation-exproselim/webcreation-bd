@@ -15,12 +15,12 @@ import {
   Dialog,
   DialogContent,
 } from "@/components/ui/dialog";
-import { AddToCartButton } from "@/components/AddToCartButton";
 import { supabase } from "@/integrations/supabase/client";
 import { useSiteContent } from "@/hooks/useSiteContent";
 import { EditableText } from "@/components/EditableText";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobilePortfolioCarousel } from "@/components/MobilePortfolioCarousel";
+import { ServicePricingCard, PricingPlanData } from "@/components/ServicePricingCard";
 
 // Fallback Portfolio Items (used when database is empty)
 const fallbackPortfolioItems = [
@@ -163,57 +163,77 @@ const reviewsRow2 = [
   },
 ];
 
-// Pricing Plans
+// Pricing Plans - Home page style with detailed features
 const pricingPlans = [
   {
     id: "gfx-startup",
-    name: "স্টার্টআপ",
-    originalPrice: "৳৩,০০০",
+    name: "Startup Package",
     price: "৳১,৭০০",
     priceNum: 1700,
-    originalPriceNum: 3000,
-    discount: "৪৩% ছাড়",
+    originalPrice: "৳২,০০০",
+    originalPriceNum: 2000,
+    discount: "15%",
+    note: "7 Days money back guarantee",
+    icon: "star" as const,
     features: [
-      "লোগো ডিজাইন (৩টি কনসেপ্ট)",
-      "৩টি রিভিশন",
-      "সোর্স ফাইল",
-      "বিজনেস কার্ড ডিজাইন",
-      "সোশ্যাল মিডিয়া কিট",
+      "Logo Design Concept 2",
+      "Business Card Concept 1",
+      "Facebook Cover Photo",
+      "Facebook Post Image 1",
+      "Facebook boost Photo 1",
+      "PNG/JPG/PDF File Formats",
+      "1 Correction Revisions",
+      "All Source File",
+      "3 Days Delivery",
+      "100% Satisfaction Guarantee",
     ],
   },
   {
     id: "gfx-business",
-    name: "বিজনেস",
-    originalPrice: "৳৫,০০০",
+    name: "Business Package",
     price: "৳৩,০০০",
     priceNum: 3000,
-    originalPriceNum: 5000,
-    discount: "৪০% ছাড়",
+    originalPrice: "৳৪,০০০",
+    originalPriceNum: 4000,
+    discount: "25%",
     popular: true,
+    note: "7 Days money back guarantee",
+    icon: "zap" as const,
     features: [
-      "লোগো ডিজাইন (৫টি কনসেপ্ট)",
-      "আনলিমিটেড রিভিশন",
-      "ব্র্যান্ড গাইডলাইন",
-      "স্টেশনারি ডিজাইন",
-      "১০টি সোশ্যাল পোস্ট",
-      "প্রিন্ট রেডি ফাইল",
+      "Logo Design Concept 3",
+      "Business Card Concept 2",
+      "Facebook Cover Photo 3",
+      "Facebook Post Image 3",
+      "Facebook boost Photo 3",
+      "Promotion Animation Video 10s",
+      "PNG/JPG/PDF File Formats",
+      "1 Correction Revisions",
+      "All Source File",
+      "2 Days Delivery",
+      "100% Satisfaction Guarantee",
     ],
   },
   {
     id: "gfx-corporate",
-    name: "কর্পোরেট",
-    originalPrice: "৳১০,০০০",
+    name: "Corporate Package",
     price: "৳৫,০০০",
     priceNum: 5000,
-    originalPriceNum: 10000,
-    discount: "৫০% ছাড়",
+    originalPrice: "৳৭,০০০",
+    originalPriceNum: 7000,
+    discount: "29%",
+    note: "7 Days money back guarantee",
+    icon: "crown" as const,
     features: [
-      "ফুল ব্র্যান্ড আইডেন্টিটি",
-      "মাল্টিপল লোগো ভ্যারিয়েশন",
-      "কম্প্রিহেনসিভ ব্র্যান্ড গাইড",
-      "সকল মার্কেটিং ম্যাটেরিয়াল",
-      "৩০টি সোশ্যাল পোস্ট",
-      "প্রায়োরিটি সাপোর্ট",
+      "Logo Design Concept 5",
+      "Business Card Concept 3",
+      "Facebook Cover Photo 4",
+      "Facebook boost Photo 5",
+      "Promotion Animation Video 20s",
+      "Social Media Banner 7",
+      "PNG/JPG/PDF File Formats",
+      "All Source File",
+      "3 Days Delivery",
+      "100% Satisfaction Guarantee",
     ],
   },
 ];
@@ -641,50 +661,16 @@ const GraphicsDesignPage = () => {
             </p>
           </motion.div>
           
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {pricingPlans.map((plan, index) => (
-              <motion.div
-                key={plan.name}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className={`relative p-6 rounded-2xl ${
-                  plan.popular 
-                    ? 'bg-gradient-to-br from-purple-600/40 to-pink-600/40 border-2 border-purple-400' 
-                    : 'bg-gradient-to-br from-purple-900/30 to-pink-900/20 border border-purple-400/20'
-                } backdrop-blur-sm hover:border-purple-400/50 transition-all duration-300`}
-              >
-                {plan.popular && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                    <span className="px-4 py-1 text-sm font-bengali font-bold bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full">
-                      জনপ্রিয়
-                    </span>
-                  </div>
-                )}
-                
-                <div className="mb-6">
-                  <h3 className="text-2xl font-bengali font-bold text-white mb-2">{plan.name}</h3>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold text-purple-400">{plan.price}</span>
-                    <span className="text-gray-400 line-through text-sm">{plan.originalPrice}</span>
-                    <span className="px-2 py-1 text-xs font-bold bg-pink-500/20 text-pink-300 rounded">
-                      {plan.discount}
-                    </span>
-                  </div>
-                </div>
-                
-                <ul className="space-y-3 mb-6">
-                  {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-center gap-3 text-gray-300 font-bengali text-sm">
-                      <CheckCircle className="w-5 h-5 text-pink-400 flex-shrink-0" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-                
-                <AddToCartButton plan={plan} serviceName="গ্রাফিক্স ডিজাইন" colorScheme="purple" />
-              </motion.div>
+              <ServicePricingCard
+                key={plan.id}
+                plan={plan as PricingPlanData}
+                serviceName="গ্রাফিক্স ডিজাইন"
+                gradient="from-purple-500 to-pink-400"
+                accentColor="purple"
+                index={index}
+              />
             ))}
           </div>
           

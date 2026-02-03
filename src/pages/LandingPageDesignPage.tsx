@@ -15,6 +15,8 @@ import { useDynamicPortfolio } from "@/hooks/useDynamicPortfolio";
 import { useMemo } from "react";
 import { useSiteContent } from "@/hooks/useSiteContent";
 import { EditableText } from "@/components/EditableText";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { MobilePortfolioCarousel } from "@/components/MobilePortfolioCarousel";
 
 // Fallback Portfolio Items
 const fallbackPortfolioItems = [
@@ -289,6 +291,7 @@ const InfiniteSlider = ({
 };
 
 const LandingPageDesignPage = () => {
+  const isMobile = useIsMobile();
   const { portfolioItems, loading: portfolioLoading } = useDynamicPortfolio("landing-page", fallbackPortfolioItems);
   
   const fallbackContent = useMemo(() => ({
@@ -503,6 +506,18 @@ const LandingPageDesignPage = () => {
             </p>
           </motion.div>
           
+          {isMobile ? (
+            <MobilePortfolioCarousel
+              items={portfolioItems}
+              serviceType="url"
+              onItemClick={(item) => {
+                if (item.live_url) {
+                  window.open(item.live_url, "_blank", "noopener,noreferrer");
+                }
+              }}
+              accentColor="teal"
+            />
+          ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {portfolioItems.map((item, index) => (
               <motion.div
@@ -545,6 +560,7 @@ const LandingPageDesignPage = () => {
               </motion.div>
             ))}
           </div>
+          )}
         </div>
       </section>
 

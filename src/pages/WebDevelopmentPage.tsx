@@ -15,6 +15,8 @@ import { useDynamicPortfolio } from "@/hooks/useDynamicPortfolio";
 import { useMemo } from "react";
 import { useSiteContent } from "@/hooks/useSiteContent";
 import { EditableText } from "@/components/EditableText";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { MobilePortfolioCarousel } from "@/components/MobilePortfolioCarousel";
 
 // Fallback Portfolio Items
 const fallbackPortfolioItems = [
@@ -290,6 +292,7 @@ const InfiniteSlider = ({
 
 const WebDevelopmentPage = () => {
   const { portfolioItems, loading: portfolioLoading } = useDynamicPortfolio("web-development", fallbackPortfolioItems);
+  const isMobile = useIsMobile();
   
   const fallbackContent = useMemo(() => ({
     badge_text: "মডার্ন ওয়েব ডেভেলপমেন্ট",
@@ -505,48 +508,51 @@ const WebDevelopmentPage = () => {
             </p>
           </motion.div>
           
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {portfolioItems.map((item, index) => (
-              <motion.div
-                key={item.id}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className="group relative overflow-hidden rounded-2xl bg-black/40 border border-green-400/20 hover:border-green-400/50 transition-all duration-300"
-              >
-                {/* Image - Show top portion of website screenshot */}
-                <div className="aspect-[4/3] overflow-hidden">
-                  <img
-                    src={item.image_url}
-                    alt={item.title}
-                    className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
-                  />
-                </div>
-                
-                {/* Card Content */}
-                <div className="p-5">
-                  <span className="inline-block px-3 py-1 text-xs rounded-full bg-gradient-to-r from-green-500 to-emerald-400 text-white font-medium mb-3">
-                    ওয়েব ডেভেলপমেন্ট
-                  </span>
-                  <h3 className="text-lg font-bengali font-bold text-white mb-1 line-clamp-1">{item.title}</h3>
-                  {item.description && (
-                    <p className="text-green-300/80 font-bengali text-sm mb-4">{item.description}</p>
-                  )}
-                  <Button 
-                    variant="outline"
-                    size="sm"
-                    className={`w-full border-green-400/50 text-green-400 hover:bg-green-400 hover:text-black font-bengali ${!item.live_url ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    onClick={() => item.live_url && window.open(item.live_url, "_blank", "noopener,noreferrer")}
-                    disabled={!item.live_url}
-                  >
-                    <ExternalLink className="w-4 h-4 mr-2" />
-                    লাইভ প্রিভিউ
-                  </Button>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+          {isMobile ? (
+            <MobilePortfolioCarousel
+              items={portfolioItems}
+              serviceType="url"
+              onItemClick={(item) => item.live_url && window.open(item.live_url, "_blank")}
+            />
+          ) : (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {portfolioItems.map((item, index) => (
+                <motion.div
+                  key={item.id}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                  className="group relative overflow-hidden rounded-2xl bg-black/40 border border-green-400/20 hover:border-green-400/50 transition-all duration-300"
+                >
+                  <div className="aspect-[4/3] overflow-hidden">
+                    <img
+                      src={item.image_url}
+                      alt={item.title}
+                      className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
+                    />
+                  </div>
+                  <div className="p-5">
+                    <span className="inline-block px-3 py-1 text-xs rounded-full bg-gradient-to-r from-green-500 to-emerald-400 text-white font-medium mb-3">
+                      ওয়েব ডেভেলপমেন্ট
+                    </span>
+                    <h3 className="text-xl font-bengali font-bold text-white mb-2">{item.title}</h3>
+                    {item.description && (
+                      <p className="text-green-300/80 font-bengali text-sm mb-4">{item.description}</p>
+                    )}
+                    <Button
+                      variant="outline"
+                      className="w-full font-bengali border-green-400/30 text-green-400 hover:bg-green-400 hover:text-black"
+                      onClick={() => item.live_url && window.open(item.live_url, "_blank")}
+                      disabled={!item.live_url}
+                    >
+                      <ExternalLink className="w-4 h-4 mr-2" />
+                      লাইভ প্রিভিউ
+                    </Button>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
         </div>
       </section>
 

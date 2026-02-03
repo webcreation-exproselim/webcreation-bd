@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
+import html2pdf from "html2pdf.js";
 import { 
   FileText, Plus, Download, Send, Eye, Printer, 
   CheckCircle, Clock, XCircle, Phone, Mail, 
-  MessageCircle, Building2, Calendar, Globe, Trash2, Edit2
+  MessageCircle, Building2, Calendar, Globe, Trash2, Edit2, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -382,157 +383,110 @@ ${servicesText}
     window.print();
   };
 
-  const downloadInvoiceAsPDF = () => {
-    // Create a printable version and trigger download
-    const invoiceEl = document.getElementById('invoice-preview');
-    if (!invoiceEl) return;
+  const [isDownloading, setIsDownloading] = useState(false);
 
-    // Open print dialog which can be saved as PDF
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) {
-      toast({ title: "পপ-আপ ব্লকার বন্ধ করুন", variant: "destructive" });
-      return;
-    }
-
-    const invoiceNumber = selectedInvoice?.invoice_number || 'invoice';
+  const downloadInvoiceAsPDF = async () => {
+    if (!selectedInvoice || !selectedOrder) return;
     
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Invoice - ${invoiceNumber}</title>
-          <meta charset="UTF-8">
-          <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { 
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-              background: white;
-              padding: 20px;
-            }
-            .accent-bar { height: 6px; background: linear-gradient(to right, #dc2626, #eab308); }
-            .header { display: flex; justify-content: space-between; align-items: flex-start; margin: 20px 0; }
-            .logo-section { display: flex; align-items: center; gap: 12px; }
-            .logo { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #fee2e2; }
-            .company-name { font-weight: bold; font-size: 18px; }
-            .company-sub { color: #9ca3af; font-size: 12px; }
-            .invoice-badge { background: linear-gradient(to right, #dc2626, #ef4444); color: white; padding: 8px 16px; border-radius: 8px; text-align: center; }
-            .invoice-label { font-size: 10px; text-transform: uppercase; opacity: 0.8; }
-            .invoice-number { font-family: monospace; font-weight: bold; font-size: 14px; }
-            .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
-            .info-box { background: #f9fafb; padding: 12px; border-radius: 12px; border: 1px solid #e5e7eb; }
-            .info-label { font-size: 10px; color: #9ca3af; text-transform: uppercase; margin-bottom: 6px; }
-            .info-value { font-weight: 600; font-size: 14px; }
-            .info-sub { font-size: 12px; color: #6b7280; margin-top: 4px; }
-            .status-paid { background: #10b981; color: white; }
-            .status-partial { background: #f59e0b; color: white; }
-            .status-unpaid { background: #ef4444; color: white; }
-            .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
-            table { width: 100%; border-collapse: collapse; margin: 16px 0; border-radius: 12px; overflow: hidden; }
-            th { background: linear-gradient(to right, #1f2937, #111827); color: white; padding: 12px; text-align: left; font-size: 10px; text-transform: uppercase; }
-            th:last-child { text-align: right; }
-            td { padding: 12px; border-bottom: 1px solid #f3f4f6; }
-            td:last-child { text-align: right; font-weight: bold; }
-            tr:nth-child(even) { background: #f9fafb; }
-            .total-section { margin: 16px 0; }
-            .total-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f3f4f6; }
-            .total-final { background: linear-gradient(to right, #dc2626, #ef4444); color: white; padding: 12px 16px; border-radius: 12px; display: flex; justify-content: space-between; margin-top: 8px; }
-            .total-final-label { font-weight: bold; }
-            .total-final-value { font-weight: bold; font-size: 18px; }
-            .footer { border-top: 1px dashed #e5e7eb; padding-top: 16px; margin-top: 16px; display: flex; justify-content: space-between; }
-            .footer-thanks { font-size: 14px; color: #374151; }
-            .footer-company { font-size: 10px; color: #9ca3af; }
-            @media print {
-              body { padding: 0; }
-              @page { margin: 0.5cm; }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="accent-bar"></div>
-          <div class="header">
-            <div class="logo-section">
-              <img src="${selectedOrder ? window.location.origin + '/logo.png' : ''}" alt="Logo" class="logo" onerror="this.style.display='none'">
+    setIsDownloading(true);
+    
+    try {
+      // Create a container element for PDF generation
+      const container = document.createElement('div');
+      container.innerHTML = `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: white; padding: 20px; max-width: 800px;">
+          <div style="height: 6px; background: linear-gradient(to right, #dc2626, #eab308);"></div>
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin: 20px 0;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <img src="${companyLogo}" alt="Logo" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #fee2e2;" onerror="this.style.display='none'">
               <div>
-                <div class="company-name">Web Creation BD</div>
-                <div class="company-sub">Professional Digital Agency</div>
+                <div style="font-weight: bold; font-size: 18px;">Web Creation BD</div>
+                <div style="color: #9ca3af; font-size: 12px;">Professional Digital Agency</div>
               </div>
             </div>
-            <div class="invoice-badge">
-              <div class="invoice-label">ইনভয়েস</div>
-              <div class="invoice-number">${invoiceNumber}</div>
+            <div style="background: linear-gradient(to right, #dc2626, #ef4444); color: white; padding: 8px 16px; border-radius: 8px; text-align: center;">
+              <div style="font-size: 10px; text-transform: uppercase; opacity: 0.8;">ইনভয়েস</div>
+              <div style="font-family: monospace; font-weight: bold; font-size: 14px;">${selectedInvoice.invoice_number}</div>
             </div>
           </div>
           
-          <div class="info-grid">
-            <div class="info-box">
-              <div class="info-label">বিল প্রাপক</div>
-              <div class="info-value">${selectedOrder?.customer_name || 'N/A'}</div>
-              <div class="info-sub">${selectedOrder?.customer_phone || ''}</div>
-              ${selectedOrder?.customer_email ? `<div class="info-sub">${selectedOrder.customer_email}</div>` : ''}
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0;">
+            <div style="background: #f9fafb; padding: 12px; border-radius: 12px; border: 1px solid #e5e7eb;">
+              <div style="font-size: 10px; color: #9ca3af; text-transform: uppercase; margin-bottom: 6px;">বিল প্রাপক</div>
+              <div style="font-weight: 600; font-size: 14px;">${selectedOrder.customer_name}</div>
+              <div style="font-size: 12px; color: #6b7280; margin-top: 4px;">${selectedOrder.customer_phone}</div>
+              ${selectedOrder.customer_email ? `<div style="font-size: 12px; color: #6b7280; margin-top: 4px;">${selectedOrder.customer_email}</div>` : ''}
             </div>
-            <div class="info-box">
-              <div class="info-label">স্ট্যাটাস</div>
-              <span class="status-badge status-${selectedInvoice?.status || 'unpaid'}">
-                ${selectedInvoice?.status === 'paid' ? '✓ পরিশোধিত' : selectedInvoice?.status === 'partial' ? '⏳ আংশিক' : '✕ বাকি'}
+            <div style="background: #f9fafb; padding: 12px; border-radius: 12px; border: 1px solid #e5e7eb;">
+              <div style="font-size: 10px; color: #9ca3af; text-transform: uppercase; margin-bottom: 6px;">স্ট্যাটাস</div>
+              <span style="display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; background: ${selectedInvoice.status === 'paid' ? '#10b981' : selectedInvoice.status === 'partial' ? '#f59e0b' : '#ef4444'}; color: white;">
+                ${selectedInvoice.status === 'paid' ? '✓ পরিশোধিত' : selectedInvoice.status === 'partial' ? '◐ আংশিক' : '✗ বাকি'}
               </span>
-              <div class="info-sub" style="margin-top: 8px;">তারিখ: ${selectedInvoice ? new Date(selectedInvoice.created_at).toLocaleDateString('bn-BD') : ''}</div>
+              <div style="font-size: 12px; color: #6b7280; margin-top: 8px;">তারিখ: ${new Date(selectedInvoice.created_at).toLocaleDateString('bn-BD')}</div>
             </div>
           </div>
           
-          <table>
+          <table style="width: 100%; border-collapse: collapse; margin: 16px 0; border-radius: 12px; overflow: hidden;">
             <thead>
-              <tr>
-                <th>#</th>
-                <th>সার্ভিস বিবরণ</th>
-                <th>মূল্য</th>
+              <tr style="background: linear-gradient(to right, #1f2937, #111827);">
+                <th style="color: white; padding: 12px; text-align: left; font-size: 10px; text-transform: uppercase;">#</th>
+                <th style="color: white; padding: 12px; text-align: left; font-size: 10px; text-transform: uppercase;">সার্ভিস</th>
+                <th style="color: white; padding: 12px; text-align: left; font-size: 10px; text-transform: uppercase;">প্যাকেজ</th>
+                <th style="color: white; padding: 12px; text-align: right; font-size: 10px; text-transform: uppercase;">মূল্য</th>
               </tr>
             </thead>
             <tbody>
-              ${selectedOrder?.services?.map((s: any, i: number) => `
-                <tr>
-                  <td>${String(i + 1).padStart(2, '0')}</td>
-                  <td>
-                    <strong>${s.serviceName || s.name || 'সার্ভিস'}</strong>
-                    <div style="font-size: 12px; color: #9ca3af;">${s.packageName || s.description || ''}</div>
-                  </td>
-                  <td>৳${Number(s.price || 0).toLocaleString()}</td>
+              ${(selectedOrder.services || []).map((s: any, i: number) => `
+                <tr style="${i % 2 === 1 ? 'background: #f9fafb;' : ''}">
+                  <td style="padding: 12px; border-bottom: 1px solid #f3f4f6;">${i + 1}</td>
+                  <td style="padding: 12px; border-bottom: 1px solid #f3f4f6;">${s.serviceName || s.name || 'N/A'}</td>
+                  <td style="padding: 12px; border-bottom: 1px solid #f3f4f6;">${s.packageName || s.description || 'Custom'}</td>
+                  <td style="padding: 12px; border-bottom: 1px solid #f3f4f6; text-align: right; font-weight: bold;">৳${(s.price || 0).toLocaleString()}</td>
                 </tr>
-              `).join('') || '<tr><td colspan="3" style="text-align: center;">কোনো সার্ভিস নেই</td></tr>'}
+              `).join('')}
             </tbody>
           </table>
           
-          <div class="total-section">
-            <div class="total-row">
-              <span>সাবটোটাল</span>
-              <span>৳${selectedInvoice ? Number(selectedInvoice.amount).toLocaleString() : '0'}</span>
+          <div style="margin: 16px 0;">
+            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f3f4f6;">
+              <span>মোট পরিমাণ</span>
+              <span>৳${Number(selectedInvoice.amount).toLocaleString()}</span>
             </div>
-            <div class="total-row">
+            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f3f4f6;">
               <span>পরিশোধিত</span>
-              <span style="color: #10b981;">- ৳${selectedInvoice ? Number(selectedInvoice.paid_amount).toLocaleString() : '0'}</span>
+              <span style="color: #10b981;">- ৳${Number(selectedInvoice.paid_amount).toLocaleString()}</span>
             </div>
-            <div class="total-final">
-              <span class="total-final-label">মোট বাকি</span>
-              <span class="total-final-value">৳${selectedInvoice ? (Number(selectedInvoice.amount) - Number(selectedInvoice.paid_amount)).toLocaleString() : '0'}</span>
+            <div style="background: linear-gradient(to right, #dc2626, #ef4444); color: white; padding: 12px 16px; border-radius: 12px; display: flex; justify-content: space-between; margin-top: 8px;">
+              <span style="font-weight: bold;">মোট বাকি</span>
+              <span style="font-weight: bold; font-size: 18px;">৳${(Number(selectedInvoice.amount) - Number(selectedInvoice.paid_amount)).toLocaleString()}</span>
             </div>
           </div>
           
-          <div class="footer">
-            <div class="footer-thanks">ধন্যবাদ আপনার সাথে কাজ করতে পেরে! 🙏</div>
-            <div class="footer-company">Web Creation BD</div>
+          <div style="border-top: 1px dashed #e5e7eb; padding-top: 16px; margin-top: 16px; display: flex; justify-content: space-between;">
+            <div style="font-size: 14px; color: #374151;">ধন্যবাদ আপনার সাথে কাজ করতে পেরে! 🙏</div>
+            <div style="font-size: 10px; color: #9ca3af;">Web Creation BD • Professional Digital Agency</div>
           </div>
-          
-          <div class="accent-bar" style="margin-top: 20px;"></div>
-          
-          <script>
-            window.onload = function() {
-              window.print();
-              window.onafterprint = function() { window.close(); };
-            };
-          </script>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
+          <div style="height: 6px; background: linear-gradient(to right, #dc2626, #eab308); margin-top: 20px;"></div>
+        </div>
+      `;
+      
+      const opt = {
+        margin: 10,
+        filename: `Invoice-${selectedInvoice.invoice_number}.pdf`,
+        image: { type: 'jpeg' as const, quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm' as const, format: 'a4' as const, orientation: 'portrait' as const }
+      };
+      
+      await html2pdf().set(opt).from(container).save();
+      
+      toast({ title: "✅ PDF ডাউনলোড হয়েছে" });
+    } catch (error) {
+      console.error("PDF generation error:", error);
+      toast({ title: "PDF তৈরি করতে সমস্যা হয়েছে", variant: "destructive" });
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   const statusConfig: Record<string, { bg: string; text: string; icon: any; label: string }> = {
@@ -1098,10 +1052,15 @@ ${servicesText}
               variant="outline"
               size="sm"
               onClick={downloadInvoiceAsPDF}
+              disabled={isDownloading}
               className="text-blue-600 border-blue-200 hover:bg-blue-50 font-bengali text-xs"
             >
-              <Download className="w-3.5 h-3.5 mr-1.5" />
-              ডাউনলোড
+              {isDownloading ? (
+                <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+              ) : (
+                <Download className="w-3.5 h-3.5 mr-1.5" />
+              )}
+              {isDownloading ? "ডাউনলোড হচ্ছে..." : "ডাউনলোড"}
             </Button>
             <Button
               variant="outline"

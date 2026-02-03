@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useSiteContent } from "@/hooks/useSiteContent";
 import { EditableText } from "./EditableText";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { MobilePortfolioCarousel } from "./MobilePortfolioCarousel";
 import {
   Dialog,
   DialogContent,
@@ -177,6 +179,7 @@ export const PortfolioSection = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [portfolioData, setPortfolioData] = useState<Record<string, PortfolioItem[]>>(fallbackData);
   const [loading, setLoading] = useState(true);
+  const isMobile = useIsMobile();
 
   // Fallback content
   const fallbackContent = useMemo(() => ({
@@ -353,8 +356,15 @@ export const PortfolioSection = () => {
           <div className="flex items-center justify-center py-16">
             <Loader2 className="w-8 h-8 animate-spin text-yellow-400" />
           </div>
+        ) : isMobile ? (
+          /* Mobile Portfolio Carousel */
+          <MobilePortfolioCarousel 
+            items={items}
+            serviceType={videoServices.includes(activeTab) ? "video" : urlServices.includes(activeTab) ? "url" : "modal"}
+            onItemClick={handleOpenModal}
+          />
         ) : (
-          /* Portfolio Grid */
+          /* Desktop Portfolio Grid */
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}

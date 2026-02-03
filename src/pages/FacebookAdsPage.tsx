@@ -22,6 +22,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useDynamicPortfolio } from "@/hooks/useDynamicPortfolio";
 import { useSiteContent } from "@/hooks/useSiteContent";
 import { EditableText } from "@/components/EditableText";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { MobilePortfolioCarousel } from "@/components/MobilePortfolioCarousel";
 
 // Fallback Portfolio Items
 const fallbackPortfolioItems = [
@@ -330,6 +332,7 @@ const FacebookAdsPage = () => {
   const { addItem, isInCart } = useCart();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   
   const fallbackContent = useMemo(() => ({
     badge_text: "#1 ফেসবুক অ্যাডস এজেন্সি",
@@ -529,50 +532,63 @@ const FacebookAdsPage = () => {
           </motion.div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {portfolioItems.map((item, index) => (
-              <motion.div
-                key={item.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className="group relative rounded-2xl overflow-hidden cursor-pointer"
-                onClick={() => {
-                  setSelectedItem(item);
-                  setIsModalOpen(true);
-                }}
-              >
-                <div className="aspect-[4/3] relative overflow-hidden">
-                  <img
-                    src={item.image_url}
-                    alt={item.title}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                  {/* Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-blue-950/95 via-blue-900/60 to-transparent" />
-                  
-                  {/* Result Badge */}
-                  {item.description && (
-                    <div className="absolute top-4 right-4 px-3 py-1 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 text-white text-sm font-bold">
-                      {item.description}
+            {isMobile ? (
+              <div className="col-span-full">
+                <MobilePortfolioCarousel
+                  items={portfolioItems}
+                  serviceType="modal"
+                  onItemClick={(item) => {
+                    setSelectedItem(item as typeof fallbackPortfolioItems[0]);
+                    setIsModalOpen(true);
+                  }}
+                />
+              </div>
+            ) : (
+              portfolioItems.map((item, index) => (
+                <motion.div
+                  key={item.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                  className="group relative rounded-2xl overflow-hidden cursor-pointer"
+                  onClick={() => {
+                    setSelectedItem(item);
+                    setIsModalOpen(true);
+                  }}
+                >
+                  <div className="aspect-[4/3] relative overflow-hidden">
+                    <img
+                      src={item.image_url}
+                      alt={item.title}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                    {/* Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-blue-950/95 via-blue-900/60 to-transparent" />
+                    
+                    {/* Result Badge */}
+                    {item.description && (
+                      <div className="absolute top-4 right-4 px-3 py-1 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 text-white text-sm font-bold">
+                        {item.description}
+                      </div>
+                    )}
+                    
+                    {/* Content */}
+                    <div className="absolute bottom-0 left-0 right-0 p-6">
+                      <span className="text-cyan-400 text-sm font-medium">{item.category}</span>
+                      <h3 className="text-white font-bengali font-bold text-lg mt-1">{item.title}</h3>
                     </div>
-                  )}
-                  
-                  {/* Content */}
-                  <div className="absolute bottom-0 left-0 right-0 p-6">
-                    <span className="text-cyan-400 text-sm font-medium">{item.category}</span>
-                    <h3 className="text-white font-bengali font-bold text-lg mt-1">{item.title}</h3>
-                  </div>
-                  
-                  {/* Hover Icon */}
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-400 to-cyan-400 flex items-center justify-center shadow-lg shadow-blue-400/40">
-                      <ExternalLink className="w-7 h-7 text-white" />
+                    
+                    {/* Hover Icon */}
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-400 to-cyan-400 flex items-center justify-center shadow-lg shadow-blue-400/40">
+                        <ExternalLink className="w-7 h-7 text-white" />
+                      </div>
                     </div>
                   </div>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              ))
+            )}
           </div>
         </div>
       </section>

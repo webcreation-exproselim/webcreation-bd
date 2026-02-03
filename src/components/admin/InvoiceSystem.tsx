@@ -84,6 +84,34 @@ export function InvoiceSystem({ invoices, orders, onRefresh }: InvoiceSystemProp
     notes: "",
   });
 
+  // Predefined packages for all services
+  const predefinedPackages = [
+    // Facebook Ads
+    { service: "ফেসবুক অ্যাডস", package: "বেসিক", price: 4999, originalPrice: 6999 },
+    { service: "ফেসবুক অ্যাডস", package: "স্ট্যান্ডার্ড", price: 7999, originalPrice: 10999 },
+    { service: "ফেসবুক অ্যাডস", package: "প্রিমিয়াম", price: 14999, originalPrice: 19999 },
+    // Web Development
+    { service: "ওয়েব ডেভেলপমেন্ট", package: "বেসিক", price: 9999, originalPrice: 14999 },
+    { service: "ওয়েব ডেভেলপমেন্ট", package: "স্ট্যান্ডার্ড", price: 19999, originalPrice: 29999 },
+    { service: "ওয়েব ডেভেলপমেন্ট", package: "প্রিমিয়াম", price: 39999, originalPrice: 59999 },
+    // Graphics Design
+    { service: "গ্রাফিক্স ডিজাইন", package: "বেসিক", price: 2999, originalPrice: 4999 },
+    { service: "গ্রাফিক্স ডিজাইন", package: "স্ট্যান্ডার্ড", price: 5999, originalPrice: 8999 },
+    { service: "গ্রাফিক্স ডিজাইন", package: "প্রিমিয়াম", price: 9999, originalPrice: 14999 },
+    // Video Editing
+    { service: "ভিডিও এডিটিং", package: "বেসিক", price: 3999, originalPrice: 5999 },
+    { service: "ভিডিও এডিটিং", package: "স্ট্যান্ডার্ড", price: 6999, originalPrice: 9999 },
+    { service: "ভিডিও এডিটিং", package: "প্রিমিয়াম", price: 12999, originalPrice: 17999 },
+    // Motion Graphics
+    { service: "মোশন গ্রাফিক্স", package: "বেসিক", price: 4999, originalPrice: 6999 },
+    { service: "মোশন গ্রাফিক্স", package: "স্ট্যান্ডার্ড", price: 8999, originalPrice: 11999 },
+    { service: "মোশন গ্রাফিক্স", package: "প্রিমিয়াম", price: 14999, originalPrice: 19999 },
+    // Landing Page
+    { service: "ল্যান্ডিং পেজ", package: "বেসিক", price: 4999, originalPrice: 7999 },
+    { service: "ল্যান্ডিং পেজ", package: "স্ট্যান্ডার্ড", price: 9999, originalPrice: 14999 },
+    { service: "ল্যান্ডিং পেজ", package: "প্রিমিয়াম", price: 17999, originalPrice: 24999 },
+  ];
+
   // Custom invoice form
   const [customForm, setCustomForm] = useState({
     client_name: "",
@@ -93,6 +121,18 @@ export function InvoiceSystem({ invoices, orders, onRefresh }: InvoiceSystemProp
     due_date: "",
     notes: "",
   });
+
+  // Add predefined package
+  const addPredefinedPackage = (pkg: typeof predefinedPackages[0]) => {
+    setCustomForm(prev => ({
+      ...prev,
+      services: [...prev.services.filter(s => s.name || s.price > 0), { 
+        name: pkg.service, 
+        description: pkg.package, 
+        price: pkg.price 
+      }]
+    }));
+  };
 
   // Edit form
   const [editForm, setEditForm] = useState({
@@ -799,8 +839,47 @@ ${servicesText}
                     className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8"
                   >
                     <Plus className="w-4 h-4 mr-1" />
-                    যোগ করুন
+                    কাস্টম যোগ করুন
                   </Button>
+                </div>
+                
+                {/* Predefined Packages Dropdown */}
+                <div className="p-3 bg-white rounded-lg border border-dashed border-red-200 mb-3">
+                  <p className="text-xs text-gray-500 mb-2 font-medium">📦 প্যাকেজ থেকে বাছাই করুন</p>
+                  <Select
+                    onValueChange={(val) => {
+                      const pkg = predefinedPackages.find(p => `${p.service}-${p.package}` === val);
+                      if (pkg) addPredefinedPackage(pkg);
+                    }}
+                  >
+                    <SelectTrigger className="w-full bg-white">
+                      <SelectValue placeholder="সার্ভিস ও প্যাকেজ সিলেক্ট করুন" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white max-h-[300px]">
+                      {["ফেসবুক অ্যাডস", "ওয়েব ডেভেলপমেন্ট", "গ্রাফিক্স ডিজাইন", "ভিডিও এডিটিং", "মোশন গ্রাফিক্স", "ল্যান্ডিং পেজ"].map(serviceName => (
+                        <div key={serviceName}>
+                          <div className="px-2 py-1.5 text-xs font-semibold text-gray-500 bg-gray-50 sticky top-0">
+                            {serviceName}
+                          </div>
+                          {predefinedPackages
+                            .filter(p => p.service === serviceName)
+                            .map(pkg => (
+                              <SelectItem 
+                                key={`${pkg.service}-${pkg.package}`} 
+                                value={`${pkg.service}-${pkg.package}`}
+                                className="cursor-pointer"
+                              >
+                                <div className="flex items-center justify-between w-full gap-4">
+                                  <span>{pkg.package}</span>
+                                  <span className="text-green-600 font-medium">৳{pkg.price.toLocaleString()}</span>
+                                </div>
+                              </SelectItem>
+                            ))
+                          }
+                        </div>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 
                 {customForm.services.map((service, index) => (

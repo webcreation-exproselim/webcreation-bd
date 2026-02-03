@@ -15,6 +15,8 @@ import { AddToCartButton } from "@/components/AddToCartButton";
 import { useDynamicPortfolio } from "@/hooks/useDynamicPortfolio";
 import { useSiteContent } from "@/hooks/useSiteContent";
 import { EditableText } from "@/components/EditableText";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { MobilePortfolioCarousel } from "@/components/MobilePortfolioCarousel";
 
 // Fallback Portfolio Items
 const fallbackPortfolioItems = [
@@ -283,6 +285,7 @@ const InfiniteSlider = ({
 };
 
 const MotionGraphicsPage = () => {
+  const isMobile = useIsMobile();
   const { portfolioItems, loading: portfolioLoading } = useDynamicPortfolio("motion-graphics", fallbackPortfolioItems);
   const [selectedItem, setSelectedItem] = useState<typeof fallbackPortfolioItems[0] | null>(null);
   const [isVideoOpen, setIsVideoOpen] = useState(false);
@@ -506,6 +509,14 @@ const MotionGraphicsPage = () => {
             </p>
           </motion.div>
           
+          {isMobile ? (
+            <MobilePortfolioCarousel
+              items={portfolioItems}
+              serviceType="video"
+              onItemClick={(item) => handlePlayVideo(item)}
+              accentColor="yellow"
+            />
+          ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {portfolioItems.map((item, index) => (
               <motion.div
@@ -542,6 +553,7 @@ const MotionGraphicsPage = () => {
               </motion.div>
             ))}
           </div>
+          )}
         </div>
       </section>
 

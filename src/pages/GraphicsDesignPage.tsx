@@ -19,6 +19,8 @@ import { AddToCartButton } from "@/components/AddToCartButton";
 import { supabase } from "@/integrations/supabase/client";
 import { useSiteContent } from "@/hooks/useSiteContent";
 import { EditableText } from "@/components/EditableText";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { MobilePortfolioCarousel } from "@/components/MobilePortfolioCarousel";
 
 // Fallback Portfolio Items (used when database is empty)
 const fallbackPortfolioItems = [
@@ -295,6 +297,7 @@ const InfiniteSlider = ({
 };
 
 const GraphicsDesignPage = () => {
+  const isMobile = useIsMobile();
   const [selectedItem, setSelectedItem] = useState<PortfolioItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>(fallbackPortfolioItems);
@@ -544,6 +547,16 @@ const GraphicsDesignPage = () => {
             <div className="flex items-center justify-center py-16">
               <Loader2 className="w-8 h-8 animate-spin text-purple-400" />
             </div>
+          ) : isMobile ? (
+            <MobilePortfolioCarousel
+              items={portfolioItems}
+              serviceType="modal"
+              onItemClick={(item) => {
+                setSelectedItem(item);
+                setIsModalOpen(true);
+              }}
+              accentColor="purple"
+            />
           ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {portfolioItems.map((item, index) => (

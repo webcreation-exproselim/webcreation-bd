@@ -278,8 +278,8 @@ export default function ClientDashboard() {
             <div style="display: flex; align-items: center; gap: 12px;">
               <img src="${companyLogo}" alt="Logo" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #fee2e2;" onerror="this.style.display='none'">
               <div>
-                <div style="font-weight: bold; font-size: 18px;">Web Creation BD</div>
-                <div style="color: #9ca3af; font-size: 12px;">Professional Digital Agency</div>
+                <div style="font-weight: bold; font-size: 18px; color: #111827;">Web Creation BD</div>
+                <div style="color: #6b7280; font-size: 12px;">Professional Digital Agency</div>
               </div>
             </div>
             <div style="background: linear-gradient(to right, #dc2626, #ef4444); color: white; padding: 8px 16px; border-radius: 8px; text-align: center;">

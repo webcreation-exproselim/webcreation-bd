@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import html2pdf from "html2pdf.js";
 import {
   Package,
   FileText,
@@ -23,6 +24,7 @@ import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { User as SupabaseUser, Session } from "@supabase/supabase-js";
+import companyLogo from "@/assets/company-logo.jpg";
 
 interface OrderService {
   id: string;
@@ -261,108 +263,76 @@ export default function ClientDashboard() {
     navigate("/");
   };
 
-  const downloadInvoice = (invoice: Invoice) => {
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) {
-      toast({ 
-        title: "পপ-আপ ব্লকার বন্ধ করুন", 
-        variant: "destructive" 
-      });
-      return;
-    }
+  const [downloadingInvoiceId, setDownloadingInvoiceId] = useState<string | null>(null);
 
-    const invoiceNumber = invoice.invoice_number;
+  const downloadInvoice = async (invoice: Invoice) => {
+    setDownloadingInvoiceId(invoice.id);
     
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Invoice - ${invoiceNumber}</title>
-          <meta charset="UTF-8">
-          <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { 
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-              background: white;
-              padding: 20px;
-            }
-            .accent-bar { height: 6px; background: linear-gradient(to right, #dc2626, #eab308); }
-            .header { display: flex; justify-content: space-between; align-items: flex-start; margin: 20px 0; }
-            .logo-section { display: flex; align-items: center; gap: 12px; }
-            .company-name { font-weight: bold; font-size: 18px; }
-            .company-sub { color: #9ca3af; font-size: 12px; }
-            .invoice-badge { background: linear-gradient(to right, #dc2626, #ef4444); color: white; padding: 8px 16px; border-radius: 8px; text-align: center; }
-            .invoice-label { font-size: 10px; text-transform: uppercase; opacity: 0.8; }
-            .invoice-number { font-family: monospace; font-weight: bold; font-size: 14px; }
-            .info-box { background: #f9fafb; padding: 12px; border-radius: 12px; border: 1px solid #e5e7eb; margin: 16px 0; }
-            .info-label { font-size: 10px; color: #9ca3af; text-transform: uppercase; margin-bottom: 6px; }
-            .info-value { font-weight: 600; font-size: 14px; }
-            .total-section { margin: 16px 0; }
-            .total-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f3f4f6; }
-            .total-final { background: linear-gradient(to right, #dc2626, #ef4444); color: white; padding: 12px 16px; border-radius: 12px; display: flex; justify-content: space-between; margin-top: 8px; }
-            .total-final-label { font-weight: bold; }
-            .total-final-value { font-weight: bold; font-size: 18px; }
-            .footer { border-top: 1px dashed #e5e7eb; padding-top: 16px; margin-top: 16px; display: flex; justify-content: space-between; }
-            .footer-thanks { font-size: 14px; color: #374151; }
-            .footer-company { font-size: 10px; color: #9ca3af; }
-            @media print {
-              body { padding: 0; }
-              @page { margin: 0.5cm; }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="accent-bar"></div>
-          <div class="header">
-            <div class="logo-section">
+    try {
+      // Create a container element for PDF generation
+      const container = document.createElement('div');
+      container.innerHTML = `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: white; padding: 20px; max-width: 800px;">
+          <div style="height: 6px; background: linear-gradient(to right, #dc2626, #eab308);"></div>
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin: 20px 0;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <img src="${companyLogo}" alt="Logo" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #fee2e2;" onerror="this.style.display='none'">
               <div>
-                <div class="company-name">Web Creation BD</div>
-                <div class="company-sub">Professional Digital Agency</div>
+                <div style="font-weight: bold; font-size: 18px;">Web Creation BD</div>
+                <div style="color: #9ca3af; font-size: 12px;">Professional Digital Agency</div>
               </div>
             </div>
-            <div class="invoice-badge">
-              <div class="invoice-label">ইনভয়েস</div>
-              <div class="invoice-number">${invoiceNumber}</div>
+            <div style="background: linear-gradient(to right, #dc2626, #ef4444); color: white; padding: 8px 16px; border-radius: 8px; text-align: center;">
+              <div style="font-size: 10px; text-transform: uppercase; opacity: 0.8;">ইনভয়েস</div>
+              <div style="font-family: monospace; font-weight: bold; font-size: 14px;">${invoice.invoice_number}</div>
             </div>
           </div>
           
-          <div class="info-box">
-            <div class="info-label">তারিখ</div>
-            <div class="info-value">${new Date(invoice.created_at).toLocaleDateString('bn-BD')}</div>
+          <div style="background: #f9fafb; padding: 12px; border-radius: 12px; border: 1px solid #e5e7eb; margin: 16px 0;">
+            <div style="font-size: 10px; color: #9ca3af; text-transform: uppercase; margin-bottom: 6px;">তারিখ</div>
+            <div style="font-weight: 600; font-size: 14px;">${new Date(invoice.created_at).toLocaleDateString('bn-BD')}</div>
           </div>
           
-          <div class="total-section">
-            <div class="total-row">
+          <div style="margin: 16px 0;">
+            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f3f4f6;">
               <span>মোট পরিমাণ</span>
               <span>৳${Number(invoice.amount).toLocaleString()}</span>
             </div>
-            <div class="total-row">
+            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f3f4f6;">
               <span>পরিশোধিত</span>
               <span style="color: #10b981;">- ৳${Number(invoice.paid_amount).toLocaleString()}</span>
             </div>
-            <div class="total-final">
-              <span class="total-final-label">মোট বাকি</span>
-              <span class="total-final-value">৳${(Number(invoice.amount) - Number(invoice.paid_amount)).toLocaleString()}</span>
+            <div style="background: linear-gradient(to right, #dc2626, #ef4444); color: white; padding: 12px 16px; border-radius: 12px; display: flex; justify-content: space-between; margin-top: 8px;">
+              <span style="font-weight: bold;">মোট বাকি</span>
+              <span style="font-weight: bold; font-size: 18px;">৳${(Number(invoice.amount) - Number(invoice.paid_amount)).toLocaleString()}</span>
             </div>
           </div>
           
-          <div class="footer">
-            <div class="footer-thanks">ধন্যবাদ! 🙏</div>
-            <div class="footer-company">Web Creation BD</div>
+          <div style="border-top: 1px dashed #e5e7eb; padding-top: 16px; margin-top: 16px; display: flex; justify-content: space-between;">
+            <div style="font-size: 14px; color: #374151;">ধন্যবাদ! 🙏</div>
+            <div style="font-size: 10px; color: #9ca3af;">Web Creation BD</div>
           </div>
-          
-          <div class="accent-bar" style="margin-top: 20px;"></div>
-          
-          <script>
-            window.onload = function() {
-              window.print();
-              window.onafterprint = function() { window.close(); };
-            };
-          </script>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
+          <div style="height: 6px; background: linear-gradient(to right, #dc2626, #eab308); margin-top: 20px;"></div>
+        </div>
+      `;
+      
+      const opt = {
+        margin: 10,
+        filename: `Invoice-${invoice.invoice_number}.pdf`,
+        image: { type: 'jpeg' as const, quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm' as const, format: 'a4' as const, orientation: 'portrait' as const }
+      };
+      
+      await html2pdf().set(opt).from(container).save();
+      
+      toast({ title: "✅ PDF ডাউনলোড হয়েছে" });
+    } catch (error) {
+      console.error("PDF generation error:", error);
+      toast({ title: "PDF তৈরি করতে সমস্যা হয়েছে", variant: "destructive" });
+    } finally {
+      setDownloadingInvoiceId(null);
+    }
   };
 
   const getStatusIcon = (status: string) => {
@@ -728,10 +698,15 @@ export default function ClientDashboard() {
                           variant="outline"
                           size="sm"
                           onClick={() => downloadInvoice(invoice)}
+                          disabled={downloadingInvoiceId === invoice.id}
                           className="flex-1 sm:flex-none text-blue-400 border-blue-400/30 hover:bg-blue-400/10 font-bengali"
                         >
-                          <Download className="w-4 h-4 mr-2" />
-                          ডাউনলোড
+                          {downloadingInvoiceId === invoice.id ? (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          ) : (
+                            <Download className="w-4 h-4 mr-2" />
+                          )}
+                          {downloadingInvoiceId === invoice.id ? "ডাউনলোড হচ্ছে..." : "ডাউনলোড"}
                         </Button>
                         {invoice.status !== "paid" && (
                           <Link 

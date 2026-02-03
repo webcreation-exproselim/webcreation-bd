@@ -11,12 +11,12 @@ import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useState, useMemo } from "react";
 import { VideoPlayerModal, getRandomDemoVideo } from "@/components/VideoPlayerModal";
-import { AddToCartButton } from "@/components/AddToCartButton";
 import { useDynamicPortfolio } from "@/hooks/useDynamicPortfolio";
 import { useSiteContent } from "@/hooks/useSiteContent";
 import { EditableText } from "@/components/EditableText";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobilePortfolioCarousel } from "@/components/MobilePortfolioCarousel";
+import { ServicePricingCard, PricingPlanData } from "@/components/ServicePricingCard";
 
 // Fallback Portfolio Items
 const fallbackPortfolioItems = [
@@ -151,57 +151,74 @@ const reviewsRow2 = [
   },
 ];
 
-// Pricing Plans
+// Pricing Plans - Home page style with detailed features
 const pricingPlans = [
   {
     id: "motion-starter",
-    name: "স্টার্টার",
-    originalPrice: "৳৫,০০০",
+    name: "Starter Package",
     price: "৳৩,৫০০",
     priceNum: 3500,
+    originalPrice: "৳৫,০০০",
     originalPriceNum: 5000,
-    discount: "৩০% ছাড়",
+    discount: "30%",
+    note: "Quick Logo Animation",
+    icon: "star" as const,
     features: [
       "অ্যানিমেটেড লোগো",
       "৫ সেকেন্ড ইন্ট্রো",
       "সোশ্যাল মিডিয়া রেডি",
-      "২টি রিভিশন",
+      "বেসিক সাউন্ড",
       "HD কোয়ালিটি",
+      "২টি রিভিশন",
+      "3 Days Delivery",
+      "Source File",
     ],
   },
   {
     id: "motion-pro",
-    name: "প্রফেশনাল",
-    originalPrice: "৳১২,০০০",
+    name: "Professional Package",
     price: "৳৮,০০০",
     priceNum: 8000,
+    originalPrice: "৳১২,০০০",
     originalPriceNum: 12000,
-    discount: "৩৩% ছাড়",
+    discount: "33%",
     popular: true,
+    note: "Best for Explainers",
+    icon: "zap" as const,
     features: [
       "৬০ সেকেন্ড এক্সপ্লেইনার",
       "ভয়েস ওভার ইন্টিগ্রেশন",
       "কাস্টম ইলাস্ট্রেশন",
+      "2D অ্যানিমেশন",
       "সাউন্ড ইফেক্টস",
-      "আনলিমিটেড রিভিশন",
+      "ব্যাকগ্রাউন্ড মিউজিক",
       "4K কোয়ালিটি",
+      "আনলিমিটেড রিভিশন",
+      "স্ক্রিপ্ট সাপোর্ট",
+      "5 Days Delivery",
     ],
   },
   {
     id: "motion-enterprise",
-    name: "এন্টারপ্রাইজ",
-    originalPrice: "৳২৫,০০০",
+    name: "Enterprise Package",
     price: "৳১৮,০০০",
     priceNum: 18000,
+    originalPrice: "৳২৫,০০০",
     originalPriceNum: 25000,
-    discount: "২৮% ছাড়",
+    discount: "28%",
+    note: "Full Production",
+    icon: "crown" as const,
     features: [
       "৩ মিনিট+ অ্যানিমেশন",
       "3D এলিমেন্টস",
       "ক্যারেক্টার অ্যানিমেশন",
       "স্টোরিবোর্ড তৈরি",
       "স্ক্রিপ্ট রাইটিং",
+      "প্রফেশনাল ভয়েস ওভার",
+      "কাস্টম মিউজিক",
+      "4K/8K কোয়ালিটি",
       "প্রায়োরিটি ডেলিভারি",
+      "ডেডিকেটেড ম্যানেজার",
     ],
   },
 ];
@@ -602,50 +619,16 @@ const MotionGraphicsPage = () => {
             </p>
           </motion.div>
           
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {pricingPlans.map((plan, index) => (
-              <motion.div
-                key={plan.name}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className={`relative p-6 rounded-2xl ${
-                  plan.popular 
-                    ? 'bg-gradient-to-br from-yellow-600/40 to-amber-600/40 border-2 border-yellow-400' 
-                    : 'bg-gradient-to-br from-yellow-900/30 to-amber-900/20 border border-yellow-400/20'
-                } backdrop-blur-sm hover:border-yellow-400/50 transition-all duration-300`}
-              >
-                {plan.popular && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                    <span className="px-4 py-1 text-sm font-bengali font-bold bg-gradient-to-r from-yellow-500 to-amber-500 text-black rounded-full">
-                      জনপ্রিয়
-                    </span>
-                  </div>
-                )}
-                
-                <div className="mb-6">
-                  <h3 className="text-2xl font-bengali font-bold text-white mb-2">{plan.name}</h3>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold text-yellow-400">{plan.price}</span>
-                    <span className="text-gray-400 line-through text-sm">{plan.originalPrice}</span>
-                    <span className="px-2 py-1 text-xs font-bold bg-amber-500/20 text-amber-300 rounded">
-                      {plan.discount}
-                    </span>
-                  </div>
-                </div>
-                
-                <ul className="space-y-3 mb-6">
-                  {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-center gap-3 text-gray-300 font-bengali text-sm">
-                      <CheckCircle className="w-5 h-5 text-amber-400 flex-shrink-0" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-                
-                <AddToCartButton plan={plan} serviceName="মোশন গ্রাফিক্স" colorScheme="yellow" />
-              </motion.div>
+              <ServicePricingCard
+                key={plan.id}
+                plan={plan as PricingPlanData}
+                serviceName="মোশন গ্রাফিক্স"
+                gradient="from-yellow-500 to-amber-400"
+                accentColor="yellow"
+                index={index}
+              />
             ))}
           </div>
           

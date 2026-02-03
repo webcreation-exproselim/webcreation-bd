@@ -11,12 +11,12 @@ import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useState, useMemo } from "react";
 import { VideoPlayerModal, getRandomDemoVideo } from "@/components/VideoPlayerModal";
-import { AddToCartButton } from "@/components/AddToCartButton";
 import { useDynamicPortfolio } from "@/hooks/useDynamicPortfolio";
 import { useSiteContent } from "@/hooks/useSiteContent";
 import { EditableText } from "@/components/EditableText";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobilePortfolioCarousel } from "@/components/MobilePortfolioCarousel";
+import { ServicePricingCard, PricingPlanData } from "@/components/ServicePricingCard";
 
 // Fallback Portfolio Items
 const fallbackPortfolioItems = [
@@ -151,57 +151,75 @@ const reviewsRow2 = [
   },
 ];
 
-// Pricing Plans
+// Pricing Plans - Home page style with detailed features
 const pricingPlans = [
   {
     id: "vid-basic",
-    name: "বেসিক",
-    originalPrice: "৳৩,০০০",
+    name: "Basic Package",
     price: "৳২,০০০",
     priceNum: 2000,
+    originalPrice: "৳৩,০০০",
     originalPriceNum: 3000,
-    discount: "৩৩% ছাড়",
+    discount: "33%",
+    note: "Quick Delivery",
+    icon: "star" as const,
     features: [
       "৫ মিনিট পর্যন্ত ভিডিও",
       "বেসিক কাট ও ট্রিম",
       "ব্যাকগ্রাউন্ড মিউজিক",
       "টেক্সট ওভারলে",
+      "Color Correction",
+      "HD Quality Export",
       "২টি রিভিশন",
+      "3 Days Delivery",
     ],
   },
   {
     id: "vid-pro",
-    name: "প্রফেশনাল",
-    originalPrice: "৳৭,০০০",
+    name: "Professional Package",
     price: "৳৫,০০০",
     priceNum: 5000,
+    originalPrice: "৳৭,০০০",
     originalPriceNum: 7000,
-    discount: "২৯% ছাড়",
+    discount: "29%",
     popular: true,
+    note: "Best Value",
+    icon: "zap" as const,
     features: [
       "১৫ মিনিট পর্যন্ত ভিডিও",
       "অ্যাডভান্সড এডিটিং",
       "কালার গ্রেডিং",
       "সাউন্ড ডিজাইন",
       "মোশন গ্রাফিক্স",
+      "ট্রানজিশন ইফেক্ট",
+      "টাইটেল অ্যানিমেশন",
+      "4K Quality Export",
       "আনলিমিটেড রিভিশন",
+      "5 Days Delivery",
     ],
   },
   {
     id: "vid-premium",
-    name: "প্রিমিয়াম",
-    originalPrice: "৳১৫,০০০",
+    name: "Premium Package",
     price: "৳১০,০০০",
     priceNum: 10000,
+    originalPrice: "৳১৫,০০০",
     originalPriceNum: 15000,
-    discount: "৩৩% ছাড়",
+    discount: "33%",
+    note: "Cinematic Quality",
+    icon: "crown" as const,
     features: [
       "৩০ মিনিট পর্যন্ত ভিডিও",
       "সিনেমাটিক এডিটিং",
       "VFX ইফেক্টস",
-      "ভয়েস ওভার",
+      "ভয়েস ওভার সাপোর্ট",
       "সাবটাইটেল",
+      "কাস্টম গ্রাফিক্স",
+      "স্টোরিবোর্ড সাপোর্ট",
+      "মাল্টি-ক্যাম এডিট",
+      "4K/8K Quality Export",
       "এক্সপ্রেস ডেলিভারি",
+      "ডেডিকেটেড সাপোর্ট",
     ],
   },
 ];
@@ -602,50 +620,16 @@ const VideoEditingPage = () => {
             </p>
           </motion.div>
           
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {pricingPlans.map((plan, index) => (
-              <motion.div
-                key={plan.name}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className={`relative p-6 rounded-2xl ${
-                  plan.popular 
-                    ? 'bg-gradient-to-br from-red-600/40 to-orange-600/40 border-2 border-red-400' 
-                    : 'bg-gradient-to-br from-red-900/30 to-orange-900/20 border border-red-400/20'
-                } backdrop-blur-sm hover:border-red-400/50 transition-all duration-300`}
-              >
-                {plan.popular && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                    <span className="px-4 py-1 text-sm font-bengali font-bold bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-full">
-                      জনপ্রিয়
-                    </span>
-                  </div>
-                )}
-                
-                <div className="mb-6">
-                  <h3 className="text-2xl font-bengali font-bold text-white mb-2">{plan.name}</h3>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold text-red-400">{plan.price}</span>
-                    <span className="text-gray-400 line-through text-sm">{plan.originalPrice}</span>
-                    <span className="px-2 py-1 text-xs font-bold bg-orange-500/20 text-orange-300 rounded">
-                      {plan.discount}
-                    </span>
-                  </div>
-                </div>
-                
-                <ul className="space-y-3 mb-6">
-                  {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-center gap-3 text-gray-300 font-bengali text-sm">
-                      <CheckCircle className="w-5 h-5 text-orange-400 flex-shrink-0" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-                
-                <AddToCartButton plan={plan} serviceName="ভিডিও এডিটিং" colorScheme="red" />
-              </motion.div>
+              <ServicePricingCard
+                key={plan.id}
+                plan={plan as PricingPlanData}
+                serviceName="ভিডিও এডিটিং"
+                gradient="from-red-500 to-orange-400"
+                accentColor="red"
+                index={index}
+              />
             ))}
           </div>
           

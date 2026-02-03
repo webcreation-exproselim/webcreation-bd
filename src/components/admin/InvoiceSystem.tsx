@@ -437,11 +437,11 @@ ${servicesText}
             </thead>
             <tbody>
               ${(selectedOrder.services || []).map((s: any, i: number) => `
-                <tr style="${i % 2 === 1 ? 'background: #f9fafb;' : ''}">
-                  <td style="padding: 12px; border-bottom: 1px solid #f3f4f6;">${i + 1}</td>
-                  <td style="padding: 12px; border-bottom: 1px solid #f3f4f6;">${s.serviceName || s.name || 'N/A'}</td>
-                  <td style="padding: 12px; border-bottom: 1px solid #f3f4f6;">${s.packageName || s.description || 'Custom'}</td>
-                  <td style="padding: 12px; border-bottom: 1px solid #f3f4f6; text-align: right; font-weight: bold;">৳${(s.price || 0).toLocaleString()}</td>
+                <tr style="${i % 2 === 1 ? 'background: #f9fafb;' : 'background: #ffffff;'}">
+                  <td style="padding: 12px; border-bottom: 1px solid #f3f4f6; color: #111827;">${i + 1}</td>
+                  <td style="padding: 12px; border-bottom: 1px solid #f3f4f6; color: #111827; font-weight: 500;">${s.serviceName || s.name || 'N/A'}</td>
+                  <td style="padding: 12px; border-bottom: 1px solid #f3f4f6; color: #374151;">${s.packageName || s.description || 'Custom'}</td>
+                  <td style="padding: 12px; border-bottom: 1px solid #f3f4f6; text-align: right; font-weight: bold; color: #111827;">৳${(s.price || 0).toLocaleString()}</td>
                 </tr>
               `).join('')}
             </tbody>
@@ -449,12 +449,12 @@ ${servicesText}
           
           <div style="margin: 16px 0;">
             <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f3f4f6;">
-              <span>মোট পরিমাণ</span>
-              <span>৳${Number(selectedInvoice.amount).toLocaleString()}</span>
+              <span style="color: #374151;">মোট পরিমাণ</span>
+              <span style="color: #111827; font-weight: 600;">৳${Number(selectedInvoice.amount).toLocaleString()}</span>
             </div>
             <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f3f4f6;">
-              <span>পরিশোধিত</span>
-              <span style="color: #10b981;">- ৳${Number(selectedInvoice.paid_amount).toLocaleString()}</span>
+              <span style="color: #374151;">পরিশোধিত</span>
+              <span style="color: #10b981; font-weight: 600;">- ৳${Number(selectedInvoice.paid_amount).toLocaleString()}</span>
             </div>
             <div style="background: linear-gradient(to right, #dc2626, #ef4444); color: white; padding: 12px 16px; border-radius: 12px; display: flex; justify-content: space-between; margin-top: 8px;">
               <span style="font-weight: bold;">মোট বাকি</span>

@@ -808,7 +808,13 @@ const AdminDashboard = () => {
         )}
 
         {activeTab === "invoices" && (
-          <InvoiceSystem invoices={invoices} orders={orders} onRefresh={fetchInvoices} />
+          <InvoiceSystem
+            invoices={invoices}
+            orders={orders}
+            onRefresh={async () => {
+              await Promise.all([fetchInvoices(), fetchOrders()]);
+            }}
+          />
         )}
 
         {activeTab === "messages" && (

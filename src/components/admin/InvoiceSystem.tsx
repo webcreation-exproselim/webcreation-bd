@@ -62,7 +62,7 @@ interface Invoice {
 interface InvoiceSystemProps {
   invoices: Invoice[];
   orders: Order[];
-  onRefresh: () => void;
+  onRefresh: () => void | Promise<void>;
 }
 
 export function InvoiceSystem({ invoices, orders, onRefresh }: InvoiceSystemProps) {

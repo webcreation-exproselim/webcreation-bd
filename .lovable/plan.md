@@ -1,118 +1,148 @@
 
-# Plugin Download Fix ও Client Dashboard Enhancement
+# Admin Dashboard: Manual Plan Assignment Feature
 
-## সমস্যা চিহ্নিত
+## সমস্যা বিশ্লেষণ
 
-### 1. Plugin Download Issue
-বর্তমান code-এ `downloadPluginFile` function:
-```javascript
-const blob = new Blob([content], { type: 'application/x-php' });
-```
+বর্তমানে Admin শুধু তাদের plan assign করতে পারেন যাদের **merchant record** আছে। কিন্তু merchant record তৈরি হয় যখন user:
+1. Client Dashboard-এ Fraud Guard section visit করে
+2. অথবা `useMerchantData` hook call হয়
 
-এই MIME type কিছু browser-এ সঠিকভাবে কাজ করে না এবং ফাইল `.ook` অথবা অন্য অপ্রত্যাশিত extension-এ download হচ্ছে।
-
-**সমাধান:** MIME type পরিবর্তন করে `text/plain` অথবা `application/octet-stream` ব্যবহার করতে হবে যাতে ফাইল সঠিক `.php` extension-এ download হয়।
-
-### 2. Setup Guide এর Visibility
-আপনি চাইছেন client login করলেই বুঝতে পারে যে Plugin আছে এবং Setup Guide সামনে দেখাবে।
-
-**সমাধান:** 
-- Client Dashboard-এ একটি প্রোমিনেন্ট "Plugin Banner" যোগ করা হবে
-- Stats Cards-এর সাথে Fraud Guard Plugin card দেখাবে
-- নতুন users-দের জন্য auto-সিলেক্ট হবে Fraud Guard tab
+যদি কোনো customer account করে কিন্তু Fraud Guard section visit না করে, তাহলে তার জন্য merchant record নেই এবং Admin plan assign করতে পারেন না।
 
 ---
 
-## পরিবর্তনসমূহ
+## প্রস্তাবিত সমাধান
 
-### File 1: `src/utils/pluginGenerator.ts`
+### Feature Overview
+Admin Dashboard-এ একটা নতুন ফিচার যোগ করা যেখানে:
+1. সব registered users দেখা যাবে (merchant থাকুক বা না থাকুক)
+2. Admin যেকোনো user-কে domain/website দিয়ে খুঁজতে পারবে
+3. যদি merchant record না থাকে, সেটা auto-create হবে
+4. Admin সরাসরি Monthly/Yearly plan assign করতে পারবে
 
-**Change:** `downloadPluginFile` function-এ MIME type fix
+### UI/UX Flow
 
-```typescript
-// Before
-const blob = new Blob([content], { type: 'application/x-php' });
-
-// After
-const blob = new Blob([content], { type: 'application/octet-stream' });
+```text
+Admin Dashboard → Fraud Guard Tab → Merchants Sub-Tab
+     │
+     ├── [বর্তমান] Existing Merchants Table
+     │
+     └── [নতুন] "Assign Plan to User" Button
+            │
+            ├── Modal Opens
+            │    ├── User Search (by Email, Name, Phone)
+            │    ├── User List (from profiles table)
+            │    ├── Select User
+            │    ├── Enter Website/Domain URL
+            │    ├── Select Plan (Monthly/Yearly)
+            │    └── Confirm Button
+            │
+            └── On Confirm:
+                 ├── Check if merchant exists for user
+                 ├── If not → Create merchant record
+                 ├── Update merchant with plan details
+                 └── Show success message
 ```
-
-এতে browser সঠিকভাবে `.php` file download করবে।
 
 ---
 
-### File 2: `src/pages/ClientDashboard.tsx`
+## Technical Implementation
+
+### 1. নতুন Component: `AssignPlanModal.tsx`
+
+**Path:** `src/components/admin/AssignPlanModal.tsx`
+
+**Features:**
+- User search functionality (profiles table থেকে)
+- All registered users list দেখানো
+- Selected user-এর জন্য website URL input
+- Plan type selection (Monthly / Yearly)
+- Auto-create merchant if not exists
+- Plan activation logic
+
+**State Management:**
+```text
+- users: UserProfile[]        - All registered users
+- selectedUser: UserProfile   - Currently selected user
+- websiteUrl: string          - Domain/website URL
+- planType: 'monthly' | 'yearly'
+- loading: boolean
+- search: string              - Search filter
+```
+
+### 2. MerchantManagement.tsx Update
 
 **Changes:**
+- Add "New Plan Assign" button in header
+- Import and render AssignPlanModal
+- Pass refetch function to modal
 
-1. **Stats Cards-এ Fraud Guard Plugin Promo Card যোগ:**
-   - "🛡️ Fraud Guard Plugin" নামের একটি special card
-   - Click করলে সরাসরি Fraud Guard tab-এ নিয়ে যাবে
-   - "Free Download" badge দেখাবে
+**UI Position:**
+```text
+┌──────────────────────────────────────────────────┐
+│  Merchant খুঁজুন...  [🔄 Refresh] [➕ Plan Assign] │
+├──────────────────────────────────────────────────┤
+│  Existing Merchants Table...                      │
+└──────────────────────────────────────────────────┘
+```
 
-2. **Welcome Section-এ Plugin Notification:**
-   - "🆕 নতুন! WCBD Fraud Guard Plugin - এখনই ডাউনলোড করুন" banner
-   - Click করলে Setup Guide tab-এ নিয়ে যাবে
+### 3. Database Flow
+
+```text
+1. Admin clicks "Plan Assign"
+2. Modal loads all users from 'profiles' table
+3. Admin searches by name/email/phone
+4. Admin selects user
+5. Admin enters website URL & selects plan
+6. System checks: Does merchant exist for this user_id?
+   │
+   ├── YES → Update existing merchant
+   │         - website_url = entered URL
+   │         - is_active = true
+   │         - current_plan = selected plan
+   │         - plan_expires_at = calculated date
+   │         - max_requests = plan-based limit
+   │         - requests_used = 0
+   │
+   └── NO → Create new merchant
+            - INSERT into merchants
+            - Same fields as above
+```
+
+### 4. Plan Details Reference
+
+| Plan | Duration | Max Requests | Price |
+|------|----------|--------------|-------|
+| Monthly | 30 days | 1,000 | ৳100 |
+| Yearly | 365 days | 15,000 | ৳699 |
 
 ---
 
-### File 3: `src/components/fraud-protection/FraudGuardSection.tsx`
+## File Changes Summary
 
-**Changes:**
-
-1. **Header Card-এ Plugin Download Button যোগ:**
-   - Header card-এ সরাসরি "Plugin Download" button
-   - যেন প্রথমেই client দেখতে পায়
-
-2. **Setup Guide tab সবার জন্য Default:**
-   - নতুন users (inactive) -দের জন্য default tab হবে "setup" 
-   - Active users-দের জন্য default tab হবে "overview"
+| File | Action | Description |
+|------|--------|-------------|
+| `src/components/admin/AssignPlanModal.tsx` | CREATE | New modal component for assigning plans |
+| `src/components/admin/MerchantManagement.tsx` | MODIFY | Add button and modal integration |
 
 ---
 
-## নতুন UI Design
+## Key Points
 
-### Client Dashboard - Fraud Guard Promo Banner
+1. **No Database Schema Change Needed**
+   - Using existing `merchants` and `profiles` tables
+   - RLS policies already allow admin full access
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  🛡️ WCBD Fraud Guard Plugin এখন Available!                      │
-│                                                                  │
-│  আপনার WooCommerce স্টোরকে Fake Order থেকে সুরক্ষিত রাখুন       │
-│                                                                  │
-│  [🔽 Plugin ডাউনলোড করুন]    [📚 Setup Guide দেখুন]              │
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
-```
+2. **Security**
+   - Admin-only access (already protected by parent component)
+   - Uses existing admin role check
 
-### Stats Cards - নতুন Fraud Guard Card
+3. **User Experience**
+   - Clean modal interface
+   - Search functionality for easy user finding
+   - Visual feedback on success/error
 
-```
-┌──────────────────────────────────────────────────────────────────┐
-│ Stats Cards                                                       │
-├──────────────┬──────────────┬──────────────┬──────────────────────┤
-│ 📦 3         │ 📄 2         │ 💬 5         │ 🛡️ Fraud Guard       │
-│ মোট অর্ডার   │ মোট ইনভয়েস   │ মেসেজ        │ Plugin Available!    │
-│              │              │              │ [Download Now →]     │
-└──────────────┴──────────────┴──────────────┴──────────────────────┘
-```
-
----
-
-## Technical Changes Summary
-
-| File | Change | Purpose |
-|------|--------|---------|
-| `pluginGenerator.ts` | MIME type fix | `.php` ফাইল সঠিকভাবে download |
-| `ClientDashboard.tsx` | Plugin promo banner ও card | Plugin visibility বাড়ানো |
-| `FraudGuardSection.tsx` | Header-এ download button, Default tab change | Quick access to plugin |
-| `SetupGuide.tsx` | Version update v2.0 → v3.0 | Consistency |
-
----
-
-## Implementation Steps
-
-1. `pluginGenerator.ts` - MIME type fix করা
-2. `ClientDashboard.tsx` - Fraud Guard promo banner ও stats card যোগ
-3. `FraudGuardSection.tsx` - Header-এ plugin button, default tab logic
-4. `SetupGuide.tsx` - Version number update
+4. **Edge Cases Handled**
+   - User already has merchant record → Update only
+   - User doesn't have merchant → Create + Activate
+   - Duplicate plan assignment → Overwrites previous plan

@@ -1,334 +1,330 @@
 
-
-# WCBD Fraud Guard - Complete Implementation Plan
+# WCBD Fraud Guard - Enhanced System with Charts & Admin Controls
 
 ## Overview
 
 এই plan-এ নিম্নলিখিত features implement করা হবে:
 
-1. **Client Dashboard-এ Fraud Protection অপশন** - Customer subscription ও access point
-2. **নতুন Info Page** - `/fraud-guard` route-এ details ও pricing সহ public page
-3. **Plugin rename to "WCBD Fraud Guard"**
-4. **Minutes-based cooldown** - Plugin থেকে minute-level control
-5. **Pricing: Monthly ৳100, Yearly ৳699**
+1. **Client Dashboard ও Admin Dashboard-এ সুন্দর Charts ও Graphs** যোগ করা
+2. **Admin-এর জন্য Manual Control System** - যেকোনো client-কে plan assign/activate/deactivate করা
+3. **Admin-এর জন্য API Logs Edit System** - যেকোনো log entry edit/delete করা
+4. **Frontend Menu-তে "Fraud Protection" অপশন** যোগ করা
+5. **Client Dashboard-এ Fraud Protection অপশন** যা click করলে সকল system ও pricing দেখাবে
 
 ---
 
-## System Architecture
+## 1. Frontend Navigation Updates
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        PUBLIC PAGES                              │
-├─────────────────────────────────────────────────────────────────┤
-│   /fraud-guard          →  Landing page with details & pricing  │
-│                              ↓ "কিনুন" button                   │
-│                              ↓                                   │
-│   /auth                 →  Login/Signup                          │
-│                              ↓                                   │
-│   /dashboard            →  Client Dashboard (Fraud Guard card)  │
-│                              ↓ "সেটিংস" button                  │
-│                              ↓                                   │
-│   /fraud-protection     →  Full dashboard (only for active)     │
-└─────────────────────────────────────────────────────────────────┘
-```
+### Header Menu-তে নতুন Item যোগ করা
 
----
+**Current Menu:**
+- হোম
+- সার্ভিস (dropdown)
+- পোর্টফোলিও
+- আমাদের সম্পর্কে
+- যোগাযোগ
 
-## 1. Database Changes
+**Updated Menu:**
+- হোম
+- সার্ভিস (dropdown)
+- **Fraud Protection** (নতুন - `/fraud-guard` page-এ link)
+- পোর্টফোলিও
+- আমাদের সম্পর্কে
+- যোগাযোগ
 
-### Update `merchants` Table - Add new columns
-
-| Column | Type | Default | Description |
-|--------|------|---------|-------------|
-| cooldown_period_minutes | integer | 1440 | Cooldown in MINUTES (1440 = 1 day) |
-| is_active | boolean | false | Account activated after payment? |
-| current_plan | text | NULL | 'monthly' or 'yearly' |
-| plan_expires_at | timestamptz | NULL | When subscription expires |
-| requests_used | integer | 0 | API calls used |
-| max_requests | integer | 0 | Max allowed requests |
-
-### New Table: `subscription_orders`
-
-| Column | Type | Description |
-|--------|------|-------------|
-| id | uuid | Primary key |
-| merchant_id | uuid (FK) | Which merchant |
-| plan_type | text | 'monthly' or 'yearly' |
-| amount | numeric | 100 or 699 |
-| payment_method | text | bkash/nagad/rocket |
-| transaction_id | text | Payment reference |
-| sender_number | text | Phone number |
-| payment_screenshot_url | text | Proof image |
-| status | text | pending/approved/rejected |
-| created_at | timestamptz | Order time |
-| approved_at | timestamptz | When approved |
+### Files to Update:
+- `src/components/Header.tsx` - Desktop navigation
+- `src/components/MobileDrawer.tsx` - Mobile navigation
 
 ---
 
-## 2. New Page: `/fraud-guard` - Landing Page with Details & Pricing
+## 2. Client Dashboard - Enhanced Fraud Guard Section
 
-### Page Structure
+### Current Situation:
+- `FraudGuardSection` component exists but is minimal
+- Shows subscription status only
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  HEADER (with navigation)                                        │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  🛡️ WCBD Fraud Guard                                            │
-│  আপনার WooCommerce স্টোর রক্ষা করুন                              │
-│                                                                  │
-│  [Hero section with features illustration]                       │
-│                                                                  │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  ✅ Features Section                                             │
-│  - Fake Order Protection                                         │
-│  - Device Fingerprinting                                         │
-│  - Minute-level Cooldown Control                                │
-│  - Blacklist Management                                          │
-│  - Real-time Logs                                                │
-│  - Beautiful Popup System                                        │
-│                                                                  │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  💰 PRICING PLANS                                                │
-│  ┌─────────────────┐  ┌─────────────────┐                       │
-│  │ 📅 MONTHLY       │  │ 📆 YEARLY        │                      │
-│  │                 │  │                 │                       │
-│  │   ৳১০০/মাস      │  │   ৳৬৯৯/বছর      │                       │
-│  │   1,000 req     │  │   15,000 req    │                       │
-│  │                 │  │   (42% সেভ!)    │                       │
-│  │   [শুরু করুন]   │  │   [শুরু করুন]   │                       │
-│  └─────────────────┘  └─────────────────┘                       │
-│                                                                  │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  🔧 HOW IT WORKS                                                 │
-│  Step 1: Account তৈরি করুন                                       │
-│  Step 2: Plan কিনুন                                              │
-│  Step 3: Plugin ডাউনলোড করুন                                     │
-│  Step 4: WooCommerce-এ ইন্সটল করুন                               │
-│                                                                  │
-├─────────────────────────────────────────────────────────────────┤
-│  FOOTER                                                          │
-└─────────────────────────────────────────────────────────────────┘
-```
+### Enhanced Features:
 
----
-
-## 3. Client Dashboard - Fraud Guard Card
-
-### Add Section to existing `/dashboard` page
-
-**If NOT Subscribed:**
+**Analytics Cards:**
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │  🛡️ WCBD Fraud Guard                                            │
+├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
-│  আপনার WooCommerce স্টোর Fake Order থেকে রক্ষা করুন!             │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐           │
+│  │ 1,245    │ │ 892      │ │ 245      │ │ 108      │           │
+│  │ মোট চেক  │ │ অনুমোদিত │ │ ব্লক     │ │ ব্ল্যাকলিস্ট│       │
+│  └──────────┘ └──────────┘ └──────────┘ └──────────┘           │
 │                                                                  │
-│  ┌──────────────┐  ┌──────────────┐                             │
-│  │ 📅 Monthly    │  │ 📆 Yearly     │                            │
-│  │ ৳১০০/মাস     │  │ ৳৬৯৯/বছর     │                            │
-│  │ [কিনুন]      │  │ [কিনুন]       │                            │
-│  └──────────────┘  └──────────────┘                             │
+│  📊 সাপ্তাহিক চার্ট                                              │
+│  [Line chart showing daily checks - allowed vs blocked]          │
 │                                                                  │
-│  [বিস্তারিত দেখুন →] (links to /fraud-guard)                    │
+│  [সেটিংস দেখুন →] [Plugin ডাউনলোড →]                            │
+│                                                                  │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-**If Payment Pending:**
+### New Component: `FraudGuardAnalytics.tsx`
+- Stats cards: Total checks, Allowed, Blocked (Cooldown), Blocked (Blacklist)
+- Line/Area chart: Daily order checks trend (7-day)
+- Pie chart: Block reasons distribution
+- Quick action buttons
+
+---
+
+## 3. Admin Dashboard - Fraud Guard Tab
+
+### Add New Tab: "Fraud Guard" (Icon: Shield)
+
+**Tab Features:**
+
+#### 3.1 Subscription Management (Enhanced)
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  ⏳ পেমেন্ট যাচাই করা হচ্ছে...                                   │
+│  👥 ALL MERCHANTS                                                │
+├─────────────────────────────────────────────────────────────────┤
+│  🔍 [Search merchants...]                                        │
 │                                                                  │
-│  আপনার পেমেন্ট ২-৪ ঘন্টার মধ্যে যাচাই হবে                       │
-│  Plan: Monthly | Amount: ৳100                                   │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │ user@example.com          │ Monthly │ Active    │ [Edit]    ││
+│  │ Website: store.com        │ 245/1000│ Exp: Mar 5│ [Deact]   ││
+│  ├─────────────────────────────────────────────────────────────┤│
+│  │ other@email.com           │ None    │ Inactive  │ [Activate]││
+│  │ Website: -                │ 0/0     │ -         │ [Assign]  ││
+│  └─────────────────────────────────────────────────────────────┘│
+│                                                                  │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-**If Active:**
+**Admin Actions:**
+- **Manual Activate**: Turn on any merchant without payment
+- **Manual Assign Plan**: Assign Monthly/Yearly plan to any merchant
+- **Deactivate**: Turn off any merchant's access
+- **Edit Merchant**: Change cooldown, website URL, API key
+
+#### 3.2 API Logs Management
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  ✅ WCBD Fraud Guard - Active                                    │
+│  📋 API LOGS (Admin View)                                        │
+├─────────────────────────────────────────────────────────────────┤
+│  [All Merchants ▼] [Filter by Status ▼] [Date Range]            │
 │                                                                  │
-│  Plan: Yearly | Expires: March 15, 2027                         │
-│  API Usage: [=====-----] 245 / 15,000                           │
+│  ┌──────────┬──────────┬──────────┬──────────┬────────────────┐│
+│  │ Date     │ Phone    │ IP       │ Status   │ Actions        ││
+│  ├──────────┼──────────┼──────────┼──────────┼────────────────┤│
+│  │ Feb 4    │ 0171...  │ 103.x.x  │ Allowed  │ [Edit] [Del]   ││
+│  │ Feb 4    │ 0181...  │ 192.x.x  │ Blocked  │ [Edit] [Del]   ││
+│  └──────────┴──────────┴──────────┴──────────┴────────────────┘│
 │                                                                  │
-│  [সেটিংস দেখুন →] (links to /fraud-protection)                  │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
----
+**Log Edit Modal:**
+- Edit phone number, IP, device ID
+- Change status (allowed/blocked_cooldown/blocked_blacklist)
+- Delete log entry
 
-## 4. Cooldown - Minutes System
-
-### Settings Page Update (`FraudSettings.tsx`)
-
-**Replace days slider with minutes input:**
-
+#### 3.3 Charts & Analytics
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  ⏱️ COOLDOWN PERIOD                                              │
+│  📊 FRAUD GUARD ANALYTICS                                        │
+├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
-│  Quick Select:                                                   │
-│  [5m] [30m] [1h] [6h] [1d] [7d] [30d]                          │
+│  ┌─────────────────────────┐ ┌─────────────────────────┐        │
+│  │ 📈 Daily API Requests   │ │ 🥧 Block Reasons        │        │
+│  │ [Area Chart]            │ │ [Pie Chart]             │        │
+│  │ Allowed vs Blocked      │ │ Cooldown vs Blacklist   │        │
+│  └─────────────────────────┘ └─────────────────────────┘        │
 │                                                                  │
-│  Custom:                                                         │
-│  [ 1440 ] minutes  =  ১ দিন                                     │
+│  ┌─────────────────────────┐ ┌─────────────────────────┐        │
+│  │ 👥 Active Subscribers   │ │ 💰 Subscription Revenue │        │
+│  │ [Bar Chart]             │ │ [Line Chart]            │        │
+│  │ Monthly vs Yearly       │ │ Monthly trend           │        │
+│  └─────────────────────────┘ └─────────────────────────┘        │
 │                                                                  │
-│  [আপডেট করুন]                                                    │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-**Preset Buttons:**
-- 5 minutes (5)
-- 30 minutes (30)
-- 1 hour (60)
-- 6 hours (360)
-- 1 day (1440)
-- 7 days (10080)
-- 30 days (43200)
-
 ---
 
-## 5. Plugin Rename & Update
+## 4. Database Changes
 
-### Changes to `pluginGenerator.ts`:
+### Update RLS Policies for `fraud_logs`
 
-1. **Rename plugin**: "Fraud Protection BD" → "WCBD Fraud Guard"
-2. **File name**: `fraud-protection-bd.php` → `wcbd-fraud-guard.php`
-3. **Update cooldown from days to minutes**
-4. **Popup messages for minutes/hours/days**
+Currently admins can only view logs. Need to add UPDATE and DELETE permissions:
 
-### Plugin Admin Panel Settings Update:
+```sql
+-- Allow admins to update fraud logs
+CREATE POLICY "Admins can update fraud logs"
+  ON fraud_logs FOR UPDATE
+  USING (has_role(auth.uid(), 'admin'::app_role));
 
-WordPress Dashboard → WCBD Fraud Guard → Settings
-- Add cooldown time field (minutes input)
-- Quick preset buttons
-- Real-time conversion display (minutes to days/hours)
-
----
-
-## 6. Edge Function Update
-
-### `check-order-eligibility/index.ts` Changes:
-
-```javascript
-// BEFORE: days-based
-const cooldownDate = new Date()
-cooldownDate.setDate(cooldownDate.getDate() - merchant.cooldown_period_days)
-
-// AFTER: minutes-based
-const cooldownMs = merchant.cooldown_period_minutes * 60 * 1000
-const cooldownDate = new Date(Date.now() - cooldownMs)
-
-// Add activation check
-if (!merchant.is_active) {
-  return { error: 'Account not activated' }
-}
-
-// Add plan expiry check  
-if (merchant.plan_expires_at && new Date(merchant.plan_expires_at) < new Date()) {
-  return { error: 'Subscription expired' }
-}
-
-// Add request limit check
-if (merchant.max_requests > 0 && merchant.requests_used >= merchant.max_requests) {
-  return { error: 'Request limit exceeded' }
-}
-
-// Return remaining time in minutes (for popup display)
-const minutesRemaining = Math.ceil((cooldownMs - elapsed) / 60000)
+-- Allow admins to delete fraud logs  
+CREATE POLICY "Admins can delete fraud logs"
+  ON fraud_logs FOR DELETE
+  USING (has_role(auth.uid(), 'admin'::app_role));
 ```
 
 ---
 
-## 7. Admin Dashboard - Subscription Management
-
-### New Tab: "Fraud Guard Subscriptions" 
-
-**Features:**
-- Pending orders list
-- Approve/Reject buttons
-- View payment screenshot
-- All subscriptions history
-
----
-
-## 8. File Changes Summary
+## 5. File Changes Summary
 
 ### New Files
 
 | File | Purpose |
 |------|---------|
-| `src/pages/FraudGuardPage.tsx` | Public landing page with details & pricing |
-| `src/components/fraud-protection/SubscriptionPlans.tsx` | Plan selection cards |
-| `src/components/fraud-protection/SubscriptionPurchaseModal.tsx` | Payment form modal |
-| `src/components/fraud-protection/SubscriptionStatus.tsx` | Active plan status |
-| `src/components/fraud-protection/CooldownMinutesSettings.tsx` | Minutes-based cooldown UI |
-| `src/components/admin/FraudSubscriptionManagement.tsx` | Admin approval panel |
-| `src/hooks/useSubscriptionData.ts` | Subscription operations |
+| `src/components/fraud-protection/FraudGuardAnalytics.tsx` | Client-side charts & stats |
+| `src/components/admin/FraudGuardManagement.tsx` | Complete admin panel for Fraud Guard |
+| `src/components/admin/MerchantManagement.tsx` | Merchant list with manual controls |
+| `src/components/admin/FraudLogsAdmin.tsx` | Admin log viewer with edit/delete |
+| `src/components/admin/FraudGuardCharts.tsx` | Admin analytics charts |
 
 ### Files to Modify
 
 | File | Change |
 |------|--------|
-| `src/App.tsx` | Add `/fraud-guard` route |
-| `src/pages/ClientDashboard.tsx` | Add Fraud Guard section card |
-| `src/pages/FraudProtectionPage.tsx` | Add subscription check + minutes UI |
-| `src/pages/AdminDashboard.tsx` | Add Fraud Guard Subscriptions tab |
-| `src/components/fraud-protection/FraudSettings.tsx` | Change days → minutes |
-| `src/components/fraud-protection/PluginDownload.tsx` | Update plugin name |
-| `src/hooks/useMerchantData.ts` | Add subscription fields, change days → minutes |
-| `src/utils/pluginGenerator.ts` | Rename to WCBD Fraud Guard, minutes support |
-| `supabase/functions/check-order-eligibility/index.ts` | Minutes + activation checks |
+| `src/components/Header.tsx` | Add "Fraud Protection" menu item |
+| `src/components/MobileDrawer.tsx` | Add "Fraud Protection" to mobile menu |
+| `src/pages/AdminDashboard.tsx` | Add "Fraud Guard" tab with full management |
+| `src/pages/ClientDashboard.tsx` | Enhance FraudGuardSection with charts |
+| `src/components/fraud-protection/FraudGuardSection.tsx` | Add analytics & charts |
+| `src/components/admin/FraudSubscriptionManagement.tsx` | Add manual activation controls |
 
 ---
 
-## 9. Implementation Phases
+## 6. Technical Implementation Details
 
-### Phase 1: Database Migration
-- Add new columns to `merchants` table
-- Create `subscription_orders` table
-- Add RLS policies
+### 6.1 Charts Library
+Using existing **Recharts** library (already installed):
+- `AreaChart` - Daily API requests trend
+- `PieChart` - Block reasons distribution
+- `BarChart` - Subscriber distribution
+- `LineChart` - Revenue trend
 
-### Phase 2: Public Landing Page
-- Create `/fraud-guard` page with full details
-- Pricing section with Monthly ৳100, Yearly ৳699
-- Features, How it works, etc.
+### 6.2 Admin Manual Controls
 
-### Phase 3: Client Dashboard Integration
-- Add Fraud Guard card section
-- Subscription purchase modal
-- Payment screenshot upload
-- Pending/Active status display
+**Activate Merchant:**
+```typescript
+const activateMerchant = async (merchantId: string, planType: 'monthly' | 'yearly') => {
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + (planType === 'yearly' ? 365 : 30));
+  
+  await supabase.from('merchants').update({
+    is_active: true,
+    current_plan: planType,
+    plan_expires_at: expiresAt.toISOString(),
+    max_requests: planType === 'yearly' ? 15000 : 1000,
+    requests_used: 0,
+  }).eq('id', merchantId);
+};
+```
 
-### Phase 4: Settings Update
-- Change cooldown from days to minutes
-- Add preset buttons
-- Update useMerchantData hook
+**Deactivate Merchant:**
+```typescript
+const deactivateMerchant = async (merchantId: string) => {
+  await supabase.from('merchants').update({
+    is_active: false,
+    current_plan: null,
+    plan_expires_at: null,
+  }).eq('id', merchantId);
+};
+```
 
-### Phase 5: Plugin Update
-- Rename to "WCBD Fraud Guard"
-- Update pluginGenerator.ts
-- Minutes-based cooldown in generated PHP
+### 6.3 Log Edit/Delete
 
-### Phase 6: Edge Function
-- Add activation/expiry/limit checks
-- Change cooldown from days to minutes
-- Return remaining time in appropriate unit
+**Edit Log:**
+```typescript
+const updateLog = async (logId: string, updates: Partial<FraudLog>) => {
+  await supabase.from('fraud_logs').update(updates).eq('id', logId);
+};
+```
 
-### Phase 7: Admin Panel
-- Add subscription management tab
-- Approve/reject functionality
+**Delete Log:**
+```typescript
+const deleteLog = async (logId: string) => {
+  await supabase.from('fraud_logs').delete().eq('id', logId);
+};
+```
 
 ---
 
-## Pricing Summary
+## 7. Implementation Phases
 
-| Plan | Price | Duration | Requests | Per Day Cost |
-|------|-------|----------|----------|--------------|
-| Monthly | ৳100 | 30 days | 1,000 | ৳3.33/day |
-| Yearly | ৳699 | 365 days | 15,000 | ৳1.91/day (42% সেভ!) |
+### Phase 1: Database & Policies
+- Add RLS policies for fraud_logs UPDATE/DELETE
 
+### Phase 2: Navigation Updates
+- Add "Fraud Protection" to Header.tsx
+- Add "Fraud Protection" to MobileDrawer.tsx
+
+### Phase 3: Client Dashboard Enhancement
+- Create FraudGuardAnalytics component with charts
+- Integrate into FraudGuardSection
+
+### Phase 4: Admin Dashboard - Fraud Guard Tab
+- Add new "Fraud Guard" tab
+- Create MerchantManagement component
+- Add manual activate/deactivate/assign functionality
+- Create FraudLogsAdmin component with edit/delete
+- Create FraudGuardCharts for admin analytics
+
+### Phase 5: Testing & Polish
+- Test all admin controls
+- Verify charts render correctly
+- Ensure mobile responsiveness
+
+---
+
+## Visual Preview
+
+### Client Dashboard - Fraud Guard Section
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  🛡️ WCBD Fraud Guard - Active                                   │
+│  Plan: Yearly | Expires: March 15, 2027                         │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐           │
+│  │ 🔍 1,245 │ │ ✅ 892   │ │ ⏱️ 245  │ │ 🚫 108   │           │
+│  │ Total    │ │ Allowed  │ │ Cooldown │ │ Blacklist│           │
+│  └──────────┘ └──────────┘ └──────────┘ └──────────┘           │
+│                                                                  │
+│  📈 সাপ্তাহিক অর্ডার চেক                                         │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │     /\      /\                                              ││
+│  │    /  \    /  \    ───── Allowed                            ││
+│  │   /    \  /    \   ----- Blocked                            ││
+│  │  /      \/      \                                           ││
+│  │ Mon Tue Wed Thu Fri Sat Sun                                 ││
+│  └─────────────────────────────────────────────────────────────┘│
+│                                                                  │
+│  [⚙️ সেটিংস] [📥 Plugin ডাউনলোড] [📊 বিস্তারিত দেখুন]           │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Admin Dashboard - Fraud Guard Tab
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  🛡️ FRAUD GUARD MANAGEMENT                                      │
+├─────────────────────────────────────────────────────────────────┤
+│  [📊 Overview] [👥 Merchants] [📋 Logs] [💳 Subscriptions]      │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  Stats Cards:                                                    │
+│  ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐                   │
+│  │ 45     │ │ 28     │ │ 12,450 │ │ ৳15,200│                   │
+│  │ Total  │ │ Active │ │ API    │ │ Revenue│                   │
+│  └────────┘ └────────┘ └────────┘ └────────┘                   │
+│                                                                  │
+│  Charts: (2x2 grid)                                              │
+│  ┌─────────────────────┐ ┌─────────────────────┐                │
+│  │ Daily Requests      │ │ Block Distribution  │                │
+│  │ [Area Chart]        │ │ [Pie Chart]         │                │
+│  └─────────────────────┘ └─────────────────────┘                │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```

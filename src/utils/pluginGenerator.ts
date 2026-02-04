@@ -125,30 +125,30 @@ class WCBD_Fraud_Guard {
     }
     
     private function get_checkout_js() {
-        $api_key = get_option('wcbd_fraud_guard_api_key', $this->api_key);
-        $language = get_option('wcbd_fraud_guard_language', 'bn');
-        $popup_timer = intval(get_option('wcbd_fraud_guard_popup_timer', 30));
-        $msg_cooldown = esc_js(get_option('wcbd_fraud_guard_msg_cooldown', 'আপনি সম্প্রতি অর্ডার করেছেন। অনুগ্রহ করে কিছুক্ষণ অপেক্ষা করুন।'));
-        $msg_blacklist = esc_js(get_option('wcbd_fraud_guard_msg_blacklist', 'আপনার অর্ডার ব্লক করা হয়েছে। সমস্যা হলে যোগাযোগ করুন।'));
-        $whatsapp = esc_js(get_option('wcbd_fraud_guard_whatsapp', ''));
-        $phone = esc_js(get_option('wcbd_fraud_guard_phone', ''));
-        $show_contact = get_option('wcbd_fraud_guard_show_contact', '1');
+        \$api_key = get_option('wcbd_fraud_guard_api_key', \$this->api_key);
+        \$language = get_option('wcbd_fraud_guard_language', 'bn');
+        \$popup_timer = intval(get_option('wcbd_fraud_guard_popup_timer', 30));
+        \$msg_cooldown = esc_js(get_option('wcbd_fraud_guard_msg_cooldown', 'আপনি সম্প্রতি অর্ডার করেছেন। অনুগ্রহ করে কিছুক্ষণ অপেক্ষা করুন।'));
+        \$msg_blacklist = esc_js(get_option('wcbd_fraud_guard_msg_blacklist', 'আপনার অর্ডার ব্লক করা হয়েছে। সমস্যা হলে যোগাযোগ করুন।'));
+        \$whatsapp = esc_js(get_option('wcbd_fraud_guard_whatsapp', ''));
+        \$phone = esc_js(get_option('wcbd_fraud_guard_phone', ''));
+        \$show_contact = get_option('wcbd_fraud_guard_show_contact', '1');
         
-        return "
-        (function($) {
+        return \"
+        (function(jQ) {
             var FG = {
                 deviceId: null,
-                endpoint: '{$this->endpoint}',
-                apiKey: '{$api_key}',
-                lang: '{$language}',
-                popupTimer: {$popup_timer},
-                msgCooldown: '{$msg_cooldown}',
-                msgBlacklist: '{$msg_blacklist}',
-                whatsapp: '{$whatsapp}',
-                phone: '{$phone}',
-                showContact: '{$show_contact}' === '1',
-                logoUrl: '{$this->logo_url}',
-                fraudGuardUrl: '{$this->fraud_guard_url}',
+                endpoint: '{\$this->endpoint}',
+                apiKey: '{\$api_key}',
+                lang: '{\$language}',
+                popupTimer: {\$popup_timer},
+                msgCooldown: '{\$msg_cooldown}',
+                msgBlacklist: '{\$msg_blacklist}',
+                whatsapp: '{\$whatsapp}',
+                phone: '{\$phone}',
+                showContact: '{\$show_contact}' === '1',
+                logoUrl: '{\$this->logo_url}',
+                fraudGuardUrl: '{\$this->fraud_guard_url}',
                 
                 init: function() {
                     var self = this;
@@ -157,17 +157,17 @@ class WCBD_Fraud_Guard {
                             fp.get().then(function(r) { self.deviceId = r.visitorId; });
                         });
                     }
-                    $('form.checkout').on('checkout_place_order', function() { return self.validate($(this)); });
+                    jQ('form.checkout').on('checkout_place_order', function() { return self.validate(jQ(this)); });
                 },
                 
                 validate: function(f) {
                     var self = this;
-                    var phone = $('#billing_phone').val();
+                    var phone = jQ('#billing_phone').val();
                     var btn = f.find('button[type=submit]');
                     
                     btn.prop('disabled', true).data('txt', btn.text()).html(this.lang === 'bn' ? 'চেক করা হচ্ছে...' : 'Checking...');
                     
-                    $.ajax({
+                    jQ.ajax({
                         url: this.endpoint,
                         method: 'POST',
                         contentType: 'application/json',
@@ -209,51 +209,51 @@ class WCBD_Fraud_Guard {
                         ? {blacklist: 'অর্ডার ব্লক করা হয়েছে', cooldown: 'অপেক্ষা করুন'}
                         : {blacklist: 'Order Blocked', cooldown: 'Please Wait'};
                     
-                    var timeDisplay = mins ? '<p class=\"fraud-popup-time\">⏰ ' + this.formatTime(mins) + ' ' + (this.lang === 'bn' ? 'বাকি' : 'remaining') + '</p>' : '';
+                    var timeDisplay = mins ? '<p class=\\\"fraud-popup-time\\\">⏰ ' + this.formatTime(mins) + ' ' + (this.lang === 'bn' ? 'বাকি' : 'remaining') + '</p>' : '';
                     
                     // Contact section
                     var contactHtml = '';
                     if (this.showContact && (this.whatsapp || this.phone)) {
-                        contactHtml = '<div class=\"fraud-popup-contact-box\">' +
-                            '<p class=\"fraud-popup-contact-title\">' + (this.lang === 'bn' ? '📞 সমস্যা হলে যোগাযোগ করুন' : '📞 Contact Us') + '</p>' +
-                            '<div class=\"fraud-popup-contact\">';
+                        contactHtml = '<div class=\\\"fraud-popup-contact-box\\\">' +
+                            '<p class=\\\"fraud-popup-contact-title\\\">' + (this.lang === 'bn' ? '📞 সমস্যা হলে যোগাযোগ করুন' : '📞 Contact Us') + '</p>' +
+                            '<div class=\\\"fraud-popup-contact\\\">';
                         
                         if (this.whatsapp) {
-                            var waNum = this.whatsapp.replace(/\\D/g, '');
-                            contactHtml += '<a href=\"https://wa.me/' + waNum + '\" target=\"_blank\" class=\"fraud-popup-whatsapp\">💬 WhatsApp</a>';
+                            var waNum = this.whatsapp.replace(/\\\\D/g, '');
+                            contactHtml += '<a href=\\\"https://wa.me/' + waNum + '\\\" target=\\\"_blank\\\" class=\\\"fraud-popup-whatsapp\\\">💬 WhatsApp</a>';
                         }
                         if (this.phone) {
-                            contactHtml += '<a href=\"tel:' + this.phone + '\" class=\"fraud-popup-phone\">📱 ' + (this.lang === 'bn' ? 'ফোন করুন' : 'Call') + '</a>';
+                            contactHtml += '<a href=\\\"tel:' + this.phone + '\\\" class=\\\"fraud-popup-phone\\\">📱 ' + (this.lang === 'bn' ? 'ফোন করুন' : 'Call') + '</a>';
                         }
                         
                         contactHtml += '</div></div>';
                     }
                     
                     // Timer countdown
-                    var timerHtml = this.popupTimer > 0 ? '<span class=\"fraud-popup-countdown\">(' + this.popupTimer + 's)</span>' : '';
+                    var timerHtml = this.popupTimer > 0 ? '<span class=\\\"fraud-popup-countdown\\\">(' + this.popupTimer + 's)</span>' : '';
                     var btnText = this.lang === 'bn' ? 'ঠিক আছে' : 'OK';
                     
-                    var html = '<div class=\"fraud-popup-overlay\" id=\"fraudPopup\">' +
-                        '<div class=\"fraud-popup-modal\">' +
-                        '<img src=\"' + this.logoUrl + '\" class=\"fraud-popup-logo\" alt=\"Logo\" onerror=\"this.style.display=\\'none\\'\">' +
-                        '<p class=\"fraud-popup-brand\">WebCreation BD</p>' +
-                        '<div class=\"fraud-popup-icon ' + type + '\">' + (icons[type] || '⚠️') + '</div>' +
-                        '<h3 class=\"fraud-popup-title\">' + (titles[type] || 'Error') + '</h3>' +
-                        '<p class=\"fraud-popup-message\">' + msg + '</p>' +
+                    var html = '<div class=\\\"fraud-popup-overlay\\\" id=\\\"fraudPopup\\\">' +
+                        '<div class=\\\"fraud-popup-modal\\\">' +
+                        '<img src=\\\"' + this.logoUrl + '\\\" class=\\\"fraud-popup-logo\\\" alt=\\\"Logo\\\" onerror=\\\"this.style.display=\\\\'none\\\\'\\\">' +
+                        '<p class=\\\"fraud-popup-brand\\\">WebCreation BD</p>' +
+                        '<div class=\\\"fraud-popup-icon ' + type + '\\\">' + (icons[type] || '⚠️') + '</div>' +
+                        '<h3 class=\\\"fraud-popup-title\\\">' + (titles[type] || 'Error') + '</h3>' +
+                        '<p class=\\\"fraud-popup-message\\\">' + msg + '</p>' +
                         timeDisplay +
                         contactHtml +
-                        '<button class=\"fraud-popup-button\" id=\"fraudPopupBtn\">' + btnText + ' ' + timerHtml + '</button>' +
-                        '<a href=\"' + this.fraudGuardUrl + '\" target=\"_blank\" class=\"fraud-popup-link\">' + 
+                        '<button class=\\\"fraud-popup-button\\\" id=\\\"fraudPopupBtn\\\">' + btnText + ' ' + timerHtml + '</button>' +
+                        '<a href=\\\"' + this.fraudGuardUrl + '\\\" target=\\\"_blank\\\" class=\\\"fraud-popup-link\\\">' + 
                             (this.lang === 'bn' ? 'বিস্তারিত জানতে এখানে ক্লিক করুন →' : 'Learn more about our protection →') + 
                         '</a>' +
-                        '<p class=\"fraud-popup-branding\">Powered by WebCreation BD</p>' +
+                        '<p class=\\\"fraud-popup-branding\\\">Powered by WebCreation BD</p>' +
                         '</div></div>';
                     
-                    $('body').append(html);
+                    jQ('body').append(html);
                     
                     // Button click handler
-                    $('#fraudPopupBtn').on('click', function() {
-                        $('#fraudPopup').remove();
+                    jQ('#fraudPopupBtn').on('click', function() {
+                        jQ('#fraudPopup').remove();
                     });
                     
                     // Timer countdown
@@ -261,18 +261,18 @@ class WCBD_Fraud_Guard {
                         var countdown = this.popupTimer;
                         var interval = setInterval(function() {
                             countdown--;
-                            $('#fraudPopupBtn .fraud-popup-countdown').text('(' + countdown + 's)');
+                            jQ('#fraudPopupBtn .fraud-popup-countdown').text('(' + countdown + 's)');
                             if (countdown <= 0) {
                                 clearInterval(interval);
-                                $('#fraudPopup').remove();
+                                jQ('#fraudPopup').remove();
                             }
                         }, 1000);
                     }
                 }
             };
-            $(function() { FG.init(); });
+            jQ(function() { FG.init(); });
         })(jQuery);
-        ";
+        \";
     }
     
     private function get_admin_css() {
@@ -308,18 +308,18 @@ class WCBD_Fraud_Guard {
     }
     
     private function get_admin_js() {
-        $nonce = wp_create_nonce('wcbd_fraud_guard_nonce');
-        return "
-        jQuery(function($) {
-            $('#test-api-btn').on('click', function() {
-                var btn = $(this);
-                var result = $('#api-result');
+        \$nonce = wp_create_nonce('wcbd_fraud_guard_nonce');
+        return \"
+        jQuery(function(jQ) {
+            jQ('#test-api-btn').on('click', function() {
+                var btn = jQ(this);
+                var result = jQ('#api-result');
                 btn.prop('disabled', true).text('Testing...');
                 result.removeClass('success error').text('');
                 
-                $.post(ajaxurl, {
+                jQ.post(ajaxurl, {
                     action: 'wcbd_fraud_guard_test_api',
-                    nonce: '" . $nonce . "'
+                    nonce: '\" . \$nonce . \"'
                 }, function(r) {
                     btn.prop('disabled', false).text('Test');
                     if (r.success) {
@@ -330,7 +330,7 @@ class WCBD_Fraud_Guard {
                 });
             });
         });
-        ";
+        \";
     }
     
     public function render_settings_page() {

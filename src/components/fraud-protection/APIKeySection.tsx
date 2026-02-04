@@ -1,16 +1,22 @@
 import { useState } from "react";
-import { Lock, Copy, Check, ShoppingCart } from "lucide-react";
+import { Lock, Copy, Check, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { SubscriptionPlans } from "./SubscriptionPlans";
+import { SubscriptionPurchaseModal } from "./SubscriptionPurchaseModal";
 
 interface APIKeySectionProps {
   apiKey: string;
   isActive: boolean;
-  onPurchase: () => void;
+  merchantId?: string;
+  onPurchaseSuccess?: () => void;
 }
 
-export function APIKeySection({ apiKey, isActive, onPurchase }: APIKeySectionProps) {
+export function APIKeySection({ apiKey, isActive, merchantId, onPurchaseSuccess }: APIKeySectionProps) {
   const [copied, setCopied] = useState(false);
+  const [showPlanModal, setShowPlanModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('monthly');
   const { toast } = useToast();
 
   const copyToClipboard = async () => {
@@ -30,44 +36,86 @@ export function APIKeySection({ apiKey, isActive, onPurchase }: APIKeySectionPro
     }
   };
 
+  const handleSelectPlan = (planType: 'monthly' | 'yearly') => {
+    setSelectedPlan(planType);
+    setShowPlanModal(false);
+    setShowPaymentModal(true);
+  };
+
+  const handlePurchaseSuccess = () => {
+    setShowPaymentModal(false);
+    onPurchaseSuccess?.();
+  };
+
   if (!isActive) {
     return (
-      <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl border border-gray-200 p-6 relative overflow-hidden">
-        {/* Locked Overlay */}
-        <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center z-10">
-          <div className="text-center">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center mx-auto mb-4 shadow-lg">
-              <Lock className="w-8 h-8 text-gray-600" />
+      <>
+        <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl border border-gray-200 p-6 relative overflow-hidden">
+          {/* Locked Overlay */}
+          <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center z-10">
+            <div className="text-center">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <Lock className="w-8 h-8 text-gray-600" />
+              </div>
+              <p className="text-gray-700 font-medium font-bengali mb-4">
+                API Key পেতে Plan কিনুন
+              </p>
+              <Button
+                onClick={() => setShowPlanModal(true)}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white gap-2 rounded-xl shadow-lg shadow-blue-500/25"
+              >
+                <Sparkles className="w-4 h-4" />
+                <span className="font-bengali">Plan কিনুন</span>
+              </Button>
             </div>
-            <p className="text-gray-700 font-medium font-bengali mb-4">
-              API Key পেতে Plan কিনুন
-            </p>
-            <Button
-              onClick={onPurchase}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white gap-2 rounded-xl shadow-lg shadow-blue-500/25"
-            >
-              <ShoppingCart className="w-4 h-4" />
-              <span className="font-bengali">Plan কিনুন</span>
-            </Button>
+          </div>
+
+          {/* Blurred Content Behind */}
+          <div className="select-none pointer-events-none">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-gray-200 flex items-center justify-center">
+                <Lock className="w-5 h-5 text-gray-400" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-400 font-bengali">আপনার API Key</p>
+                <p className="text-xs text-gray-300">Plugin-এ ব্যবহার করুন</p>
+              </div>
+            </div>
+            <div className="bg-gray-200 rounded-xl p-4 font-mono text-gray-400 text-sm blur-sm">
+              xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+            </div>
           </div>
         </div>
 
-        {/* Blurred Content Behind */}
-        <div className="select-none pointer-events-none">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-xl bg-gray-200 flex items-center justify-center">
-              <Lock className="w-5 h-5 text-gray-400" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-400 font-bengali">আপনার API Key</p>
-              <p className="text-xs text-gray-300">Plugin-এ ব্যবহার করুন</p>
+        {/* Plan Selection Modal */}
+        {showPlanModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+            <div className="bg-white border border-gray-200 rounded-3xl p-6 max-w-xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold text-gray-900 font-bengali">Plan নির্বাচন করুন</h2>
+                <button 
+                  onClick={() => setShowPlanModal(false)}
+                  className="text-gray-400 hover:text-gray-600 text-2xl w-10 h-10 rounded-full hover:bg-gray-100 flex items-center justify-center"
+                >
+                  ×
+                </button>
+              </div>
+              <SubscriptionPlans onSelectPlan={handleSelectPlan} />
             </div>
           </div>
-          <div className="bg-gray-200 rounded-xl p-4 font-mono text-gray-400 text-sm blur-sm">
-            xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-          </div>
-        </div>
-      </div>
+        )}
+
+        {/* Payment Modal */}
+        {merchantId && (
+          <SubscriptionPurchaseModal
+            isOpen={showPaymentModal}
+            onClose={() => setShowPaymentModal(false)}
+            planType={selectedPlan}
+            merchantId={merchantId}
+            onSuccess={handlePurchaseSuccess}
+          />
+        )}
+      </>
     );
   }
 

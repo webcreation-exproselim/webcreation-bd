@@ -466,6 +466,24 @@ ADMINJSTEMPLATE;
                         💾 Save Settings
                     </button>
                 </form>
+                
+                <!-- WebCreation BD Branding -->
+                <div style="margin-top:30px;padding:25px;background:linear-gradient(135deg,#0f172a,#1e293b);border-radius:16px;text-align:center;border:1px solid #334155">
+                    <div style="margin-bottom:15px">
+                        <img src="https://webcreation-bd.lovable.app/logo.png" alt="WebCreation BD" style="width:60px;height:60px;border-radius:50%;border:3px solid #0891b2;object-fit:contain;background:#fff;padding:5px">
+                    </div>
+                    <h3 style="color:#fff;margin:0 0 5px;font-size:18px">WebCreation BD</h3>
+                    <p style="color:#94a3b8;margin:0 0 15px;font-size:13px">Best Digital Marketing In Bangladesh</p>
+                    <div style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap">
+                        <a href="https://webcreation-bd.lovable.app" target="_blank" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:linear-gradient(135deg,#0891b2,#06b6d4);color:#fff;text-decoration:none;border-radius:8px;font-size:13px;font-weight:500">
+                            🌐 Visit Website
+                        </a>
+                        <a href="https://webcreation-bd.lovable.app/dashboard" target="_blank" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#374151;color:#fff;text-decoration:none;border-radius:8px;font-size:13px;font-weight:500">
+                            📊 Dashboard
+                        </a>
+                    </div>
+                    <p style="color:#64748b;font-size:11px;margin-top:15px">Powered by WebCreation BD © <?php echo date('Y'); ?></p>
+                </div>
             </div>
         </div>
         <?php

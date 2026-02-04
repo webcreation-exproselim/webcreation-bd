@@ -5,7 +5,7 @@ import {
   Package, Phone, User, CreditCard, ExternalLink,
   Users, FileImage, FileText, Trash2,
   Plus, Upload, X, Edit2, Loader2, Search, MessageCircle, Send,
-  LayoutDashboard, UserPlus, Star, PenTool
+  LayoutDashboard, UserPlus, Star, PenTool, Shield
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,6 +48,7 @@ import { InvoiceSystem } from "@/components/admin/InvoiceSystem";
 import { PaymentSettings } from "@/components/admin/PaymentSettings";
 import { ReviewsManagement } from "@/components/admin/ReviewsManagement";
 import { ContentManagement } from "@/components/admin/ContentManagement";
+import { FraudGuardManagement } from "@/components/admin/FraudGuardManagement";
 
 interface OrderService {
   id: string;
@@ -145,7 +146,7 @@ const categoryLabels: Record<string, string> = {
   "landing-page": "ল্যান্ডিং পেজ",
 };
 
-type TabType = "overview" | "orders" | "users" | "portfolio" | "invoices" | "messages" | "payments" | "reviews" | "content";
+type TabType = "overview" | "orders" | "users" | "portfolio" | "invoices" | "messages" | "payments" | "reviews" | "content" | "fraudguard";
 
 const AdminDashboard = () => {
   const [user, setUser] = useState<SupabaseUser | null>(null);
@@ -519,6 +520,7 @@ const AdminDashboard = () => {
     { id: "overview" as TabType, label: "ওভারভিউ", icon: LayoutDashboard },
     { id: "orders" as TabType, label: "অর্ডার", icon: Package },
     { id: "users" as TabType, label: "ইউজার", icon: Users },
+    { id: "fraudguard" as TabType, label: "Fraud Guard", icon: Shield },
     { id: "portfolio" as TabType, label: "পোর্টফোলিও", icon: FileImage },
     { id: "invoices" as TabType, label: "ইনভয়েস", icon: FileText },
     { id: "messages" as TabType, label: "মেসেজ", icon: MessageCircle },
@@ -577,6 +579,10 @@ const AdminDashboard = () => {
         {/* Tab Content */}
         {activeTab === "overview" && (
           <AnalyticsCharts orders={orders} usersCount={users.length} />
+        )}
+
+        {activeTab === "fraudguard" && (
+          <FraudGuardManagement />
         )}
 
         {activeTab === "orders" && (

@@ -74,10 +74,10 @@ export function FraudGuardAnalytics({ logs, loading }: FraudGuardAnalyticsProps)
       <div className="space-y-4 animate-pulse">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map(i => (
-            <div key={i} className="bg-white/10 rounded-xl h-24" />
+            <div key={i} className="bg-gray-100 rounded-xl h-24" />
           ))}
         </div>
-        <div className="bg-white/10 rounded-xl h-64" />
+        <div className="bg-gray-100 rounded-xl h-64" />
       </div>
     );
   }
@@ -85,113 +85,107 @@ export function FraudGuardAnalytics({ logs, loading }: FraudGuardAnalyticsProps)
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-blue-500/20 to-blue-600/10 border-blue-500/30">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
-                <Shield className="w-5 h-5 text-blue-400" />
-              </div>
-              <div>
-                <p className="text-white/60 text-xs font-bengali">মোট চেক</p>
-                <p className="text-2xl font-bold text-white">{stats.total.toLocaleString()}</p>
-              </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4">
+        <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+              <Shield className="w-5 h-5 text-blue-600" />
             </div>
-          </CardContent>
-        </Card>
+            <div>
+              <p className="text-gray-500 text-xs font-bengali">মোট চেক</p>
+              <p className="text-xl md:text-2xl font-bold text-gray-900">{stats.total.toLocaleString()}</p>
+            </div>
+          </div>
+        </div>
 
-        <Card className="bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border-emerald-500/30">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
-                <CheckCircle className="w-5 h-5 text-emerald-400" />
-              </div>
-              <div>
-                <p className="text-white/60 text-xs font-bengali">অনুমোদিত</p>
-                <p className="text-2xl font-bold text-white">{stats.allowed.toLocaleString()}</p>
-              </div>
+        <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
+              <CheckCircle className="w-5 h-5 text-emerald-600" />
             </div>
-          </CardContent>
-        </Card>
+            <div>
+              <p className="text-gray-500 text-xs font-bengali">অনুমোদিত</p>
+              <p className="text-xl md:text-2xl font-bold text-gray-900">{stats.allowed.toLocaleString()}</p>
+            </div>
+          </div>
+        </div>
 
-        <Card className="bg-gradient-to-br from-amber-500/20 to-amber-600/10 border-amber-500/30">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center">
-                <Clock className="w-5 h-5 text-amber-400" />
-              </div>
-              <div>
-                <p className="text-white/60 text-xs font-bengali">কুলডাউন ব্লক</p>
-                <p className="text-2xl font-bold text-white">{stats.cooldown.toLocaleString()}</p>
-              </div>
+        <div className="bg-amber-50 border border-amber-100 rounded-xl p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
+              <Clock className="w-5 h-5 text-amber-600" />
             </div>
-          </CardContent>
-        </Card>
+            <div>
+              <p className="text-gray-500 text-xs font-bengali">কুলডাউন</p>
+              <p className="text-xl md:text-2xl font-bold text-gray-900">{stats.cooldown.toLocaleString()}</p>
+            </div>
+          </div>
+        </div>
 
-        <Card className="bg-gradient-to-br from-red-500/20 to-red-600/10 border-red-500/30">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center">
-                <Ban className="w-5 h-5 text-red-400" />
-              </div>
-              <div>
-                <p className="text-white/60 text-xs font-bengali">ব্ল্যাকলিস্ট</p>
-                <p className="text-2xl font-bold text-white">{stats.blacklist.toLocaleString()}</p>
-              </div>
+        <div className="bg-red-50 border border-red-100 rounded-xl p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center">
+              <Ban className="w-5 h-5 text-red-600" />
             </div>
-          </CardContent>
-        </Card>
+            <div>
+              <p className="text-gray-500 text-xs font-bengali">ব্ল্যাকলিস্ট</p>
+              <p className="text-xl md:text-2xl font-bold text-gray-900">{stats.blacklist.toLocaleString()}</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         {/* Area Chart - Weekly Trend */}
-        <Card className="bg-white/5 border-white/10">
+        <Card className="bg-white border-gray-100 shadow-sm">
           <CardHeader className="pb-2">
-            <CardTitle className="text-white font-bengali text-lg flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-blue-400" />
+            <CardTitle className="text-gray-900 font-bengali text-base md:text-lg flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-blue-600" />
               সাপ্তাহিক ট্রেন্ড
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-64">
+            <div className="h-48 md:h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={trendData}>
                   <defs>
-                    <linearGradient id="colorAllowed" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10B981" stopOpacity={0.3}/>
+                    <linearGradient id="colorAllowedLight" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10B981" stopOpacity={0.2}/>
                       <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
                     </linearGradient>
-                    <linearGradient id="colorBlocked" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#EF4444" stopOpacity={0.3}/>
+                    <linearGradient id="colorBlockedLight" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#EF4444" stopOpacity={0.2}/>
                       <stop offset="95%" stopColor="#EF4444" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis dataKey="date" stroke="#9CA3AF" fontSize={12} />
-                  <YAxis stroke="#9CA3AF" fontSize={12} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                  <XAxis dataKey="date" stroke="#9CA3AF" fontSize={11} />
+                  <YAxis stroke="#9CA3AF" fontSize={11} />
                   <Tooltip 
                     contentStyle={{ 
-                      backgroundColor: '#1F2937', 
-                      border: '1px solid #374151',
-                      borderRadius: '8px',
-                      color: '#fff'
+                      backgroundColor: '#FFFFFF', 
+                      border: '1px solid #E5E7EB',
+                      borderRadius: '12px',
+                      boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)'
                     }}
                   />
                   <Area 
                     type="monotone" 
                     dataKey="allowed" 
                     stroke="#10B981" 
+                    strokeWidth={2}
                     fillOpacity={1} 
-                    fill="url(#colorAllowed)" 
+                    fill="url(#colorAllowedLight)" 
                     name="অনুমোদিত"
                   />
                   <Area 
                     type="monotone" 
                     dataKey="blocked" 
                     stroke="#EF4444" 
+                    strokeWidth={2}
                     fillOpacity={1} 
-                    fill="url(#colorBlocked)" 
+                    fill="url(#colorBlockedLight)" 
                     name="ব্লকড"
                   />
                 </AreaChart>
@@ -201,14 +195,14 @@ export function FraudGuardAnalytics({ logs, loading }: FraudGuardAnalyticsProps)
         </Card>
 
         {/* Pie Chart - Block Reasons */}
-        <Card className="bg-white/5 border-white/10">
+        <Card className="bg-white border-gray-100 shadow-sm">
           <CardHeader className="pb-2">
-            <CardTitle className="text-white font-bengali text-lg">
+            <CardTitle className="text-gray-900 font-bengali text-base md:text-lg">
               ব্লক কারণ বিতরণ
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-64">
+            <div className="h-48 md:h-64">
               {pieData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -216,8 +210,8 @@ export function FraudGuardAnalytics({ logs, loading }: FraudGuardAnalyticsProps)
                       data={pieData}
                       cx="50%"
                       cy="50%"
-                      innerRadius={60}
-                      outerRadius={90}
+                      innerRadius={50}
+                      outerRadius={75}
                       paddingAngle={5}
                       dataKey="value"
                     >
@@ -227,19 +221,19 @@ export function FraudGuardAnalytics({ logs, loading }: FraudGuardAnalyticsProps)
                     </Pie>
                     <Tooltip 
                       contentStyle={{ 
-                        backgroundColor: '#1F2937', 
-                        border: '1px solid #374151',
-                        borderRadius: '8px',
-                        color: '#fff'
+                        backgroundColor: '#FFFFFF', 
+                        border: '1px solid #E5E7EB',
+                        borderRadius: '12px',
+                        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)'
                       }}
                     />
                     <Legend 
-                      formatter={(value) => <span className="text-white/80 text-sm">{value}</span>}
+                      formatter={(value) => <span className="text-gray-600 text-sm">{value}</span>}
                     />
                   </PieChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="h-full flex items-center justify-center text-white/50 font-bengali">
+                <div className="h-full flex items-center justify-center text-gray-400 font-bengali">
                   কোনো ডাটা নেই
                 </div>
               )}

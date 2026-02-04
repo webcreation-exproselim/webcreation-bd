@@ -46,6 +46,7 @@ export function FraudGuardSection({ userId }: FraudGuardSectionProps) {
   const [logs, setLogs] = useState<{ id: string; status: string; created_at: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('monthly');
   const [activeTab, setActiveTab] = useState("setup");
   const navigate = useNavigate();
@@ -110,7 +111,8 @@ export function FraudGuardSection({ userId }: FraudGuardSectionProps) {
 
   const handleSelectPlan = (planType: 'monthly' | 'yearly') => {
     setSelectedPlan(planType);
-    setShowPurchaseModal(true);
+    setShowPurchaseModal(false);
+    setShowPaymentModal(true);
   };
 
   const handlePurchaseSuccess = async () => {
@@ -422,8 +424,8 @@ export function FraudGuardSection({ userId }: FraudGuardSectionProps) {
       {/* Payment Modal */}
       {merchant?.id && (
         <SubscriptionPurchaseModal
-          isOpen={showPurchaseModal && !!selectedPlan && !pendingOrder && !merchant?.is_active}
-          onClose={() => setShowPurchaseModal(false)}
+          isOpen={showPaymentModal && !pendingOrder && !merchant?.is_active}
+          onClose={() => setShowPaymentModal(false)}
           planType={selectedPlan}
           merchantId={merchant.id}
           onSuccess={handlePurchaseSuccess}

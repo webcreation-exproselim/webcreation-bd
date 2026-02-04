@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download, Check, Loader2, Package, CheckCircle2, ArrowRight, ExternalLink } from "lucide-react";
+import { Download, Check, Loader2, Package, CheckCircle2, ArrowRight, ExternalLink, Sparkles, RefreshCw } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { downloadPluginFile } from "@/utils/pluginGenerator";
 
@@ -39,6 +40,34 @@ export function PluginDownload({ apiKey }: PluginDownloadProps) {
 
   return (
     <div className="space-y-6">
+      {/* Update Notice Banner */}
+      <Card className="border-green-500/50 bg-gradient-to-r from-green-950/50 to-emerald-950/50 overflow-hidden">
+        <CardContent className="py-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-full bg-green-500/20 animate-pulse">
+                <Sparkles className="h-5 w-5 text-green-400" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-green-400">🆕 নতুন Version 3.1 আপডেট!</span>
+                  <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs">
+                    Domain Security
+                  </Badge>
+                </div>
+                <p className="text-sm text-slate-400 mt-1">
+                  আপনার API key এখন শুধুমাত্র আপনার domain-এ কাজ করবে। অন্য কেউ আপনার key ব্যবহার করতে পারবে না।
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-amber-400 bg-amber-500/10 px-3 py-1.5 rounded-full border border-amber-500/20">
+              <RefreshCw className="h-3 w-3" />
+              পুরোনো plugin থাকলে আপডেট করুন
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Download Card */}
       <Card className="border-cyan-500/30 bg-gradient-to-br from-cyan-950/50 to-slate-900 overflow-hidden relative">
         <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
@@ -47,8 +76,16 @@ export function PluginDownload({ apiKey }: PluginDownloadProps) {
             <div className="p-3 rounded-xl bg-gradient-to-br from-cyan-500 to-cyan-600 shadow-lg shadow-cyan-500/25">
               <Package className="h-6 w-6 text-white" />
             </div>
-            <div>
-              <CardTitle className="text-xl text-white">WCBD Fraud Guard Plugin <span className="text-sm bg-gradient-to-r from-green-400 to-cyan-400 text-transparent bg-clip-text">v3.0</span></CardTitle>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <CardTitle className="text-xl text-white">WCBD Fraud Guard Plugin</CardTitle>
+                <Badge className="bg-gradient-to-r from-cyan-500 to-green-500 text-white border-0 text-xs">
+                  v3.1
+                </Badge>
+                <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-xs animate-pulse">
+                  NEW
+                </Badge>
+              </div>
               <CardDescription>
                 আপনার API Key সহ রেডি plugin ডাউনলোড করুন
               </CardDescription>
@@ -56,6 +93,28 @@ export function PluginDownload({ apiKey }: PluginDownloadProps) {
           </div>
         </CardHeader>
         <CardContent className="relative space-y-6">
+          {/* What's New Section */}
+          <div className="p-4 rounded-xl bg-gradient-to-r from-green-500/10 to-cyan-500/10 border border-green-500/20">
+            <h4 className="text-sm font-semibold text-green-400 mb-3 flex items-center gap-2">
+              <Sparkles className="h-4 w-4" />
+              v3.1 এ নতুন কী আছে?
+            </h4>
+            <div className="grid grid-cols-1 gap-2">
+              <div className="flex items-center gap-2 text-sm text-white">
+                <CheckCircle2 className="h-4 w-4 text-green-400 flex-shrink-0" />
+                <span>🔒 <strong>Domain Binding Security</strong> - API key শুধু আপনার domain-এ কাজ করবে</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-white">
+                <CheckCircle2 className="h-4 w-4 text-green-400 flex-shrink-0" />
+                <span>🛡️ <strong>Anti-Theft Protection</strong> - অন্য কেউ আপনার key চুরি করতে পারবে না</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-white">
+                <CheckCircle2 className="h-4 w-4 text-green-400 flex-shrink-0" />
+                <span>⚡ <strong>Auto Domain Detection</strong> - স্বয়ংক্রিয়ভাবে domain verify করে</span>
+              </div>
+            </div>
+          </div>
+
           {/* Features List */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {[
@@ -65,10 +124,10 @@ export function PluginDownload({ apiKey }: PluginDownloadProps) {
               "বাংলা/English ভাষা সাপোর্ট",
               "Admin Settings প্যানেল",
               "API Key প্রি-কনফিগার্ড",
-              "⏱️ Popup Timer Control (NEW)",
-              "💬 Custom Block Messages (NEW)",
-              "📞 WhatsApp/Phone Contact (NEW)",
-              "🎨 Circle Logo + Branding (NEW)",
+              "⏱️ Popup Timer Control",
+              "💬 Custom Block Messages",
+              "📞 WhatsApp/Phone Contact",
+              "🎨 Circle Logo + Branding",
             ].map((feature, index) => (
               <div key={index} className="flex items-center gap-2 text-sm text-slate-300">
                 <CheckCircle2 className="h-4 w-4 text-cyan-400 flex-shrink-0" />
@@ -107,7 +166,7 @@ export function PluginDownload({ apiKey }: PluginDownloadProps) {
               )}
             </Button>
             <span className="text-sm text-slate-400">
-              wcbd-fraud-guard.php (~15KB) • v3.0
+              wcbd-fraud-guard.php (~15KB) • v3.1 (Domain Security)
             </span>
           </div>
         </CardContent>

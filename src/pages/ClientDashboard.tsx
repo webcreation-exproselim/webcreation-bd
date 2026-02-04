@@ -31,6 +31,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { User as SupabaseUser, Session } from "@supabase/supabase-js";
 import companyLogo from "@/assets/company-logo.jpg";
 import { FraudGuardSection } from "@/components/fraud-protection/FraudGuardSection";
+import { ProfileSection } from "@/components/client/ProfileSection";
 
 interface OrderService {
   id: string;
@@ -67,7 +68,7 @@ interface Message {
   created_at: string;
 }
 
-type TabType = "orders" | "invoices" | "chat" | "fraudguard";
+type TabType = "orders" | "invoices" | "chat" | "fraudguard" | "profile";
 
 export default function ClientDashboard() {
   const [user, setUser] = useState<SupabaseUser | null>(null);
@@ -350,6 +351,7 @@ export default function ClientDashboard() {
     { id: "invoices" as TabType, label: "ইনভয়েস", icon: FileText },
     { id: "chat" as TabType, label: "চ্যাট", icon: MessageCircle },
     { id: "fraudguard" as TabType, label: "Fraud Guard", icon: Shield },
+    { id: "profile" as TabType, label: "প্রোফাইল", icon: User },
   ];
 
   if (loading) {
@@ -881,6 +883,19 @@ export default function ClientDashboard() {
             animate={{ opacity: 1 }}
           >
             {user && <FraudGuardSection userId={user.id} />}
+          </motion.div>
+        )}
+
+        {activeTab === "profile" && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            <ProfileSection
+              user={user}
+              profile={profile}
+              onProfileUpdate={() => user && fetchUserData(user.id)}
+            />
           </motion.div>
         )}
       </main>

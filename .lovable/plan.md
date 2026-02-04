@@ -1,340 +1,378 @@
 
 
-# SaaS Order Limiter & Anti-Fraud System - Implementation Plan
+# WordPress Plugin Development Plan - Fraud Protection Integration
 
 ## Overview
 
-This plan outlines how to build a complete anti-fraud system for WordPress WooCommerce stores. The system will allow WooCommerce merchants to limit repeat orders based on phone number, IP address, and device fingerprint within a configurable cooldown period, plus manually blacklist fraudulent entities.
+এই plan-এ একটি professional WordPress plugin তৈরি করা হবে যেটা users তাদের WooCommerce site-এ easily install করতে পারবে। Plugin-এ থাকবে admin settings page, beautiful popup system, এবং automatic checkout integration।
 
 ---
 
-## 1. Database Schema
+## Plugin Structure
 
-### New Tables to Create
-
-#### `merchants` Table
-Stores merchant account details linked to authenticated users.
-
-| Column | Type | Default | Description |
-|--------|------|---------|-------------|
-| id | uuid (PK) | gen_random_uuid() | Primary key |
-| user_id | uuid (FK -> profiles.user_id) | NOT NULL | Link to auth user |
-| website_url | text | NULL | Merchant's WooCommerce store URL |
-| api_key | uuid | gen_random_uuid() | API key for authentication |
-| cooldown_period_days | integer | 30 | Days before same entity can order again |
-| created_at | timestamptz | now() | Record creation time |
-| updated_at | timestamptz | now() | Last update time |
-
-#### `fraud_logs` Table
-Records every order check for tracking and cooldown enforcement.
-
-| Column | Type | Default | Description |
-|--------|------|---------|-------------|
-| id | uuid (PK) | gen_random_uuid() | Primary key |
-| merchant_id | uuid (FK -> merchants.id) | NOT NULL | Associated merchant |
-| phone_number | text | NULL | Customer phone |
-| ip_address | text | NULL | Customer IP |
-| device_fingerprint | text | NULL | Device fingerprint ID |
-| status | text | 'allowed' | Result: allowed/blocked_cooldown/blocked_blacklist |
-| created_at | timestamptz | now() | Check timestamp |
-
-#### `blacklist` Table
-Stores manually banned entities (phones, IPs, device IDs).
-
-| Column | Type | Default | Description |
-|--------|------|---------|-------------|
-| id | uuid (PK) | gen_random_uuid() | Primary key |
-| merchant_id | uuid (FK -> merchants.id) | NOT NULL | Associated merchant |
-| blocked_value | text | NOT NULL | Phone/IP/Device ID to block |
-| block_type | text | 'phone' | Type: phone/ip/device |
-| reason | text | NULL | Optional reason for blocking |
-| created_at | timestamptz | now() | When blocked |
-
-### RLS Policies
-
-- Merchants can only access their own data
-- API key validation done server-side in edge function
-- Admin users can view all data
+```text
+fraud-protection-bd/
+├── fraud-protection-bd.php          # Main plugin file
+├── includes/
+│   ├── class-fraud-protection.php   # Main class
+│   ├── class-admin-settings.php     # Admin settings page
+│   └── class-checkout-handler.php   # WooCommerce checkout hook
+├── assets/
+│   ├── css/
+│   │   ├── admin-style.css          # Admin panel styling
+│   │   └── popup-style.css          # Frontend popup styling
+│   └── js/
+│       ├── fingerprint.min.js       # FingerprintJS library
+│       └── checkout-handler.js      # Checkout validation script
+├── templates/
+│   └── admin-settings.php           # Admin settings template
+└── readme.txt                        # WordPress plugin readme
+```
 
 ---
 
-## 2. Edge Function: `check-order-eligibility`
+## 1. Main Plugin File: `fraud-protection-bd.php`
 
-### Endpoint
-`POST /functions/v1/check-order-eligibility`
+```php
+<?php
+/**
+ * Plugin Name: Fraud Protection BD
+ * Plugin URI: https://yoursite.com
+ * Description: Order Limiter & Anti-Fraud System for WooCommerce
+ * Version: 1.0.0
+ * Author: Your Name
+ * Text Domain: fraud-protection-bd
+ * Requires Plugins: woocommerce
+ */
 
-### Input JSON
-```json
-{
-  "api_key": "uuid-string",
-  "phone": "01XXXXXXXXX",
-  "ip": "192.168.1.1",
-  "device_id": "fingerprint-hash"
+if (!defined('ABSPATH')) exit;
+
+define('FRAUD_PROTECTION_VERSION', '1.0.0');
+define('FRAUD_PROTECTION_PATH', plugin_dir_path(__FILE__));
+define('FRAUD_PROTECTION_URL', plugin_dir_url(__FILE__));
+
+// Check if WooCommerce is active
+if (!in_array('woocommerce/woocommerce.php', get_option('active_plugins'))) {
+    add_action('admin_notices', function() {
+        echo '<div class="error"><p>Fraud Protection BD requires WooCommerce to be installed and active.</p></div>';
+    });
+    return;
+}
+
+// Initialize plugin
+require_once FRAUD_PROTECTION_PATH . 'includes/class-fraud-protection.php';
+new Fraud_Protection_BD();
+```
+
+---
+
+## 2. Admin Settings Page
+
+### Features
+- API Key input field (সহজে paste করার জন্য)
+- Enable/Disable toggle
+- Test API connection button
+- Custom popup colors
+- Bengali/English message selection
+
+### Settings UI Design
+
+```text
++--------------------------------------------------+
+|  FRAUD PROTECTION BD - SETTINGS                  |
++--------------------------------------------------+
+|                                                  |
+|  API Key:                                        |
+|  [ xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx ]       |
+|  [Test Connection]  ✅ Connected                 |
+|                                                  |
+|  Status:                                         |
+|  [✓] Enable Fraud Protection                    |
+|                                                  |
+|  Popup Language:                                 |
+|  ( ) English  (•) বাংলা                         |
+|                                                  |
+|  Popup Style:                                    |
+|  [Modern Dark ▼]                                |
+|                                                  |
+|  [ Save Settings ]                              |
++--------------------------------------------------+
+```
+
+---
+
+## 3. Beautiful Popup System
+
+### Popup Types
+
+| Type | Color | Icon | Message |
+|------|-------|------|---------|
+| Blocked (Blacklist) | Red | 🚫 | আপনাকে অর্ডার করা থেকে বাদ দেওয়া হয়েছে |
+| Blocked (Cooldown) | Orange | ⏱️ | আপনি ইতিমধ্যে অর্ডার করেছেন, X দিন অপেক্ষা করুন |
+| Error | Gray | ⚠️ | কিছু সমস্যা হয়েছে |
+
+### Popup CSS (Modern Glassmorphism)
+
+```css
+.fraud-popup-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(8px);
+    z-index: 999999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease;
+}
+
+.fraud-popup-modal {
+    background: linear-gradient(145deg, #1a1a2e, #16213e);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 40px;
+    max-width: 420px;
+    text-align: center;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+    animation: scaleIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.fraud-popup-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    font-size: 40px;
+}
+
+.fraud-popup-icon.blocked { background: linear-gradient(135deg, #ff4757, #c0392b); }
+.fraud-popup-icon.cooldown { background: linear-gradient(135deg, #ffa502, #e67e22); }
+.fraud-popup-icon.error { background: linear-gradient(135deg, #636e72, #2d3436); }
+
+.fraud-popup-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 12px;
+}
+
+.fraud-popup-message {
+    font-size: 16px;
+    color: #a0a0a0;
+    line-height: 1.6;
+    margin-bottom: 24px;
+}
+
+.fraud-popup-button {
+    padding: 14px 50px;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.fraud-popup-button:hover {
+    transform: scale(1.05);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.8); }
+    to { opacity: 1; transform: scale(1); }
 }
 ```
 
-### Logic Flow
+---
+
+## 4. Checkout Handler JavaScript
+
+```javascript
+(function($) {
+    'use strict';
+    
+    var FraudProtection = {
+        deviceId: null,
+        settings: window.fraudProtectionSettings || {},
+        
+        init: function() {
+            this.initFingerprint();
+            this.bindEvents();
+        },
+        
+        initFingerprint: function() {
+            var self = this;
+            if (typeof FingerprintJS !== 'undefined') {
+                FingerprintJS.load().then(function(fp) {
+                    fp.get().then(function(result) {
+                        self.deviceId = result.visitorId;
+                    });
+                });
+            }
+        },
+        
+        bindEvents: function() {
+            var self = this;
+            $('form.checkout').on('checkout_place_order', function(e) {
+                return self.validateOrder($(this));
+            });
+        },
+        
+        validateOrder: function($form) {
+            var self = this;
+            var phone = $('#billing_phone').val();
+            var $button = $form.find('button[type="submit"]');
+            
+            // Show loading
+            $button.prop('disabled', true);
+            $button.data('original-text', $button.text());
+            $button.html('<span class="spinner"></span> চেক করা হচ্ছে...');
+            
+            $.ajax({
+                url: this.settings.endpoint,
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    api_key: this.settings.apiKey,
+                    phone: phone,
+                    device_id: this.deviceId
+                }),
+                success: function(response) {
+                    if (response.allowed) {
+                        $form.off('checkout_place_order').submit();
+                    } else {
+                        self.showPopup(response.reason, response.message, response.days_remaining);
+                        self.resetButton($button);
+                    }
+                },
+                error: function() {
+                    // Fail-open: allow order on error
+                    $form.off('checkout_place_order').submit();
+                }
+            });
+            
+            return false;
+        },
+        
+        showPopup: function(type, message, daysRemaining) {
+            var iconMap = {
+                'blacklist': '🚫',
+                'cooldown': '⏱️',
+                'error': '⚠️'
+            };
+            
+            var titleMap = {
+                'blacklist': 'অর্ডার ব্লক করা হয়েছে',
+                'cooldown': 'অপেক্ষা করুন',
+                'error': 'সমস্যা হয়েছে'
+            };
+            
+            var html = `
+                <div class="fraud-popup-overlay" id="fraudPopup">
+                    <div class="fraud-popup-modal">
+                        <div class="fraud-popup-icon ${type}">
+                            ${iconMap[type] || '⚠️'}
+                        </div>
+                        <h3 class="fraud-popup-title">${titleMap[type] || 'Error'}</h3>
+                        <p class="fraud-popup-message">${message}</p>
+                        ${daysRemaining ? `<p class="fraud-popup-days">${daysRemaining} দিন বাকি</p>` : ''}
+                        <button class="fraud-popup-button" onclick="document.getElementById('fraudPopup').remove()">
+                            ঠিক আছে
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            $('body').append(html);
+        },
+        
+        resetButton: function($button) {
+            $button.prop('disabled', false);
+            $button.text($button.data('original-text'));
+        }
+    };
+    
+    $(document).ready(function() {
+        FraudProtection.init();
+    });
+    
+})(jQuery);
+```
+
+---
+
+## 5. Dashboard-এ Plugin Download Feature
+
+### IntegrationCode.tsx-এ নতুন Features
+
+1. **Download as ZIP Button**: Plugin as ZIP file download করার option
+2. **Step-by-step Installation Guide**: বাংলায় installation instructions
+3. **Video Tutorial Link**: YouTube tutorial link
+
+### Download Flow
 
 ```text
-+-------------------+
-|  Receive Request  |
-+--------+----------+
-         |
-         v
-+-------------------+
-| Validate API Key  |
-| (merchants table) |
-+--------+----------+
-         |
-    +----+----+
-    |  Valid? |
-    +----+----+
-         |
-    No --+-- Yes
-    |         |
-    v         v
-+-------+  +------------------+
-|  401  |  | Check Blacklist  |
-+-------+  +--------+---------+
-                    |
-              +-----+-----+
-              | Blocked?  |
-              +-----+-----+
-                    |
-              Yes --+-- No
-               |         |
-               v         v
-          +---------+  +-------------------+
-          | allowed:|  | Check fraud_logs  |
-          | false   |  | within cooldown   |
-          +---------+  +--------+----------+
-                               |
-                        +------+------+
-                        | Found logs? |
-                        +------+------+
-                               |
-                         Yes --+-- No
-                          |         |
-                          v         v
-                    +---------+  +---------+
-                    | allowed:|  | allowed:|
-                    | false   |  | true    |
-                    +---------+  +---------+
-                                      |
-                                      v
-                              +---------------+
-                              | Log to        |
-                              | fraud_logs    |
-                              +---------------+
-```
-
-### Response Examples
-
-**Success:**
-```json
-{ "allowed": true }
-```
-
-**Blocked by Blacklist:**
-```json
-{ "allowed": false, "reason": "blacklist", "message": "You are banned from ordering." }
-```
-
-**Blocked by Cooldown:**
-```json
-{ "allowed": false, "reason": "cooldown", "message": "You have already placed an order recently. Please wait X days." }
-```
-
-**Invalid API Key:**
-```json
-{ "error": "Invalid API key" }
+User clicks "Download Plugin"
+        ↓
+System generates ZIP file with:
+  - Main plugin file (API key injected)
+  - CSS files
+  - JS files
+  - Readme
+        ↓
+Browser downloads: fraud-protection-bd.zip
 ```
 
 ---
 
-## 3. Dashboard Features
-
-### New Route: `/fraud-protection`
-
-A new page accessible to authenticated merchants (non-admin users) with the following tabs:
-
-### Tab 1: Settings
-- View current API key (with copy button)
-- Regenerate API key button
-- Update cooldown period (slider: 1-90 days)
-- Display website URL with edit option
-- Show integration code snippet
-
-### Tab 2: Blacklist Manager
-- Add new entry form:
-  - Value input (phone/IP/device ID)
-  - Type selector (phone/ip/device)
-  - Reason input (optional)
-- Table showing all blacklisted entries:
-  - Blocked value
-  - Type (with icon)
-  - Reason
-  - Created date
-  - Delete button
-
-### Tab 3: Logs View
-- Searchable table showing recent checks:
-  - Date/Time
-  - Phone (masked: 01XX***XXX)
-  - IP Address
-  - Device ID (truncated)
-  - Status badge (Allowed/Blocked)
-  - Reason (if blocked)
-- Pagination (50 per page)
-- Date filter
-
----
-
-## 4. WordPress Integration Snippet
-
-### Features
-- Uses FingerprintJS for device fingerprinting
-- Intercepts WooCommerce checkout
-- AJAX call to edge function before order submission
-- Shows user-friendly error messages in Bengali/English
-
-### Code Structure
-```javascript
-// 1. Load FingerprintJS
-// 2. Get device fingerprint on page load
-// 3. Hook into WooCommerce checkout form submit
-// 4. Make API call to check eligibility
-// 5. Block or allow order based on response
-```
-
-### Integration Instructions
-Merchants will:
-1. Copy the snippet from their dashboard
-2. Paste into WordPress Customizer > Additional JavaScript
-   OR add to theme's footer.php
-
----
-
-## 5. File Changes Summary
+## 6. File Changes Summary
 
 ### New Files to Create
 
 | File | Purpose |
 |------|---------|
-| `src/pages/FraudProtectionPage.tsx` | Main dashboard page for merchants |
-| `src/components/fraud-protection/FraudSettings.tsx` | API key & cooldown settings |
-| `src/components/fraud-protection/BlacklistManager.tsx` | Add/remove blacklist entries |
-| `src/components/fraud-protection/FraudLogs.tsx` | View order check logs |
-| `src/components/fraud-protection/IntegrationCode.tsx` | WordPress snippet display |
-| `src/hooks/useMerchantData.ts` | Hook for merchant data fetching |
-| `supabase/functions/check-order-eligibility/index.ts` | Main edge function |
+| `src/components/fraud-protection/PluginDownload.tsx` | Plugin ZIP generation & download |
+| `src/utils/pluginGenerator.ts` | Generate plugin files with API key |
 
 ### Files to Modify
 
 | File | Change |
 |------|--------|
-| `src/App.tsx` | Add new route `/fraud-protection` |
-| `supabase/config.toml` | Add new edge function config |
+| `src/components/fraud-protection/IntegrationCode.tsx` | Add beautiful popup code & plugin download |
+| `src/pages/FraudProtectionPage.tsx` | Add Plugin tab |
 
 ---
 
-## 6. Security Considerations
+## 7. Implementation Phases
 
-1. **API Key Security**: UUID-based, stored hashed if needed, regeneratable
-2. **RLS Policies**: Each merchant only sees their own data
-3. **Rate Limiting**: Edge function can be rate-limited per API key
-4. **Input Validation**: Sanitize all inputs (phone, IP, device ID)
-5. **No Admin Access via Client**: All sensitive operations server-side
-
----
-
-## Technical Details
-
-### Database Migration SQL (Preview)
-
-```sql
--- Create merchants table
-CREATE TABLE public.merchants (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  website_url text,
-  api_key uuid DEFAULT gen_random_uuid() NOT NULL,
-  cooldown_period_days integer DEFAULT 30 NOT NULL,
-  created_at timestamptz DEFAULT now() NOT NULL,
-  updated_at timestamptz DEFAULT now() NOT NULL,
-  UNIQUE (user_id),
-  UNIQUE (api_key)
-);
-
--- Create fraud_logs table
-CREATE TABLE public.fraud_logs (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  merchant_id uuid NOT NULL REFERENCES public.merchants(id) ON DELETE CASCADE,
-  phone_number text,
-  ip_address text,
-  device_fingerprint text,
-  status text DEFAULT 'allowed' NOT NULL,
-  created_at timestamptz DEFAULT now() NOT NULL
-);
-
--- Create blacklist table
-CREATE TABLE public.blacklist (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  merchant_id uuid NOT NULL REFERENCES public.merchants(id) ON DELETE CASCADE,
-  blocked_value text NOT NULL,
-  block_type text DEFAULT 'phone' NOT NULL,
-  reason text,
-  created_at timestamptz DEFAULT now() NOT NULL
-);
-
--- Enable RLS
-ALTER TABLE public.merchants ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.fraud_logs ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.blacklist ENABLE ROW LEVEL SECURITY;
-
--- RLS Policies for merchants
-CREATE POLICY "Users can view own merchant data"
-ON public.merchants FOR SELECT
-USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can update own merchant data"
-ON public.merchants FOR UPDATE
-USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert own merchant data"
-ON public.merchants FOR INSERT
-WITH CHECK (auth.uid() = user_id);
-
--- RLS Policies for fraud_logs
-CREATE POLICY "Merchants can view own logs"
-ON public.fraud_logs FOR SELECT
-USING (merchant_id IN (SELECT id FROM public.merchants WHERE user_id = auth.uid()));
-
--- RLS Policies for blacklist
-CREATE POLICY "Merchants can manage own blacklist"
-ON public.blacklist FOR ALL
-USING (merchant_id IN (SELECT id FROM public.merchants WHERE user_id = auth.uid()));
-
--- Admin policies
-CREATE POLICY "Admins can manage all merchants"
-ON public.merchants FOR ALL
-USING (has_role(auth.uid(), 'admin'::app_role));
-
-CREATE POLICY "Admins can view all logs"
-ON public.fraud_logs FOR ALL
-USING (has_role(auth.uid(), 'admin'::app_role));
-
-CREATE POLICY "Admins can manage all blacklists"
-ON public.blacklist FOR ALL
-USING (has_role(auth.uid(), 'admin'::app_role));
-```
+1. **Phase 1**: Update IntegrationCode.tsx with beautiful popup system
+2. **Phase 2**: Create plugin generator utility
+3. **Phase 3**: Add plugin download feature to dashboard
+4. **Phase 4**: Add installation instructions in Bengali
 
 ---
 
-## Implementation Order
+## Technical Notes
 
-1. **Phase 1: Database** - Create tables and RLS policies
-2. **Phase 2: Edge Function** - Build `check-order-eligibility` with full logic
-3. **Phase 3: Dashboard** - Create merchant dashboard page with all tabs
-4. **Phase 4: Integration** - Add WordPress snippet generator
+### Plugin Requirements
+- WordPress 5.0+
+- WooCommerce 4.0+
+- PHP 7.4+
+
+### Browser Support
+- Chrome, Firefox, Safari, Edge (latest versions)
+- Mobile browsers supported
+
+### Security
+- API key stored in WordPress options (encrypted)
+- Nonce verification for admin actions
+- Sanitization of all inputs
 

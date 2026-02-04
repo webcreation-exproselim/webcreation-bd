@@ -1,6 +1,7 @@
 const ENDPOINT_URL = 'https://gtjmfvwkatrorhuyrpby.supabase.co/functions/v1/check-order-eligibility';
 const DASHBOARD_URL = 'https://webcreation-bd.lovable.app/dashboard';
 const WHATSAPP_DEFAULT = '+8801332052874';
+import JSZip from 'jszip';
 
 export const generateMainPluginFile = (apiKey: string): string => {
   // Use PHP heredoc syntax (<<<'SCRIPT') to completely avoid PHP variable interpolation
@@ -533,16 +534,71 @@ new WCBD_Fraud_Guard();
 
 export const downloadPluginFile = async (apiKey: string): Promise<void> => {
   try {
-    const pluginContent = generateMainPluginFile(apiKey);
+    // Create ZIP file with proper folder structure
+    const zip = new JSZip();
+    const pluginFolder = zip.folder('wcbd-fraud-guard');
     
-    // Create blob with explicit PHP content type
-    const blob = new Blob([pluginContent], { type: 'application/octet-stream' });
+    if (!pluginFolder) {
+      throw new Error('Failed to create plugin folder');
+    }
+    
+    // Add main plugin file
+    const pluginContent = generateMainPluginFile(apiKey);
+    pluginFolder.file('wcbd-fraud-guard.php', pluginContent);
+    
+    // Add README
+    const readmeContent = `=== WCBD Fraud Guard ===
+Contributors: WebCreation BD
+Tags: woocommerce, fraud, security, order-limiter
+Requires at least: 5.0
+Tested up to: 6.4
+Requires PHP: 7.4
+Stable tag: 3.3.0
+License: GPLv2 or later
+
+WooCommerce Anti-Fraud Protection System with Order Limiting & Device Fingerprinting
+
+== Description ==
+
+WCBD Fraud Guard protects your WooCommerce store from fake orders and fraud attempts using:
+
+* Device Fingerprinting
+* Phone Number Blacklist
+* IP Address Blocking
+* Cooldown Period Management
+* Beautiful Popup Notifications
+* Domain-Locked API Security
+
+== Installation ==
+
+1. Upload the plugin folder to /wp-content/plugins/
+2. Activate the plugin through WordPress admin
+3. Configure your API key in Fraud Guard settings
+4. Done! Protection is now active on checkout
+
+== Changelog ==
+
+= 3.3.0 =
+* Fixed: PHP Heredoc syntax to prevent JavaScript variable escaping issues
+* Fixed: Bulletproof popup with maximum z-index (2147483647)
+* Added: ESC key support to close popup
+* Added: Click outside to close popup
+* Improved: Cross-theme compatibility
+
+== Support ==
+
+Visit: https://webcreation-bd.lovable.app/dashboard
+`;
+    pluginFolder.file('README.txt', readmeContent);
+    
+    // Generate ZIP blob
+    const blob = await zip.generateAsync({ type: 'blob' });
     const url = URL.createObjectURL(blob);
     
     // Create download link
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'wcbd-fraud-guard.php';
+    link.download = 'wcbd-fraud-guard.zip';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

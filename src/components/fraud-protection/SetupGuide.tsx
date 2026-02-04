@@ -23,13 +23,13 @@ const steps: Step[] = [
   {
     id: 1,
     title: "Plugin ডাউনলোড করুন",
-    description: "নিচের Download বাটনে ক্লিক করে wcbd-fraud-guard.php ফাইল ডাউনলোড করুন।",
+    description: "নিচের Download বাটনে ক্লিক করে wcbd-fraud-guard.zip ফাইল ডাউনলোড করুন।",
     icon: <Download className="w-5 h-5" />,
   },
   {
     id: 2,
     title: "WordPress-এ আপলোড করুন",
-    description: "WordPress Admin → Plugins → Add New → Upload Plugin → Choose File → wcbd-fraud-guard.php সিলেক্ট করুন → Install Now ক্লিক করুন।",
+    description: "WordPress Admin → Plugins → Add New → Upload Plugin → wcbd-fraud-guard.zip সিলেক্ট করুন → Install Now ক্লিক করুন।",
     icon: <Upload className="w-5 h-5" />,
   },
   {

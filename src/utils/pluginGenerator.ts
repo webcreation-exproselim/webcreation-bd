@@ -543,14 +543,23 @@ new WCBD_Fraud_Guard();
 `;
 };
 
-export const downloadPluginFile = (apiKey: string): void => {
+export const downloadPluginFile = async (apiKey: string): Promise<void> => {
+  const JSZip = (await import('jszip')).default;
+  const zip = new JSZip();
+  
+  // Create plugin folder structure: wcbd-fraud-guard/wcbd-fraud-guard.php
+  const pluginFolder = zip.folder('wcbd-fraud-guard');
   const content = generateMainPluginFile(apiKey);
-  // Use application/octet-stream to ensure correct .php file download
-  const blob = new Blob([content], { type: 'application/octet-stream' });
+  pluginFolder?.file('wcbd-fraud-guard.php', content);
+  
+  // Generate ZIP blob
+  const blob = await zip.generateAsync({ type: 'blob' });
+  
+  // Download
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'wcbd-fraud-guard.php';
+  a.download = 'wcbd-fraud-guard-plugin.zip';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);

@@ -171,7 +171,7 @@ class WCBD_Fraud_Guard {
                         url: this.endpoint,
                         method: 'POST',
                         contentType: 'application/json',
-                        data: JSON.stringify({api_key: this.apiKey, phone: phone, device_id: this.deviceId}),
+                        data: JSON.stringify({api_key: this.apiKey, phone: phone, device_id: this.deviceId, domain: window.location.hostname}),
                         success: function(r) {
                             if (r.allowed) {
                                 f.off('checkout_place_order').submit();

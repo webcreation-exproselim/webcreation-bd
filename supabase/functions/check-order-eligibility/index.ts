@@ -10,6 +10,21 @@ interface CheckRequest {
   phone?: string
   ip?: string
   device_id?: string
+  domain?: string
+}
+
+// Normalize domain for comparison (remove protocol, www, trailing slashes)
+function normalizeDomain(url: string): string {
+  try {
+    let domain = url.toLowerCase()
+      .replace(/^https?:\/\//, '')
+      .replace(/^www\./, '')
+      .replace(/\/.*$/, '')
+      .trim();
+    return domain;
+  } catch {
+    return url.toLowerCase().trim();
+  }
 }
 
 Deno.serve(async (req) => {
@@ -26,9 +41,9 @@ Deno.serve(async (req) => {
 
     // Parse request body
     const body: CheckRequest = await req.json()
-    const { api_key, phone, ip, device_id } = body
+    const { api_key, phone, ip, device_id, domain } = body
 
-    console.log('Received check request:', { api_key: api_key?.slice(0, 8) + '...', phone, ip, device_id: device_id?.slice(0, 10) + '...' })
+    console.log('Received check request:', { api_key: api_key?.slice(0, 8) + '...', phone, ip, device_id: device_id?.slice(0, 10) + '...', domain })
 
     // Validate required fields
     if (!api_key) {
@@ -48,7 +63,7 @@ Deno.serve(async (req) => {
     // Step 1: Validate API Key and get merchant data
     const { data: merchant, error: merchantError } = await supabase
       .from('merchants')
-      .select('id, cooldown_period_minutes, is_active, plan_expires_at, requests_used, max_requests')
+      .select('id, cooldown_period_minutes, is_active, plan_expires_at, requests_used, max_requests, website_url')
       .eq('api_key', api_key)
       .single()
 
@@ -60,7 +75,28 @@ Deno.serve(async (req) => {
       )
     }
 
-    console.log('Merchant found:', merchant.id, 'Active:', merchant.is_active, 'Cooldown:', merchant.cooldown_period_minutes, 'minutes')
+    console.log('Merchant found:', merchant.id, 'Active:', merchant.is_active, 'Cooldown:', merchant.cooldown_period_minutes, 'minutes', 'Website:', merchant.website_url)
+
+    // Step 1.5: Validate Domain Binding (NEW)
+    if (merchant.website_url && domain) {
+      const allowedDomain = normalizeDomain(merchant.website_url)
+      const requestDomain = normalizeDomain(domain)
+      
+      console.log('Domain check:', { allowed: allowedDomain, request: requestDomain })
+      
+      if (allowedDomain !== requestDomain) {
+        console.log('Domain mismatch! Allowed:', allowedDomain, 'Request:', requestDomain)
+        return new Response(
+          JSON.stringify({ 
+            error: 'Domain mismatch',
+            allowed: false,
+            reason: 'domain_mismatch',
+            message: 'এই ডোমেইনে ব্যবহারের অনুমতি নেই। আপনার নিবন্ধিত ডোমেইন: ' + allowedDomain
+          }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+    }
 
     // Step 2: Check if account is activated
     if (!merchant.is_active) {

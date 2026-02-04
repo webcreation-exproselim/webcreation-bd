@@ -38,6 +38,7 @@ export function SubscriptionPurchaseModal({
   const [selectedMethod, setSelectedMethod] = useState<string>("");
   const [transactionId, setTransactionId] = useState("");
   const [senderNumber, setSenderNumber] = useState("");
+  const [websiteDomain, setWebsiteDomain] = useState("");
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -80,10 +81,10 @@ export function SubscriptionPurchaseModal({
   };
 
   const handleSubmit = async () => {
-    if (!transactionId.trim() || !senderNumber.trim()) {
+    if (!transactionId.trim() || !senderNumber.trim() || !websiteDomain.trim()) {
       toast({
         title: "সব তথ্য দিন",
-        description: "Transaction ID এবং Sender Number আবশ্যক",
+        description: "Transaction ID, Sender Number এবং Website Domain আবশ্যক",
         variant: "destructive",
       });
       return;
@@ -117,6 +118,12 @@ export function SubscriptionPurchaseModal({
         setUploading(false);
       }
 
+      // Update merchant's website_url
+      await supabase
+        .from('merchants')
+        .update({ website_url: websiteDomain.trim() })
+        .eq('id', merchantId);
+
       // Create subscription order
       const { error } = await supabase
         .from('subscription_orders')
@@ -144,6 +151,7 @@ export function SubscriptionPurchaseModal({
       // Reset form
       setTransactionId("");
       setSenderNumber("");
+      setWebsiteDomain("");
       setScreenshotFile(null);
     } catch (error) {
       console.error('Error submitting order:', error);
@@ -245,6 +253,21 @@ export function SubscriptionPurchaseModal({
                   placeholder="01XXXXXXXXX"
                   className="bg-slate-800 border-slate-600 text-white"
                 />
+              </div>
+              <div>
+                <Label htmlFor="domain" className="text-sm text-white/60">
+                  Website Domain <span className="text-red-400">*</span>
+                </Label>
+                <Input
+                  id="domain"
+                  value={websiteDomain}
+                  onChange={(e) => setWebsiteDomain(e.target.value)}
+                  placeholder="example.com"
+                  className="bg-slate-800 border-slate-600 text-white"
+                />
+                <p className="text-xs text-white/40 mt-1">
+                  যে ডোমেইনে plugin ব্যবহার করবেন সেটা দিন
+                </p>
               </div>
               <div>
                 <Label htmlFor="screenshot" className="text-sm text-white/60">

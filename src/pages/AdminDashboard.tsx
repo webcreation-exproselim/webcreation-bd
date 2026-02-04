@@ -49,6 +49,7 @@ import { PaymentSettings } from "@/components/admin/PaymentSettings";
 import { ReviewsManagement } from "@/components/admin/ReviewsManagement";
 import { ContentManagement } from "@/components/admin/ContentManagement";
 import { FraudGuardManagement } from "@/components/admin/FraudGuardManagement";
+import { UserManagement } from "@/components/admin/UserManagement";
 
 interface OrderService {
   id: string;
@@ -662,62 +663,7 @@ const AdminDashboard = () => {
         )}
 
         {activeTab === "users" && (
-          <div className="space-y-4">
-            <div className="flex gap-2">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <Input
-                  placeholder="ইউজার খুঁজুন..."
-                  value={userSearch}
-                  onChange={(e) => setUserSearch(e.target.value)}
-                  className="pl-11 font-bengali bg-white border-gray-100 rounded-xl h-11"
-                />
-              </div>
-            </div>
-
-            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-100">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-xs font-bengali font-semibold text-gray-500 uppercase tracking-wider">নাম</th>
-                    <th className="px-6 py-4 text-left text-xs font-bengali font-semibold text-gray-500 uppercase tracking-wider">ফোন</th>
-                    <th className="px-6 py-4 text-left text-xs font-bengali font-semibold text-gray-500 uppercase tracking-wider">যোগদান</th>
-                    <th className="px-6 py-4 text-right text-xs font-bengali font-semibold text-gray-500 uppercase tracking-wider">অ্যাকশন</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {filteredUsers.map((userProfile) => (
-                    <tr key={userProfile.id} className="hover:bg-gray-50/50 transition-colors">
-                      <td className="px-6 py-4">
-                        <span className="font-bengali font-medium text-gray-900">
-                          {userProfile.full_name || "নাম নেই"}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-gray-600">{userProfile.phone || "-"}</td>
-                      <td className="px-6 py-4 text-sm text-gray-500">
-                        {new Date(userProfile.created_at).toLocaleDateString("bn-BD")}
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setDeleteUserConfirm(userProfile.user_id)}
-                          className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {filteredUsers.length === 0 && (
-                <div className="p-12 text-center text-gray-400 font-bengali">
-                  কোনো ইউজার পাওয়া যায়নি
-                </div>
-              )}
-            </div>
-          </div>
+          <UserManagement />
         )}
 
         {activeTab === "portfolio" && (

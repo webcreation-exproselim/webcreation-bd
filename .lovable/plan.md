@@ -1,120 +1,144 @@
 
-# Admin Dashboard: Manual Plan Assignment Feature
+
+# API Key + Domain Binding Security Feature
 
 ## সমস্যা বিশ্লেষণ
 
-বর্তমানে Admin শুধু তাদের plan assign করতে পারেন যাদের **merchant record** আছে। কিন্তু merchant record তৈরি হয় যখন user:
-1. Client Dashboard-এ Fraud Guard section visit করে
-2. অথবা `useMerchantData` hook call হয়
+### বর্তমান অবস্থা
+- একটা API key দিয়ে **যেকোনো domain** থেকে request করা যায়
+- Edge function শুধু `api_key` validate করে
+- Domain (`website_url`) merchants table-এ আছে কিন্তু enforce হয় না
 
-যদি কোনো customer account করে কিন্তু Fraud Guard section visit না করে, তাহলে তার জন্য merchant record নেই এবং Admin plan assign করতে পারেন না।
+### Security Risk
+যদি কেউ API key জানতে পারে (screenshot, shared, etc.), তারা নিজের domain-এ use করতে পারবে
 
 ---
 
 ## প্রস্তাবিত সমাধান
 
-### Feature Overview
-Admin Dashboard-এ একটা নতুন ফিচার যোগ করা যেখানে:
-1. সব registered users দেখা যাবে (merchant থাকুক বা না থাকুক)
-2. Admin যেকোনো user-কে domain/website দিয়ে খুঁজতে পারবে
-3. যদি merchant record না থাকে, সেটা auto-create হবে
-4. Admin সরাসরি Monthly/Yearly plan assign করতে পারবে
-
-### UI/UX Flow
-
+### মূল Concept
 ```text
-Admin Dashboard → Fraud Guard Tab → Merchants Sub-Tab
-     │
-     ├── [বর্তমান] Existing Merchants Table
-     │
-     └── [নতুন] "Assign Plan to User" Button
-            │
-            ├── Modal Opens
-            │    ├── User Search (by Email, Name, Phone)
-            │    ├── User List (from profiles table)
-            │    ├── Select User
-            │    ├── Enter Website/Domain URL
-            │    ├── Select Plan (Monthly/Yearly)
-            │    └── Confirm Button
-            │
-            └── On Confirm:
-                 ├── Check if merchant exists for user
-                 ├── If not → Create merchant record
-                 ├── Update merchant with plan details
-                 └── Show success message
+API Request → Edge Function
+    │
+    ├── Check: api_key valid?
+    │
+    ├── [NEW] Check: Request Origin/Domain matches website_url?
+    │    ├── Match → Continue
+    │    └── No Match → Block (401)
+    │
+    └── Continue with fraud checks...
 ```
 
 ---
 
 ## Technical Implementation
 
-### 1. নতুন Component: `AssignPlanModal.tsx`
+### 1. Edge Function Update (`check-order-eligibility`)
 
-**Path:** `src/components/admin/AssignPlanModal.tsx`
+**নতুন Parameter:**
+- `domain` - Request থেকে domain pass হবে
 
-**Features:**
-- User search functionality (profiles table থেকে)
-- All registered users list দেখানো
-- Selected user-এর জন্য website URL input
-- Plan type selection (Monthly / Yearly)
-- Auto-create merchant if not exists
-- Plan activation logic
-
-**State Management:**
+**নতুন Validation Logic:**
 ```text
-- users: UserProfile[]        - All registered users
-- selectedUser: UserProfile   - Currently selected user
-- websiteUrl: string          - Domain/website URL
-- planType: 'monthly' | 'yearly'
-- loading: boolean
-- search: string              - Search filter
+1. api_key দিয়ে merchant fetch করো
+2. merchant.website_url extract করো
+3. Request-এর domain/origin match করো
+4. Match না হলে → Block with "Domain mismatch" error
 ```
 
-### 2. MerchantManagement.tsx Update
+**Code Changes:**
+```typescript
+interface CheckRequest {
+  api_key: string
+  phone?: string
+  ip?: string
+  device_id?: string
+  domain?: string  // NEW - from plugin
+}
 
-**Changes:**
-- Add "New Plan Assign" button in header
-- Import and render AssignPlanModal
-- Pass refetch function to modal
+// After getting merchant:
+const allowedDomain = merchant.website_url;
+const requestDomain = domain;
 
-**UI Position:**
-```text
-┌──────────────────────────────────────────────────┐
-│  Merchant খুঁজুন...  [🔄 Refresh] [➕ Plan Assign] │
-├──────────────────────────────────────────────────┤
-│  Existing Merchants Table...                      │
-└──────────────────────────────────────────────────┘
+// Normalize and compare domains
+if (allowedDomain && requestDomain) {
+  const normalizedAllowed = normalizeDomain(allowedDomain);
+  const normalizedRequest = normalizeDomain(requestDomain);
+  
+  if (normalizedAllowed !== normalizedRequest) {
+    return { error: 'Domain mismatch', allowed: false };
+  }
+}
 ```
 
-### 3. Database Flow
+### 2. WordPress Plugin Update (`pluginGenerator.ts`)
 
-```text
-1. Admin clicks "Plan Assign"
-2. Modal loads all users from 'profiles' table
-3. Admin searches by name/email/phone
-4. Admin selects user
-5. Admin enters website URL & selects plan
-6. System checks: Does merchant exist for this user_id?
-   │
-   ├── YES → Update existing merchant
-   │         - website_url = entered URL
-   │         - is_active = true
-   │         - current_plan = selected plan
-   │         - plan_expires_at = calculated date
-   │         - max_requests = plan-based limit
-   │         - requests_used = 0
-   │
-   └── NO → Create new merchant
-            - INSERT into merchants
-            - Same fields as above
+**নতুন Feature:**
+- Plugin automatically current site domain send করবে
+
+**JavaScript পরিবর্তন:**
+```javascript
+// validate function-এ:
+jQ.ajax({
+  url: this.endpoint,
+  method: 'POST',
+  contentType: 'application/json',
+  data: JSON.stringify({
+    api_key: this.apiKey, 
+    phone: phone, 
+    device_id: this.deviceId,
+    domain: window.location.hostname  // NEW
+  }),
+  // ...
+});
 ```
 
-### 4. Plan Details Reference
+### 3. Subscription Purchase Modal Update
 
-| Plan | Duration | Max Requests | Price |
-|------|----------|--------------|-------|
-| Monthly | 30 days | 1,000 | ৳100 |
-| Yearly | 365 days | 15,000 | ৳699 |
+**পরিবর্তন:**
+- Plan কেনার সময় **domain বাধ্যতামূলক**
+- Domain ছাড়া submit করা যাবে না
+
+**নতুন Field:**
+```text
+Step 1: পেমেন্ট পাঠান (current)
+Step 2: তথ্য দিন
+   - Transaction ID (current)
+   - Sender Number (current)
+   - Website Domain (NEW - required)
+   - Screenshot (current - optional)
+```
+
+### 4. AssignPlanModal Update (Admin)
+
+**পরিবর্তন:**
+- Already আছে `websiteUrl` field ✓
+- Validation ensure করা যে empty না হয়
+
+---
+
+## Domain Normalization Logic
+
+```typescript
+function normalizeDomain(url: string): string {
+  try {
+    // Remove protocol, www, trailing slashes
+    let domain = url.toLowerCase()
+      .replace(/^https?:\/\//, '')
+      .replace(/^www\./, '')
+      .replace(/\/.*$/, '')
+      .trim();
+    return domain;
+  } catch {
+    return url.toLowerCase().trim();
+  }
+}
+
+// Examples:
+// "https://www.example.com/page" → "example.com"
+// "http://example.com" → "example.com"
+// "example.com" → "example.com"
+```
 
 ---
 
@@ -122,27 +146,54 @@ Admin Dashboard → Fraud Guard Tab → Merchants Sub-Tab
 
 | File | Action | Description |
 |------|--------|-------------|
-| `src/components/admin/AssignPlanModal.tsx` | CREATE | New modal component for assigning plans |
-| `src/components/admin/MerchantManagement.tsx` | MODIFY | Add button and modal integration |
+| `supabase/functions/check-order-eligibility/index.ts` | MODIFY | Add domain validation + select website_url |
+| `src/utils/pluginGenerator.ts` | MODIFY | Send domain in API request |
+| `src/components/fraud-protection/SubscriptionPurchaseModal.tsx` | MODIFY | Add required domain field |
+| `src/hooks/useMerchantData.ts` | No change | Already handles website_url |
+| `src/components/admin/AssignPlanModal.tsx` | No change | Already has website_url field |
 
 ---
 
-## Key Points
+## Edge Cases Handled
 
-1. **No Database Schema Change Needed**
-   - Using existing `merchants` and `profiles` tables
-   - RLS policies already allow admin full access
+| Case | Handling |
+|------|----------|
+| Merchant has no website_url set | Skip domain check (backward compatible) |
+| Domain with/without www | Normalize both before comparing |
+| HTTP vs HTTPS | Strip protocol before comparing |
+| Subdomain mismatch | Strict match required (admin can update) |
+| localhost/development | Match will fail unless website_url = localhost |
 
-2. **Security**
-   - Admin-only access (already protected by parent component)
-   - Uses existing admin role check
+---
 
-3. **User Experience**
-   - Clean modal interface
-   - Search functionality for easy user finding
-   - Visual feedback on success/error
+## User Flow After Implementation
 
-4. **Edge Cases Handled**
-   - User already has merchant record → Update only
-   - User doesn't have merchant → Create + Activate
-   - Duplicate plan assignment → Overwrites previous plan
+### Client Plan Purchase:
+```text
+1. Client selects plan (Monthly/Yearly)
+2. Opens payment modal
+3. Enters: Transaction ID, Sender Number, Website Domain
+4. Submits → Creates subscription order
+5. Admin approves → website_url saved to merchant
+6. Plugin only works on that domain
+```
+
+### Admin Manual Assignment:
+```text
+1. Admin opens "Plan Assign" modal
+2. Selects user
+3. Enters website domain (already implemented)
+4. Assigns plan → website_url saved
+5. API key only works for that domain
+```
+
+---
+
+## Error Messages
+
+| Scenario | Response |
+|----------|----------|
+| Domain mismatch | `{ allowed: false, reason: 'domain_mismatch', message: 'এই ডোমেইনে ব্যবহারের অনুমতি নেই।' }` |
+| No domain in request | Continue normally (backward compatible) |
+| No website_url in merchant | Continue normally (backward compatible) |
+

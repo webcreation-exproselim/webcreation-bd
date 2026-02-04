@@ -32,6 +32,7 @@ import type { User as SupabaseUser, Session } from "@supabase/supabase-js";
 import companyLogo from "@/assets/company-logo.jpg";
 import { FraudGuardSection } from "@/components/fraud-protection/FraudGuardSection";
 import { ProfileSection } from "@/components/client/ProfileSection";
+import { downloadPluginFile } from "@/utils/pluginGenerator";
 
 interface OrderService {
   id: string;
@@ -390,8 +391,16 @@ export default function ClientDashboard() {
                 </Button>
               </Link>
               <div className="flex items-center gap-3 px-4 py-2 bg-gray-50 rounded-xl">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
-                  <User className="w-4 h-4 text-white" />
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center overflow-hidden">
+                  {profile?.avatar_url ? (
+                    <img 
+                      src={profile.avatar_url} 
+                      alt="Avatar" 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <User className="w-4 h-4 text-white" />
+                  )}
                 </div>
                 <span className="font-bengali text-sm font-medium text-gray-700">
                   {profile?.full_name || user?.email?.split("@")[0]}
@@ -427,8 +436,16 @@ export default function ClientDashboard() {
               </Link>
               <div className="px-4 py-3 rounded-xl bg-gray-50">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
-                    <User className="w-4 h-4 text-white" />
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center overflow-hidden">
+                    {profile?.avatar_url ? (
+                      <img 
+                        src={profile.avatar_url} 
+                        alt="Avatar" 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <User className="w-4 h-4 text-white" />
+                    )}
                   </div>
                   <span className="font-bengali text-sm text-gray-700">
                     {profile?.full_name || user?.email?.split("@")[0]}
@@ -487,7 +504,13 @@ export default function ClientDashboard() {
             </div>
             <div className="flex gap-3 flex-wrap">
               <Button
-                onClick={() => setActiveTab("fraudguard")}
+                onClick={() => {
+                  downloadPluginFile("YOUR_API_KEY_HERE");
+                  toast({
+                    title: "✅ Plugin ডাউনলোড হয়েছে",
+                    description: "Fraud Guard tab থেকে API Key সেট করুন",
+                  });
+                }}
                 className="bg-white text-blue-600 hover:bg-white/90 gap-2 rounded-xl font-bengali shadow-lg"
               >
                 <Download className="w-4 h-4" />

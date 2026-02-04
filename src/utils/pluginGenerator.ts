@@ -1,5 +1,4 @@
 const ENDPOINT_URL = 'https://gtjmfvwkatrorhuyrpby.supabase.co/functions/v1/check-order-eligibility';
-const LOGO_URL = 'https://webcreation-bd.lovable.app/logo.png';
 const FRAUD_GUARD_URL = 'https://webcreation-bd.lovable.app/fraud-guard';
 const DASHBOARD_URL = 'https://webcreation-bd.lovable.app/dashboard';
 const WHATSAPP_DEFAULT = '+8801332052874';
@@ -10,7 +9,7 @@ export const generateMainPluginFile = (apiKey: string): string => {
  * Plugin Name: WCBD Fraud Guard
  * Plugin URI: https://webcreation-bd.lovable.app/fraud-guard
  * Description: Order Limiter & Anti-Fraud System for WooCommerce - Protect your store from fake orders with Domain Binding Security
- * Version: 3.1.0
+ * Version: 3.2.0
  * Author: WebCreation BD
  * Author URI: https://webcreation-bd.lovable.app
  * Text Domain: wcbd-fraud-guard
@@ -20,7 +19,7 @@ export const generateMainPluginFile = (apiKey: string): string => {
 
 if (!defined('ABSPATH')) exit;
 
-define('WCBD_FRAUD_GUARD_VERSION', '3.1.0');
+define('WCBD_FRAUD_GUARD_VERSION', '3.2.0');
 define('WCBD_FRAUD_GUARD_PATH', plugin_dir_path(__FILE__));
 define('WCBD_FRAUD_GUARD_URL', plugin_dir_url(__FILE__));
 
@@ -28,7 +27,6 @@ class WCBD_Fraud_Guard {
     
     private $api_key = '${apiKey}';
     private $endpoint = '${ENDPOINT_URL}';
-    private $logo_url = '${LOGO_URL}';
     private $fraud_guard_url = '${FRAUD_GUARD_URL}';
     private $dashboard_url = '${DASHBOARD_URL}';
     private $whatsapp_default = '${WHATSAPP_DEFAULT}';
@@ -98,8 +96,6 @@ class WCBD_Fraud_Guard {
         return '
         .fraud-popup-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.9);backdrop-filter:blur(10px);z-index:999999;display:flex;align-items:center;justify-content:center;padding:20px;animation:fraudFadeIn 0.3s ease}
         .fraud-popup-modal{background:linear-gradient(145deg,#1a1a2e,#16213e);border:1px solid rgba(255,255,255,0.1);border-radius:24px;padding:40px 30px;max-width:420px;width:100%;text-align:center;box-shadow:0 25px 50px rgba(0,0,0,0.5);animation:fraudScaleIn 0.4s cubic-bezier(0.175,0.885,0.32,1.275)}
-        .fraud-popup-logo{width:70px;height:70px;border-radius:50%;border:3px solid rgba(0,212,255,0.3);box-shadow:0 8px 32px rgba(0,212,255,0.3);margin:0 auto 15px;object-fit:cover}
-        .fraud-popup-brand{font-size:13px;color:#00d4ff;margin:0 0 20px;font-weight:500}
         .fraud-popup-icon{width:80px;height:80px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:38px}
         .fraud-popup-icon.blocked{background:linear-gradient(135deg,#ff4757,#c0392b)}
         .fraud-popup-icon.cooldown{background:linear-gradient(135deg,#ffa502,#e67e22)}
@@ -113,12 +109,9 @@ class WCBD_Fraud_Guard {
         .fraud-popup-whatsapp:hover{transform:scale(1.05);color:#fff}
         .fraud-popup-phone{background:linear-gradient(135deg,#00d4ff,#0099cc);padding:12px 24px;border-radius:12px;color:#fff;text-decoration:none;font-weight:600;font-size:14px;display:inline-flex;align-items:center;gap:8px;transition:transform 0.2s}
         .fraud-popup-phone:hover{transform:scale(1.05);color:#fff}
-        .fraud-popup-button{padding:14px 50px;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;background:linear-gradient(135deg,#00d4ff,#0099cc);color:#fff;transition:transform 0.2s;margin-bottom:15px}
+        .fraud-popup-button{padding:14px 50px;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;background:linear-gradient(135deg,#00d4ff,#0099cc);color:#fff;transition:transform 0.2s}
         .fraud-popup-button:hover{transform:scale(1.05)}
         .fraud-popup-countdown{font-size:13px;color:#888;margin-left:5px}
-        .fraud-popup-link{display:block;color:#00d4ff;text-decoration:none;font-size:14px;margin-bottom:15px;transition:opacity 0.2s}
-        .fraud-popup-link:hover{opacity:0.8;color:#00d4ff}
-        .fraud-popup-branding{font-size:12px;color:#666;margin:0}
         @keyframes fraudFadeIn{from{opacity:0}to{opacity:1}}
         @keyframes fraudScaleIn{from{opacity:0;transform:scale(0.8)}to{opacity:1;transform:scale(1)}}
         ';
@@ -147,8 +140,6 @@ class WCBD_Fraud_Guard {
                 whatsapp: '{\$whatsapp}',
                 phone: '{\$phone}',
                 showContact: '{\$show_contact}' === '1',
-                logoUrl: '{\$this->logo_url}',
-                fraudGuardUrl: '{\$this->fraud_guard_url}',
                 
                 init: function() {
                     var self = this;
@@ -235,18 +226,12 @@ class WCBD_Fraud_Guard {
                     
                     var html = '<div class=\\\"fraud-popup-overlay\\\" id=\\\"fraudPopup\\\">' +
                         '<div class=\\\"fraud-popup-modal\\\">' +
-                        '<img src=\\\"' + this.logoUrl + '\\\" class=\\\"fraud-popup-logo\\\" alt=\\\"Logo\\\" onerror=\\\"this.style.display=\\\\'none\\\\'\\\">' +
-                        '<p class=\\\"fraud-popup-brand\\\">WebCreation BD</p>' +
                         '<div class=\\\"fraud-popup-icon ' + type + '\\\">' + (icons[type] || '⚠️') + '</div>' +
                         '<h3 class=\\\"fraud-popup-title\\\">' + (titles[type] || 'Error') + '</h3>' +
                         '<p class=\\\"fraud-popup-message\\\">' + msg + '</p>' +
                         timeDisplay +
                         contactHtml +
                         '<button class=\\\"fraud-popup-button\\\" id=\\\"fraudPopupBtn\\\">' + btnText + ' ' + timerHtml + '</button>' +
-                        '<a href=\\\"' + this.fraudGuardUrl + '\\\" target=\\\"_blank\\\" class=\\\"fraud-popup-link\\\">' + 
-                            (this.lang === 'bn' ? 'বিস্তারিত জানতে এখানে ক্লিক করুন →' : 'Learn more about our protection →') + 
-                        '</a>' +
-                        '<p class=\\\"fraud-popup-branding\\\">Powered by WebCreation BD</p>' +
                         '</div></div>';
                     
                     jQ('body').append(html);

@@ -1,199 +1,111 @@
 
 
-# API Key + Domain Binding Security Feature
+# WCBD Fraud Guard Plugin v3.3 - Complete Fix Plan
 
 ## সমস্যা বিশ্লেষণ
 
-### বর্তমান অবস্থা
-- একটা API key দিয়ে **যেকোনো domain** থেকে request করা যায়
-- Edge function শুধু `api_key` validate করে
-- Domain (`website_url`) merchants table-এ আছে কিন্তু enforce হয় না
+### সনাক্ত করা সমস্যাগুলো:
 
-### Security Risk
-যদি কেউ API key জানতে পারে (screenshot, shared, etc.), তারা নিজের domain-এ use করতে পারবে
+1. **Popup Layout ভেঙ্গে যাচ্ছে / নিচে চলে যাচ্ছে**
+   - CSS properly load হচ্ছে না (WooCommerce dependency issue)
+   - z-index conflict অন্য থিম/plugin এর সাথে
 
----
+2. **PHP String Escaping সমস্যা**
+   - Double-quoted PHP string এ `\$` escaping inconsistent
+   - JavaScript popup code PHP parsing এ corrupt হচ্ছে
 
-## প্রস্তাবিত সমাধান
-
-### মূল Concept
-```text
-API Request → Edge Function
-    │
-    ├── Check: api_key valid?
-    │
-    ├── [NEW] Check: Request Origin/Domain matches website_url?
-    │    ├── Match → Continue
-    │    └── No Match → Block (401)
-    │
-    └── Continue with fraud checks...
-```
+3. **Version Inconsistency**
+   - বিভিন্ন জায়গায় v3.0, v3.1, v3.2 মিশে আছে
 
 ---
 
-## Technical Implementation
+## সমাধান পরিকল্পনা
 
-### 1. Edge Function Update (`check-order-eligibility`)
+### ধাপ ১: Plugin Generator সম্পূর্ণ Rewrite (v3.3)
 
-**নতুন Parameter:**
-- `domain` - Request থেকে domain pass হবে
+**উদ্দেশ্য**: সমস্ত PHP/JavaScript escaping সমস্যা ঠিক করা এবং robust popup নিশ্চিত করা
 
-**নতুন Validation Logic:**
+**পরিবর্তন সমূহ**:
+
+- **CSS Injection উন্নত করা**:
+  - `wp_add_inline_style()` এর পরিবর্তে `<style>` tag সরাসরি footer এ inject করা
+  - `!important` দিয়ে z-index enforce করা (999999)
+  - CSS minified এবং self-contained রাখা
+
+- **JavaScript Code Isolation**:
+  - PHP heredoc (`<<<'JS'`) বা single-quoted string ব্যবহার (variable interpolation বন্ধ)
+  - JavaScript এ jQuery `$` কখনো ব্যবহার না করা, সবসময় `jQuery` বা `jQ` alias
+  - Popup HTML properly escaped রাখা
+
+- **Popup Rendering Fix**:
+  - `body.prepend()` এর পরিবর্তে `body.append()` ব্যবহার (current)
+  - Existing popup remove করে নতুন add করা
+  - Escape click এ popup close
+
+- **Branding সম্পূর্ণ অপসারণ**:
+  - Popup message এ কোনো logo/branding নেই (already done)
+  - Admin panel header এ minimal branding (version only)
+
+### ধাপ ২: Dashboard Version Sync
+
+**সকল জায়গায় v3.3 update**:
+
+| ফাইল | অবস্থান |
+|------|---------|
+| `pluginGenerator.ts` | Plugin header + admin panel |
+| `FraudGuardSection.tsx` | Header badge + download button |
+| `SetupGuide.tsx` | Plugin card title |
+| `PluginDownload.tsx` | Version badges + changelog |
+| `ClientDashboard.tsx` | Promo banner |
+
+### ধাপ ৩: Popup CSS Hardening
+
 ```text
-1. api_key দিয়ে merchant fetch করো
-2. merchant.website_url extract করো
-3. Request-এর domain/origin match করো
-4. Match না হলে → Block with "Domain mismatch" error
-```
-
-**Code Changes:**
-```typescript
-interface CheckRequest {
-  api_key: string
-  phone?: string
-  ip?: string
-  device_id?: string
-  domain?: string  // NEW - from plugin
+.fraud-popup-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147483647 !important;  // Max z-index
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
-
-// After getting merchant:
-const allowedDomain = merchant.website_url;
-const requestDomain = domain;
-
-// Normalize and compare domains
-if (allowedDomain && requestDomain) {
-  const normalizedAllowed = normalizeDomain(allowedDomain);
-  const normalizedRequest = normalizeDomain(requestDomain);
-  
-  if (normalizedAllowed !== normalizedRequest) {
-    return { error: 'Domain mismatch', allowed: false };
-  }
-}
 ```
 
-### 2. WordPress Plugin Update (`pluginGenerator.ts`)
+### ধাপ ৪: Error Handling যোগ করা
 
-**নতুন Feature:**
-- Plugin automatically current site domain send করবে
-
-**JavaScript পরিবর্তন:**
-```javascript
-// validate function-এ:
-jQ.ajax({
-  url: this.endpoint,
-  method: 'POST',
-  contentType: 'application/json',
-  data: JSON.stringify({
-    api_key: this.apiKey, 
-    phone: phone, 
-    device_id: this.deviceId,
-    domain: window.location.hostname  // NEW
-  }),
-  // ...
-});
-```
-
-### 3. Subscription Purchase Modal Update
-
-**পরিবর্তন:**
-- Plan কেনার সময় **domain বাধ্যতামূলক**
-- Domain ছাড়া submit করা যাবে না
-
-**নতুন Field:**
-```text
-Step 1: পেমেন্ট পাঠান (current)
-Step 2: তথ্য দিন
-   - Transaction ID (current)
-   - Sender Number (current)
-   - Website Domain (NEW - required)
-   - Screenshot (current - optional)
-```
-
-### 4. AssignPlanModal Update (Admin)
-
-**পরিবর্তন:**
-- Already আছে `websiteUrl` field ✓
-- Validation ensure করা যে empty না হয়
+- Console logging (debug mode)
+- Fallback alert যদি popup fail হয়
+- AJAX error handling improved
 
 ---
 
-## Domain Normalization Logic
+## প্রযুক্তিগত বিবরণ
 
-```typescript
-function normalizeDomain(url: string): string {
-  try {
-    // Remove protocol, www, trailing slashes
-    let domain = url.toLowerCase()
-      .replace(/^https?:\/\//, '')
-      .replace(/^www\./, '')
-      .replace(/\/.*$/, '')
-      .trim();
-    return domain;
-  } catch {
-    return url.toLowerCase().trim();
-  }
-}
+### ফাইল পরিবর্তন তালিকা
 
-// Examples:
-// "https://www.example.com/page" → "example.com"
-// "http://example.com" → "example.com"
-// "example.com" → "example.com"
-```
+| ফাইল | পরিবর্তনের ধরন |
+|------|---------------|
+| `src/utils/pluginGenerator.ts` | Major rewrite - CSS injection, JS escaping, version 3.3 |
+| `src/components/fraud-protection/FraudGuardSection.tsx` | Version update |
+| `src/components/fraud-protection/SetupGuide.tsx` | Version update |
+| `src/components/fraud-protection/PluginDownload.tsx` | Changelog + version update |
+| `src/pages/ClientDashboard.tsx` | Promo banner version update |
+
+### Plugin নতুন Features (v3.3)
+
+1. **Bulletproof Popup**: Maximum z-index + `!important` rules
+2. **Cross-theme Compatibility**: Isolated CSS namespace
+3. **ESC Key Support**: Popup close on Escape key press
+4. **Click Outside Close**: Overlay click এ popup close
+5. **Debug Console**: Browser console এ status logs
 
 ---
 
-## File Changes Summary
+## Testing Checklist
 
-| File | Action | Description |
-|------|--------|-------------|
-| `supabase/functions/check-order-eligibility/index.ts` | MODIFY | Add domain validation + select website_url |
-| `src/utils/pluginGenerator.ts` | MODIFY | Send domain in API request |
-| `src/components/fraud-protection/SubscriptionPurchaseModal.tsx` | MODIFY | Add required domain field |
-| `src/hooks/useMerchantData.ts` | No change | Already handles website_url |
-| `src/components/admin/AssignPlanModal.tsx` | No change | Already has website_url field |
-
----
-
-## Edge Cases Handled
-
-| Case | Handling |
-|------|----------|
-| Merchant has no website_url set | Skip domain check (backward compatible) |
-| Domain with/without www | Normalize both before comparing |
-| HTTP vs HTTPS | Strip protocol before comparing |
-| Subdomain mismatch | Strict match required (admin can update) |
-| localhost/development | Match will fail unless website_url = localhost |
-
----
-
-## User Flow After Implementation
-
-### Client Plan Purchase:
-```text
-1. Client selects plan (Monthly/Yearly)
-2. Opens payment modal
-3. Enters: Transaction ID, Sender Number, Website Domain
-4. Submits → Creates subscription order
-5. Admin approves → website_url saved to merchant
-6. Plugin only works on that domain
-```
-
-### Admin Manual Assignment:
-```text
-1. Admin opens "Plan Assign" modal
-2. Selects user
-3. Enters website domain (already implemented)
-4. Assigns plan → website_url saved
-5. API key only works for that domain
-```
-
----
-
-## Error Messages
-
-| Scenario | Response |
-|----------|----------|
-| Domain mismatch | `{ allowed: false, reason: 'domain_mismatch', message: 'এই ডোমেইনে ব্যবহারের অনুমতি নেই।' }` |
-| No domain in request | Continue normally (backward compatible) |
-| No website_url in merchant | Continue normally (backward compatible) |
+- [ ] Plugin download করে WordPress এ install করুন
+- [ ] Checkout page এ order try করুন (cooldown trigger করতে)
+- [ ] Popup সঠিকভাবে center এ দেখাচ্ছে কিনা verify করুন
+- [ ] OK button এবং ESC key দিয়ে close হচ্ছে কিনা
+- [ ] Mobile responsive check করুন
 

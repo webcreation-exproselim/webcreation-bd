@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      blacklist: {
+        Row: {
+          block_type: string
+          blocked_value: string
+          created_at: string
+          id: string
+          merchant_id: string
+          reason: string | null
+        }
+        Insert: {
+          block_type?: string
+          blocked_value: string
+          created_at?: string
+          id?: string
+          merchant_id: string
+          reason?: string | null
+        }
+        Update: {
+          block_type?: string
+          blocked_value?: string
+          created_at?: string
+          id?: string
+          merchant_id?: string
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blacklist_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_reviews: {
         Row: {
           created_at: string
@@ -55,6 +90,44 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      fraud_logs: {
+        Row: {
+          created_at: string
+          device_fingerprint: string | null
+          id: string
+          ip_address: string | null
+          merchant_id: string
+          phone_number: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          device_fingerprint?: string | null
+          id?: string
+          ip_address?: string | null
+          merchant_id: string
+          phone_number?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          device_fingerprint?: string | null
+          id?: string
+          ip_address?: string | null
+          merchant_id?: string
+          phone_number?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fraud_logs_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       invoices: {
         Row: {
@@ -102,6 +175,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      merchants: {
+        Row: {
+          api_key: string
+          cooldown_period_days: number
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+          website_url: string | null
+        }
+        Insert: {
+          api_key?: string
+          cooldown_period_days?: number
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+          website_url?: string | null
+        }
+        Update: {
+          api_key?: string
+          cooldown_period_days?: number
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+          website_url?: string | null
+        }
+        Relationships: []
       }
       messages: {
         Row: {

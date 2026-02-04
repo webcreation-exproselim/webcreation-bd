@@ -370,7 +370,8 @@ export function FraudGuardSection({ userId }: FraudGuardSectionProps) {
           <SetupGuide 
             apiKey={merchant?.api_key || ''} 
             isActive={merchant?.is_active || false} 
-            onPurchase={() => setShowPurchaseModal(true)} 
+            merchantId={merchant?.id}
+            onPurchaseSuccess={handlePurchaseSuccess}
           />
         </TabsContent>
 

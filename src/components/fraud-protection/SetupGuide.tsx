@@ -9,7 +9,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 interface SetupGuideProps {
   apiKey: string;
   isActive: boolean;
-  onPurchase: () => void;
+  merchantId?: string;
+  onPurchaseSuccess?: () => void;
 }
 
 interface Step {
@@ -46,7 +47,7 @@ const steps: Step[] = [
   },
 ];
 
-export function SetupGuide({ apiKey, isActive, onPurchase }: SetupGuideProps) {
+export function SetupGuide({ apiKey, isActive, merchantId, onPurchaseSuccess }: SetupGuideProps) {
   const [openSteps, setOpenSteps] = useState<number[]>([1]);
   const { toast } = useToast();
 
@@ -122,7 +123,7 @@ export function SetupGuide({ apiKey, isActive, onPurchase }: SetupGuideProps) {
       </div>
 
       {/* API Key Section */}
-      <APIKeySection apiKey={apiKey} isActive={isActive} onPurchase={onPurchase} />
+      <APIKeySection apiKey={apiKey} isActive={isActive} merchantId={merchantId} onPurchaseSuccess={onPurchaseSuccess} />
 
       {/* Step-by-Step Guide */}
       <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">

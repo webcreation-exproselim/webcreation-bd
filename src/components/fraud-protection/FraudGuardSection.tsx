@@ -16,8 +16,10 @@ import {
   Zap,
   Crown,
   AlertCircle,
-  ExternalLink
+  ExternalLink,
+  Download
 } from "lucide-react";
+import { downloadPluginFile } from "@/utils/pluginGenerator";
 
 import { SetupGuide } from "./SetupGuide";
 import { FraudGuardAnalytics } from "./FraudGuardAnalytics";
@@ -45,7 +47,7 @@ export function FraudGuardSection({ userId }: FraudGuardSectionProps) {
   const [loading, setLoading] = useState(true);
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('monthly');
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState("setup");
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -156,22 +158,33 @@ export function FraudGuardSection({ userId }: FraudGuardSectionProps) {
     <div className="space-y-6">
       {/* Header Card */}
       <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-purple-700 rounded-2xl p-6 text-white shadow-xl shadow-blue-500/20">
-        <div className="flex items-start gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-            <Shield className="w-9 h-9 text-white" />
-          </div>
-          <div className="flex-1">
-            <h2 className="text-xl font-bold font-bengali mb-1">WCBD Fraud Guard</h2>
-            <p className="text-white/80 text-sm font-bengali">
-              আপনার WooCommerce স্টোর সুরক্ষিত করুন
-            </p>
-          </div>
-          {merchant?.is_active && (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-400/30">
-              <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-sm font-medium text-emerald-200">Active</span>
+        <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+          <div className="flex items-start gap-4 flex-1">
+            <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
+              <Shield className="w-9 h-9 text-white" />
             </div>
-          )}
+            <div className="flex-1">
+              <h2 className="text-xl font-bold font-bengali mb-1">WCBD Fraud Guard v3.0</h2>
+              <p className="text-white/80 text-sm font-bengali">
+                আপনার WooCommerce স্টোর সুরক্ষিত করুন
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 flex-wrap">
+            <Button
+              onClick={() => downloadPluginFile(merchant?.api_key || 'YOUR_API_KEY_HERE')}
+              className="bg-white/20 hover:bg-white/30 border border-white/30 text-white gap-2 rounded-xl"
+            >
+              <Download className="w-4 h-4" />
+              <span className="font-bengali">Plugin Download</span>
+            </Button>
+            {merchant?.is_active && (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-400/30">
+                <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-sm font-medium text-emerald-200">Active</span>
+              </div>
+            )}
+          </div>
         </div>
         
         {/* Status Info */}

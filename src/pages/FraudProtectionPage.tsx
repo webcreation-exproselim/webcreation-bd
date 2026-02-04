@@ -7,8 +7,9 @@ import { FraudSettings } from "@/components/fraud-protection/FraudSettings";
 import { BlacklistManager } from "@/components/fraud-protection/BlacklistManager";
 import { FraudLogs } from "@/components/fraud-protection/FraudLogs";
 import { IntegrationCode } from "@/components/fraud-protection/IntegrationCode";
+import { PluginDownload } from "@/components/fraud-protection/PluginDownload";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Settings, Shield, FileText, Code, Loader2 } from "lucide-react";
+import { ArrowLeft, Settings, Shield, FileText, Code, Loader2, Download } from "lucide-react";
 
 export default function FraudProtectionPage() {
   const navigate = useNavigate();
@@ -115,6 +116,13 @@ export default function FraudProtectionPage() {
               <Code className="h-4 w-4 mr-2" />
               Integration
             </TabsTrigger>
+            <TabsTrigger 
+              value="plugin"
+              className="data-[state=active]:bg-cyan-600 data-[state=active]:text-white"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Plugin
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="settings">
@@ -140,6 +148,10 @@ export default function FraudProtectionPage() {
 
           <TabsContent value="integration">
             {merchant && <IntegrationCode apiKey={merchant.api_key} />}
+          </TabsContent>
+
+          <TabsContent value="plugin">
+            {merchant && <PluginDownload apiKey={merchant.api_key} />}
           </TabsContent>
         </Tabs>
       </main>

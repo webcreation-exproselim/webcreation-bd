@@ -9,6 +9,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -19,7 +20,7 @@ import {
 } from "@/components/ui/select";
 import { 
   Search, Edit2, Power, PowerOff, Shield, 
-  User, Globe, Key, Loader2, RefreshCw, UserPlus
+  User, Globe, Key, Loader2, RefreshCw, UserPlus, Trash2, History
 } from "lucide-react";
 import { AssignPlanModal } from "./AssignPlanModal";
 interface Merchant {
@@ -41,6 +42,17 @@ interface Merchant {
   email?: string;
 }
 
+interface SubscriptionOrder {
+  id: string;
+  merchant_id: string;
+  plan_type: string;
+  amount: number;
+  payment_method: string;
+  transaction_id: string;
+  status: string;
+  created_at: string;
+}
+
 export function MerchantManagement() {
   const [merchants, setMerchants] = useState<Merchant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,6 +61,10 @@ export function MerchantManagement() {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [activateModalOpen, setActivateModalOpen] = useState(false);
   const [assignPlanModalOpen, setAssignPlanModalOpen] = useState(false);
+  const [historyModalOpen, setHistoryModalOpen] = useState(false);
+  const [deleteConfirmModalOpen, setDeleteConfirmModalOpen] = useState(false);
+  const [subscriptionOrders, setSubscriptionOrders] = useState<SubscriptionOrder[]>([]);
+  const [orderToDelete, setOrderToDelete] = useState<SubscriptionOrder | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('monthly');
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
@@ -189,6 +205,100 @@ export function MerchantManagement() {
     await updateMerchant(merchantId, { api_key: newApiKey });
   };
 
+  const fetchSubscriptionHistory = async (merchantId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('subscription_orders')
+        .select('*')
+        .eq('merchant_id', merchantId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setSubscriptionOrders(data || []);
+    } catch (error) {
+      console.error('Error fetching subscription history:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load subscription history",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const deleteSubscriptionOrder = async (orderId: string) => {
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('subscription_orders')
+        .delete()
+        .eq('id', orderId);
+
+      if (error) throw error;
+
+      toast({ title: "✅ Subscription order deleted" });
+      setDeleteConfirmModalOpen(false);
+      setOrderToDelete(null);
+      
+      // Refresh history
+      if (selectedMerchant) {
+        fetchSubscriptionHistory(selectedMerchant.id);
+      }
+    } catch (error) {
+      console.error('Error deleting subscription order:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete subscription order",
+        variant: "destructive"
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteMerchant = async (merchantId: string) => {
+    setSaving(true);
+    try {
+      // First delete related subscription orders
+      await supabase
+        .from('subscription_orders')
+        .delete()
+        .eq('merchant_id', merchantId);
+
+      // Delete related fraud logs
+      await supabase
+        .from('fraud_logs')
+        .delete()
+        .eq('merchant_id', merchantId);
+
+      // Delete related blacklist entries
+      await supabase
+        .from('blacklist')
+        .delete()
+        .eq('merchant_id', merchantId);
+
+      // Finally delete the merchant
+      const { error } = await supabase
+        .from('merchants')
+        .delete()
+        .eq('id', merchantId);
+
+      if (error) throw error;
+
+      toast({ title: "✅ Merchant deleted successfully" });
+      setEditModalOpen(false);
+      fetchMerchants();
+    } catch (error) {
+      console.error('Error deleting merchant:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete merchant",
+        variant: "destructive"
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const filteredMerchants = merchants.filter(m => 
     m.profile?.full_name?.toLowerCase().includes(search.toLowerCase()) ||
     m.website_url?.toLowerCase().includes(search.toLowerCase()) ||
@@ -297,6 +407,18 @@ export function MerchantManagement() {
                         <Button
                           size="sm"
                           variant="ghost"
+                          title="Plan History"
+                          onClick={() => {
+                            setSelectedMerchant(merchant);
+                            fetchSubscriptionHistory(merchant.id);
+                            setHistoryModalOpen(true);
+                          }}
+                        >
+                          <History className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
                           onClick={() => {
                             setSelectedMerchant(merchant);
                             setEditModalOpen(true);
@@ -392,6 +514,15 @@ export function MerchantManagement() {
               <div className="flex gap-2 pt-4">
                 <Button
                   variant="outline"
+                  className="text-red-500 hover:text-red-600 hover:bg-red-50 gap-2"
+                  onClick={() => deleteMerchant(selectedMerchant.id)}
+                  disabled={saving}
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete
+                </Button>
+                <Button
+                  variant="outline"
                   className="flex-1"
                   onClick={() => setEditModalOpen(false)}
                 >
@@ -462,6 +593,109 @@ export function MerchantManagement() {
         onOpenChange={setAssignPlanModalOpen}
         onSuccess={fetchMerchants}
       />
+
+      {/* Plan History Modal */}
+      <Dialog open={historyModalOpen} onOpenChange={setHistoryModalOpen}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="font-bengali flex items-center gap-2">
+              <History className="w-5 h-5 text-blue-500" />
+              Plan History - {selectedMerchant?.profile?.full_name || "Merchant"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto">
+            {subscriptionOrders.length === 0 ? (
+              <div className="text-center py-8 text-gray-500 font-bengali">
+                কোনো subscription order পাওয়া যায়নি
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {subscriptionOrders.map((order) => (
+                  <div
+                    key={order.id}
+                    className="bg-gray-50 rounded-lg p-4 border border-gray-100"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Badge className={
+                            order.status === 'approved' 
+                              ? 'bg-emerald-100 text-emerald-700' 
+                              : order.status === 'pending'
+                              ? 'bg-yellow-100 text-yellow-700'
+                              : 'bg-red-100 text-red-700'
+                          }>
+                            {order.status}
+                          </Badge>
+                          <Badge variant="outline">
+                            {order.plan_type === 'yearly' ? '📆 Yearly' : '📅 Monthly'}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-gray-600">
+                          <span className="font-medium">Amount:</span> ৳{order.amount}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          <span className="font-medium">Method:</span> {order.payment_method}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          <span className="font-medium">TXN ID:</span> {order.transaction_id}
+                        </p>
+                        <p className="text-xs text-gray-400 mt-2">
+                          {new Date(order.created_at).toLocaleString('bn-BD')}
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                        onClick={() => {
+                          setOrderToDelete(order);
+                          setDeleteConfirmModalOpen(true);
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirm Modal */}
+      <Dialog open={deleteConfirmModalOpen} onOpenChange={setDeleteConfirmModalOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-bengali text-red-600">
+              Delete Confirm
+            </DialogTitle>
+            <DialogDescription className="font-bengali">
+              এই subscription order delete করতে চান? এটি undo করা যাবে না।
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-2 pt-4">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => {
+                setDeleteConfirmModalOpen(false);
+                setOrderToDelete(null);
+              }}
+            >
+              বাতিল
+            </Button>
+            <Button
+              className="flex-1 bg-red-600 hover:bg-red-700"
+              onClick={() => orderToDelete && deleteSubscriptionOrder(orderToDelete.id)}
+              disabled={saving}
+            >
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Delete করুন"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

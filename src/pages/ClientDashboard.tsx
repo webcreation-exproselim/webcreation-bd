@@ -461,6 +461,50 @@ export default function ClientDashboard() {
           </p>
         </motion.div>
 
+        {/* Fraud Guard Plugin Promo Banner */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="mb-6 md:mb-8 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 rounded-2xl p-5 md:p-6 text-white shadow-xl shadow-blue-500/20"
+        >
+          <div className="flex flex-col md:flex-row md:items-center gap-4">
+            <div className="flex items-center gap-4 flex-1">
+              <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
+                <Shield className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-lg md:text-xl font-bold font-bengali">🛡️ WCBD Fraud Guard Plugin v3.0</h3>
+                  <span className="bg-emerald-500/30 text-emerald-100 text-xs font-medium px-2 py-1 rounded-full border border-emerald-400/30">
+                    FREE Download
+                  </span>
+                </div>
+                <p className="text-white/80 text-sm font-bengali mt-1">
+                  আপনার WooCommerce স্টোরকে Fake Order থেকে সুরক্ষিত রাখুন
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-3 flex-wrap">
+              <Button
+                onClick={() => setActiveTab("fraudguard")}
+                className="bg-white text-blue-600 hover:bg-white/90 gap-2 rounded-xl font-bengali shadow-lg"
+              >
+                <Download className="w-4 h-4" />
+                Plugin ডাউনলোড করুন
+              </Button>
+              <Button
+                onClick={() => setActiveTab("fraudguard")}
+                variant="outline"
+                className="border-white/30 text-white hover:bg-white/10 gap-2 rounded-xl font-bengali"
+              >
+                <Settings className="w-4 h-4" />
+                Setup Guide
+              </Button>
+            </div>
+          </div>
+        </motion.div>
+
         {/* Stats Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
           <motion.div
@@ -520,15 +564,21 @@ export default function ClientDashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="bg-white rounded-2xl border border-gray-100 p-4 md:p-6 shadow-sm hover:shadow-md transition-shadow"
+            onClick={() => setActiveTab("fraudguard")}
+            className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-2xl border border-purple-200 p-4 md:p-6 shadow-sm hover:shadow-lg transition-all cursor-pointer group"
           >
             <div className="flex items-center gap-3 md:gap-4">
-              <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-purple-100 flex items-center justify-center">
-                <Shield className="w-5 h-5 md:w-6 md:h-6 text-purple-600" />
+              <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center shadow-lg shadow-purple-500/25 group-hover:scale-110 transition-transform">
+                <Shield className="w-5 h-5 md:w-6 md:h-6 text-white" />
               </div>
-              <div>
-                <p className="text-gray-500 text-xs md:text-sm font-bengali">Fraud Guard</p>
-                <p className="text-sm md:text-base font-semibold text-gray-900 font-bengali">Active</p>
+              <div className="flex-1">
+                <p className="text-purple-600 text-xs md:text-sm font-bengali font-medium">🛡️ Fraud Guard</p>
+                <p className="text-xs md:text-sm font-semibold text-gray-900 font-bengali">Plugin Available!</p>
+              </div>
+              <div className="hidden md:block">
+                <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full font-bengali group-hover:bg-purple-200 transition-colors">
+                  Setup →
+                </span>
               </div>
             </div>
           </motion.div>

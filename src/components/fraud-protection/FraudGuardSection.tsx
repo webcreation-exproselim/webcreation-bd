@@ -172,7 +172,7 @@ export function FraudGuardSection({ userId }: FraudGuardSectionProps) {
           </div>
           <div className="flex items-center gap-3 flex-wrap">
             <Button
-              onClick={() => downloadPluginFile(merchant?.api_key || 'YOUR_API_KEY_HERE')}
+              onClick={async () => await downloadPluginFile(merchant?.api_key || 'YOUR_API_KEY_HERE')}
               className="bg-white/20 hover:bg-white/30 border border-white/30 text-white gap-2 rounded-xl"
             >
               <Download className="w-4 h-4" />

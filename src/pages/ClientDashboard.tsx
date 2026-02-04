@@ -504,10 +504,10 @@ export default function ClientDashboard() {
             </div>
             <div className="flex gap-3 flex-wrap">
               <Button
-                onClick={() => {
-                  downloadPluginFile("YOUR_API_KEY_HERE");
+                onClick={async () => {
+                  await downloadPluginFile("YOUR_API_KEY_HERE");
                   toast({
-                    title: "✅ Plugin ডাউনলোড হয়েছে",
+                    title: "✅ Plugin ZIP ডাউনলোড হয়েছে",
                     description: "Fraud Guard tab থেকে API Key সেট করুন",
                   });
                 }}

@@ -14,14 +14,14 @@ export function PluginDownload({ apiKey }: PluginDownloadProps) {
   const [downloaded, setDownloaded] = useState(false);
   const { toast } = useToast();
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     try {
       setIsDownloading(true);
-      downloadPluginFile(apiKey);
+      await downloadPluginFile(apiKey);
       setDownloaded(true);
       toast({
         title: "ডাউনলোড সম্পন্ন! ✅",
-        description: "প্লাগইন ফাইল ডাউনলোড হয়েছে",
+        description: "প্লাগইন ZIP ফাইল ডাউনলোড হয়েছে",
       });
       
       setTimeout(() => setDownloaded(false), 5000);

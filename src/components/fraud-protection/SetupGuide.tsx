@@ -56,10 +56,10 @@ export function SetupGuide({ apiKey, isActive, onPurchase }: SetupGuideProps) {
     );
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     // Download with placeholder if inactive, real key if active
     const keyToUse = isActive ? apiKey : "YOUR_API_KEY_HERE";
-    downloadPluginFile(keyToUse);
+    await downloadPluginFile(keyToUse);
 
     if (!isActive) {
       toast({

@@ -8,6 +8,12 @@ interface Merchant {
   website_url: string | null;
   api_key: string;
   cooldown_period_days: number;
+  cooldown_period_minutes: number;
+  is_active: boolean;
+  current_plan: string | null;
+  plan_expires_at: string | null;
+  requests_used: number;
+  max_requests: number;
   created_at: string;
   updated_at: string;
 }
@@ -76,7 +82,17 @@ export function useMerchantData() {
       }
 
       if (merchantData) {
-        setMerchant(merchantData as Merchant);
+        // Ensure all new fields have defaults if they're missing from the DB response
+        const fullMerchant: Merchant = {
+          ...merchantData,
+          cooldown_period_minutes: merchantData.cooldown_period_minutes ?? 1440,
+          is_active: merchantData.is_active ?? false,
+          current_plan: merchantData.current_plan ?? null,
+          plan_expires_at: merchantData.plan_expires_at ?? null,
+          requests_used: merchantData.requests_used ?? 0,
+          max_requests: merchantData.max_requests ?? 0,
+        };
+        setMerchant(fullMerchant);
       }
     } catch (error) {
       console.error('Error in fetchMerchant:', error);
@@ -118,12 +134,12 @@ export function useMerchantData() {
     }
   };
 
-  const updateCooldownPeriod = async (days: number) => {
+  const updateCooldownMinutes = async (minutes: number) => {
     if (!merchant?.id) return;
 
     const { error } = await supabase
       .from('merchants')
-      .update({ cooldown_period_days: days, updated_at: new Date().toISOString() })
+      .update({ cooldown_period_minutes: minutes, updated_at: new Date().toISOString() })
       .eq('id', merchant.id);
 
     if (error) {
@@ -133,12 +149,17 @@ export function useMerchantData() {
         variant: "destructive"
       });
     } else {
-      setMerchant({ ...merchant, cooldown_period_days: days });
+      setMerchant({ ...merchant, cooldown_period_minutes: minutes });
       toast({
         title: "Success",
-        description: `Cooldown period updated to ${days} days`,
+        description: `Cooldown period updated`,
       });
     }
+  };
+
+  // Legacy function for backward compatibility
+  const updateCooldownPeriod = async (days: number) => {
+    await updateCooldownMinutes(days * 1440);
   };
 
   const updateWebsiteUrl = async (url: string) => {
@@ -255,11 +276,13 @@ export function useMerchantData() {
     logs,
     loading,
     updateCooldownPeriod,
+    updateCooldownMinutes,
     updateWebsiteUrl,
     regenerateApiKey,
     addToBlacklist,
     removeFromBlacklist,
     refetchLogs: fetchLogs,
-    refetchBlacklist: fetchBlacklist
+    refetchBlacklist: fetchBlacklist,
+    refetchMerchant: fetchMerchant
   };
 }

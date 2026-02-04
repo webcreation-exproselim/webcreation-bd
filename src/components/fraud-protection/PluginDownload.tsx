@@ -48,9 +48,9 @@ export function PluginDownload({ apiKey }: PluginDownloadProps) {
               <Package className="h-6 w-6 text-white" />
             </div>
             <div>
-              <CardTitle className="text-xl text-white">WordPress Plugin Download</CardTitle>
+              <CardTitle className="text-xl text-white">WCBD Fraud Guard Plugin</CardTitle>
               <CardDescription>
-                আপনার API Key সহ রেডি প্লাগইন ডাউনলোড করুন
+                আপনার API Key সহ রেডি plugin ডাউনলোড করুন
               </CardDescription>
             </div>
           </div>
@@ -103,7 +103,7 @@ export function PluginDownload({ apiKey }: PluginDownloadProps) {
               )}
             </Button>
             <span className="text-sm text-slate-400">
-              fraud-protection-bd.php (~8KB)
+              wcbd-fraud-guard.php (~10KB)
             </span>
           </div>
         </CardContent>
@@ -116,7 +116,7 @@ export function PluginDownload({ apiKey }: PluginDownloadProps) {
             📚 ইন্সটলেশন গাইড
           </CardTitle>
           <CardDescription>
-            ধাপে ধাপে WordPress-এ প্লাগইন ইন্সটল করুন
+            ধাপে ধাপে WordPress-এ plugin ইন্সটল করুন
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -126,10 +126,10 @@ export function PluginDownload({ apiKey }: PluginDownloadProps) {
               1
             </div>
             <div className="space-y-2">
-              <h4 className="font-semibold text-white">প্লাগইন ডাউনলোড করুন</h4>
+              <h4 className="font-semibold text-white">Plugin ডাউনলোড করুন</h4>
               <p className="text-sm text-muted-foreground">
                 উপরের "Plugin ডাউনলোড করুন" বাটনে ক্লিক করে PHP ফাইল ডাউনলোড করুন। 
-                আপনার API Key অটোমেটিক প্লাগইনে ইনজেক্ট করা থাকবে।
+                আপনার API Key অটোমেটিক plugin-এ ইনজেক্ট করা থাকবে।
               </p>
             </div>
           </div>
@@ -164,9 +164,9 @@ export function PluginDownload({ apiKey }: PluginDownloadProps) {
               3
             </div>
             <div className="space-y-2">
-              <h4 className="font-semibold text-white">প্লাগইন একটিভ করুন</h4>
+              <h4 className="font-semibold text-white">Plugin একটিভ করুন</h4>
               <p className="text-sm text-muted-foreground">
-                WordPress Dashboard → Plugins → "Fraud Protection BD" → Activate
+                WordPress Dashboard → Plugins → "WCBD Fraud Guard" → Activate
               </p>
             </div>
           </div>
@@ -183,10 +183,10 @@ export function PluginDownload({ apiKey }: PluginDownloadProps) {
             <div className="space-y-2">
               <h4 className="font-semibold text-white">সেটআপ সম্পন্ন!</h4>
               <p className="text-sm text-muted-foreground">
-                প্লাগইন এখন কাজ করবে। WooCommerce Checkout-এ অটোমেটিক Fraud Protection একটিভ হয়ে যাবে।
+                Plugin এখন কাজ করবে। WooCommerce Checkout-এ অটোমেটিক Fraud Protection একটিভ হয়ে যাবে।
               </p>
               <p className="text-sm text-muted-foreground">
-                <code className="bg-slate-800 px-2 py-0.5 rounded text-cyan-400">Dashboard → Fraud Protection</code>
+                <code className="bg-slate-800 px-2 py-0.5 rounded text-cyan-400">Dashboard → Fraud Guard</code>
                 {" "}থেকে সেটিংস পরিবর্তন করতে পারবেন।
               </p>
             </div>

@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
     // Step 1: Validate API Key and get merchant data
     const { data: merchant, error: merchantError } = await supabase
       .from('merchants')
-      .select('id, cooldown_period_days')
+      .select('id, cooldown_period_minutes, is_active, plan_expires_at, requests_used, max_requests')
       .eq('api_key', api_key)
       .single()
 
@@ -60,9 +60,54 @@ Deno.serve(async (req) => {
       )
     }
 
-    console.log('Merchant found:', merchant.id, 'Cooldown:', merchant.cooldown_period_days, 'days')
+    console.log('Merchant found:', merchant.id, 'Active:', merchant.is_active, 'Cooldown:', merchant.cooldown_period_minutes, 'minutes')
 
-    // Step 2: Check Blacklist
+    // Step 2: Check if account is activated
+    if (!merchant.is_active) {
+      console.log('Account not activated:', merchant.id)
+      return new Response(
+        JSON.stringify({ 
+          error: 'Account not activated',
+          allowed: false,
+          reason: 'inactive',
+          message: 'আপনার অ্যাকাউন্ট সক্রিয় নয়। দয়া করে সাবস্ক্রিপশন কিনুন।'
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Step 3: Check if subscription has expired
+    if (merchant.plan_expires_at) {
+      const expiryDate = new Date(merchant.plan_expires_at)
+      if (expiryDate < new Date()) {
+        console.log('Subscription expired:', merchant.id, 'Expired at:', merchant.plan_expires_at)
+        return new Response(
+          JSON.stringify({ 
+            error: 'Subscription expired',
+            allowed: false,
+            reason: 'expired',
+            message: 'আপনার সাবস্ক্রিপশন মেয়াদ শেষ হয়ে গেছে। দয়া করে রিনিউ করুন।'
+          }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+    }
+
+    // Step 4: Check request limits
+    if (merchant.max_requests > 0 && merchant.requests_used >= merchant.max_requests) {
+      console.log('Request limit exceeded:', merchant.id, 'Used:', merchant.requests_used, 'Max:', merchant.max_requests)
+      return new Response(
+        JSON.stringify({ 
+          error: 'Request limit exceeded',
+          allowed: false,
+          reason: 'limit_exceeded',
+          message: 'আপনার API request সীমা শেষ হয়ে গেছে। দয়া করে প্ল্যান আপগ্রেড করুন।'
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Step 5: Check Blacklist
     const blacklistConditions = []
     if (phone) blacklistConditions.push(`blocked_value.eq.${phone}`)
     if (ip) blacklistConditions.push(`blocked_value.eq.${ip}`)
@@ -95,19 +140,20 @@ Deno.serve(async (req) => {
         JSON.stringify({
           allowed: false,
           reason: 'blacklist',
-          message: 'You are banned from ordering.',
+          message: 'আপনি অর্ডার করতে পারবেন না। আপনাকে ব্লক করা হয়েছে।',
           blocked_type: entry.block_type
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    // Step 3: Check Cooldown Period
-    const cooldownDate = new Date()
-    cooldownDate.setDate(cooldownDate.getDate() - merchant.cooldown_period_days)
+    // Step 6: Check Cooldown Period (MINUTES based)
+    const cooldownMinutes = merchant.cooldown_period_minutes || 1440 // Default to 1 day
+    const cooldownMs = cooldownMinutes * 60 * 1000
+    const cooldownDate = new Date(Date.now() - cooldownMs)
     const cooldownDateString = cooldownDate.toISOString()
 
-    console.log('Checking logs since:', cooldownDateString)
+    console.log('Checking logs since:', cooldownDateString, '(cooldown:', cooldownMinutes, 'minutes)')
 
     // Build OR conditions for fraud_logs check
     let fraudQuery = supabase
@@ -136,10 +182,11 @@ Deno.serve(async (req) => {
     if (existingLogs && existingLogs.length > 0) {
       const log = existingLogs[0]
       const logDate = new Date(log.created_at)
-      const daysAgo = Math.ceil((Date.now() - logDate.getTime()) / (1000 * 60 * 60 * 24))
-      const daysRemaining = merchant.cooldown_period_days - daysAgo
+      const elapsedMs = Date.now() - logDate.getTime()
+      const remainingMs = cooldownMs - elapsedMs
+      const minutesRemaining = Math.ceil(remainingMs / (1000 * 60))
 
-      console.log('Found existing order within cooldown:', log)
+      console.log('Found existing order within cooldown:', log, 'Minutes remaining:', minutesRemaining)
       
       // Log the blocked attempt
       await supabase.from('fraud_logs').insert({
@@ -150,18 +197,28 @@ Deno.serve(async (req) => {
         status: 'blocked_cooldown'
       })
 
+      // Format the remaining time for display
+      let timeMessage: string
+      if (minutesRemaining < 60) {
+        timeMessage = `${minutesRemaining} মিনিট`
+      } else if (minutesRemaining < 1440) {
+        timeMessage = `${Math.ceil(minutesRemaining / 60)} ঘন্টা`
+      } else {
+        timeMessage = `${Math.ceil(minutesRemaining / 1440)} দিন`
+      }
+
       return new Response(
         JSON.stringify({
           allowed: false,
           reason: 'cooldown',
-          message: `You have already placed an order recently. Please wait ${daysRemaining > 0 ? daysRemaining : 1} more day(s).`,
-          days_remaining: daysRemaining > 0 ? daysRemaining : 1
+          message: `আপনি ইতিমধ্যে অর্ডার করেছেন। দয়া করে ${timeMessage} অপেক্ষা করুন।`,
+          minutes_remaining: minutesRemaining > 0 ? minutesRemaining : 1
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    // Step 4: Success - Log the allowed order
+    // Step 7: Success - Log the allowed order and increment request count
     const { error: insertError } = await supabase.from('fraud_logs').insert({
       merchant_id: merchant.id,
       phone_number: phone || null,
@@ -172,6 +229,16 @@ Deno.serve(async (req) => {
 
     if (insertError) {
       console.error('Failed to log order:', insertError)
+    }
+
+    // Increment requests_used
+    const { error: updateError } = await supabase
+      .from('merchants')
+      .update({ requests_used: (merchant.requests_used || 0) + 1 })
+      .eq('id', merchant.id)
+
+    if (updateError) {
+      console.error('Failed to update request count:', updateError)
     }
 
     console.log('Order allowed for merchant:', merchant.id)

@@ -180,8 +180,14 @@ export type Database = {
         Row: {
           api_key: string
           cooldown_period_days: number
+          cooldown_period_minutes: number
           created_at: string
+          current_plan: string | null
           id: string
+          is_active: boolean
+          max_requests: number
+          plan_expires_at: string | null
+          requests_used: number
           updated_at: string
           user_id: string
           website_url: string | null
@@ -189,8 +195,14 @@ export type Database = {
         Insert: {
           api_key?: string
           cooldown_period_days?: number
+          cooldown_period_minutes?: number
           created_at?: string
+          current_plan?: string | null
           id?: string
+          is_active?: boolean
+          max_requests?: number
+          plan_expires_at?: string | null
+          requests_used?: number
           updated_at?: string
           user_id: string
           website_url?: string | null
@@ -198,8 +210,14 @@ export type Database = {
         Update: {
           api_key?: string
           cooldown_period_days?: number
+          cooldown_period_minutes?: number
           created_at?: string
+          current_plan?: string | null
           id?: string
+          is_active?: boolean
+          max_requests?: number
+          plan_expires_at?: string | null
+          requests_used?: number
           updated_at?: string
           user_id?: string
           website_url?: string | null
@@ -426,6 +444,56 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      subscription_orders: {
+        Row: {
+          amount: number
+          approved_at: string | null
+          created_at: string
+          id: string
+          merchant_id: string
+          payment_method: string
+          payment_screenshot_url: string | null
+          plan_type: string
+          sender_number: string
+          status: string
+          transaction_id: string
+        }
+        Insert: {
+          amount: number
+          approved_at?: string | null
+          created_at?: string
+          id?: string
+          merchant_id: string
+          payment_method: string
+          payment_screenshot_url?: string | null
+          plan_type: string
+          sender_number: string
+          status?: string
+          transaction_id: string
+        }
+        Update: {
+          amount?: number
+          approved_at?: string | null
+          created_at?: string
+          id?: string
+          merchant_id?: string
+          payment_method?: string
+          payment_screenshot_url?: string | null
+          plan_type?: string
+          sender_number?: string
+          status?: string
+          transaction_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_orders_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {

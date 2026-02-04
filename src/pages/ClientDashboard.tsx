@@ -492,7 +492,7 @@ export default function ClientDashboard() {
               </div>
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="text-lg md:text-xl font-bold font-bengali">🛡️ WCBD Fraud Guard Plugin v3.0</h3>
+                  <h3 className="text-lg md:text-xl font-bold font-bengali">🛡️ WCBD Fraud Guard Plugin v3.3</h3>
                   <span className="bg-emerald-500/30 text-emerald-100 text-xs font-medium px-2 py-1 rounded-full border border-emerald-400/30">
                     FREE Download
                   </span>

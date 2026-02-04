@@ -16,23 +16,23 @@ import {
   Send,
   Home,
   Loader2,
-  CreditCard,
   Shield,
-  Settings,
-  BarChart3,
   Menu,
   X,
+  CreditCard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { User as SupabaseUser, Session } from "@supabase/supabase-js";
 import companyLogo from "@/assets/company-logo.jpg";
 import { FraudGuardSection } from "@/components/fraud-protection/FraudGuardSection";
 import { ProfileSection } from "@/components/client/ProfileSection";
-import { downloadPluginFile } from "@/utils/pluginGenerator";
+import { FraudGuardQuickStatus } from "@/components/client/FraudGuardQuickStatus";
+import { useMerchantData } from "@/hooks/useMerchantData";
+import { useSubscriptionData } from "@/hooks/useSubscriptionData";
+import { SubscriptionPurchaseModal } from "@/components/fraud-protection/SubscriptionPurchaseModal";
 
 interface OrderService {
   id: string;
@@ -83,8 +83,14 @@ export default function ClientDashboard() {
   const [activeTab, setActiveTab] = useState<TabType>("orders");
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showPurchaseModal, setShowPurchaseModal] = useState(false);
+  const [selectedPlanType, setSelectedPlanType] = useState<'monthly' | 'yearly'>('monthly');
   const navigate = useNavigate();
   const { toast } = useToast();
+  
+  // Fraud Guard merchant data
+  const { merchant, refetchMerchant } = useMerchantData();
+  const { pendingOrder, refetch: refetchSubscription } = useSubscriptionData(merchant?.id || null);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -478,54 +484,22 @@ export default function ClientDashboard() {
           </p>
         </motion.div>
 
-        {/* Fraud Guard Plugin Promo Banner */}
+        {/* Fraud Guard Quick Status - shows subscription status directly */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="mb-6 md:mb-8 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 rounded-2xl p-5 md:p-6 text-white shadow-xl shadow-blue-500/20"
+          className="mb-6 md:mb-8"
         >
-          <div className="flex flex-col md:flex-row md:items-center gap-4">
-            <div className="flex items-center gap-4 flex-1">
-              <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
-                <Shield className="w-8 h-8 text-white" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="text-lg md:text-xl font-bold font-bengali">🛡️ WCBD Fraud Guard Plugin v3.3</h3>
-                  <span className="bg-emerald-500/30 text-emerald-100 text-xs font-medium px-2 py-1 rounded-full border border-emerald-400/30">
-                    FREE Download
-                  </span>
-                </div>
-                <p className="text-white/80 text-sm font-bengali mt-1">
-                  আপনার WooCommerce স্টোরকে Fake Order থেকে সুরক্ষিত রাখুন
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-3 flex-wrap">
-              <Button
-                onClick={async () => {
-                  await downloadPluginFile("YOUR_API_KEY_HERE");
-                  toast({
-                    title: "✅ Plugin ZIP ডাউনলোড হয়েছে",
-                    description: "Fraud Guard tab থেকে API Key সেট করুন",
-                  });
-                }}
-                className="bg-white text-blue-600 hover:bg-white/90 gap-2 rounded-xl font-bengali shadow-lg"
-              >
-                <Download className="w-4 h-4" />
-                Plugin ডাউনলোড করুন
-              </Button>
-              <Button
-                onClick={() => setActiveTab("fraudguard")}
-                variant="outline"
-                className="border-white/30 text-white hover:bg-white/10 gap-2 rounded-xl font-bengali"
-              >
-                <Settings className="w-4 h-4" />
-                Setup Guide
-              </Button>
-            </div>
-          </div>
+          <FraudGuardQuickStatus
+            merchant={merchant}
+            pendingOrder={pendingOrder}
+            onOpenFraudGuard={() => setActiveTab("fraudguard")}
+            onPurchase={(planType) => {
+              setSelectedPlanType(planType);
+              setShowPurchaseModal(true);
+            }}
+          />
         </motion.div>
 
         {/* Stats Cards */}
@@ -588,19 +562,43 @@ export default function ClientDashboard() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
             onClick={() => setActiveTab("fraudguard")}
-            className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-2xl border border-purple-200 p-4 md:p-6 shadow-sm hover:shadow-lg transition-all cursor-pointer group"
+            className={`rounded-2xl border p-4 md:p-6 shadow-sm hover:shadow-lg transition-all cursor-pointer group ${
+              merchant?.is_active 
+                ? "bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-200" 
+                : pendingOrder 
+                  ? "bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200"
+                  : "bg-gradient-to-br from-purple-50 to-blue-50 border-purple-200"
+            }`}
           >
             <div className="flex items-center gap-3 md:gap-4">
-              <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center shadow-lg shadow-purple-500/25 group-hover:scale-110 transition-transform">
+              <div className={`w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform ${
+                merchant?.is_active 
+                  ? "bg-gradient-to-br from-emerald-500 to-teal-500 shadow-emerald-500/25" 
+                  : pendingOrder 
+                    ? "bg-gradient-to-br from-amber-500 to-orange-500 shadow-amber-500/25"
+                    : "bg-gradient-to-br from-purple-600 to-blue-600 shadow-purple-500/25"
+              }`}>
                 <Shield className="w-5 h-5 md:w-6 md:h-6 text-white" />
               </div>
               <div className="flex-1">
-                <p className="text-purple-600 text-xs md:text-sm font-bengali font-medium">🛡️ Fraud Guard</p>
-                <p className="text-xs md:text-sm font-semibold text-gray-900 font-bengali">Plugin Available!</p>
+                <p className={`text-xs md:text-sm font-bengali font-medium ${
+                  merchant?.is_active ? "text-emerald-600" : pendingOrder ? "text-amber-600" : "text-purple-600"
+                }`}>
+                  🛡️ Fraud Guard
+                </p>
+                <p className="text-xs md:text-sm font-semibold text-gray-900 font-bengali">
+                  {merchant?.is_active ? "সক্রিয় ✓" : pendingOrder ? "পেমেন্ট Pending" : "সেটআপ করুন"}
+                </p>
               </div>
               <div className="hidden md:block">
-                <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full font-bengali group-hover:bg-purple-200 transition-colors">
-                  Setup →
+                <span className={`text-xs px-2 py-1 rounded-full font-bengali group-hover:opacity-80 transition-colors ${
+                  merchant?.is_active 
+                    ? "bg-emerald-100 text-emerald-700" 
+                    : pendingOrder 
+                      ? "bg-amber-100 text-amber-700"
+                      : "bg-purple-100 text-purple-700"
+                }`}>
+                  {merchant?.is_active ? "Settings →" : pendingOrder ? "যাচাই হচ্ছে" : "Setup →"}
                 </span>
               </div>
             </div>
@@ -972,6 +970,21 @@ export default function ClientDashboard() {
           </motion.div>
         )}
       </main>
+      
+      {/* Subscription Purchase Modal */}
+      {merchant && (
+        <SubscriptionPurchaseModal
+          isOpen={showPurchaseModal}
+          onClose={() => setShowPurchaseModal(false)}
+          planType={selectedPlanType}
+          merchantId={merchant.id}
+          onSuccess={() => {
+            refetchMerchant();
+            refetchSubscription();
+            setShowPurchaseModal(false);
+          }}
+        />
+      )}
     </div>
   );
 }

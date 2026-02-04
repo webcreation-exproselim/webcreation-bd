@@ -1,250 +1,259 @@
 
-# Client Dashboard ও Fraud Guard System Enhancement
+# WCBD Fraud Guard Plugin v3.0 - Enhanced Features
 
-## সমস্যা বিশ্লেষণ
+## সমস্যা ও সমাধান
 
 আপনি যা চাইছেন:
-1. **Plugin আগেই download করা যাবে** - plan কেনার আগেই client plugin টা download করতে পারবে
-2. **Setup guide dashboard-এ** - ইন্সটলেশন গাইড client dashboard-এই দেখাবে
-3. **API key শুধু plan কেনার পর** - API key locked থাকবে, plan activate হলে unlock হবে
-4. **Client Dashboard আরো modern ও সুন্দর** করা
+1. **Plugin download কাজ করছে না** - Fix করতে হবে
+2. **Timer Control** - মিনিট থেকে শুরু, WordPress settings থেকে control করা যাবে
+3. **Block popup message customizable** - কি message দেখাবে সেটা পরিবর্তন করা যাবে
+4. **WhatsApp ও Phone number fields** - Block হলে contact করার জন্য
+5. **Fraud Protection page link** - বিস্তারিত জানতে link
+6. **Developed by WebCreation BD** - Branding text
+7. **Circle Logo** - Plugin-এ সুন্দর logo দেখাবে
+8. **WhatsApp contact button** - সরাসরি যোগাযোগ করতে পারবে
 
 ---
 
-## যা পরিবর্তন হবে
+## Plugin v3.0 - নতুন Features
 
-### 1. FraudGuardSection.tsx - Complete Redesign
+### WordPress Admin Settings Panel (Enhanced)
 
-বর্তমান অবস্থা:
-- Active merchant: Analytics + Quick buttons দেখায়
-- Inactive merchant: Subscription status + Plan purchase modal
-
-নতুন অবস্থা:
-- **সবার জন্য**: Plugin download ও Setup guide সবসময় দেখাবে
-- **API key**: Plan কেনার আগে blur/locked থাকবে, পরে দেখাবে
-- **Tabs system**: Overview | Setup Guide | Settings
-
-নতুন ফ্লো:
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  🛡️ WCBD Fraud Guard                                            │
+│  [Logo] WCBD Fraud Guard v3.0                                   │
+│  Developed by WebCreation BD                                    │
 ├─────────────────────────────────────────────────────────────────┤
-│  [Overview] [Setup Guide] [Settings]                             │
-├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
-│  📦 PLUGIN DOWNLOAD (সবার জন্য available)                        │
-│  ┌─────────────────────────────────────────────────────────────┐│
-│  │ WCBD Fraud Guard Plugin v1.0                                ││
-│  │ [Download Plugin ডাউনলোড করুন]                              ││
-│  │                                                              ││
-│  │ ⚠️ Note: Plugin কাজ করতে Plan কিনতে হবে                      ││
-│  └─────────────────────────────────────────────────────────────┘│
+│  🔑 API Settings                                                 │
+│  ├── API Key: [___________________] [Test]                      │
 │                                                                  │
-│  🔑 API KEY                                                      │
-│  ┌─────────────────────────────────────────────────────────────┐│
-│  │ (Inactive User)                                             ││
-│  │ [🔒 ••••••••-••••-••••-••••-••••••••••••]                   ││
-│  │ "Plan কিনুন API Key পেতে"                                   ││
-│  │                                                              ││
-│  │ (Active User)                                                ││
-│  │ [abc12345-xxxx-yyyy-zzzz-123456789abc] [Copy]               ││
-│  └─────────────────────────────────────────────────────────────┘│
+│  ⚙️ General Settings                                             │
+│  ├── Protection Status: [Toggle ON/OFF]                         │
+│  ├── Popup Language: [Bengali/English]                          │
 │                                                                  │
-│  📚 SETUP GUIDE (Accordion)                                      │
-│  - Step 1: Plugin ডাউনলোড করুন                                  │
-│  - Step 2: WordPress-এ আপলোড করুন                               │
-│  - Step 3: Plugin Activate করুন                                 │
-│  - Step 4: API Key কপি করুন                                     │
+│  ⏱️ Timer Settings (NEW!)                                        │
+│  ├── Popup Timer: [_30_] seconds (default: 30)                  │
+│  │   └── 0 = No timer (manual close only)                       │
 │                                                                  │
-│  📊 ANALYTICS (শুধু Active users)                                │
-│  ┌─────────────────────────────────────────────────────────────┐│
-│  │ Charts, Stats, Logs                                         ││
-│  └─────────────────────────────────────────────────────────────┘│
+│  💬 Custom Messages (NEW!)                                       │
+│  ├── Blocked Message (Cooldown):                                │
+│  │   [আপনি সম্প্রতি অর্ডার করেছেন। অনুগ্রহ করে অপেক্ষা করুন।]    │
+│  ├── Blocked Message (Blacklist):                               │
+│  │   [আপনার অর্ডার ব্লক করা হয়েছে।]                              │
+│                                                                  │
+│  📞 Contact Information (NEW!)                                   │
+│  ├── WhatsApp Number: [+8801332052874]                          │
+│  ├── Phone Number: [+8801332052874]                             │
+│  ├── Show Contact in Popup: [Toggle ON/OFF]                     │
+│                                                                  │
+│  [💾 Save Settings]                                              │
+│                                                                  │
+│  ℹ️ About                                                        │
+│  ├── [Logo] Developed by WebCreation BD                         │
+│  ├── [বিস্তারিত জানুন →] (Link to /fraud-guard)                 │
+│  ├── [WhatsApp-এ যোগাযোগ করুন →]                                │
 │                                                                  │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 2. Client Dashboard Light Theme Enhancement
+### Enhanced Popup Design
 
-সম্পূর্ণ modern ও clean design:
-- Soft shadows ও rounded corners
-- Better spacing ও typography
-- Smooth animations
-- Mobile-optimized cards
-- Improved tab navigation
+Block হলে যে popup দেখাবে সেটাতে থাকবে:
+- Timer countdown (যদি set করা থাকে)
+- Custom message (admin settings থেকে)
+- Contact buttons (WhatsApp/Phone)
+- "বিস্তারিত জানুন" link
+- WebCreation BD branding with logo
 
----
-
-## নতুন Components
-
-### Component 1: FraudGuardDashboard.tsx (Main Component)
-
-```typescript
-// Tabs: Overview | Setup Guide | Settings
-// - Overview: Status card + Quick stats + Purchase CTA (if inactive)
-// - Setup Guide: Plugin download + Installation steps + API key
-// - Settings: Cooldown, Blacklist (only if active)
 ```
-
-### Component 2: SetupGuide.tsx
-
-```typescript
-// Features:
-// 1. Plugin download button (সবার জন্য)
-// 2. Step-by-step accordion guide
-// 3. API key section (locked/unlocked based on status)
-// 4. Copy button for API key
-// 5. Integration code preview
-```
-
-### Component 3: APIKeySection.tsx
-
-```typescript
-interface APIKeySectionProps {
-  apiKey: string;
-  isActive: boolean;
-  onPurchase: () => void;
-}
-
-// If isActive:
-//   Show API key with copy button
-// Else:
-//   Show blurred/locked key with "Plan কিনুন" button
+┌─────────────────────────────────────────────────────────────────┐
+│                                                                  │
+│                    [Circle Logo]                                 │
+│                  WebCreation BD                                  │
+│                                                                  │
+│                       ⏱️                                         │
+│              অপেক্ষা করুন                                        │
+│                                                                  │
+│     আপনি সম্প্রতি অর্ডার করেছেন।                                 │
+│     অনুগ্রহ করে অপেক্ষা করুন।                                    │
+│                                                                  │
+│              ⏰ 2 ঘন্টা 30 মিনিট বাকি                             │
+│                                                                  │
+│     ┌─────────────────────────────────────┐                     │
+│     │ 📞 সমস্যা হলে যোগাযোগ করুন          │                     │
+│     │                                     │                     │
+│     │ [WhatsApp] [Phone Call]             │                     │
+│     └─────────────────────────────────────┘                     │
+│                                                                  │
+│              [ঠিক আছে] (25s)                                     │
+│                                                                  │
+│     বিস্তারিত জানতে এখানে ক্লিক করুন →                           │
+│                                                                  │
+│         Powered by WebCreation BD                               │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
 ## File Changes
 
-### Modified Files
+### 1. Plugin Generator Update
+**File:** `src/utils/pluginGenerator.ts`
 
-| File | Changes |
-|------|---------|
-| `src/components/fraud-protection/FraudGuardSection.tsx` | Complete rewrite with tabs, plugin download for all, locked API key |
-| `src/pages/ClientDashboard.tsx` | Enhanced styling, better mobile layout |
+নতুন features:
+- Timer control (seconds)
+- Custom messages for cooldown/blacklist
+- WhatsApp and Phone number fields
+- Show/hide contact in popup
+- Circle logo with WebCreation BD branding
+- "বিস্তারিত জানুন" link to /fraud-guard
+- Popup auto-close timer with countdown
+- Enhanced CSS for modern popup design
 
-### New Files
+### 2. Logo Copy to Public Folder
+**Action:** Copy `src/assets/logo.png` to `public/logo.png`
 
-| File | Purpose |
-|------|---------|
-| `src/components/fraud-protection/SetupGuide.tsx` | Plugin download + installation guide + API key |
-| `src/components/fraud-protection/APIKeySection.tsx` | Locked/unlocked API key display |
+Plugin-এ logo URL হবে: `https://webcreation-bd.lovable.app/logo.png`
+
+### 3. SetupGuide Component Update
+**File:** `src/components/fraud-protection/SetupGuide.tsx`
+
+- Download button fix verify
+- Add note about new features
+
+### 4. PluginDownload Component Update  
+**File:** `src/components/fraud-protection/PluginDownload.tsx`
+
+- Add note about v3.0 features
+- List new customization options
 
 ---
 
 ## Technical Implementation
 
-### API Key Locking Logic
+### New WordPress Options (Database)
 
-```typescript
-// API key from merchant record
-const { api_key, is_active } = merchant;
+```php
+// নতুন settings যা WordPress database-এ save হবে:
+'wcbd_fraud_guard_popup_timer' => 30,  // seconds (0 = no timer)
+'wcbd_fraud_guard_msg_cooldown' => 'আপনি সম্প্রতি অর্ডার করেছেন...',
+'wcbd_fraud_guard_msg_blacklist' => 'আপনার অর্ডার ব্লক করা হয়েছে।',
+'wcbd_fraud_guard_whatsapp' => '+8801332052874',
+'wcbd_fraud_guard_phone' => '+8801332052874',
+'wcbd_fraud_guard_show_contact' => '1',  // 1 or 0
+```
 
-// If not active, show locked state
-if (!is_active) {
-  return (
-    <div className="relative">
-      <div className="blur-sm select-none">
-        abc12345-xxxx-yyyy-zzzz-••••••••••••
-      </div>
-      <div className="absolute inset-0 flex items-center justify-center bg-white/80">
-        <Button onClick={onPurchase}>
-          <Lock /> Plan কিনুন
-        </Button>
-      </div>
-    </div>
-  );
+### Enhanced Popup CSS
+
+```css
+/* Circle Logo */
+.fraud-popup-logo {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 3px solid rgba(255,255,255,0.2);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  margin: 0 auto 10px;
 }
 
-// If active, show real key
-return (
-  <div className="flex items-center gap-2">
-    <code>{api_key}</code>
-    <Button onClick={copyKey}>
-      <Copy />
-    </Button>
-  </div>
-);
+/* Contact Buttons */
+.fraud-popup-contact {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin: 20px 0;
+}
+
+.fraud-popup-whatsapp {
+  background: linear-gradient(135deg, #25D366, #128C7E);
+  padding: 10px 20px;
+  border-radius: 10px;
+  color: white;
+  text-decoration: none;
+}
+
+.fraud-popup-phone {
+  background: linear-gradient(135deg, #00d4ff, #0099cc);
+  padding: 10px 20px;
+  border-radius: 10px;
+  color: white;
+  text-decoration: none;
+}
+
+/* Timer Countdown */
+.fraud-popup-countdown {
+  font-size: 14px;
+  color: #888;
+}
+
+/* Branding */
+.fraud-popup-branding {
+  font-size: 12px;
+  color: #666;
+  margin-top: 15px;
+}
 ```
 
-### Plugin Download (No API Key Required)
+### Enhanced Popup JavaScript
 
-```typescript
-// Plugin download uses a placeholder API key that doesn't work
-// Until user activates their plan
-
-const handlePluginDownload = () => {
-  // Download plugin with actual API key if active
-  // Or with "YOUR_API_KEY" placeholder if inactive
-  const keyToUse = isActive ? apiKey : "YOUR_API_KEY_HERE";
-  downloadPluginFile(keyToUse);
+```javascript
+popup: function(type, msg, mins) {
+  var self = this;
+  var timer = parseInt('<?php echo get_option("wcbd_fraud_guard_popup_timer", 30); ?>');
+  var whatsapp = '<?php echo esc_attr(get_option("wcbd_fraud_guard_whatsapp", "")); ?>';
+  var phone = '<?php echo esc_attr(get_option("wcbd_fraud_guard_phone", "")); ?>';
+  var showContact = '<?php echo get_option("wcbd_fraud_guard_show_contact", "1"); ?>' === '1';
   
-  if (!isActive) {
-    toast({
-      title: "⚠️ Plugin ডাউনলোড হয়েছে",
-      description: "Plugin কাজ করতে Plan কিনে API Key সেট করুন",
-    });
+  var contactHtml = '';
+  if (showContact && (whatsapp || phone)) {
+    contactHtml = '<div class="fraud-popup-contact-box">' +
+      '<p class="fraud-popup-contact-title">' + (this.lang === 'bn' ? '📞 সমস্যা হলে যোগাযোগ করুন' : '📞 Contact Us') + '</p>' +
+      '<div class="fraud-popup-contact">';
+    
+    if (whatsapp) {
+      contactHtml += '<a href="https://wa.me/' + whatsapp.replace(/\D/g,'') + '" target="_blank" class="fraud-popup-whatsapp">WhatsApp</a>';
+    }
+    if (phone) {
+      contactHtml += '<a href="tel:' + phone + '" class="fraud-popup-phone">' + (this.lang === 'bn' ? 'ফোন করুন' : 'Call') + '</a>';
+    }
+    
+    contactHtml += '</div></div>';
   }
-};
-```
-
----
-
-## UI/UX Improvements
-
-### Client Dashboard Stats Cards (Enhanced)
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  📊 Dashboard Stats                                              │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
-│  │ 📦 3         │  │ 📄 2         │  │ 🛡️ Active    │          │
-│  │ মোট অর্ডার   │  │ মোট ইনভয়েস   │  │ Fraud Guard  │          │
-│  │              │  │              │  │ ৳699/বছর     │          │
-│  │ ↗️ +1 এই মাসে│  │ ৳5,000 বাকি  │  │ 245 checks   │          │
-│  └──────────────┘  └──────────────┘  └──────────────┘          │
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### Fraud Guard Tab - New Layout
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  🛡️ WCBD Fraud Guard                                            │
-│  আপনার WooCommerce স্টোর সুরক্ষিত করুন                          │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  ┌───────────────────────────────────────────────────────────┐  │
-│  │ 📊 Status Card                                             │  │
-│  │ ┌─────────────┬─────────────┬─────────────┐               │  │
-│  │ │ Plan        │ API Usage   │ Expires     │               │  │
-│  │ │ Yearly ✓    │ 245/15000   │ Mar 5, 2027 │               │  │
-│  │ └─────────────┴─────────────┴─────────────┘               │  │
-│  └───────────────────────────────────────────────────────────┘  │
-│                                                                  │
-│  ┌───────────────────────────────────────────────────────────┐  │
-│  │ 📦 Plugin & Setup                                          │  │
-│  │                                                            │  │
-│  │ [Download Plugin]  [Copy API Key]  [View Guide]           │  │
-│  │                                                            │  │
-│  │ 🔑 API Key: abc12345-xxxx-yyyy-zzzz-123456789abc [Copy]   │  │
-│  └───────────────────────────────────────────────────────────┘  │
-│                                                                  │
-│  ┌───────────────────────────────────────────────────────────┐  │
-│  │ 📚 ইন্সটলেশন গাইড                                          │  │
-│  │ ▸ Step 1: Plugin ডাউনলোড করুন                             │  │
-│  │ ▸ Step 2: WordPress-এ আপলোড করুন                          │  │
-│  │ ▸ Step 3: Plugin Activate করুন                            │  │
-│  │ ▸ Step 4: API Key সেট করুন (Plugin Settings-এ)            │  │
-│  └───────────────────────────────────────────────────────────┘  │
-│                                                                  │
-│  📊 Analytics (7-day trend)                                      │
-│  [Charts show here for active users]                             │
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
+  
+  var timerHtml = timer > 0 ? '<span class="fraud-popup-countdown">(' + timer + 's)</span>' : '';
+  
+  var html = '<div class="fraud-popup-overlay" id="fraudPopup">' +
+    '<div class="fraud-popup-modal">' +
+    '<img src="https://webcreation-bd.lovable.app/logo.png" class="fraud-popup-logo" alt="Logo">' +
+    '<div class="fraud-popup-icon ' + type + '">' + (icons[type] || '⚠️') + '</div>' +
+    '<h3 class="fraud-popup-title">' + (titles[type] || 'Error') + '</h3>' +
+    '<p class="fraud-popup-message">' + msg + '</p>' +
+    timeDisplay +
+    contactHtml +
+    '<button class="fraud-popup-button" id="fraudPopupBtn">' + btnText + ' ' + timerHtml + '</button>' +
+    '<a href="https://webcreation-bd.lovable.app/fraud-guard" target="_blank" class="fraud-popup-link">' + 
+      (this.lang === 'bn' ? 'বিস্তারিত জানতে এখানে ক্লিক করুন →' : 'Learn more →') + 
+    '</a>' +
+    '<p class="fraud-popup-branding">Powered by WebCreation BD</p>' +
+    '</div></div>';
+  
+  $('body').append(html);
+  
+  // Timer countdown
+  if (timer > 0) {
+    var countdown = timer;
+    var interval = setInterval(function() {
+      countdown--;
+      $('#fraudPopupBtn .fraud-popup-countdown').text('(' + countdown + 's)');
+      if (countdown <= 0) {
+        clearInterval(interval);
+        $('#fraudPopup').remove();
+      }
+    }, 1000);
+  }
+}
 ```
 
 ---
@@ -253,8 +262,20 @@ const handlePluginDownload = () => {
 
 | Feature | Before | After |
 |---------|--------|-------|
-| Plugin Download | শুধু Active users | সবাই |
-| API Key | Always visible | Inactive: Locked, Active: Visible |
-| Setup Guide | Separate page | Dashboard-এ integrated |
-| Analytics | Separate | Dashboard-এ integrated |
-| UI Design | Basic | Modern, light-themed |
+| Timer Control | None | Configurable (0-60 seconds) |
+| Custom Messages | Fixed | Editable in settings |
+| Contact Info | None | WhatsApp + Phone in popup |
+| Logo | None | Circle logo at top |
+| Branding | None | "Powered by WebCreation BD" |
+| Learn More Link | None | Link to /fraud-guard |
+| Popup Auto-close | No | Yes, with countdown |
+
+---
+
+## Implementation Steps
+
+1. Copy logo to public folder
+2. Update pluginGenerator.ts with v3.0 code
+3. Update SetupGuide.tsx to mention new features
+4. Update PluginDownload.tsx to highlight v3.0
+5. Test plugin download functionality

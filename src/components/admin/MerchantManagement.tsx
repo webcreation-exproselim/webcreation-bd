@@ -19,9 +19,9 @@ import {
 } from "@/components/ui/select";
 import { 
   Search, Edit2, Power, PowerOff, Shield, 
-  User, Globe, Key, Loader2, RefreshCw
+  User, Globe, Key, Loader2, RefreshCw, UserPlus
 } from "lucide-react";
-
+import { AssignPlanModal } from "./AssignPlanModal";
 interface Merchant {
   id: string;
   user_id: string;
@@ -48,6 +48,7 @@ export function MerchantManagement() {
   const [selectedMerchant, setSelectedMerchant] = useState<Merchant | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [activateModalOpen, setActivateModalOpen] = useState(false);
+  const [assignPlanModalOpen, setAssignPlanModalOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('monthly');
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
@@ -207,15 +208,24 @@ export function MerchantManagement() {
             className="pl-11 font-bengali bg-white border-gray-100 rounded-xl h-11"
           />
         </div>
-        <Button
-          onClick={fetchMerchants}
-          variant="outline"
-          className="gap-2"
-          disabled={loading}
-        >
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          রিফ্রেশ
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={fetchMerchants}
+            variant="outline"
+            className="gap-2"
+            disabled={loading}
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            রিফ্রেশ
+          </Button>
+          <Button
+            onClick={() => setAssignPlanModalOpen(true)}
+            className="gap-2 bg-blue-600 hover:bg-blue-700"
+          >
+            <UserPlus className="w-4 h-4" />
+            Plan Assign
+          </Button>
+        </div>
       </div>
 
       {/* Merchants Table */}
@@ -445,6 +455,13 @@ export function MerchantManagement() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Assign Plan Modal */}
+      <AssignPlanModal
+        open={assignPlanModalOpen}
+        onOpenChange={setAssignPlanModalOpen}
+        onSuccess={fetchMerchants}
+      />
     </div>
   );
 }

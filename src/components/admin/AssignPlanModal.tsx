@@ -1,0 +1,294 @@
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Search, User, Globe, Loader2, Check, Shield } from "lucide-react";
+
+interface UserProfile {
+  user_id: string;
+  full_name: string | null;
+  phone: string | null;
+}
+
+interface AssignPlanModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess: () => void;
+}
+
+export function AssignPlanModal({ open, onOpenChange, onSuccess }: AssignPlanModalProps) {
+  const [users, setUsers] = useState<UserProfile[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState("");
+  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
+  const [websiteUrl, setWebsiteUrl] = useState("");
+  const [planType, setPlanType] = useState<'monthly' | 'yearly'>('monthly');
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (open) {
+      fetchUsers();
+      // Reset state when modal opens
+      setSelectedUser(null);
+      setWebsiteUrl("");
+      setPlanType('monthly');
+      setSearch("");
+    }
+  }, [open]);
+
+  const fetchUsers = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, phone')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setUsers(data || []);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load users",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAssignPlan = async () => {
+    if (!selectedUser) {
+      toast({
+        title: "Error",
+        description: "Please select a user",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!websiteUrl.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter website URL",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setSaving(true);
+    try {
+      // Calculate expiration date
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + (planType === 'yearly' ? 365 : 30));
+
+      const planData = {
+        website_url: websiteUrl.trim(),
+        is_active: true,
+        current_plan: planType,
+        plan_expires_at: expiresAt.toISOString(),
+        max_requests: planType === 'yearly' ? 15000 : 1000,
+        requests_used: 0,
+        updated_at: new Date().toISOString(),
+      };
+
+      // Check if merchant exists for this user
+      const { data: existingMerchant, error: checkError } = await supabase
+        .from('merchants')
+        .select('id')
+        .eq('user_id', selectedUser.user_id)
+        .maybeSingle();
+
+      if (checkError) throw checkError;
+
+      if (existingMerchant) {
+        // Update existing merchant
+        const { error: updateError } = await supabase
+          .from('merchants')
+          .update(planData)
+          .eq('id', existingMerchant.id);
+
+        if (updateError) throw updateError;
+      } else {
+        // Create new merchant
+        const { error: insertError } = await supabase
+          .from('merchants')
+          .insert({
+            user_id: selectedUser.user_id,
+            ...planData,
+          });
+
+        if (insertError) throw insertError;
+      }
+
+      toast({
+        title: "✅ Plan Assigned Successfully",
+        description: `${planType === 'yearly' ? 'Yearly' : 'Monthly'} plan assigned to ${selectedUser.full_name || 'User'}`,
+      });
+
+      onOpenChange(false);
+      onSuccess();
+    } catch (error) {
+      console.error('Error assigning plan:', error);
+      toast({
+        title: "Error",
+        description: "Failed to assign plan",
+        variant: "destructive"
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const filteredUsers = users.filter(user =>
+    user.full_name?.toLowerCase().includes(search.toLowerCase()) ||
+    user.phone?.includes(search)
+  );
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogHeader>
+          <DialogTitle className="font-bengali flex items-center gap-2">
+            <Shield className="w-5 h-5 text-blue-500" />
+            নতুন Plan Assign করুন
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4 flex-1 overflow-hidden flex flex-col">
+          {/* Step 1: Select User */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 font-bengali">
+              ১. User নির্বাচন করুন
+            </label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                placeholder="নাম বা ফোন দিয়ে খুঁজুন..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-10 font-bengali"
+              />
+            </div>
+            
+            <div className="max-h-40 overflow-y-auto border rounded-lg">
+              {loading ? (
+                <div className="flex items-center justify-center py-6">
+                  <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+                </div>
+              ) : filteredUsers.length === 0 ? (
+                <div className="text-center py-6 text-gray-500 text-sm font-bengali">
+                  কোনো User পাওয়া যায়নি
+                </div>
+              ) : (
+                <div className="divide-y">
+                  {filteredUsers.map((user) => (
+                    <button
+                      key={user.user_id}
+                      onClick={() => setSelectedUser(user)}
+                      className={`w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-50 transition-colors text-left ${
+                        selectedUser?.user_id === user.user_id ? 'bg-blue-50 border-l-4 border-blue-500' : ''
+                      }`}
+                    >
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center flex-shrink-0">
+                        <User className="w-4 h-4 text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-900 truncate">
+                          {user.full_name || "নাম নেই"}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {user.phone || "ফোন নেই"}
+                        </p>
+                      </div>
+                      {selectedUser?.user_id === user.user_id && (
+                        <Check className="w-5 h-5 text-blue-500 flex-shrink-0" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Step 2: Website URL */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 font-bengali">
+              ২. Website URL দিন
+            </label>
+            <div className="relative">
+              <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                placeholder="https://example.com"
+                value={websiteUrl}
+                onChange={(e) => setWebsiteUrl(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </div>
+
+          {/* Step 3: Select Plan */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 font-bengali">
+              ৩. Plan নির্বাচন করুন
+            </label>
+            <Select value={planType} onValueChange={(v: 'monthly' | 'yearly') => setPlanType(v)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="monthly">📅 Monthly - ৳100 (1,000 requests, 30 days)</SelectItem>
+                <SelectItem value="yearly">📆 Yearly - ৳699 (15,000 requests, 365 days)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Selected User Summary */}
+          {selectedUser && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <p className="text-sm text-blue-800 font-bengali">
+                <strong>{selectedUser.full_name || 'User'}</strong> কে{' '}
+                <strong>{planType === 'yearly' ? 'Yearly (৳699)' : 'Monthly (৳100)'}</strong>{' '}
+                plan assign করা হবে
+              </p>
+            </div>
+          )}
+
+          {/* Actions */}
+          <div className="flex gap-2 pt-2">
+            <Button
+              variant="outline"
+              className="flex-1 font-bengali"
+              onClick={() => onOpenChange(false)}
+            >
+              বাতিল
+            </Button>
+            <Button
+              className="flex-1 bg-blue-600 hover:bg-blue-700 font-bengali"
+              onClick={handleAssignPlan}
+              disabled={saving || !selectedUser || !websiteUrl.trim()}
+            >
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Plan Assign করুন"}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}

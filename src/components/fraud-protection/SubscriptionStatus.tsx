@@ -1,9 +1,13 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Shield, Clock, AlertCircle, CheckCircle, ExternalLink, Zap } from "lucide-react";
+import { Shield, Clock, AlertCircle, CheckCircle, ExternalLink, Zap, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SubscriptionPlans } from "./SubscriptionPlans";
+import { SubscriptionPurchaseModal } from "./SubscriptionPurchaseModal";
 
 interface SubscriptionStatusProps {
   merchant: {
+    id: string;
     is_active: boolean;
     current_plan: string | null;
     plan_expires_at: string | null;
@@ -15,10 +19,25 @@ interface SubscriptionStatusProps {
     amount: number;
     created_at: string;
   } | null;
-  onPurchase: () => void;
+  onPurchaseSuccess?: () => void;
 }
 
-export function SubscriptionStatus({ merchant, pendingOrder, onPurchase }: SubscriptionStatusProps) {
+export function SubscriptionStatus({ merchant, pendingOrder, onPurchaseSuccess }: SubscriptionStatusProps) {
+  const [showPlanModal, setShowPlanModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('monthly');
+
+  const handleSelectPlan = (planType: 'monthly' | 'yearly') => {
+    setSelectedPlan(planType);
+    setShowPlanModal(false);
+    setShowPaymentModal(true);
+  };
+
+  const handlePurchaseSuccess = () => {
+    setShowPaymentModal(false);
+    onPurchaseSuccess?.();
+  };
+
   // If payment is pending
   if (pendingOrder) {
     return (
@@ -58,27 +77,58 @@ export function SubscriptionStatus({ merchant, pendingOrder, onPurchase }: Subsc
 
     if (isExpired) {
       return (
-        <div className="bg-red-50 border border-red-200 rounded-2xl p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-xl bg-red-100 flex items-center justify-center">
-              <AlertCircle className="w-6 h-6 text-red-600" />
+        <>
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-xl bg-red-100 flex items-center justify-center">
+                <AlertCircle className="w-6 h-6 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 font-bengali">
+                  সাবস্ক্রিপশন মেয়াদ শেষ
+                </h3>
+                <p className="text-gray-500 text-sm font-bengali">
+                  চালু রাখতে রিনিউ করুন
+                </p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 font-bengali">
-                সাবস্ক্রিপশন মেয়াদ শেষ
-              </h3>
-              <p className="text-gray-500 text-sm font-bengali">
-                চালু রাখতে রিনিউ করুন
-              </p>
-            </div>
+            <Button 
+              onClick={() => setShowPlanModal(true)}
+              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:opacity-90 text-white font-bengali"
+            >
+              রিনিউ করুন
+            </Button>
           </div>
-          <Button 
-            onClick={onPurchase}
-            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:opacity-90 text-white font-bengali"
-          >
-            রিনিউ করুন
-          </Button>
-        </div>
+
+          {/* Plan Selection Modal */}
+          {showPlanModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+              <div className="bg-white border border-gray-200 rounded-3xl p-6 max-w-xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-xl font-bold text-gray-900 font-bengali">Plan নির্বাচন করুন</h2>
+                  <button 
+                    onClick={() => setShowPlanModal(false)}
+                    className="text-gray-400 hover:text-gray-600 text-2xl w-10 h-10 rounded-full hover:bg-gray-100 flex items-center justify-center"
+                  >
+                    ×
+                  </button>
+                </div>
+                <SubscriptionPlans onSelectPlan={handleSelectPlan} />
+              </div>
+            </div>
+          )}
+
+          {/* Payment Modal */}
+          {merchant?.id && (
+            <SubscriptionPurchaseModal
+              isOpen={showPaymentModal}
+              onClose={() => setShowPaymentModal(false)}
+              planType={selectedPlan}
+              merchantId={merchant.id}
+              onSuccess={handlePurchaseSuccess}
+            />
+          )}
+        </>
       );
     }
 
@@ -137,49 +187,71 @@ export function SubscriptionStatus({ merchant, pendingOrder, onPurchase }: Subsc
     );
   }
 
-  // Not subscribed - show plans
+  // Not subscribed - show CTA to open plan modal
   return (
-    <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6">
-      <div className="flex items-center gap-3 mb-4">
-        <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
-          <Shield className="w-6 h-6 text-blue-600" />
+    <>
+      <div className="bg-gradient-to-br from-blue-50 to-purple-50 border border-blue-200 rounded-2xl p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
+            <Shield className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 font-bengali">
+              WCBD Fraud Guard
+            </h3>
+            <p className="text-gray-500 text-sm font-bengali">
+              আপনার স্টোর সুরক্ষিত করুন
+            </p>
+          </div>
         </div>
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900 font-bengali">
-            WCBD Fraud Guard
-          </h3>
-          <p className="text-gray-500 text-sm font-bengali">
-            আপনার স্টোর সুরক্ষিত করুন
-          </p>
-        </div>
+
+        <p className="text-gray-600 text-sm mb-4 font-bengali">
+          Fake order থেকে আপনার WooCommerce স্টোর রক্ষা করুন
+        </p>
+
+        {/* Single CTA Button to Open Plan Modal */}
+        <Button 
+          onClick={() => setShowPlanModal(true)}
+          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold font-bengali h-12 rounded-xl shadow-lg shadow-blue-500/20"
+        >
+          <Sparkles className="w-4 h-4 mr-2" />
+          Plan নির্বাচন করুন
+        </Button>
+
+        <Link to="/fraud-guard" className="mt-3 text-blue-600 text-sm hover:underline font-bengali flex items-center justify-center gap-1">
+          বিস্তারিত দেখুন
+          <ExternalLink className="w-3 h-3" />
+        </Link>
       </div>
 
-      <p className="text-gray-600 text-sm mb-4 font-bengali">
-        Fake order থেকে আপনার WooCommerce স্টোর রক্ষা করুন
-      </p>
+      {/* Plan Selection Modal */}
+      {showPlanModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white border border-gray-200 rounded-3xl p-6 max-w-xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold text-gray-900 font-bengali">Plan নির্বাচন করুন</h2>
+              <button 
+                onClick={() => setShowPlanModal(false)}
+                className="text-gray-400 hover:text-gray-600 text-2xl w-10 h-10 rounded-full hover:bg-gray-100 flex items-center justify-center"
+              >
+                ×
+              </button>
+            </div>
+            <SubscriptionPlans onSelectPlan={handleSelectPlan} />
+          </div>
+        </div>
+      )}
 
-      <div className="grid grid-cols-2 gap-3 mb-4">
-        <Button 
-          onClick={onPurchase}
-          variant="outline"
-          className="border-gray-300 text-gray-700 hover:bg-gray-100 font-bengali"
-        >
-          <Clock className="w-4 h-4 mr-1" />
-          ৳১০০/মাস
-        </Button>
-        <Button 
-          onClick={onPurchase}
-          className="bg-gradient-to-r from-blue-600 to-purple-600 hover:opacity-90 text-white font-bengali"
-        >
-          <Zap className="w-4 h-4 mr-1" />
-          ৳৬৯৯/বছর
-        </Button>
-      </div>
-
-      <Link to="/fraud-guard" className="text-blue-600 text-sm hover:underline font-bengali flex items-center gap-1">
-        বিস্তারিত দেখুন
-        <ExternalLink className="w-3 h-3" />
-      </Link>
-    </div>
+      {/* Payment Modal */}
+      {merchant?.id && (
+        <SubscriptionPurchaseModal
+          isOpen={showPaymentModal}
+          onClose={() => setShowPaymentModal(false)}
+          planType={selectedPlan}
+          merchantId={merchant.id}
+          onSuccess={handlePurchaseSuccess}
+        />
+      )}
+    </>
   );
 }

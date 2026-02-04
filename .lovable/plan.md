@@ -1,330 +1,260 @@
 
-# WCBD Fraud Guard - Enhanced System with Charts & Admin Controls
+# Client Dashboard ও Fraud Guard System Enhancement
 
-## Overview
+## সমস্যা বিশ্লেষণ
 
-এই plan-এ নিম্নলিখিত features implement করা হবে:
-
-1. **Client Dashboard ও Admin Dashboard-এ সুন্দর Charts ও Graphs** যোগ করা
-2. **Admin-এর জন্য Manual Control System** - যেকোনো client-কে plan assign/activate/deactivate করা
-3. **Admin-এর জন্য API Logs Edit System** - যেকোনো log entry edit/delete করা
-4. **Frontend Menu-তে "Fraud Protection" অপশন** যোগ করা
-5. **Client Dashboard-এ Fraud Protection অপশন** যা click করলে সকল system ও pricing দেখাবে
+আপনি যা চাইছেন:
+1. **Plugin আগেই download করা যাবে** - plan কেনার আগেই client plugin টা download করতে পারবে
+2. **Setup guide dashboard-এ** - ইন্সটলেশন গাইড client dashboard-এই দেখাবে
+3. **API key শুধু plan কেনার পর** - API key locked থাকবে, plan activate হলে unlock হবে
+4. **Client Dashboard আরো modern ও সুন্দর** করা
 
 ---
 
-## 1. Frontend Navigation Updates
+## যা পরিবর্তন হবে
 
-### Header Menu-তে নতুন Item যোগ করা
+### 1. FraudGuardSection.tsx - Complete Redesign
 
-**Current Menu:**
-- হোম
-- সার্ভিস (dropdown)
-- পোর্টফোলিও
-- আমাদের সম্পর্কে
-- যোগাযোগ
+বর্তমান অবস্থা:
+- Active merchant: Analytics + Quick buttons দেখায়
+- Inactive merchant: Subscription status + Plan purchase modal
 
-**Updated Menu:**
-- হোম
-- সার্ভিস (dropdown)
-- **Fraud Protection** (নতুন - `/fraud-guard` page-এ link)
-- পোর্টফোলিও
-- আমাদের সম্পর্কে
-- যোগাযোগ
+নতুন অবস্থা:
+- **সবার জন্য**: Plugin download ও Setup guide সবসময় দেখাবে
+- **API key**: Plan কেনার আগে blur/locked থাকবে, পরে দেখাবে
+- **Tabs system**: Overview | Setup Guide | Settings
 
-### Files to Update:
-- `src/components/Header.tsx` - Desktop navigation
-- `src/components/MobileDrawer.tsx` - Mobile navigation
-
----
-
-## 2. Client Dashboard - Enhanced Fraud Guard Section
-
-### Current Situation:
-- `FraudGuardSection` component exists but is minimal
-- Shows subscription status only
-
-### Enhanced Features:
-
-**Analytics Cards:**
+নতুন ফ্লো:
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │  🛡️ WCBD Fraud Guard                                            │
 ├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐           │
-│  │ 1,245    │ │ 892      │ │ 245      │ │ 108      │           │
-│  │ মোট চেক  │ │ অনুমোদিত │ │ ব্লক     │ │ ব্ল্যাকলিস্ট│       │
-│  └──────────┘ └──────────┘ └──────────┘ └──────────┘           │
-│                                                                  │
-│  📊 সাপ্তাহিক চার্ট                                              │
-│  [Line chart showing daily checks - allowed vs blocked]          │
-│                                                                  │
-│  [সেটিংস দেখুন →] [Plugin ডাউনলোড →]                            │
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### New Component: `FraudGuardAnalytics.tsx`
-- Stats cards: Total checks, Allowed, Blocked (Cooldown), Blocked (Blacklist)
-- Line/Area chart: Daily order checks trend (7-day)
-- Pie chart: Block reasons distribution
-- Quick action buttons
-
----
-
-## 3. Admin Dashboard - Fraud Guard Tab
-
-### Add New Tab: "Fraud Guard" (Icon: Shield)
-
-**Tab Features:**
-
-#### 3.1 Subscription Management (Enhanced)
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  👥 ALL MERCHANTS                                                │
+│  [Overview] [Setup Guide] [Settings]                             │
 ├─────────────────────────────────────────────────────────────────┤
-│  🔍 [Search merchants...]                                        │
 │                                                                  │
+│  📦 PLUGIN DOWNLOAD (সবার জন্য available)                        │
 │  ┌─────────────────────────────────────────────────────────────┐│
-│  │ user@example.com          │ Monthly │ Active    │ [Edit]    ││
-│  │ Website: store.com        │ 245/1000│ Exp: Mar 5│ [Deact]   ││
-│  ├─────────────────────────────────────────────────────────────┤│
-│  │ other@email.com           │ None    │ Inactive  │ [Activate]││
-│  │ Website: -                │ 0/0     │ -         │ [Assign]  ││
+│  │ WCBD Fraud Guard Plugin v1.0                                ││
+│  │ [Download Plugin ডাউনলোড করুন]                              ││
+│  │                                                              ││
+│  │ ⚠️ Note: Plugin কাজ করতে Plan কিনতে হবে                      ││
+│  └─────────────────────────────────────────────────────────────┘│
+│                                                                  │
+│  🔑 API KEY                                                      │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │ (Inactive User)                                             ││
+│  │ [🔒 ••••••••-••••-••••-••••-••••••••••••]                   ││
+│  │ "Plan কিনুন API Key পেতে"                                   ││
+│  │                                                              ││
+│  │ (Active User)                                                ││
+│  │ [abc12345-xxxx-yyyy-zzzz-123456789abc] [Copy]               ││
+│  └─────────────────────────────────────────────────────────────┘│
+│                                                                  │
+│  📚 SETUP GUIDE (Accordion)                                      │
+│  - Step 1: Plugin ডাউনলোড করুন                                  │
+│  - Step 2: WordPress-এ আপলোড করুন                               │
+│  - Step 3: Plugin Activate করুন                                 │
+│  - Step 4: API Key কপি করুন                                     │
+│                                                                  │
+│  📊 ANALYTICS (শুধু Active users)                                │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │ Charts, Stats, Logs                                         ││
 │  └─────────────────────────────────────────────────────────────┘│
 │                                                                  │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-**Admin Actions:**
-- **Manual Activate**: Turn on any merchant without payment
-- **Manual Assign Plan**: Assign Monthly/Yearly plan to any merchant
-- **Deactivate**: Turn off any merchant's access
-- **Edit Merchant**: Change cooldown, website URL, API key
+### 2. Client Dashboard Light Theme Enhancement
 
-#### 3.2 API Logs Management
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  📋 API LOGS (Admin View)                                        │
-├─────────────────────────────────────────────────────────────────┤
-│  [All Merchants ▼] [Filter by Status ▼] [Date Range]            │
-│                                                                  │
-│  ┌──────────┬──────────┬──────────┬──────────┬────────────────┐│
-│  │ Date     │ Phone    │ IP       │ Status   │ Actions        ││
-│  ├──────────┼──────────┼──────────┼──────────┼────────────────┤│
-│  │ Feb 4    │ 0171...  │ 103.x.x  │ Allowed  │ [Edit] [Del]   ││
-│  │ Feb 4    │ 0181...  │ 192.x.x  │ Blocked  │ [Edit] [Del]   ││
-│  └──────────┴──────────┴──────────┴──────────┴────────────────┘│
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
+সম্পূর্ণ modern ও clean design:
+- Soft shadows ও rounded corners
+- Better spacing ও typography
+- Smooth animations
+- Mobile-optimized cards
+- Improved tab navigation
+
+---
+
+## নতুন Components
+
+### Component 1: FraudGuardDashboard.tsx (Main Component)
+
+```typescript
+// Tabs: Overview | Setup Guide | Settings
+// - Overview: Status card + Quick stats + Purchase CTA (if inactive)
+// - Setup Guide: Plugin download + Installation steps + API key
+// - Settings: Cooldown, Blacklist (only if active)
 ```
 
-**Log Edit Modal:**
-- Edit phone number, IP, device ID
-- Change status (allowed/blocked_cooldown/blocked_blacklist)
-- Delete log entry
+### Component 2: SetupGuide.tsx
 
-#### 3.3 Charts & Analytics
+```typescript
+// Features:
+// 1. Plugin download button (সবার জন্য)
+// 2. Step-by-step accordion guide
+// 3. API key section (locked/unlocked based on status)
+// 4. Copy button for API key
+// 5. Integration code preview
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│  📊 FRAUD GUARD ANALYTICS                                        │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  ┌─────────────────────────┐ ┌─────────────────────────┐        │
-│  │ 📈 Daily API Requests   │ │ 🥧 Block Reasons        │        │
-│  │ [Area Chart]            │ │ [Pie Chart]             │        │
-│  │ Allowed vs Blocked      │ │ Cooldown vs Blacklist   │        │
-│  └─────────────────────────┘ └─────────────────────────┘        │
-│                                                                  │
-│  ┌─────────────────────────┐ ┌─────────────────────────┐        │
-│  │ 👥 Active Subscribers   │ │ 💰 Subscription Revenue │        │
-│  │ [Bar Chart]             │ │ [Line Chart]            │        │
-│  │ Monthly vs Yearly       │ │ Monthly trend           │        │
-│  └─────────────────────────┘ └─────────────────────────┘        │
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
+
+### Component 3: APIKeySection.tsx
+
+```typescript
+interface APIKeySectionProps {
+  apiKey: string;
+  isActive: boolean;
+  onPurchase: () => void;
+}
+
+// If isActive:
+//   Show API key with copy button
+// Else:
+//   Show blurred/locked key with "Plan কিনুন" button
 ```
 
 ---
 
-## 4. Database Changes
+## File Changes
 
-### Update RLS Policies for `fraud_logs`
+### Modified Files
 
-Currently admins can only view logs. Need to add UPDATE and DELETE permissions:
-
-```sql
--- Allow admins to update fraud logs
-CREATE POLICY "Admins can update fraud logs"
-  ON fraud_logs FOR UPDATE
-  USING (has_role(auth.uid(), 'admin'::app_role));
-
--- Allow admins to delete fraud logs  
-CREATE POLICY "Admins can delete fraud logs"
-  ON fraud_logs FOR DELETE
-  USING (has_role(auth.uid(), 'admin'::app_role));
-```
-
----
-
-## 5. File Changes Summary
+| File | Changes |
+|------|---------|
+| `src/components/fraud-protection/FraudGuardSection.tsx` | Complete rewrite with tabs, plugin download for all, locked API key |
+| `src/pages/ClientDashboard.tsx` | Enhanced styling, better mobile layout |
 
 ### New Files
 
 | File | Purpose |
 |------|---------|
-| `src/components/fraud-protection/FraudGuardAnalytics.tsx` | Client-side charts & stats |
-| `src/components/admin/FraudGuardManagement.tsx` | Complete admin panel for Fraud Guard |
-| `src/components/admin/MerchantManagement.tsx` | Merchant list with manual controls |
-| `src/components/admin/FraudLogsAdmin.tsx` | Admin log viewer with edit/delete |
-| `src/components/admin/FraudGuardCharts.tsx` | Admin analytics charts |
-
-### Files to Modify
-
-| File | Change |
-|------|--------|
-| `src/components/Header.tsx` | Add "Fraud Protection" menu item |
-| `src/components/MobileDrawer.tsx` | Add "Fraud Protection" to mobile menu |
-| `src/pages/AdminDashboard.tsx` | Add "Fraud Guard" tab with full management |
-| `src/pages/ClientDashboard.tsx` | Enhance FraudGuardSection with charts |
-| `src/components/fraud-protection/FraudGuardSection.tsx` | Add analytics & charts |
-| `src/components/admin/FraudSubscriptionManagement.tsx` | Add manual activation controls |
+| `src/components/fraud-protection/SetupGuide.tsx` | Plugin download + installation guide + API key |
+| `src/components/fraud-protection/APIKeySection.tsx` | Locked/unlocked API key display |
 
 ---
 
-## 6. Technical Implementation Details
+## Technical Implementation
 
-### 6.1 Charts Library
-Using existing **Recharts** library (already installed):
-- `AreaChart` - Daily API requests trend
-- `PieChart` - Block reasons distribution
-- `BarChart` - Subscriber distribution
-- `LineChart` - Revenue trend
+### API Key Locking Logic
 
-### 6.2 Admin Manual Controls
-
-**Activate Merchant:**
 ```typescript
-const activateMerchant = async (merchantId: string, planType: 'monthly' | 'yearly') => {
-  const expiresAt = new Date();
-  expiresAt.setDate(expiresAt.getDate() + (planType === 'yearly' ? 365 : 30));
+// API key from merchant record
+const { api_key, is_active } = merchant;
+
+// If not active, show locked state
+if (!is_active) {
+  return (
+    <div className="relative">
+      <div className="blur-sm select-none">
+        abc12345-xxxx-yyyy-zzzz-••••••••••••
+      </div>
+      <div className="absolute inset-0 flex items-center justify-center bg-white/80">
+        <Button onClick={onPurchase}>
+          <Lock /> Plan কিনুন
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// If active, show real key
+return (
+  <div className="flex items-center gap-2">
+    <code>{api_key}</code>
+    <Button onClick={copyKey}>
+      <Copy />
+    </Button>
+  </div>
+);
+```
+
+### Plugin Download (No API Key Required)
+
+```typescript
+// Plugin download uses a placeholder API key that doesn't work
+// Until user activates their plan
+
+const handlePluginDownload = () => {
+  // Download plugin with actual API key if active
+  // Or with "YOUR_API_KEY" placeholder if inactive
+  const keyToUse = isActive ? apiKey : "YOUR_API_KEY_HERE";
+  downloadPluginFile(keyToUse);
   
-  await supabase.from('merchants').update({
-    is_active: true,
-    current_plan: planType,
-    plan_expires_at: expiresAt.toISOString(),
-    max_requests: planType === 'yearly' ? 15000 : 1000,
-    requests_used: 0,
-  }).eq('id', merchantId);
-};
-```
-
-**Deactivate Merchant:**
-```typescript
-const deactivateMerchant = async (merchantId: string) => {
-  await supabase.from('merchants').update({
-    is_active: false,
-    current_plan: null,
-    plan_expires_at: null,
-  }).eq('id', merchantId);
-};
-```
-
-### 6.3 Log Edit/Delete
-
-**Edit Log:**
-```typescript
-const updateLog = async (logId: string, updates: Partial<FraudLog>) => {
-  await supabase.from('fraud_logs').update(updates).eq('id', logId);
-};
-```
-
-**Delete Log:**
-```typescript
-const deleteLog = async (logId: string) => {
-  await supabase.from('fraud_logs').delete().eq('id', logId);
+  if (!isActive) {
+    toast({
+      title: "⚠️ Plugin ডাউনলোড হয়েছে",
+      description: "Plugin কাজ করতে Plan কিনে API Key সেট করুন",
+    });
+  }
 };
 ```
 
 ---
 
-## 7. Implementation Phases
+## UI/UX Improvements
 
-### Phase 1: Database & Policies
-- Add RLS policies for fraud_logs UPDATE/DELETE
+### Client Dashboard Stats Cards (Enhanced)
 
-### Phase 2: Navigation Updates
-- Add "Fraud Protection" to Header.tsx
-- Add "Fraud Protection" to MobileDrawer.tsx
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  📊 Dashboard Stats                                              │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
+│  │ 📦 3         │  │ 📄 2         │  │ 🛡️ Active    │          │
+│  │ মোট অর্ডার   │  │ মোট ইনভয়েস   │  │ Fraud Guard  │          │
+│  │              │  │              │  │ ৳699/বছর     │          │
+│  │ ↗️ +1 এই মাসে│  │ ৳5,000 বাকি  │  │ 245 checks   │          │
+│  └──────────────┘  └──────────────┘  └──────────────┘          │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
 
-### Phase 3: Client Dashboard Enhancement
-- Create FraudGuardAnalytics component with charts
-- Integrate into FraudGuardSection
+### Fraud Guard Tab - New Layout
 
-### Phase 4: Admin Dashboard - Fraud Guard Tab
-- Add new "Fraud Guard" tab
-- Create MerchantManagement component
-- Add manual activate/deactivate/assign functionality
-- Create FraudLogsAdmin component with edit/delete
-- Create FraudGuardCharts for admin analytics
-
-### Phase 5: Testing & Polish
-- Test all admin controls
-- Verify charts render correctly
-- Ensure mobile responsiveness
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  🛡️ WCBD Fraud Guard                                            │
+│  আপনার WooCommerce স্টোর সুরক্ষিত করুন                          │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │ 📊 Status Card                                             │  │
+│  │ ┌─────────────┬─────────────┬─────────────┐               │  │
+│  │ │ Plan        │ API Usage   │ Expires     │               │  │
+│  │ │ Yearly ✓    │ 245/15000   │ Mar 5, 2027 │               │  │
+│  │ └─────────────┴─────────────┴─────────────┘               │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│                                                                  │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │ 📦 Plugin & Setup                                          │  │
+│  │                                                            │  │
+│  │ [Download Plugin]  [Copy API Key]  [View Guide]           │  │
+│  │                                                            │  │
+│  │ 🔑 API Key: abc12345-xxxx-yyyy-zzzz-123456789abc [Copy]   │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│                                                                  │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │ 📚 ইন্সটলেশন গাইড                                          │  │
+│  │ ▸ Step 1: Plugin ডাউনলোড করুন                             │  │
+│  │ ▸ Step 2: WordPress-এ আপলোড করুন                          │  │
+│  │ ▸ Step 3: Plugin Activate করুন                            │  │
+│  │ ▸ Step 4: API Key সেট করুন (Plugin Settings-এ)            │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│                                                                  │
+│  📊 Analytics (7-day trend)                                      │
+│  [Charts show here for active users]                             │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
-## Visual Preview
+## Summary
 
-### Client Dashboard - Fraud Guard Section
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  🛡️ WCBD Fraud Guard - Active                                   │
-│  Plan: Yearly | Expires: March 15, 2027                         │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐           │
-│  │ 🔍 1,245 │ │ ✅ 892   │ │ ⏱️ 245  │ │ 🚫 108   │           │
-│  │ Total    │ │ Allowed  │ │ Cooldown │ │ Blacklist│           │
-│  └──────────┘ └──────────┘ └──────────┘ └──────────┘           │
-│                                                                  │
-│  📈 সাপ্তাহিক অর্ডার চেক                                         │
-│  ┌─────────────────────────────────────────────────────────────┐│
-│  │     /\      /\                                              ││
-│  │    /  \    /  \    ───── Allowed                            ││
-│  │   /    \  /    \   ----- Blocked                            ││
-│  │  /      \/      \                                           ││
-│  │ Mon Tue Wed Thu Fri Sat Sun                                 ││
-│  └─────────────────────────────────────────────────────────────┘│
-│                                                                  │
-│  [⚙️ সেটিংস] [📥 Plugin ডাউনলোড] [📊 বিস্তারিত দেখুন]           │
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### Admin Dashboard - Fraud Guard Tab
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  🛡️ FRAUD GUARD MANAGEMENT                                      │
-├─────────────────────────────────────────────────────────────────┤
-│  [📊 Overview] [👥 Merchants] [📋 Logs] [💳 Subscriptions]      │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  Stats Cards:                                                    │
-│  ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐                   │
-│  │ 45     │ │ 28     │ │ 12,450 │ │ ৳15,200│                   │
-│  │ Total  │ │ Active │ │ API    │ │ Revenue│                   │
-│  └────────┘ └────────┘ └────────┘ └────────┘                   │
-│                                                                  │
-│  Charts: (2x2 grid)                                              │
-│  ┌─────────────────────┐ ┌─────────────────────┐                │
-│  │ Daily Requests      │ │ Block Distribution  │                │
-│  │ [Area Chart]        │ │ [Pie Chart]         │                │
-│  └─────────────────────┘ └─────────────────────┘                │
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
-```
+| Feature | Before | After |
+|---------|--------|-------|
+| Plugin Download | শুধু Active users | সবাই |
+| API Key | Always visible | Inactive: Locked, Active: Visible |
+| Setup Guide | Separate page | Dashboard-এ integrated |
+| Analytics | Separate | Dashboard-এ integrated |
+| UI Design | Basic | Modern, light-themed |

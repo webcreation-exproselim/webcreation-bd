@@ -1,9 +1,13 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { SubscriptionStatus } from "./SubscriptionStatus";
 import { SubscriptionPlans } from "./SubscriptionPlans";
 import { SubscriptionPurchaseModal } from "./SubscriptionPurchaseModal";
+import { FraudGuardAnalytics } from "./FraudGuardAnalytics";
 import { useSubscriptionData } from "@/hooks/useSubscriptionData";
+import { Button } from "@/components/ui/button";
+import { Settings, Download, ExternalLink } from "lucide-react";
 
 interface FraudGuardSectionProps {
   userId: string;
@@ -20,9 +24,11 @@ interface Merchant {
 
 export function FraudGuardSection({ userId }: FraudGuardSectionProps) {
   const [merchant, setMerchant] = useState<Merchant | null>(null);
+  const [logs, setLogs] = useState<{ id: string; status: string; created_at: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('monthly');
+  const navigate = useNavigate();
   
   const { pendingOrder, refetch: refetchSubscription } = useSubscriptionData(merchant?.id ?? null);
 
@@ -50,14 +56,27 @@ export function FraudGuardSection({ userId }: FraudGuardSectionProps) {
         }
 
         if (merchantData) {
-          setMerchant({
+          const fullMerchant = {
             ...merchantData,
             is_active: merchantData.is_active ?? false,
             current_plan: merchantData.current_plan ?? null,
             plan_expires_at: merchantData.plan_expires_at ?? null,
             requests_used: merchantData.requests_used ?? 0,
             max_requests: merchantData.max_requests ?? 0,
-          });
+          };
+          setMerchant(fullMerchant);
+
+          // If merchant is active, fetch logs for analytics
+          if (fullMerchant.is_active) {
+            const { data: logsData } = await supabase
+              .from('fraud_logs')
+              .select('id, status, created_at')
+              .eq('merchant_id', fullMerchant.id)
+              .order('created_at', { ascending: false })
+              .limit(200);
+            
+            setLogs(logsData || []);
+          }
         }
       } catch (error) {
         console.error('Error fetching merchant:', error);
@@ -107,7 +126,7 @@ export function FraudGuardSection({ userId }: FraudGuardSectionProps) {
 
   // Show subscription status (active, pending, or plans)
   return (
-    <>
+    <div className="space-y-6">
       <SubscriptionStatus
         merchant={merchant}
         pendingOrder={pendingOrder ? {
@@ -117,6 +136,40 @@ export function FraudGuardSection({ userId }: FraudGuardSectionProps) {
         } : null}
         onPurchase={() => setShowPurchaseModal(true)}
       />
+
+      {/* Show Analytics if Active */}
+      {merchant?.is_active && (
+        <>
+          <FraudGuardAnalytics logs={logs} />
+          
+          {/* Quick Action Buttons */}
+          <div className="flex flex-wrap gap-3">
+            <Button
+              onClick={() => navigate('/fraud-protection')}
+              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white gap-2"
+            >
+              <Settings className="w-4 h-4" />
+              সেটিংস দেখুন
+            </Button>
+            <Button
+              onClick={() => navigate('/fraud-protection')}
+              variant="outline"
+              className="border-white/20 text-white hover:bg-white/10 gap-2"
+            >
+              <Download className="w-4 h-4" />
+              Plugin ডাউনলোড
+            </Button>
+            <Button
+              onClick={() => navigate('/fraud-guard')}
+              variant="ghost"
+              className="text-white/60 hover:text-white gap-2"
+            >
+              <ExternalLink className="w-4 h-4" />
+              বিস্তারিত দেখুন
+            </Button>
+          </div>
+        </>
+      )}
 
       {/* Purchase Modal with Plan Selection */}
       {showPurchaseModal && !pendingOrder && !merchant?.is_active && merchant?.id && (
@@ -146,6 +199,6 @@ export function FraudGuardSection({ userId }: FraudGuardSectionProps) {
           onSuccess={handlePurchaseSuccess}
         />
       )}
-    </>
+    </div>
   );
 }

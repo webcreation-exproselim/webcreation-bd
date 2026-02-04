@@ -22,7 +22,7 @@ const serviceItems = [
 interface MobileDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  navItems: { label: string; href: string; hasSubmenu?: boolean }[];
+  navItems: { label: string; href: string; hasSubmenu?: boolean; isRoute?: boolean }[];
   onLoginClick: () => void;
   onSignupClick: () => void;
 }

@@ -19,6 +19,7 @@ const serviceItems = [
 const navItems = [
   { label: "হোম", href: "#", hasSubmenu: false },
   { label: "সার্ভিস", href: "#services", hasSubmenu: true, submenu: serviceItems },
+  { label: "Fraud Protection", href: "/fraud-guard", hasSubmenu: false, isRoute: true },
   { label: "পোর্টফোলিও", href: "#portfolio", hasSubmenu: false },
   { label: "আমাদের সম্পর্কে", href: "#about", hasSubmenu: false },
   { label: "যোগাযোগ", href: "#contact", hasSubmenu: false },
@@ -111,6 +112,15 @@ export function Header() {
                         ))}
                       </div>
                     </div>
+                  ) : (item as any).isRoute ? (
+                    <Link
+                      key={item.href}
+                      to={item.href}
+                      className="relative px-4 py-2 text-sm font-bengali font-medium transition-all duration-300 group text-gray-700 hover:text-blue-600"
+                    >
+                      {item.label}
+                      <span className="absolute bottom-0 left-4 right-4 h-0.5 scale-x-0 transition-transform duration-300 group-hover:scale-x-100 origin-left bg-gradient-to-r from-cyan-500 to-blue-500" />
+                    </Link>
                   ) : (
                     <a
                       key={item.href}

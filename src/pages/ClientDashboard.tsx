@@ -18,6 +18,10 @@ import {
   Loader2,
   CreditCard,
   Shield,
+  Settings,
+  BarChart3,
+  Menu,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,6 +67,8 @@ interface Message {
   created_at: string;
 }
 
+type TabType = "orders" | "invoices" | "chat" | "fraudguard";
+
 export default function ClientDashboard() {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -72,13 +78,13 @@ export default function ClientDashboard() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [newMessage, setNewMessage] = useState("");
-  const [activeTab, setActiveTab] = useState<"orders" | "invoices" | "chat">("orders");
+  const [activeTab, setActiveTab] = useState<TabType>("orders");
   const [loading, setLoading] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -88,7 +94,6 @@ export default function ClientDashboard() {
       }
     });
 
-    // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -96,7 +101,6 @@ export default function ClientDashboard() {
       if (!session) {
         navigate("/auth");
       } else {
-        // Defer data fetching to avoid race conditions
         fetchUserData(session.user.id);
       }
       setLoading(false);
@@ -107,7 +111,6 @@ export default function ClientDashboard() {
 
   const fetchUserData = async (userId: string) => {
     try {
-      // Fetch profile
       const { data: profileData } = await supabase
         .from("profiles")
         .select("*")
@@ -116,16 +119,11 @@ export default function ClientDashboard() {
       
       if (profileData) setProfile(profileData);
 
-      // Fetch orders for this user
-      const { data: ordersData, error: ordersError } = await supabase
+      const { data: ordersData } = await supabase
         .from("orders")
         .select("*")
         .eq("user_id", userId)
         .order("created_at", { ascending: false });
-      
-      if (ordersError) {
-        console.error("Orders fetch error:", ordersError);
-      }
       
       if (ordersData) {
         const typedOrders: Order[] = ordersData.map(order => ({
@@ -136,16 +134,11 @@ export default function ClientDashboard() {
         setOrders(typedOrders);
       }
 
-      // Fetch invoices for this user
-      const { data: invoicesData, error: invoicesError } = await supabase
+      const { data: invoicesData } = await supabase
         .from("invoices")
         .select("*")
         .eq("client_id", userId)
         .order("created_at", { ascending: false });
-      
-      if (invoicesError) {
-        console.error("Invoices fetch error:", invoicesError);
-      }
       
       if (invoicesData) setInvoices(invoicesData as Invoice[]);
     } catch (error) {
@@ -153,7 +146,6 @@ export default function ClientDashboard() {
     }
   };
 
-  // Subscribe to realtime invoice updates
   useEffect(() => {
     if (!user) return;
 
@@ -168,7 +160,6 @@ export default function ClientDashboard() {
           filter: `client_id=eq.${user.id}`,
         },
         (payload) => {
-          // Add new invoice to the list
           setInvoices((prev) => [payload.new as Invoice, ...prev]);
         }
       )
@@ -181,7 +172,6 @@ export default function ClientDashboard() {
           filter: `client_id=eq.${user.id}`,
         },
         (payload) => {
-          // Update existing invoice
           setInvoices((prev) => 
             prev.map(inv => inv.id === payload.new.id ? payload.new as Invoice : inv)
           );
@@ -195,15 +185,11 @@ export default function ClientDashboard() {
   }, [user?.id]);
 
   const fetchMessages = async (orderId: string) => {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("messages")
       .select("*")
       .eq("order_id", orderId)
       .order("created_at", { ascending: true });
-    
-    if (error) {
-      console.error("Messages fetch error:", error);
-    }
     
     if (data) setMessages(data as Message[]);
   };
@@ -220,22 +206,15 @@ export default function ClientDashboard() {
 
     if (!error) {
       setNewMessage("");
-      // Messages will be updated by realtime subscription
       toast({ title: "মেসেজ পাঠানো হয়েছে" });
     } else {
-      console.error("Message send error:", error);
-      toast({
-        title: "মেসেজ পাঠানো যায়নি",
-        variant: "destructive",
-      });
+      toast({ title: "মেসেজ পাঠানো যায়নি", variant: "destructive" });
     }
   };
 
-  // Subscribe to realtime messages
   useEffect(() => {
     if (!selectedOrder) return;
 
-    // Initial fetch
     fetchMessages(selectedOrder.id);
 
     const channel = supabase
@@ -249,7 +228,6 @@ export default function ClientDashboard() {
           filter: `order_id=eq.${selectedOrder.id}`,
         },
         (payload) => {
-          // Add new message to the list
           setMessages((prev) => [...prev, payload.new as Message]);
         }
       )
@@ -271,20 +249,19 @@ export default function ClientDashboard() {
     setDownloadingInvoiceId(invoice.id);
     
     try {
-      // Create a container element for PDF generation
       const container = document.createElement('div');
       container.innerHTML = `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: white; padding: 20px; max-width: 800px;">
-          <div style="height: 6px; background: linear-gradient(to right, #dc2626, #eab308);"></div>
+          <div style="height: 6px; background: linear-gradient(to right, #3b82f6, #8b5cf6);"></div>
           <div style="display: flex; justify-content: space-between; align-items: flex-start; margin: 20px 0;">
             <div style="display: flex; align-items: center; gap: 12px;">
-              <img src="${companyLogo}" alt="Logo" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #fee2e2;" onerror="this.style.display='none'">
+              <img src="${companyLogo}" alt="Logo" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;" onerror="this.style.display='none'">
               <div>
                 <div style="font-weight: bold; font-size: 18px; color: #111827;">Web Creation BD</div>
                 <div style="color: #6b7280; font-size: 12px;">Professional Digital Agency</div>
               </div>
             </div>
-            <div style="background: linear-gradient(to right, #dc2626, #ef4444); color: white; padding: 8px 16px; border-radius: 8px; text-align: center;">
+            <div style="background: linear-gradient(to right, #3b82f6, #8b5cf6); color: white; padding: 8px 16px; border-radius: 8px; text-align: center;">
               <div style="font-size: 10px; text-transform: uppercase; opacity: 0.8;">ইনভয়েস</div>
               <div style="font-family: monospace; font-weight: bold; font-size: 14px;">${invoice.invoice_number}</div>
             </div>
@@ -304,7 +281,7 @@ export default function ClientDashboard() {
               <span style="color: #374151;">পরিশোধিত</span>
               <span style="color: #10b981; font-weight: 600;">- ৳${Number(invoice.paid_amount).toLocaleString()}</span>
             </div>
-            <div style="background: linear-gradient(to right, #dc2626, #ef4444); color: white; padding: 12px 16px; border-radius: 12px; display: flex; justify-content: space-between; margin-top: 8px;">
+            <div style="background: linear-gradient(to right, #3b82f6, #8b5cf6); color: white; padding: 12px 16px; border-radius: 12px; display: flex; justify-content: space-between; margin-top: 8px;">
               <span style="font-weight: bold;">মোট বাকি</span>
               <span style="font-weight: bold; font-size: 18px;">৳${(Number(invoice.amount) - Number(invoice.paid_amount)).toLocaleString()}</span>
             </div>
@@ -314,7 +291,7 @@ export default function ClientDashboard() {
             <div style="font-size: 14px; color: #374151;">ধন্যবাদ! 🙏</div>
             <div style="font-size: 10px; color: #9ca3af;">Web Creation BD</div>
           </div>
-          <div style="height: 6px; background: linear-gradient(to right, #dc2626, #eab308); margin-top: 20px;"></div>
+          <div style="height: 6px; background: linear-gradient(to right, #3b82f6, #8b5cf6); margin-top: 20px;"></div>
         </div>
       `;
       
@@ -340,213 +317,247 @@ export default function ClientDashboard() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "completed":
-        return <CheckCircle className="w-5 h-5 text-green-400" />;
+        return <CheckCircle className="w-5 h-5 text-emerald-500" />;
       case "cancelled":
-        return <XCircle className="w-5 h-5 text-red-400" />;
+        return <XCircle className="w-5 h-5 text-red-500" />;
       case "processing":
-        return <Clock className="w-5 h-5 text-yellow-400" />;
+        return <Clock className="w-5 h-5 text-amber-500" />;
       default:
-        return <AlertCircle className="w-5 h-5 text-blue-400" />;
+        return <AlertCircle className="w-5 h-5 text-blue-500" />;
     }
   };
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case "completed":
-        return "সম্পন্ন";
-      case "cancelled":
-        return "বাতিল";
-      case "processing":
-        return "প্রসেসিং";
-      default:
-        return "পেন্ডিং";
+      case "completed": return "সম্পন্ন";
+      case "cancelled": return "বাতিল";
+      case "processing": return "প্রসেসিং";
+      default: return "পেন্ডিং";
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "completed":
-        return "bg-green-500/20 text-green-400 border-green-500/30";
-      case "cancelled":
-        return "bg-red-500/20 text-red-400 border-red-500/30";
-      case "processing":
-        return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
-      default:
-        return "bg-blue-500/20 text-blue-400 border-blue-500/30";
+      case "completed": return "bg-emerald-100 text-emerald-700 border-emerald-200";
+      case "cancelled": return "bg-red-100 text-red-700 border-red-200";
+      case "processing": return "bg-amber-100 text-amber-700 border-amber-200";
+      default: return "bg-blue-100 text-blue-700 border-blue-200";
     }
   };
 
+  const tabs = [
+    { id: "orders" as TabType, label: "অর্ডার", icon: Package },
+    { id: "invoices" as TabType, label: "ইনভয়েস", icon: FileText },
+    { id: "chat" as TabType, label: "চ্যাট", icon: MessageCircle },
+    { id: "fraudguard" as TabType, label: "Fraud Guard", icon: Shield },
+  ];
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-red-950 flex items-center justify-center">
-        <Loader2 className="w-10 h-10 animate-spin text-red-500" />
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto" />
+          <p className="text-gray-500 mt-4 font-bengali">লোড হচ্ছে...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-red-950">
-      {/* Header */}
-      <header className="bg-black/50 backdrop-blur-xl border-b border-white/10 sticky top-0 z-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
+      {/* Modern Header */}
+      <header className="bg-white/80 backdrop-blur-xl border-b border-gray-100 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-4">
-              <Link to="/" className="flex items-center gap-2">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center">
-                  <span className="text-white font-bold text-xl font-bengali">W</span>
-                </div>
-                <span className="font-bengali text-lg font-bold text-white hidden sm:block">
-                  Web Creation BD
-                </span>
-              </Link>
-            </div>
+            {/* Logo */}
+            <Link to="/" className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                <span className="text-white font-bold text-xl">W</span>
+              </div>
+              <span className="font-bengali text-lg font-bold text-gray-900 hidden sm:block">
+                Web Creation BD
+              </span>
+            </Link>
 
-            <div className="flex items-center gap-4">
+            {/* Desktop Actions */}
+            <div className="hidden md:flex items-center gap-4">
               <Link to="/">
-                <Button variant="ghost" className="text-white/70 hover:text-white">
-                  <Home className="w-5 h-5 mr-2" />
-                  <span className="hidden sm:inline font-bengali">হোম</span>
+                <Button variant="ghost" className="text-gray-600 hover:text-gray-900 gap-2">
+                  <Home className="w-4 h-4" />
+                  <span className="font-bengali">হোম</span>
                 </Button>
               </Link>
-              <div className="flex items-center gap-2 text-white/70">
-                <User className="w-5 h-5" />
-                <span className="font-bengali text-sm hidden sm:inline">
+              <div className="flex items-center gap-3 px-4 py-2 bg-gray-50 rounded-xl">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
+                  <User className="w-4 h-4 text-white" />
+                </div>
+                <span className="font-bengali text-sm font-medium text-gray-700">
                   {profile?.full_name || user?.email?.split("@")[0]}
                 </span>
               </div>
               <Button
                 onClick={handleLogout}
                 variant="ghost"
-                className="text-white/70 hover:text-red-400"
+                className="text-gray-500 hover:text-red-500"
               >
                 <LogOut className="w-5 h-5" />
               </Button>
             </div>
+
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden p-2 rounded-lg hover:bg-gray-100"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
           </div>
+
+          {/* Mobile Menu */}
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="md:hidden pb-4 space-y-2"
+            >
+              <Link to="/" className="block px-4 py-3 rounded-xl hover:bg-gray-50 font-bengali text-gray-700">
+                <Home className="w-4 h-4 inline mr-2" /> হোম
+              </Link>
+              <div className="px-4 py-3 rounded-xl bg-gray-50">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
+                    <User className="w-4 h-4 text-white" />
+                  </div>
+                  <span className="font-bengali text-sm text-gray-700">
+                    {profile?.full_name || user?.email?.split("@")[0]}
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="w-full text-left px-4 py-3 rounded-xl hover:bg-red-50 text-red-500 font-bengali"
+              >
+                <LogOut className="w-4 h-4 inline mr-2" /> লগআউট
+              </button>
+            </motion.div>
+          )}
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
         {/* Welcome Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          className="mb-6 md:mb-8"
         >
-          <h1 className="text-2xl sm:text-3xl font-bengali font-bold text-white mb-2">
+          <h1 className="text-2xl sm:text-3xl font-bengali font-bold text-gray-900 mb-2">
             স্বাগতম, {profile?.full_name || "গ্রাহক"}! 👋
           </h1>
-          <p className="text-white/60 font-bengali">
-            আপনার অর্ডার এবং ইনভয়েস ট্র্যাক করুন
+          <p className="text-gray-500 font-bengali">
+            আপনার অর্ডার, ইনভয়েস এবং Fraud Guard ট্র্যাক করুন
           </p>
         </motion.div>
 
-        {/* Stats Cards + Fraud Guard Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          {/* Left Column: Stats */}
-          <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
-                  <Package className="w-6 h-6 text-blue-400" />
-                </div>
-                <div>
-                  <p className="text-white/60 text-sm font-bengali">মোট অর্ডার</p>
-                  <p className="text-2xl font-bold text-white">{orders.length}</p>
-                </div>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="bg-white rounded-2xl border border-gray-100 p-4 md:p-6 shadow-sm hover:shadow-md transition-shadow"
+          >
+            <div className="flex items-center gap-3 md:gap-4">
+              <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-blue-100 flex items-center justify-center">
+                <Package className="w-5 h-5 md:w-6 md:h-6 text-blue-600" />
               </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center">
-                  <CheckCircle className="w-6 h-6 text-green-400" />
-                </div>
-                <div>
-                  <p className="text-white/60 text-sm font-bengali">সম্পন্ন</p>
-                  <p className="text-2xl font-bold text-white">
-                    {orders.filter((o) => o.status === "completed").length}
-                  </p>
-                </div>
+              <div>
+                <p className="text-gray-500 text-xs md:text-sm font-bengali">মোট অর্ডার</p>
+                <p className="text-xl md:text-2xl font-bold text-gray-900">{orders.length}</p>
               </div>
-            </motion.div>
+            </div>
+          </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-yellow-500/20 flex items-center justify-center">
-                  <FileText className="w-6 h-6 text-yellow-400" />
-                </div>
-                <div>
-                  <p className="text-white/60 text-sm font-bengali">মোট ইনভয়েস</p>
-                  <p className="text-2xl font-bold text-white">{invoices.length}</p>
-                </div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="bg-white rounded-2xl border border-gray-100 p-4 md:p-6 shadow-sm hover:shadow-md transition-shadow"
+          >
+            <div className="flex items-center gap-3 md:gap-4">
+              <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-emerald-100 flex items-center justify-center">
+                <CheckCircle className="w-5 h-5 md:w-6 md:h-6 text-emerald-600" />
               </div>
-            </motion.div>
-          </div>
+              <div>
+                <p className="text-gray-500 text-xs md:text-sm font-bengali">সম্পন্ন</p>
+                <p className="text-xl md:text-2xl font-bold text-gray-900">
+                  {orders.filter((o) => o.status === "completed").length}
+                </p>
+              </div>
+            </div>
+          </motion.div>
 
-          {/* Right Column: Fraud Guard Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="bg-white rounded-2xl border border-gray-100 p-4 md:p-6 shadow-sm hover:shadow-md transition-shadow"
+          >
+            <div className="flex items-center gap-3 md:gap-4">
+              <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-amber-100 flex items-center justify-center">
+                <FileText className="w-5 h-5 md:w-6 md:h-6 text-amber-600" />
+              </div>
+              <div>
+                <p className="text-gray-500 text-xs md:text-sm font-bengali">মোট ইনভয়েস</p>
+                <p className="text-xl md:text-2xl font-bold text-gray-900">{invoices.length}</p>
+              </div>
+            </div>
+          </motion.div>
+
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
+            className="bg-white rounded-2xl border border-gray-100 p-4 md:p-6 shadow-sm hover:shadow-md transition-shadow"
           >
-            {user && <FraudGuardSection userId={user.id} />}
+            <div className="flex items-center gap-3 md:gap-4">
+              <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-purple-100 flex items-center justify-center">
+                <Shield className="w-5 h-5 md:w-6 md:h-6 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-gray-500 text-xs md:text-sm font-bengali">Fraud Guard</p>
+                <p className="text-sm md:text-base font-semibold text-gray-900 font-bengali">Active</p>
+              </div>
+            </div>
           </motion.div>
         </div>
 
-        {/* Tabs */}
-        <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-          <Button
-            onClick={() => setActiveTab("orders")}
-            className={`font-bengali ${
-              activeTab === "orders"
-                ? "bg-red-500 text-white"
-                : "bg-white/5 text-white/70 hover:bg-white/10"
-            }`}
-          >
-            <Package className="w-4 h-4 mr-2" />
-            অর্ডার
-          </Button>
-          <Button
-            onClick={() => setActiveTab("invoices")}
-            className={`font-bengali ${
-              activeTab === "invoices"
-                ? "bg-red-500 text-white"
-                : "bg-white/5 text-white/70 hover:bg-white/10"
-            }`}
-          >
-            <FileText className="w-4 h-4 mr-2" />
-            ইনভয়েস
-          </Button>
-          <Button
-            onClick={() => setActiveTab("chat")}
-            className={`font-bengali ${
-              activeTab === "chat"
-                ? "bg-red-500 text-white"
-                : "bg-white/5 text-white/70 hover:bg-white/10"
-            }`}
-          >
-            <MessageCircle className="w-4 h-4 mr-2" />
-            চ্যাট
-          </Button>
+        {/* Tab Navigation */}
+        <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  setMobileMenuOpen(false);
+                }}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bengali font-medium whitespace-nowrap transition-all duration-200 ${
+                  isActive
+                    ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/25"
+                    : "bg-white text-gray-600 hover:bg-gray-50 border border-gray-100"
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                {tab.label}
+              </button>
+            );
+          })}
         </div>
 
-        {/* Orders Tab */}
+        {/* Tab Contents */}
         {activeTab === "orders" && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -554,11 +565,11 @@ export default function ClientDashboard() {
             className="space-y-4"
           >
             {orders.length === 0 ? (
-              <div className="bg-white/5 rounded-2xl border border-white/10 p-12 text-center">
-                <Package className="w-16 h-16 text-white/20 mx-auto mb-4" />
-                <p className="text-white/60 font-bengali mb-4">আপনার কোন অর্ডার নেই</p>
+              <div className="bg-white rounded-2xl border border-gray-100 p-8 md:p-12 text-center shadow-sm">
+                <Package className="w-16 h-16 text-gray-200 mx-auto mb-4" />
+                <p className="text-gray-500 font-bengali mb-4">আপনার কোন অর্ডার নেই</p>
                 <Link to="/#services">
-                  <Button className="bg-red-500 hover:bg-red-600 font-bengali">
+                  <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:opacity-90 font-bengali">
                     সার্ভিস দেখুন
                   </Button>
                 </Link>
@@ -569,28 +580,26 @@ export default function ClientDashboard() {
                   key={order.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.1 }}
-                  className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6"
+                  transition={{ delay: idx * 0.05 }}
+                  className="bg-white rounded-2xl border border-gray-100 p-4 md:p-6 shadow-sm hover:shadow-md transition-shadow"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
                     <div className="flex items-center gap-3">
                       {getStatusIcon(order.status)}
                       <div>
-                        <p className="text-white font-medium">
+                        <p className="text-gray-900 font-medium">
                           অর্ডার #{order.id.slice(0, 8)}
                         </p>
-                        <p className="text-white/60 text-sm font-bengali">
+                        <p className="text-gray-500 text-sm font-bengali">
                           {new Date(order.created_at).toLocaleDateString("bn-BD")}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span
-                        className={`px-3 py-1 rounded-full text-sm font-bengali border ${getStatusColor(order.status)}`}
-                      >
+                      <span className={`px-3 py-1 rounded-full text-sm font-bengali border ${getStatusColor(order.status)}`}>
                         {getStatusText(order.status)}
                       </span>
-                      <span className="text-white font-bold">
+                      <span className="text-gray-900 font-bold">
                         ৳{Number(order.total_price).toLocaleString()}
                       </span>
                     </div>
@@ -599,10 +608,15 @@ export default function ClientDashboard() {
                   {/* Progress Bar */}
                   <div className="mb-4">
                     <div className="flex justify-between text-sm mb-2">
-                      <span className="text-white/60 font-bengali">প্রজেক্ট অগ্রগতি</span>
-                      <span className="text-white font-bengali font-medium">{order.progress || 0}%</span>
+                      <span className="text-gray-500 font-bengali">প্রজেক্ট অগ্রগতি</span>
+                      <span className="text-gray-900 font-bengali font-medium">{order.progress || 0}%</span>
                     </div>
-                    <Progress value={order.progress || 0} className="h-3" />
+                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-500"
+                        style={{ width: `${order.progress || 0}%` }}
+                      />
+                    </div>
                   </div>
 
                   {/* Services */}
@@ -611,7 +625,7 @@ export default function ClientDashboard() {
                       order.services.map((service, serviceIdx) => (
                         <span
                           key={serviceIdx}
-                          className="px-3 py-1 bg-white/5 border border-white/10 rounded-lg text-white/70 text-sm font-bengali"
+                          className="px-3 py-1 bg-gray-50 border border-gray-100 rounded-lg text-gray-600 text-sm font-bengali"
                         >
                           {service.serviceName} - {service.packageName}
                         </span>
@@ -623,7 +637,6 @@ export default function ClientDashboard() {
           </motion.div>
         )}
 
-        {/* Invoices Tab */}
         {activeTab === "invoices" && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -631,9 +644,9 @@ export default function ClientDashboard() {
             className="space-y-4"
           >
             {invoices.length === 0 ? (
-              <div className="bg-white/5 rounded-2xl border border-white/10 p-12 text-center">
-                <FileText className="w-16 h-16 text-white/20 mx-auto mb-4" />
-                <p className="text-white/60 font-bengali">কোন ইনভয়েস নেই</p>
+              <div className="bg-white rounded-2xl border border-gray-100 p-8 md:p-12 text-center shadow-sm">
+                <FileText className="w-16 h-16 text-gray-200 mx-auto mb-4" />
+                <p className="text-gray-500 font-bengali">কোন ইনভয়েস নেই</p>
               </div>
             ) : (
               invoices.map((invoice, idx) => {
@@ -642,12 +655,12 @@ export default function ClientDashboard() {
                   ? CheckCircle 
                   : invoice.status === "partial" 
                   ? Clock 
-                  : XCircle;
+                  : AlertCircle;
                 const statusColor = invoice.status === "paid"
-                  ? "bg-green-500/20 text-green-400"
+                  ? "bg-emerald-100 text-emerald-600"
                   : invoice.status === "partial"
-                  ? "bg-yellow-500/20 text-yellow-400"
-                  : "bg-red-500/20 text-red-400";
+                  ? "bg-amber-100 text-amber-600"
+                  : "bg-red-100 text-red-600";
                 const statusText = invoice.status === "paid" 
                   ? "পরিশোধিত" 
                   : invoice.status === "partial"
@@ -659,61 +672,59 @@ export default function ClientDashboard() {
                     key={invoice.id}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.1 }}
-                    className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-2xl border border-white/10 overflow-hidden"
+                    transition={{ delay: idx * 0.05 }}
+                    className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-shadow"
                   >
-                    {/* Header Accent Bar */}
-                    <div className="h-1.5 bg-gradient-to-r from-red-500 to-yellow-500" />
+                    <div className="h-1 bg-gradient-to-r from-blue-500 to-purple-500" />
                     
-                    <div className="p-6">
-                      {/* Top Row */}
-                      <div className="flex items-start justify-between mb-6">
+                    <div className="p-4 md:p-6">
+                      <div className="flex items-start justify-between gap-4 mb-4">
                         <div className="flex items-center gap-4">
-                          <div className={`w-14 h-14 rounded-2xl ${statusColor} flex items-center justify-center`}>
-                            <StatusIcon className="w-7 h-7" />
+                          <div className={`w-12 h-12 rounded-xl ${statusColor} flex items-center justify-center`}>
+                            <StatusIcon className="w-6 h-6" />
                           </div>
                           <div>
-                            <div className="flex items-center gap-3 mb-1">
-                              <span className="font-mono text-lg font-bold text-white">
+                            <div className="flex items-center gap-3 mb-1 flex-wrap">
+                              <span className="font-mono text-base md:text-lg font-bold text-gray-900">
                                 {invoice.invoice_number}
                               </span>
-                              <span className={`px-3 py-1 rounded-full text-xs font-bold ${statusColor}`}>
+                              <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${statusColor}`}>
                                 {statusText}
                               </span>
                             </div>
-                            <p className="text-white/50 text-sm font-bengali">
-                              তারিখ: {new Date(invoice.created_at).toLocaleDateString("bn-BD")}
+                            <p className="text-gray-400 text-sm font-bengali">
+                              {new Date(invoice.created_at).toLocaleDateString("bn-BD")}
                             </p>
                           </div>
                         </div>
                       </div>
 
-                      {/* Amount Details */}
-                      <div className="grid grid-cols-3 gap-4 mb-6 p-4 bg-black/20 rounded-xl">
+                      {/* Amount Grid */}
+                      <div className="grid grid-cols-3 gap-2 md:gap-4 mb-4 p-3 md:p-4 bg-gray-50 rounded-xl">
                         <div className="text-center">
-                          <p className="text-white/50 text-xs font-bengali mb-1">মোট</p>
-                          <p className="text-white font-bold text-lg">৳{Number(invoice.amount).toLocaleString()}</p>
+                          <p className="text-gray-400 text-xs font-bengali mb-1">মোট</p>
+                          <p className="text-gray-900 font-bold text-sm md:text-base">৳{Number(invoice.amount).toLocaleString()}</p>
                         </div>
-                        <div className="text-center border-x border-white/10">
-                          <p className="text-white/50 text-xs font-bengali mb-1">পরিশোধিত</p>
-                          <p className="text-green-400 font-bold text-lg">৳{Number(invoice.paid_amount).toLocaleString()}</p>
+                        <div className="text-center border-x border-gray-200">
+                          <p className="text-gray-400 text-xs font-bengali mb-1">পরিশোধিত</p>
+                          <p className="text-emerald-600 font-bold text-sm md:text-base">৳{Number(invoice.paid_amount).toLocaleString()}</p>
                         </div>
                         <div className="text-center">
-                          <p className="text-white/50 text-xs font-bengali mb-1">বাকি</p>
-                          <p className={`font-bold text-lg ${dueAmount > 0 ? 'text-red-400' : 'text-green-400'}`}>
+                          <p className="text-gray-400 text-xs font-bengali mb-1">বাকি</p>
+                          <p className={`font-bold text-sm md:text-base ${dueAmount > 0 ? 'text-red-500' : 'text-emerald-500'}`}>
                             ৳{dueAmount.toLocaleString()}
                           </p>
                         </div>
                       </div>
 
                       {/* Actions */}
-                      <div className="flex flex-wrap items-center gap-3">
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => downloadInvoice(invoice)}
                           disabled={downloadingInvoiceId === invoice.id}
-                          className="flex-1 sm:flex-none text-blue-400 border-blue-400/30 hover:bg-blue-400/10 font-bengali"
+                          className="flex-1 sm:flex-none text-blue-600 border-blue-200 hover:bg-blue-50 font-bengali"
                         >
                           {downloadingInvoiceId === invoice.id ? (
                             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -729,7 +740,7 @@ export default function ClientDashboard() {
                           >
                             <Button
                               size="sm"
-                              className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-bengali"
+                              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:opacity-90 text-white font-bengali"
                             >
                               <CreditCard className="w-4 h-4 mr-2" />
                               পেমেন্ট করুন
@@ -745,20 +756,19 @@ export default function ClientDashboard() {
           </motion.div>
         )}
 
-        {/* Chat Tab */}
         {activeTab === "chat" && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+            className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6"
           >
             {/* Order List */}
-            <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-4 max-h-[500px] overflow-y-auto">
-              <h3 className="text-white font-bengali font-bold mb-4">
+            <div className="bg-white rounded-2xl border border-gray-100 p-4 max-h-[400px] md:max-h-[500px] overflow-y-auto shadow-sm">
+              <h3 className="text-gray-900 font-bengali font-bold mb-4">
                 অর্ডার সিলেক্ট করুন
               </h3>
               {orders.length === 0 ? (
-                <p className="text-white/40 text-sm font-bengali text-center py-8">
+                <p className="text-gray-400 text-sm font-bengali text-center py-8">
                   কোন অর্ডার নেই
                 </p>
               ) : (
@@ -772,14 +782,14 @@ export default function ClientDashboard() {
                       }}
                       className={`w-full p-3 rounded-xl text-left transition-colors ${
                         selectedOrder?.id === order.id
-                          ? "bg-red-500/20 border border-red-500/50"
-                          : "bg-white/5 hover:bg-white/10 border border-transparent"
+                          ? "bg-blue-50 border-2 border-blue-500"
+                          : "bg-gray-50 hover:bg-gray-100 border-2 border-transparent"
                       }`}
                     >
-                      <p className="text-white text-sm font-medium">
+                      <p className="text-gray-900 text-sm font-medium">
                         অর্ডার #{order.id.slice(0, 8)}
                       </p>
-                      <p className="text-white/60 text-xs font-bengali">
+                      <p className="text-gray-500 text-xs font-bengali">
                         {getStatusText(order.status)} • {order.progress || 0}% সম্পন্ন
                       </p>
                     </button>
@@ -789,25 +799,23 @@ export default function ClientDashboard() {
             </div>
 
             {/* Chat Area */}
-            <div className="lg:col-span-2 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 flex flex-col h-[500px]">
+            <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 flex flex-col h-[400px] md:h-[500px] shadow-sm">
               {selectedOrder ? (
                 <>
-                  {/* Chat Header */}
-                  <div className="p-4 border-b border-white/10">
-                    <p className="text-white font-bengali font-bold">
+                  <div className="p-4 border-b border-gray-100">
+                    <p className="text-gray-900 font-bengali font-bold">
                       অর্ডার #{selectedOrder.id.slice(0, 8)}
                     </p>
-                    <p className="text-white/60 text-sm font-bengali">
+                    <p className="text-gray-500 text-sm font-bengali">
                       {getStatusText(selectedOrder.status)}
                     </p>
                   </div>
 
-                  {/* Messages */}
-                  <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                  <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/50">
                     {messages.length === 0 ? (
                       <div className="text-center py-8">
-                        <MessageCircle className="w-12 h-12 text-white/20 mx-auto mb-2" />
-                        <p className="text-white/40 text-sm font-bengali">
+                        <MessageCircle className="w-12 h-12 text-gray-200 mx-auto mb-2" />
+                        <p className="text-gray-400 text-sm font-bengali">
                           কোন মেসেজ নেই। প্রথম মেসেজ পাঠান!
                         </p>
                       </div>
@@ -815,19 +823,17 @@ export default function ClientDashboard() {
                       messages.map((msg) => (
                         <div
                           key={msg.id}
-                          className={`flex ${
-                            msg.is_admin ? "justify-start" : "justify-end"
-                          }`}
+                          className={`flex ${msg.is_admin ? "justify-start" : "justify-end"}`}
                         >
                           <div
-                            className={`max-w-[80%] p-3 rounded-2xl ${
+                            className={`max-w-[85%] p-3 rounded-2xl ${
                               msg.is_admin
-                                ? "bg-white/10 text-white"
-                                : "bg-red-500 text-white"
+                                ? "bg-white border border-gray-100 text-gray-800"
+                                : "bg-gradient-to-r from-blue-600 to-purple-600 text-white"
                             }`}
                           >
                             <p className="text-sm">{msg.content}</p>
-                            <p className="text-xs text-white/60 mt-1">
+                            <p className={`text-xs mt-1 ${msg.is_admin ? "text-gray-400" : "text-white/70"}`}>
                               {new Date(msg.created_at).toLocaleTimeString("bn-BD")}
                             </p>
                           </div>
@@ -836,19 +842,18 @@ export default function ClientDashboard() {
                     )}
                   </div>
 
-                  {/* Input */}
-                  <div className="p-4 border-t border-white/10">
+                  <div className="p-4 border-t border-gray-100 bg-white">
                     <div className="flex gap-2">
                       <Input
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
                         placeholder="মেসেজ লিখুন..."
-                        className="bg-white/5 border-white/10 text-white placeholder:text-white/40 font-bengali"
+                        className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 font-bengali rounded-xl"
                         onKeyPress={(e) => e.key === "Enter" && sendMessage()}
                       />
                       <Button
                         onClick={sendMessage}
-                        className="bg-red-500 hover:bg-red-600"
+                        className="bg-gradient-to-r from-blue-600 to-purple-600 hover:opacity-90 rounded-xl"
                         disabled={!newMessage.trim()}
                       >
                         <Send className="w-5 h-5" />
@@ -859,14 +864,23 @@ export default function ClientDashboard() {
               ) : (
                 <div className="flex-1 flex items-center justify-center">
                   <div className="text-center">
-                    <MessageCircle className="w-16 h-16 text-white/20 mx-auto mb-4" />
-                    <p className="text-white/60 font-bengali">
+                    <MessageCircle className="w-16 h-16 text-gray-200 mx-auto mb-4" />
+                    <p className="text-gray-400 font-bengali">
                       চ্যাট করতে একটি অর্ডার সিলেক্ট করুন
                     </p>
                   </div>
                 </div>
               )}
             </div>
+          </motion.div>
+        )}
+
+        {activeTab === "fraudguard" && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            {user && <FraudGuardSection userId={user.id} />}
           </motion.div>
         )}
       </main>

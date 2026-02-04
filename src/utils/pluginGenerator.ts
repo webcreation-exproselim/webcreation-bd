@@ -30,6 +30,7 @@ class WCBD_Fraud_Guard {
     private $endpoint = '${ENDPOINT_URL}';
     private $logo_url = '${LOGO_URL}';
     private $fraud_guard_url = '${FRAUD_GUARD_URL}';
+    private $dashboard_url = '${DASHBOARD_URL}';
     private $whatsapp_default = '${WHATSAPP_DEFAULT}';
     
     public function __construct() {
@@ -307,6 +308,7 @@ class WCBD_Fraud_Guard {
     }
     
     private function get_admin_js() {
+        $nonce = wp_create_nonce('wcbd_fraud_guard_nonce');
         return "
         jQuery(function($) {
             $('#test-api-btn').on('click', function() {
@@ -317,7 +319,7 @@ class WCBD_Fraud_Guard {
                 
                 $.post(ajaxurl, {
                     action: 'wcbd_fraud_guard_test_api',
-                    nonce: '" . wp_create_nonce('wcbd_fraud_guard_nonce') . "'
+                    nonce: '" . $nonce . "'
                 }, function(r) {
                     btn.prop('disabled', false).text('Test');
                     if (r.success) {
@@ -372,7 +374,7 @@ class WCBD_Fraud_Guard {
                                 <input type="text" id="api_key" name="api_key" value="<?php echo esc_attr($api_key); ?>" class="regular-text code">
                                 <button type="button" id="test-api-btn" class="button">Test Connection</button>
                                 <span id="api-result" class="api-result"></span>
-                                <p class="description">Get your API key from your <a href="<?php echo esc_url('${DASHBOARD_URL}'); ?>" target="_blank">dashboard</a></p>
+                                <p class="description">Get your API key from your <a href="<?php echo esc_url($this->dashboard_url); ?>" target="_blank">dashboard</a></p>
                             </td>
                         </tr>
                     </table>

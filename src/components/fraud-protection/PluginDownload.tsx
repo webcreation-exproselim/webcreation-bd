@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download, Check, Loader2, Package, CheckCircle2, ArrowRight, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { downloadPluginZip } from "@/utils/pluginGenerator";
+import { downloadPluginFile } from "@/utils/pluginGenerator";
 
 interface PluginDownloadProps {
   apiKey: string;
@@ -14,17 +14,16 @@ export function PluginDownload({ apiKey }: PluginDownloadProps) {
   const [downloaded, setDownloaded] = useState(false);
   const { toast } = useToast();
 
-  const handleDownload = async () => {
+  const handleDownload = () => {
     try {
       setIsDownloading(true);
-      await downloadPluginZip(apiKey);
+      downloadPluginFile(apiKey);
       setDownloaded(true);
       toast({
         title: "ডাউনলোড সম্পন্ন! ✅",
-        description: "প্লাগইন ZIP ফাইল ডাউনলোড হয়েছে",
+        description: "প্লাগইন ফাইল ডাউনলোড হয়েছে",
       });
       
-      // Reset downloaded state after 5 seconds
       setTimeout(() => setDownloaded(false), 5000);
     } catch (error) {
       console.error("Download error:", error);
@@ -41,7 +40,7 @@ export function PluginDownload({ apiKey }: PluginDownloadProps) {
   return (
     <div className="space-y-6">
       {/* Download Card */}
-      <Card className="border-cyan-500/30 bg-gradient-to-br from-cyan-950/50 to-slate-900 overflow-hidden">
+      <Card className="border-cyan-500/30 bg-gradient-to-br from-cyan-950/50 to-slate-900 overflow-hidden relative">
         <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
         <CardHeader className="relative">
           <div className="flex items-center gap-3 mb-2">
@@ -104,7 +103,7 @@ export function PluginDownload({ apiKey }: PluginDownloadProps) {
               )}
             </Button>
             <span className="text-sm text-slate-400">
-              fraud-protection-bd.zip (~15KB)
+              fraud-protection-bd.php (~8KB)
             </span>
           </div>
         </CardContent>
@@ -129,13 +128,12 @@ export function PluginDownload({ apiKey }: PluginDownloadProps) {
             <div className="space-y-2">
               <h4 className="font-semibold text-white">প্লাগইন ডাউনলোড করুন</h4>
               <p className="text-sm text-muted-foreground">
-                উপরের "Plugin ডাউনলোড করুন" বাটনে ক্লিক করে ZIP ফাইল ডাউনলোড করুন। 
+                উপরের "Plugin ডাউনলোড করুন" বাটনে ক্লিক করে PHP ফাইল ডাউনলোড করুন। 
                 আপনার API Key অটোমেটিক প্লাগইনে ইনজেক্ট করা থাকবে।
               </p>
             </div>
           </div>
 
-          {/* Arrow */}
           <div className="flex justify-center">
             <ArrowRight className="h-5 w-5 text-slate-600 rotate-90" />
           </div>
@@ -148,18 +146,14 @@ export function PluginDownload({ apiKey }: PluginDownloadProps) {
             <div className="space-y-2">
               <h4 className="font-semibold text-white">WordPress-এ আপলোড করুন</h4>
               <p className="text-sm text-muted-foreground">
-                আপনার WordPress Dashboard-এ যান। <br />
-                <code className="bg-slate-800 px-2 py-0.5 rounded text-cyan-400">
-                  Plugins → Add New → Upload Plugin
-                </code>
+                ফাইলটি আপনার WordPress সাইটের <code className="bg-slate-800 px-2 py-0.5 rounded text-cyan-400">/wp-content/plugins/</code> ফোল্ডারে আপলোড করুন।
               </p>
               <p className="text-sm text-muted-foreground">
-                ZIP ফাইল সিলেক্ট করে "Install Now" ক্লিক করুন।
+                অথবা FTP/File Manager ব্যবহার করে আপলোড করুন।
               </p>
             </div>
           </div>
 
-          {/* Arrow */}
           <div className="flex justify-center">
             <ArrowRight className="h-5 w-5 text-slate-600 rotate-90" />
           </div>
@@ -172,12 +166,11 @@ export function PluginDownload({ apiKey }: PluginDownloadProps) {
             <div className="space-y-2">
               <h4 className="font-semibold text-white">প্লাগইন একটিভ করুন</h4>
               <p className="text-sm text-muted-foreground">
-                ইন্সটল হয়ে গেলে "Activate" বাটনে ক্লিক করুন।
+                WordPress Dashboard → Plugins → "Fraud Protection BD" → Activate
               </p>
             </div>
           </div>
 
-          {/* Arrow */}
           <div className="flex justify-center">
             <ArrowRight className="h-5 w-5 text-slate-600 rotate-90" />
           </div>
@@ -190,13 +183,10 @@ export function PluginDownload({ apiKey }: PluginDownloadProps) {
             <div className="space-y-2">
               <h4 className="font-semibold text-white">সেটআপ সম্পন্ন!</h4>
               <p className="text-sm text-muted-foreground">
-                প্লাগইন এখন কাজ করবে। আপনার WooCommerce Checkout page-এ 
-                অটোমেটিক Fraud Protection একটিভ হয়ে যাবে।
+                প্লাগইন এখন কাজ করবে। WooCommerce Checkout-এ অটোমেটিক Fraud Protection একটিভ হয়ে যাবে।
               </p>
               <p className="text-sm text-muted-foreground">
-                <code className="bg-slate-800 px-2 py-0.5 rounded text-cyan-400">
-                  Dashboard → Fraud Protection
-                </code>
+                <code className="bg-slate-800 px-2 py-0.5 rounded text-cyan-400">Dashboard → Fraud Protection</code>
                 {" "}থেকে সেটিংস পরিবর্তন করতে পারবেন।
               </p>
             </div>

@@ -48,7 +48,7 @@ export function PluginDownload({ apiKey }: PluginDownloadProps) {
               <Package className="h-6 w-6 text-white" />
             </div>
             <div>
-              <CardTitle className="text-xl text-white">WCBD Fraud Guard Plugin</CardTitle>
+              <CardTitle className="text-xl text-white">WCBD Fraud Guard Plugin <span className="text-sm bg-gradient-to-r from-green-400 to-cyan-400 text-transparent bg-clip-text">v3.0</span></CardTitle>
               <CardDescription>
                 আপনার API Key সহ রেডি plugin ডাউনলোড করুন
               </CardDescription>
@@ -65,6 +65,10 @@ export function PluginDownload({ apiKey }: PluginDownloadProps) {
               "বাংলা/English ভাষা সাপোর্ট",
               "Admin Settings প্যানেল",
               "API Key প্রি-কনফিগার্ড",
+              "⏱️ Popup Timer Control (NEW)",
+              "💬 Custom Block Messages (NEW)",
+              "📞 WhatsApp/Phone Contact (NEW)",
+              "🎨 Circle Logo + Branding (NEW)",
             ].map((feature, index) => (
               <div key={index} className="flex items-center gap-2 text-sm text-slate-300">
                 <CheckCircle2 className="h-4 w-4 text-cyan-400 flex-shrink-0" />
@@ -103,7 +107,7 @@ export function PluginDownload({ apiKey }: PluginDownloadProps) {
               )}
             </Button>
             <span className="text-sm text-slate-400">
-              wcbd-fraud-guard.php (~10KB)
+              wcbd-fraud-guard.php (~15KB) • v3.0
             </span>
           </div>
         </CardContent>

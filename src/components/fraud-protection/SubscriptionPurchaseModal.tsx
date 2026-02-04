@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, Copy, Check, Upload, Loader2 } from "lucide-react";
+import { Copy, Check, Upload, Loader2, CreditCard, Phone, Image, Globe, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface SubscriptionPurchaseModalProps {
   isOpen: boolean;
@@ -36,7 +37,6 @@ export function SubscriptionPurchaseModal({
 }: SubscriptionPurchaseModalProps) {
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [selectedMethod, setSelectedMethod] = useState<string>("");
-  
   const [senderNumber, setSenderNumber] = useState("");
   const [websiteDomain, setWebsiteDomain] = useState("");
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
@@ -44,8 +44,10 @@ export function SubscriptionPurchaseModal({
   const [submitting, setSubmitting] = useState(false);
   const [copiedNumber, setCopiedNumber] = useState<string | null>(null);
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   const amount = planType === 'monthly' ? 100 : 699;
+  const planLabel = planType === 'monthly' ? 'Monthly' : 'Yearly';
 
   useEffect(() => {
     const fetchPaymentMethods = async () => {
@@ -95,7 +97,6 @@ export function SubscriptionPurchaseModal({
     try {
       let screenshotUrl = null;
 
-      // Upload screenshot if provided
       if (screenshotFile) {
         setUploading(true);
         const fileExt = screenshotFile.name.split('.').pop();
@@ -118,13 +119,11 @@ export function SubscriptionPurchaseModal({
         setUploading(false);
       }
 
-      // Update merchant's website_url
       await supabase
         .from('merchants')
         .update({ website_url: websiteDomain.trim() })
         .eq('id', merchantId);
 
-      // Create subscription order
       const { error } = await supabase
         .from('subscription_orders')
         .insert({
@@ -132,7 +131,7 @@ export function SubscriptionPurchaseModal({
           plan_type: planType,
           amount,
           payment_method: selectedMethod,
-          transaction_id: senderNumber.trim(), // Using sender number as reference
+          transaction_id: senderNumber.trim(),
           sender_number: senderNumber.trim(),
           payment_screenshot_url: screenshotUrl,
           status: 'pending',
@@ -148,7 +147,6 @@ export function SubscriptionPurchaseModal({
       onSuccess();
       onClose();
       
-      // Reset form
       setSenderNumber("");
       setWebsiteDomain("");
       setScreenshotFile(null);
@@ -169,38 +167,53 @@ export function SubscriptionPurchaseModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-slate-900 border-slate-700 text-white max-w-md">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-bengali flex items-center justify-between">
-            <span>
-              কিনুন: {planType === 'monthly' ? 'Monthly' : 'Yearly'} Plan - ৳{amount}
-            </span>
+      <DialogContent className={`bg-white border-gray-200 text-gray-900 ${isMobile ? 'max-w-[95vw] p-4' : 'max-w-md p-6'} rounded-3xl max-h-[90vh] overflow-y-auto`}>
+        <DialogHeader className="pb-4 border-b border-gray-100">
+          <DialogTitle className="text-xl font-bold font-bengali flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
+              <CreditCard className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <span className="block">{planLabel} Plan</span>
+              <span className="text-sm font-normal text-gray-500">৳{amount}</span>
+            </div>
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6 mt-4">
+        <div className="space-y-5 mt-4">
           {/* Step 1: Payment Methods */}
-          <div>
-            <Label className="text-white/80 font-bengali mb-3 block">
-              Step 1: পেমেন্ট পাঠান
-            </Label>
+          <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center">1</div>
+              <Label className="text-gray-700 font-semibold font-bengali">
+                টাকা পাঠান এই নম্বরে
+              </Label>
+            </div>
+            
             <div className="space-y-2">
               {paymentMethods.map((method) => (
                 <div
                   key={method.id}
                   onClick={() => setSelectedMethod(method.method)}
-                  className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all ${
+                  className={`flex items-center justify-between p-3 rounded-xl border-2 cursor-pointer transition-all ${
                     selectedMethod === method.method
-                      ? 'border-cyan-500 bg-cyan-500/10'
-                      : 'border-slate-600 hover:border-slate-500'
+                      ? 'border-blue-500 bg-white shadow-md shadow-blue-100'
+                      : 'border-gray-200 bg-white hover:border-gray-300'
                   }`}
                 >
-                  <div>
-                    <div className="font-medium capitalize">{method.method}</div>
-                    <div className="text-sm text-white/60">{method.account_number}</div>
-                    {method.account_name && (
-                      <div className="text-xs text-white/40">{method.account_name}</div>
-                    )}
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold text-white text-xs ${
+                      method.method.toLowerCase() === 'bkash' ? 'bg-pink-500' :
+                      method.method.toLowerCase() === 'nagad' ? 'bg-orange-500' :
+                      method.method.toLowerCase() === 'rocket' ? 'bg-purple-600' :
+                      'bg-gray-600'
+                    }`}>
+                      {method.method.slice(0, 2).toUpperCase()}
+                    </div>
+                    <div>
+                      <div className="font-semibold capitalize text-gray-900">{method.method}</div>
+                      <div className="text-sm text-gray-600">{method.account_number}</div>
+                    </div>
                   </div>
                   <Button
                     size="sm"
@@ -209,7 +222,7 @@ export function SubscriptionPurchaseModal({
                       e.stopPropagation();
                       copyNumber(method.account_number);
                     }}
-                    className="text-cyan-400 hover:text-cyan-300"
+                    className={`rounded-lg ${copiedNumber === method.account_number ? 'text-emerald-600 bg-emerald-50' : 'text-blue-600 hover:bg-blue-50'}`}
                   >
                     {copiedNumber === method.account_number ? (
                       <Check className="w-4 h-4" />
@@ -220,61 +233,92 @@ export function SubscriptionPurchaseModal({
                 </div>
               ))}
             </div>
+            
             {selectedPayment && (
-              <p className="text-sm text-white/50 mt-2 font-bengali">
-                ৳{amount} পাঠান: {selectedPayment.account_number}
-              </p>
+              <div className="mt-3 p-3 rounded-xl bg-amber-50 border border-amber-200">
+                <p className="text-sm text-amber-700 font-bengali text-center">
+                  <strong>৳{amount}</strong> পাঠান: <strong>{selectedPayment.account_number}</strong> ({selectedPayment.method})
+                </p>
+              </div>
             )}
           </div>
 
           {/* Step 2: Transaction Details */}
-          <div>
-            <Label className="text-white/80 font-bengali mb-3 block">
-              Step 2: তথ্য দিন
-            </Label>
-            <div className="space-y-3">
-              <div>
-                <Label htmlFor="sender" className="text-sm text-white/60">Sender Number</Label>
+          <div className="bg-gray-50 rounded-2xl p-4">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center">2</div>
+              <Label className="text-gray-700 font-semibold font-bengali">
+                তথ্য দিন
+              </Label>
+            </div>
+            
+            <div className="space-y-4">
+              {/* Sender Number */}
+              <div className="space-y-1.5">
+                <Label htmlFor="sender" className="text-sm text-gray-600 flex items-center gap-2">
+                  <Phone className="w-4 h-4" />
+                  Sender Number <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   id="sender"
                   value={senderNumber}
                   onChange={(e) => setSenderNumber(e.target.value)}
                   placeholder="01XXXXXXXXX"
-                  className="bg-slate-800 border-slate-600 text-white"
+                  className="h-12 rounded-xl border-gray-200 bg-white focus:border-blue-500 focus:ring-blue-500"
                 />
+                <p className="text-xs text-gray-400">যে নম্বর থেকে টাকা পাঠিয়েছেন</p>
               </div>
-              <div>
-                <Label htmlFor="domain" className="text-sm text-white/60">
-                  Website Domain <span className="text-red-400">*</span>
+
+              {/* Website Domain */}
+              <div className="space-y-1.5">
+                <Label htmlFor="domain" className="text-sm text-gray-600 flex items-center gap-2">
+                  <Globe className="w-4 h-4" />
+                  Website Domain <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="domain"
                   value={websiteDomain}
                   onChange={(e) => setWebsiteDomain(e.target.value)}
                   placeholder="example.com"
-                  className="bg-slate-800 border-slate-600 text-white"
+                  className="h-12 rounded-xl border-gray-200 bg-white focus:border-blue-500 focus:ring-blue-500"
                 />
-                <p className="text-xs text-white/40 mt-1">
-                  যে ডোমেইনে plugin ব্যবহার করবেন সেটা দিন
-                </p>
+                <p className="text-xs text-gray-400">যে ওয়েবসাইটে Plugin ব্যবহার করবেন</p>
               </div>
-              <div>
-                <Label htmlFor="screenshot" className="text-sm text-white/60">
-                  স্ক্রিনশট (optional)
+
+              {/* Screenshot */}
+              <div className="space-y-1.5">
+                <Label htmlFor="screenshot" className="text-sm text-gray-600 flex items-center gap-2">
+                  <Image className="w-4 h-4" />
+                  Payment Screenshot
                 </Label>
                 <div className="relative">
+                  <label 
+                    htmlFor="screenshot"
+                    className={`flex items-center justify-center gap-2 h-12 rounded-xl border-2 border-dashed cursor-pointer transition-all ${
+                      screenshotFile 
+                        ? 'border-emerald-400 bg-emerald-50 text-emerald-700' 
+                        : 'border-gray-300 bg-white hover:border-blue-400 text-gray-500'
+                    }`}
+                  >
+                    {screenshotFile ? (
+                      <>
+                        <Check className="w-4 h-4" />
+                        <span className="text-sm font-medium truncate max-w-[200px]">{screenshotFile.name}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-4 h-4" />
+                        <span className="text-sm">স্ক্রিনশট আপলোড করুন</span>
+                      </>
+                    )}
+                  </label>
                   <Input
                     id="screenshot"
                     type="file"
                     accept="image/*"
                     onChange={handleFileChange}
-                    className="bg-slate-800 border-slate-600 text-white file:bg-slate-700 file:text-white file:border-0"
+                    className="sr-only"
                   />
-                  {screenshotFile && (
-                    <div className="text-xs text-green-400 mt-1">
-                      ✓ {screenshotFile.name}
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
@@ -283,17 +327,30 @@ export function SubscriptionPurchaseModal({
           {/* Submit Button */}
           <Button
             onClick={handleSubmit}
-            disabled={submitting || uploading}
-            className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-bengali"
+            disabled={submitting || uploading || !senderNumber.trim() || !websiteDomain.trim()}
+            className="w-full h-14 rounded-2xl bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold text-base font-bengali shadow-lg shadow-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {submitting || uploading ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                 জমা হচ্ছে...
               </>
             ) : (
-              'পেমেন্ট জমা দিন'
+              <>
+                <CreditCard className="w-5 h-5 mr-2" />
+                পেমেন্ট জমা দিন
+              </>
             )}
+          </Button>
+
+          {/* Back Button */}
+          <Button
+            onClick={onClose}
+            variant="ghost"
+            className="w-full h-10 rounded-xl text-gray-500 hover:text-gray-700 hover:bg-gray-100 font-bengali"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            অন্য Plan দেখুন
           </Button>
         </div>
       </DialogContent>

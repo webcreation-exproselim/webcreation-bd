@@ -50,12 +50,12 @@ export function PluginDownload({ apiKey }: PluginDownloadProps) {
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-green-400">🆕 নতুন Version 3.3 আপডেট!</span>
+                  <span className="font-semibold text-green-400">🆕 নতুন Version 3.3.0 আপডেট!</span>
                   <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs">
-                    Bulletproof Popup
+                    PHP Heredoc Fix
                   </Badge>
                 </div>
-                <p className="text-sm text-slate-400 mt-1">
+                <p className="text-sm text-slate-400 mt-1 font-bengali">
                   Popup সম্পূর্ণ ঠিক করা হয়েছে! Maximum z-index + ESC key + Click outside close সাপোর্ট।
                 </p>
               </div>
@@ -80,10 +80,10 @@ export function PluginDownload({ apiKey }: PluginDownloadProps) {
               <div className="flex items-center gap-2 flex-wrap">
                 <CardTitle className="text-xl text-white">WCBD Fraud Guard Plugin</CardTitle>
                 <Badge className="bg-gradient-to-r from-cyan-500 to-green-500 text-white border-0 text-xs">
-                  v3.3
+                  v3.3.0
                 </Badge>
-                <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-xs animate-pulse">
-                  FIXED
+                <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs">
+                  STABLE
                 </Badge>
               </div>
               <CardDescription>
@@ -100,21 +100,21 @@ export function PluginDownload({ apiKey }: PluginDownloadProps) {
               v3.3 এ নতুন কী আছে?
             </h4>
             <div className="grid grid-cols-1 gap-2">
-              <div className="flex items-center gap-2 text-sm text-white">
+              <div className="flex items-center gap-2 text-sm text-white font-bengali">
+                <CheckCircle2 className="h-4 w-4 text-green-400 flex-shrink-0" />
+                <span>✅ <strong>PHP Heredoc</strong> - JavaScript $ variable escaping সমস্যা সমাধান</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-white font-bengali">
                 <CheckCircle2 className="h-4 w-4 text-green-400 flex-shrink-0" />
                 <span>🛡️ <strong>Bulletproof Popup</strong> - Maximum z-index দিয়ে সব থিমে কাজ করবে</span>
               </div>
-              <div className="flex items-center gap-2 text-sm text-white">
+              <div className="flex items-center gap-2 text-sm text-white font-bengali">
                 <CheckCircle2 className="h-4 w-4 text-green-400 flex-shrink-0" />
                 <span>⌨️ <strong>ESC Key Close</strong> - Escape চাপলে popup বন্ধ হবে</span>
               </div>
-              <div className="flex items-center gap-2 text-sm text-white">
+              <div className="flex items-center gap-2 text-sm text-white font-bengali">
                 <CheckCircle2 className="h-4 w-4 text-green-400 flex-shrink-0" />
                 <span>🖱️ <strong>Click Outside</strong> - বাইরে ক্লিক করলে popup বন্ধ</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-white">
-                <CheckCircle2 className="h-4 w-4 text-green-400 flex-shrink-0" />
-                <span>🐛 <strong>PHP/JS Fixed</strong> - সব escaping সমস্যা সমাধান</span>
               </div>
             </div>
           </div>
@@ -169,8 +169,8 @@ export function PluginDownload({ apiKey }: PluginDownloadProps) {
                 </>
               )}
             </Button>
-            <span className="text-sm text-slate-400">
-              wcbd-fraud-guard.zip (~15KB) • v3.3 (Bulletproof Popup)
+            <span className="text-sm text-slate-400 font-bengali">
+              wcbd-fraud-guard.php (~15KB) • v3.3.0 (PHP Heredoc Fix)
             </span>
           </div>
         </CardContent>

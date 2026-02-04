@@ -33,7 +33,7 @@ export function FraudGuardQuickStatus({
     const apiKey = merchant?.is_active && merchant?.api_key ? merchant.api_key : "YOUR_API_KEY_HERE";
     await downloadPluginFile(apiKey);
     toast({
-      title: "✅ Plugin v3.3 ডাউনলোড হয়েছে",
+      title: "✅ Plugin v3.3.0 ডাউনলোড হয়েছে",
       description: merchant?.is_active 
         ? "আপনার API Key সহ Plugin ready" 
         : "Fraud Guard tab থেকে Plan কিনে API Key সেট করুন",

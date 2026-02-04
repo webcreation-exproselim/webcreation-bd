@@ -9,8 +9,8 @@ export const generateMainPluginFile = (apiKey: string): string => {
 /**
  * Plugin Name: WCBD Fraud Guard
  * Plugin URI: https://webcreation-bd.lovable.app/fraud-guard
- * Description: Order Limiter & Anti-Fraud System for WooCommerce - Protect your store from fake orders
- * Version: 3.0.0
+ * Description: Order Limiter & Anti-Fraud System for WooCommerce - Protect your store from fake orders with Domain Binding Security
+ * Version: 3.1.0
  * Author: WebCreation BD
  * Author URI: https://webcreation-bd.lovable.app
  * Text Domain: wcbd-fraud-guard
@@ -20,7 +20,7 @@ export const generateMainPluginFile = (apiKey: string): string => {
 
 if (!defined('ABSPATH')) exit;
 
-define('WCBD_FRAUD_GUARD_VERSION', '3.0.0');
+define('WCBD_FRAUD_GUARD_VERSION', '3.1.0');
 define('WCBD_FRAUD_GUARD_PATH', plugin_dir_path(__FILE__));
 define('WCBD_FRAUD_GUARD_URL', plugin_dir_url(__FILE__));
 

@@ -1,378 +1,334 @@
 
 
-# WordPress Plugin Development Plan - Fraud Protection Integration
+# WCBD Fraud Guard - Complete Implementation Plan
 
 ## Overview
 
-এই plan-এ একটি professional WordPress plugin তৈরি করা হবে যেটা users তাদের WooCommerce site-এ easily install করতে পারবে। Plugin-এ থাকবে admin settings page, beautiful popup system, এবং automatic checkout integration।
+এই plan-এ নিম্নলিখিত features implement করা হবে:
+
+1. **Client Dashboard-এ Fraud Protection অপশন** - Customer subscription ও access point
+2. **নতুন Info Page** - `/fraud-guard` route-এ details ও pricing সহ public page
+3. **Plugin rename to "WCBD Fraud Guard"**
+4. **Minutes-based cooldown** - Plugin থেকে minute-level control
+5. **Pricing: Monthly ৳100, Yearly ৳699**
 
 ---
 
-## Plugin Structure
+## System Architecture
 
-```text
-fraud-protection-bd/
-├── fraud-protection-bd.php          # Main plugin file
-├── includes/
-│   ├── class-fraud-protection.php   # Main class
-│   ├── class-admin-settings.php     # Admin settings page
-│   └── class-checkout-handler.php   # WooCommerce checkout hook
-├── assets/
-│   ├── css/
-│   │   ├── admin-style.css          # Admin panel styling
-│   │   └── popup-style.css          # Frontend popup styling
-│   └── js/
-│       ├── fingerprint.min.js       # FingerprintJS library
-│       └── checkout-handler.js      # Checkout validation script
-├── templates/
-│   └── admin-settings.php           # Admin settings template
-└── readme.txt                        # WordPress plugin readme
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        PUBLIC PAGES                              │
+├─────────────────────────────────────────────────────────────────┤
+│   /fraud-guard          →  Landing page with details & pricing  │
+│                              ↓ "কিনুন" button                   │
+│                              ↓                                   │
+│   /auth                 →  Login/Signup                          │
+│                              ↓                                   │
+│   /dashboard            →  Client Dashboard (Fraud Guard card)  │
+│                              ↓ "সেটিংস" button                  │
+│                              ↓                                   │
+│   /fraud-protection     →  Full dashboard (only for active)     │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 1. Main Plugin File: `fraud-protection-bd.php`
+## 1. Database Changes
 
-```php
-<?php
-/**
- * Plugin Name: Fraud Protection BD
- * Plugin URI: https://yoursite.com
- * Description: Order Limiter & Anti-Fraud System for WooCommerce
- * Version: 1.0.0
- * Author: Your Name
- * Text Domain: fraud-protection-bd
- * Requires Plugins: woocommerce
- */
+### Update `merchants` Table - Add new columns
 
-if (!defined('ABSPATH')) exit;
+| Column | Type | Default | Description |
+|--------|------|---------|-------------|
+| cooldown_period_minutes | integer | 1440 | Cooldown in MINUTES (1440 = 1 day) |
+| is_active | boolean | false | Account activated after payment? |
+| current_plan | text | NULL | 'monthly' or 'yearly' |
+| plan_expires_at | timestamptz | NULL | When subscription expires |
+| requests_used | integer | 0 | API calls used |
+| max_requests | integer | 0 | Max allowed requests |
 
-define('FRAUD_PROTECTION_VERSION', '1.0.0');
-define('FRAUD_PROTECTION_PATH', plugin_dir_path(__FILE__));
-define('FRAUD_PROTECTION_URL', plugin_dir_url(__FILE__));
+### New Table: `subscription_orders`
 
-// Check if WooCommerce is active
-if (!in_array('woocommerce/woocommerce.php', get_option('active_plugins'))) {
-    add_action('admin_notices', function() {
-        echo '<div class="error"><p>Fraud Protection BD requires WooCommerce to be installed and active.</p></div>';
-    });
-    return;
-}
+| Column | Type | Description |
+|--------|------|-------------|
+| id | uuid | Primary key |
+| merchant_id | uuid (FK) | Which merchant |
+| plan_type | text | 'monthly' or 'yearly' |
+| amount | numeric | 100 or 699 |
+| payment_method | text | bkash/nagad/rocket |
+| transaction_id | text | Payment reference |
+| sender_number | text | Phone number |
+| payment_screenshot_url | text | Proof image |
+| status | text | pending/approved/rejected |
+| created_at | timestamptz | Order time |
+| approved_at | timestamptz | When approved |
 
-// Initialize plugin
-require_once FRAUD_PROTECTION_PATH . 'includes/class-fraud-protection.php';
-new Fraud_Protection_BD();
+---
+
+## 2. New Page: `/fraud-guard` - Landing Page with Details & Pricing
+
+### Page Structure
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  HEADER (with navigation)                                        │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  🛡️ WCBD Fraud Guard                                            │
+│  আপনার WooCommerce স্টোর রক্ষা করুন                              │
+│                                                                  │
+│  [Hero section with features illustration]                       │
+│                                                                  │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  ✅ Features Section                                             │
+│  - Fake Order Protection                                         │
+│  - Device Fingerprinting                                         │
+│  - Minute-level Cooldown Control                                │
+│  - Blacklist Management                                          │
+│  - Real-time Logs                                                │
+│  - Beautiful Popup System                                        │
+│                                                                  │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  💰 PRICING PLANS                                                │
+│  ┌─────────────────┐  ┌─────────────────┐                       │
+│  │ 📅 MONTHLY       │  │ 📆 YEARLY        │                      │
+│  │                 │  │                 │                       │
+│  │   ৳১০০/মাস      │  │   ৳৬৯৯/বছর      │                       │
+│  │   1,000 req     │  │   15,000 req    │                       │
+│  │                 │  │   (42% সেভ!)    │                       │
+│  │   [শুরু করুন]   │  │   [শুরু করুন]   │                       │
+│  └─────────────────┘  └─────────────────┘                       │
+│                                                                  │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  🔧 HOW IT WORKS                                                 │
+│  Step 1: Account তৈরি করুন                                       │
+│  Step 2: Plan কিনুন                                              │
+│  Step 3: Plugin ডাউনলোড করুন                                     │
+│  Step 4: WooCommerce-এ ইন্সটল করুন                               │
+│                                                                  │
+├─────────────────────────────────────────────────────────────────┤
+│  FOOTER                                                          │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 2. Admin Settings Page
+## 3. Client Dashboard - Fraud Guard Card
 
-### Features
-- API Key input field (সহজে paste করার জন্য)
-- Enable/Disable toggle
-- Test API connection button
-- Custom popup colors
-- Bengali/English message selection
+### Add Section to existing `/dashboard` page
 
-### Settings UI Design
+**If NOT Subscribed:**
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  🛡️ WCBD Fraud Guard                                            │
+│                                                                  │
+│  আপনার WooCommerce স্টোর Fake Order থেকে রক্ষা করুন!             │
+│                                                                  │
+│  ┌──────────────┐  ┌──────────────┐                             │
+│  │ 📅 Monthly    │  │ 📆 Yearly     │                            │
+│  │ ৳১০০/মাস     │  │ ৳৬৯৯/বছর     │                            │
+│  │ [কিনুন]      │  │ [কিনুন]       │                            │
+│  └──────────────┘  └──────────────┘                             │
+│                                                                  │
+│  [বিস্তারিত দেখুন →] (links to /fraud-guard)                    │
+└─────────────────────────────────────────────────────────────────┘
+```
 
-```text
-+--------------------------------------------------+
-|  FRAUD PROTECTION BD - SETTINGS                  |
-+--------------------------------------------------+
-|                                                  |
-|  API Key:                                        |
-|  [ xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx ]       |
-|  [Test Connection]  ✅ Connected                 |
-|                                                  |
-|  Status:                                         |
-|  [✓] Enable Fraud Protection                    |
-|                                                  |
-|  Popup Language:                                 |
-|  ( ) English  (•) বাংলা                         |
-|                                                  |
-|  Popup Style:                                    |
-|  [Modern Dark ▼]                                |
-|                                                  |
-|  [ Save Settings ]                              |
-+--------------------------------------------------+
+**If Payment Pending:**
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  ⏳ পেমেন্ট যাচাই করা হচ্ছে...                                   │
+│                                                                  │
+│  আপনার পেমেন্ট ২-৪ ঘন্টার মধ্যে যাচাই হবে                       │
+│  Plan: Monthly | Amount: ৳100                                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**If Active:**
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  ✅ WCBD Fraud Guard - Active                                    │
+│                                                                  │
+│  Plan: Yearly | Expires: March 15, 2027                         │
+│  API Usage: [=====-----] 245 / 15,000                           │
+│                                                                  │
+│  [সেটিংস দেখুন →] (links to /fraud-protection)                  │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 3. Beautiful Popup System
+## 4. Cooldown - Minutes System
 
-### Popup Types
+### Settings Page Update (`FraudSettings.tsx`)
 
-| Type | Color | Icon | Message |
-|------|-------|------|---------|
-| Blocked (Blacklist) | Red | 🚫 | আপনাকে অর্ডার করা থেকে বাদ দেওয়া হয়েছে |
-| Blocked (Cooldown) | Orange | ⏱️ | আপনি ইতিমধ্যে অর্ডার করেছেন, X দিন অপেক্ষা করুন |
-| Error | Gray | ⚠️ | কিছু সমস্যা হয়েছে |
+**Replace days slider with minutes input:**
 
-### Popup CSS (Modern Glassmorphism)
-
-```css
-.fraud-popup-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(8px);
-    z-index: 999999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    animation: fadeIn 0.3s ease;
-}
-
-.fraud-popup-modal {
-    background: linear-gradient(145deg, #1a1a2e, #16213e);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 20px;
-    padding: 40px;
-    max-width: 420px;
-    text-align: center;
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
-    animation: scaleIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-.fraud-popup-icon {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 20px;
-    font-size: 40px;
-}
-
-.fraud-popup-icon.blocked { background: linear-gradient(135deg, #ff4757, #c0392b); }
-.fraud-popup-icon.cooldown { background: linear-gradient(135deg, #ffa502, #e67e22); }
-.fraud-popup-icon.error { background: linear-gradient(135deg, #636e72, #2d3436); }
-
-.fraud-popup-title {
-    font-size: 24px;
-    font-weight: 700;
-    color: #fff;
-    margin-bottom: 12px;
-}
-
-.fraud-popup-message {
-    font-size: 16px;
-    color: #a0a0a0;
-    line-height: 1.6;
-    margin-bottom: 24px;
-}
-
-.fraud-popup-button {
-    padding: 14px 50px;
-    border: none;
-    border-radius: 10px;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: transform 0.2s;
-}
-
-.fraud-popup-button:hover {
-    transform: scale(1.05);
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-@keyframes scaleIn {
-    from { opacity: 0; transform: scale(0.8); }
-    to { opacity: 1; transform: scale(1); }
-}
 ```
+┌─────────────────────────────────────────────────────────────────┐
+│  ⏱️ COOLDOWN PERIOD                                              │
+│                                                                  │
+│  Quick Select:                                                   │
+│  [5m] [30m] [1h] [6h] [1d] [7d] [30d]                          │
+│                                                                  │
+│  Custom:                                                         │
+│  [ 1440 ] minutes  =  ১ দিন                                     │
+│                                                                  │
+│  [আপডেট করুন]                                                    │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Preset Buttons:**
+- 5 minutes (5)
+- 30 minutes (30)
+- 1 hour (60)
+- 6 hours (360)
+- 1 day (1440)
+- 7 days (10080)
+- 30 days (43200)
 
 ---
 
-## 4. Checkout Handler JavaScript
+## 5. Plugin Rename & Update
+
+### Changes to `pluginGenerator.ts`:
+
+1. **Rename plugin**: "Fraud Protection BD" → "WCBD Fraud Guard"
+2. **File name**: `fraud-protection-bd.php` → `wcbd-fraud-guard.php`
+3. **Update cooldown from days to minutes**
+4. **Popup messages for minutes/hours/days**
+
+### Plugin Admin Panel Settings Update:
+
+WordPress Dashboard → WCBD Fraud Guard → Settings
+- Add cooldown time field (minutes input)
+- Quick preset buttons
+- Real-time conversion display (minutes to days/hours)
+
+---
+
+## 6. Edge Function Update
+
+### `check-order-eligibility/index.ts` Changes:
 
 ```javascript
-(function($) {
-    'use strict';
-    
-    var FraudProtection = {
-        deviceId: null,
-        settings: window.fraudProtectionSettings || {},
-        
-        init: function() {
-            this.initFingerprint();
-            this.bindEvents();
-        },
-        
-        initFingerprint: function() {
-            var self = this;
-            if (typeof FingerprintJS !== 'undefined') {
-                FingerprintJS.load().then(function(fp) {
-                    fp.get().then(function(result) {
-                        self.deviceId = result.visitorId;
-                    });
-                });
-            }
-        },
-        
-        bindEvents: function() {
-            var self = this;
-            $('form.checkout').on('checkout_place_order', function(e) {
-                return self.validateOrder($(this));
-            });
-        },
-        
-        validateOrder: function($form) {
-            var self = this;
-            var phone = $('#billing_phone').val();
-            var $button = $form.find('button[type="submit"]');
-            
-            // Show loading
-            $button.prop('disabled', true);
-            $button.data('original-text', $button.text());
-            $button.html('<span class="spinner"></span> চেক করা হচ্ছে...');
-            
-            $.ajax({
-                url: this.settings.endpoint,
-                method: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({
-                    api_key: this.settings.apiKey,
-                    phone: phone,
-                    device_id: this.deviceId
-                }),
-                success: function(response) {
-                    if (response.allowed) {
-                        $form.off('checkout_place_order').submit();
-                    } else {
-                        self.showPopup(response.reason, response.message, response.days_remaining);
-                        self.resetButton($button);
-                    }
-                },
-                error: function() {
-                    // Fail-open: allow order on error
-                    $form.off('checkout_place_order').submit();
-                }
-            });
-            
-            return false;
-        },
-        
-        showPopup: function(type, message, daysRemaining) {
-            var iconMap = {
-                'blacklist': '🚫',
-                'cooldown': '⏱️',
-                'error': '⚠️'
-            };
-            
-            var titleMap = {
-                'blacklist': 'অর্ডার ব্লক করা হয়েছে',
-                'cooldown': 'অপেক্ষা করুন',
-                'error': 'সমস্যা হয়েছে'
-            };
-            
-            var html = `
-                <div class="fraud-popup-overlay" id="fraudPopup">
-                    <div class="fraud-popup-modal">
-                        <div class="fraud-popup-icon ${type}">
-                            ${iconMap[type] || '⚠️'}
-                        </div>
-                        <h3 class="fraud-popup-title">${titleMap[type] || 'Error'}</h3>
-                        <p class="fraud-popup-message">${message}</p>
-                        ${daysRemaining ? `<p class="fraud-popup-days">${daysRemaining} দিন বাকি</p>` : ''}
-                        <button class="fraud-popup-button" onclick="document.getElementById('fraudPopup').remove()">
-                            ঠিক আছে
-                        </button>
-                    </div>
-                </div>
-            `;
-            
-            $('body').append(html);
-        },
-        
-        resetButton: function($button) {
-            $button.prop('disabled', false);
-            $button.text($button.data('original-text'));
-        }
-    };
-    
-    $(document).ready(function() {
-        FraudProtection.init();
-    });
-    
-})(jQuery);
+// BEFORE: days-based
+const cooldownDate = new Date()
+cooldownDate.setDate(cooldownDate.getDate() - merchant.cooldown_period_days)
+
+// AFTER: minutes-based
+const cooldownMs = merchant.cooldown_period_minutes * 60 * 1000
+const cooldownDate = new Date(Date.now() - cooldownMs)
+
+// Add activation check
+if (!merchant.is_active) {
+  return { error: 'Account not activated' }
+}
+
+// Add plan expiry check  
+if (merchant.plan_expires_at && new Date(merchant.plan_expires_at) < new Date()) {
+  return { error: 'Subscription expired' }
+}
+
+// Add request limit check
+if (merchant.max_requests > 0 && merchant.requests_used >= merchant.max_requests) {
+  return { error: 'Request limit exceeded' }
+}
+
+// Return remaining time in minutes (for popup display)
+const minutesRemaining = Math.ceil((cooldownMs - elapsed) / 60000)
 ```
 
 ---
 
-## 5. Dashboard-এ Plugin Download Feature
+## 7. Admin Dashboard - Subscription Management
 
-### IntegrationCode.tsx-এ নতুন Features
+### New Tab: "Fraud Guard Subscriptions" 
 
-1. **Download as ZIP Button**: Plugin as ZIP file download করার option
-2. **Step-by-step Installation Guide**: বাংলায় installation instructions
-3. **Video Tutorial Link**: YouTube tutorial link
-
-### Download Flow
-
-```text
-User clicks "Download Plugin"
-        ↓
-System generates ZIP file with:
-  - Main plugin file (API key injected)
-  - CSS files
-  - JS files
-  - Readme
-        ↓
-Browser downloads: fraud-protection-bd.zip
-```
+**Features:**
+- Pending orders list
+- Approve/Reject buttons
+- View payment screenshot
+- All subscriptions history
 
 ---
 
-## 6. File Changes Summary
+## 8. File Changes Summary
 
-### New Files to Create
+### New Files
 
 | File | Purpose |
 |------|---------|
-| `src/components/fraud-protection/PluginDownload.tsx` | Plugin ZIP generation & download |
-| `src/utils/pluginGenerator.ts` | Generate plugin files with API key |
+| `src/pages/FraudGuardPage.tsx` | Public landing page with details & pricing |
+| `src/components/fraud-protection/SubscriptionPlans.tsx` | Plan selection cards |
+| `src/components/fraud-protection/SubscriptionPurchaseModal.tsx` | Payment form modal |
+| `src/components/fraud-protection/SubscriptionStatus.tsx` | Active plan status |
+| `src/components/fraud-protection/CooldownMinutesSettings.tsx` | Minutes-based cooldown UI |
+| `src/components/admin/FraudSubscriptionManagement.tsx` | Admin approval panel |
+| `src/hooks/useSubscriptionData.ts` | Subscription operations |
 
 ### Files to Modify
 
 | File | Change |
 |------|--------|
-| `src/components/fraud-protection/IntegrationCode.tsx` | Add beautiful popup code & plugin download |
-| `src/pages/FraudProtectionPage.tsx` | Add Plugin tab |
+| `src/App.tsx` | Add `/fraud-guard` route |
+| `src/pages/ClientDashboard.tsx` | Add Fraud Guard section card |
+| `src/pages/FraudProtectionPage.tsx` | Add subscription check + minutes UI |
+| `src/pages/AdminDashboard.tsx` | Add Fraud Guard Subscriptions tab |
+| `src/components/fraud-protection/FraudSettings.tsx` | Change days → minutes |
+| `src/components/fraud-protection/PluginDownload.tsx` | Update plugin name |
+| `src/hooks/useMerchantData.ts` | Add subscription fields, change days → minutes |
+| `src/utils/pluginGenerator.ts` | Rename to WCBD Fraud Guard, minutes support |
+| `supabase/functions/check-order-eligibility/index.ts` | Minutes + activation checks |
 
 ---
 
-## 7. Implementation Phases
+## 9. Implementation Phases
 
-1. **Phase 1**: Update IntegrationCode.tsx with beautiful popup system
-2. **Phase 2**: Create plugin generator utility
-3. **Phase 3**: Add plugin download feature to dashboard
-4. **Phase 4**: Add installation instructions in Bengali
+### Phase 1: Database Migration
+- Add new columns to `merchants` table
+- Create `subscription_orders` table
+- Add RLS policies
+
+### Phase 2: Public Landing Page
+- Create `/fraud-guard` page with full details
+- Pricing section with Monthly ৳100, Yearly ৳699
+- Features, How it works, etc.
+
+### Phase 3: Client Dashboard Integration
+- Add Fraud Guard card section
+- Subscription purchase modal
+- Payment screenshot upload
+- Pending/Active status display
+
+### Phase 4: Settings Update
+- Change cooldown from days to minutes
+- Add preset buttons
+- Update useMerchantData hook
+
+### Phase 5: Plugin Update
+- Rename to "WCBD Fraud Guard"
+- Update pluginGenerator.ts
+- Minutes-based cooldown in generated PHP
+
+### Phase 6: Edge Function
+- Add activation/expiry/limit checks
+- Change cooldown from days to minutes
+- Return remaining time in appropriate unit
+
+### Phase 7: Admin Panel
+- Add subscription management tab
+- Approve/reject functionality
 
 ---
 
-## Technical Notes
+## Pricing Summary
 
-### Plugin Requirements
-- WordPress 5.0+
-- WooCommerce 4.0+
-- PHP 7.4+
-
-### Browser Support
-- Chrome, Firefox, Safari, Edge (latest versions)
-- Mobile browsers supported
-
-### Security
-- API key stored in WordPress options (encrypted)
-- Nonce verification for admin actions
-- Sanitization of all inputs
+| Plan | Price | Duration | Requests | Per Day Cost |
+|------|-------|----------|----------|--------------|
+| Monthly | ৳100 | 30 days | 1,000 | ৳3.33/day |
+| Yearly | ৳699 | 365 days | 15,000 | ৳1.91/day (42% সেভ!) |
 

@@ -17,6 +17,7 @@ import {
   Home,
   Loader2,
   CreditCard,
+  Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +26,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { User as SupabaseUser, Session } from "@supabase/supabase-js";
 import companyLogo from "@/assets/company-logo.jpg";
+import { FraudGuardSection } from "@/components/fraud-protection/FraudGuardSection";
 
 interface OrderService {
   id: string;
@@ -439,59 +441,71 @@ export default function ClientDashboard() {
           </p>
         </motion.div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6"
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
-                <Package className="w-6 h-6 text-blue-400" />
+        {/* Stats Cards + Fraud Guard Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          {/* Left Column: Stats */}
+          <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
+                  <Package className="w-6 h-6 text-blue-400" />
+                </div>
+                <div>
+                  <p className="text-white/60 text-sm font-bengali">মোট অর্ডার</p>
+                  <p className="text-2xl font-bold text-white">{orders.length}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-white/60 text-sm font-bengali">মোট অর্ডার</p>
-                <p className="text-2xl font-bold text-white">{orders.length}</p>
-              </div>
-            </div>
-          </motion.div>
+            </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6"
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center">
-                <CheckCircle className="w-6 h-6 text-green-400" />
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center">
+                  <CheckCircle className="w-6 h-6 text-green-400" />
+                </div>
+                <div>
+                  <p className="text-white/60 text-sm font-bengali">সম্পন্ন</p>
+                  <p className="text-2xl font-bold text-white">
+                    {orders.filter((o) => o.status === "completed").length}
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-white/60 text-sm font-bengali">সম্পন্ন</p>
-                <p className="text-2xl font-bold text-white">
-                  {orders.filter((o) => o.status === "completed").length}
-                </p>
-              </div>
-            </div>
-          </motion.div>
+            </motion.div>
 
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-yellow-500/20 flex items-center justify-center">
+                  <FileText className="w-6 h-6 text-yellow-400" />
+                </div>
+                <div>
+                  <p className="text-white/60 text-sm font-bengali">মোট ইনভয়েস</p>
+                  <p className="text-2xl font-bold text-white">{invoices.length}</p>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Right Column: Fraud Guard Section */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6"
+            transition={{ delay: 0.4 }}
           >
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-yellow-500/20 flex items-center justify-center">
-                <FileText className="w-6 h-6 text-yellow-400" />
-              </div>
-              <div>
-                <p className="text-white/60 text-sm font-bengali">মোট ইনভয়েস</p>
-                <p className="text-2xl font-bold text-white">{invoices.length}</p>
-              </div>
-            </div>
+            {user && <FraudGuardSection userId={user.id} />}
           </motion.div>
         </div>
 

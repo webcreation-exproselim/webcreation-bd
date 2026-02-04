@@ -19,7 +19,7 @@ export default function FraudProtectionPage() {
     blacklist,
     logs,
     loading,
-    updateCooldownPeriod,
+    updateCooldownMinutes,
     updateWebsiteUrl,
     regenerateApiKey,
     addToBlacklist,
@@ -127,8 +127,12 @@ export default function FraudProtectionPage() {
 
           <TabsContent value="settings">
             <FraudSettings
-              merchant={merchant}
-              onUpdateCooldown={updateCooldownPeriod}
+              merchant={merchant ? {
+                api_key: merchant.api_key,
+                website_url: merchant.website_url,
+                cooldown_period_minutes: merchant.cooldown_period_minutes ?? 1440,
+              } : null}
+              onUpdateCooldownMinutes={updateCooldownMinutes}
               onUpdateWebsite={updateWebsiteUrl}
               onRegenerateApiKey={regenerateApiKey}
             />

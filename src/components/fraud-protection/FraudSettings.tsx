@@ -3,7 +3,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
 import { Copy, RefreshCw, Globe, Key, Clock, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -11,16 +10,33 @@ interface FraudSettingsProps {
   merchant: {
     api_key: string;
     website_url: string | null;
-    cooldown_period_days: number;
+    cooldown_period_minutes: number;
   } | null;
-  onUpdateCooldown: (days: number) => void;
+  onUpdateCooldownMinutes: (minutes: number) => void;
   onUpdateWebsite: (url: string) => void;
   onRegenerateApiKey: () => void;
 }
 
-export function FraudSettings({ merchant, onUpdateCooldown, onUpdateWebsite, onRegenerateApiKey }: FraudSettingsProps) {
+const PRESETS = [
+  { label: "5m", value: 5 },
+  { label: "30m", value: 30 },
+  { label: "1h", value: 60 },
+  { label: "6h", value: 360 },
+  { label: "1d", value: 1440 },
+  { label: "7d", value: 10080 },
+  { label: "30d", value: 43200 },
+];
+
+const formatMinutes = (minutes: number): string => {
+  if (minutes < 60) return `${minutes} মিনিট`;
+  if (minutes < 1440) return `${Math.round(minutes / 60)} ঘন্টা`;
+  return `${Math.round(minutes / 1440)} দিন`;
+};
+
+export function FraudSettings({ merchant, onUpdateCooldownMinutes, onUpdateWebsite, onRegenerateApiKey }: FraudSettingsProps) {
   const [websiteUrl, setWebsiteUrl] = useState(merchant?.website_url || "");
-  const [cooldown, setCooldown] = useState(merchant?.cooldown_period_days || 30);
+  const [cooldownMinutes, setCooldownMinutes] = useState(merchant?.cooldown_period_minutes || 1440);
+  const [customMinutes, setCustomMinutes] = useState(String(merchant?.cooldown_period_minutes || 1440));
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
 
@@ -36,12 +52,22 @@ export function FraudSettings({ merchant, onUpdateCooldown, onUpdateWebsite, onR
     }
   };
 
-  const handleCooldownChange = (value: number[]) => {
-    setCooldown(value[0]);
+  const handlePresetClick = (value: number) => {
+    setCooldownMinutes(value);
+    setCustomMinutes(String(value));
   };
 
-  const handleCooldownCommit = () => {
-    onUpdateCooldown(cooldown);
+  const handleCustomChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setCustomMinutes(value);
+    const numValue = parseInt(value);
+    if (!isNaN(numValue) && numValue > 0) {
+      setCooldownMinutes(numValue);
+    }
+  };
+
+  const handleCooldownSave = () => {
+    onUpdateCooldownMinutes(cooldownMinutes);
   };
 
   const handleWebsiteSubmit = (e: React.FormEvent) => {
@@ -122,7 +148,7 @@ export function FraudSettings({ merchant, onUpdateCooldown, onUpdateWebsite, onR
         </CardContent>
       </Card>
 
-      {/* Cooldown Period Card */}
+      {/* Cooldown Period Card - Minutes Based */}
       <Card className="border-cyan-500/20 bg-gradient-to-br from-slate-900 to-slate-800">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-cyan-400">
@@ -130,30 +156,55 @@ export function FraudSettings({ merchant, onUpdateCooldown, onUpdateWebsite, onR
             Cooldown Period
           </CardTitle>
           <CardDescription>
-            Days before the same customer can place another order
+            Time before the same customer can place another order
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <Label>Current: {cooldown} days</Label>
-              <span className="text-3xl font-bold text-cyan-400">{cooldown}</span>
-            </div>
-            <Slider
-              value={[cooldown]}
-              onValueChange={handleCooldownChange}
-              onValueCommit={handleCooldownCommit}
-              min={1}
-              max={90}
-              step={1}
-              className="w-full"
-            />
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>1 day</span>
-              <span>90 days</span>
+          {/* Quick Select Presets */}
+          <div>
+            <Label className="text-sm text-muted-foreground mb-2 block">Quick Select:</Label>
+            <div className="flex flex-wrap gap-2">
+              {PRESETS.map((preset) => (
+                <Button
+                  key={preset.value}
+                  variant={cooldownMinutes === preset.value ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => handlePresetClick(preset.value)}
+                  className={cooldownMinutes === preset.value 
+                    ? "bg-cyan-600 hover:bg-cyan-700" 
+                    : "border-slate-600 hover:bg-slate-700"
+                  }
+                >
+                  {preset.label}
+                </Button>
+              ))}
             </div>
           </div>
-          <Button onClick={handleCooldownCommit} className="w-full bg-cyan-600 hover:bg-cyan-700">
+
+          {/* Custom Input */}
+          <div>
+            <Label className="text-sm text-muted-foreground mb-2 block">Or enter custom:</Label>
+            <div className="flex items-center gap-3">
+              <Input
+                type="number"
+                min="1"
+                max="129600"
+                value={customMinutes}
+                onChange={handleCustomChange}
+                className="w-32 bg-slate-800/50 border-slate-600"
+              />
+              <span className="text-muted-foreground">minutes</span>
+              <span className="text-cyan-400 font-medium">= {formatMinutes(cooldownMinutes)}</span>
+            </div>
+          </div>
+
+          {/* Current Display */}
+          <div className="bg-slate-800/50 rounded-lg p-4 flex items-center justify-between">
+            <span className="text-muted-foreground">Current Cooldown:</span>
+            <span className="text-2xl font-bold text-cyan-400">{formatMinutes(cooldownMinutes)}</span>
+          </div>
+
+          <Button onClick={handleCooldownSave} className="w-full bg-cyan-600 hover:bg-cyan-700">
             Update Cooldown Period
           </Button>
         </CardContent>

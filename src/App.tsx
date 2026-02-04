@@ -21,6 +21,7 @@ import AuthPage from "./pages/AuthPage";
 import ClientDashboard from "./pages/ClientDashboard";
 import AdminLoginPage from "./pages/AdminLoginPage";
 import FraudProtectionPage from "./pages/FraudProtectionPage";
+import FraudGuardPage from "./pages/FraudGuardPage";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +49,7 @@ const App = () => (
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/dashboard" element={<ClientDashboard />} />
               <Route path="/fraud-protection" element={<FraudProtectionPage />} />
+              <Route path="/fraud-guard" element={<FraudGuardPage />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

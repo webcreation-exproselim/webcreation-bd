@@ -50,13 +50,13 @@ export function PluginDownload({ apiKey }: PluginDownloadProps) {
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-green-400">🆕 নতুন Version 3.2 আপডেট!</span>
+                  <span className="font-semibold text-green-400">🆕 নতুন Version 3.3 আপডেট!</span>
                   <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs">
-                    Clean Popup
+                    Bulletproof Popup
                   </Badge>
                 </div>
                 <p className="text-sm text-slate-400 mt-1">
-                  Popup থেকে logo এবং branding সরিয়ে দেওয়া হয়েছে। আরো clean এবং professional look।
+                  Popup সম্পূর্ণ ঠিক করা হয়েছে! Maximum z-index + ESC key + Click outside close সাপোর্ট।
                 </p>
               </div>
             </div>
@@ -80,10 +80,10 @@ export function PluginDownload({ apiKey }: PluginDownloadProps) {
               <div className="flex items-center gap-2 flex-wrap">
                 <CardTitle className="text-xl text-white">WCBD Fraud Guard Plugin</CardTitle>
                 <Badge className="bg-gradient-to-r from-cyan-500 to-green-500 text-white border-0 text-xs">
-                  v3.2
+                  v3.3
                 </Badge>
                 <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-xs animate-pulse">
-                  NEW
+                  FIXED
                 </Badge>
               </div>
               <CardDescription>
@@ -97,20 +97,24 @@ export function PluginDownload({ apiKey }: PluginDownloadProps) {
           <div className="p-4 rounded-xl bg-gradient-to-r from-green-500/10 to-cyan-500/10 border border-green-500/20">
             <h4 className="text-sm font-semibold text-green-400 mb-3 flex items-center gap-2">
               <Sparkles className="h-4 w-4" />
-              v3.2 এ নতুন কী আছে?
+              v3.3 এ নতুন কী আছে?
             </h4>
             <div className="grid grid-cols-1 gap-2">
               <div className="flex items-center gap-2 text-sm text-white">
                 <CheckCircle2 className="h-4 w-4 text-green-400 flex-shrink-0" />
-                <span>🎨 <strong>Clean Popup</strong> - Logo এবং branding ছাড়া সুন্দর popup</span>
+                <span>🛡️ <strong>Bulletproof Popup</strong> - Maximum z-index দিয়ে সব থিমে কাজ করবে</span>
               </div>
               <div className="flex items-center gap-2 text-sm text-white">
                 <CheckCircle2 className="h-4 w-4 text-green-400 flex-shrink-0" />
-                <span>🔒 <strong>Domain Binding</strong> - API key শুধু আপনার domain-এ কাজ করবে</span>
+                <span>⌨️ <strong>ESC Key Close</strong> - Escape চাপলে popup বন্ধ হবে</span>
               </div>
               <div className="flex items-center gap-2 text-sm text-white">
                 <CheckCircle2 className="h-4 w-4 text-green-400 flex-shrink-0" />
-                <span>⚡ <strong>Fixed Popup Issues</strong> - Popup আর ভাঙ্গবে না</span>
+                <span>🖱️ <strong>Click Outside</strong> - বাইরে ক্লিক করলে popup বন্ধ</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-white">
+                <CheckCircle2 className="h-4 w-4 text-green-400 flex-shrink-0" />
+                <span>🐛 <strong>PHP/JS Fixed</strong> - সব escaping সমস্যা সমাধান</span>
               </div>
             </div>
           </div>
@@ -166,7 +170,7 @@ export function PluginDownload({ apiKey }: PluginDownloadProps) {
               )}
             </Button>
             <span className="text-sm text-slate-400">
-              wcbd-fraud-guard.zip (~15KB) • v3.2 (Clean Popup)
+              wcbd-fraud-guard.zip (~15KB) • v3.3 (Bulletproof Popup)
             </span>
           </div>
         </CardContent>

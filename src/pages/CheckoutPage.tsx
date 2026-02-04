@@ -682,18 +682,6 @@ const CheckoutPage = () => {
                             className="font-bengali rounded-xl border-gray-200 focus:border-red-300 focus:ring-red-200 h-12"
                           />
                         </div>
-                        
-                        <div>
-                          <label className="block text-sm font-bengali text-gray-600 mb-2">
-                            ট্রানজেকশন আইডি (ঐচ্ছিক)
-                          </label>
-                          <Input
-                            placeholder="TrxID"
-                            value={transactionId}
-                            onChange={(e) => setTransactionId(e.target.value)}
-                            className="font-bengali rounded-xl border-gray-200 focus:border-red-300 focus:ring-red-200 h-12"
-                          />
-                        </div>
 
                         {/* Screenshot Upload */}
                         <div>

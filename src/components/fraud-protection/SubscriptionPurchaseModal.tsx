@@ -36,7 +36,7 @@ export function SubscriptionPurchaseModal({
 }: SubscriptionPurchaseModalProps) {
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [selectedMethod, setSelectedMethod] = useState<string>("");
-  const [transactionId, setTransactionId] = useState("");
+  
   const [senderNumber, setSenderNumber] = useState("");
   const [websiteDomain, setWebsiteDomain] = useState("");
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
@@ -81,10 +81,10 @@ export function SubscriptionPurchaseModal({
   };
 
   const handleSubmit = async () => {
-    if (!transactionId.trim() || !senderNumber.trim() || !websiteDomain.trim()) {
+    if (!senderNumber.trim() || !websiteDomain.trim()) {
       toast({
         title: "সব তথ্য দিন",
-        description: "Transaction ID, Sender Number এবং Website Domain আবশ্যক",
+        description: "Sender Number এবং Website Domain আবশ্যক",
         variant: "destructive",
       });
       return;
@@ -132,7 +132,7 @@ export function SubscriptionPurchaseModal({
           plan_type: planType,
           amount,
           payment_method: selectedMethod,
-          transaction_id: transactionId.trim(),
+          transaction_id: senderNumber.trim(), // Using sender number as reference
           sender_number: senderNumber.trim(),
           payment_screenshot_url: screenshotUrl,
           status: 'pending',
@@ -149,7 +149,6 @@ export function SubscriptionPurchaseModal({
       onClose();
       
       // Reset form
-      setTransactionId("");
       setSenderNumber("");
       setWebsiteDomain("");
       setScreenshotFile(null);
@@ -234,16 +233,6 @@ export function SubscriptionPurchaseModal({
               Step 2: তথ্য দিন
             </Label>
             <div className="space-y-3">
-              <div>
-                <Label htmlFor="txn" className="text-sm text-white/60">Transaction ID</Label>
-                <Input
-                  id="txn"
-                  value={transactionId}
-                  onChange={(e) => setTransactionId(e.target.value)}
-                  placeholder="ABC123XYZ"
-                  className="bg-slate-800 border-slate-600 text-white"
-                />
-              </div>
               <div>
                 <Label htmlFor="sender" className="text-sm text-white/60">Sender Number</Label>
                 <Input

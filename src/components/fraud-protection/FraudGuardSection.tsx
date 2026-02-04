@@ -7,7 +7,7 @@ import { SubscriptionPurchaseModal } from "./SubscriptionPurchaseModal";
 import { FraudGuardAnalytics } from "./FraudGuardAnalytics";
 import { useSubscriptionData } from "@/hooks/useSubscriptionData";
 import { Button } from "@/components/ui/button";
-import { Settings, Download, ExternalLink } from "lucide-react";
+import { Settings, Download, ExternalLink, Shield, Loader2 } from "lucide-react";
 
 interface FraudGuardSectionProps {
   userId: string;
@@ -35,14 +35,12 @@ export function FraudGuardSection({ userId }: FraudGuardSectionProps) {
   useEffect(() => {
     const fetchOrCreateMerchant = async () => {
       try {
-        // Try to get existing merchant
         let { data: merchantData, error } = await supabase
           .from('merchants')
           .select('id, is_active, current_plan, plan_expires_at, requests_used, max_requests')
           .eq('user_id', userId)
           .maybeSingle();
 
-        // If no merchant exists, create one
         if (!merchantData && !error) {
           const { data: newMerchant, error: insertError } = await supabase
             .from('merchants')
@@ -66,7 +64,6 @@ export function FraudGuardSection({ userId }: FraudGuardSectionProps) {
           };
           setMerchant(fullMerchant);
 
-          // If merchant is active, fetch logs for analytics
           if (fullMerchant.is_active) {
             const { data: logsData } = await supabase
               .from('fraud_logs')
@@ -94,7 +91,6 @@ export function FraudGuardSection({ userId }: FraudGuardSectionProps) {
   };
 
   const handlePurchaseSuccess = async () => {
-    // Refetch merchant data and subscription status
     refetchSubscription();
     
     const { data } = await supabase
@@ -117,36 +113,80 @@ export function FraudGuardSection({ userId }: FraudGuardSectionProps) {
 
   if (loading) {
     return (
-      <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6 animate-pulse">
-        <div className="h-6 bg-white/10 rounded w-1/3 mb-4" />
-        <div className="h-4 bg-white/10 rounded w-2/3" />
+      <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+        <div className="flex items-center justify-center gap-3">
+          <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
+          <span className="text-gray-500 font-bengali">লোড হচ্ছে...</span>
+        </div>
       </div>
     );
   }
 
-  // Show subscription status (active, pending, or plans)
   return (
     <div className="space-y-6">
-      <SubscriptionStatus
-        merchant={merchant}
-        pendingOrder={pendingOrder ? {
-          plan_type: pendingOrder.plan_type,
-          amount: pendingOrder.amount,
-          created_at: pendingOrder.created_at,
-        } : null}
-        onPurchase={() => setShowPurchaseModal(true)}
-      />
+      {/* Header Card */}
+      <div className="bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl p-6 text-white">
+        <div className="flex items-center gap-4 mb-4">
+          <div className="w-14 h-14 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+            <Shield className="w-8 h-8 text-white" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold font-bengali">WCBD Fraud Guard</h2>
+            <p className="text-white/80 text-sm font-bengali">
+              {merchant?.is_active 
+                ? `${merchant.current_plan === 'yearly' ? 'Yearly' : 'Monthly'} Plan Active`
+                : 'Anti-Fraud Protection System'
+              }
+            </p>
+          </div>
+        </div>
+        
+        {merchant?.is_active && (
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+              <p className="text-white/60 text-xs font-bengali">API ব্যবহার</p>
+              <p className="text-2xl font-bold">{merchant.requests_used} / {merchant.max_requests}</p>
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+              <p className="text-white/60 text-xs font-bengali">মেয়াদ শেষ</p>
+              <p className="text-lg font-semibold">
+                {merchant.plan_expires_at 
+                  ? new Date(merchant.plan_expires_at).toLocaleDateString('bn-BD')
+                  : '—'
+                }
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
 
-      {/* Show Analytics if Active */}
+      {/* Subscription Status for inactive users */}
+      {!merchant?.is_active && (
+        <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+          <SubscriptionStatus
+            merchant={merchant}
+            pendingOrder={pendingOrder ? {
+              plan_type: pendingOrder.plan_type,
+              amount: pendingOrder.amount,
+              created_at: pendingOrder.created_at,
+            } : null}
+            onPurchase={() => setShowPurchaseModal(true)}
+          />
+        </div>
+      )}
+
+      {/* Analytics for active merchants */}
       {merchant?.is_active && (
         <>
-          <FraudGuardAnalytics logs={logs} />
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+            <FraudGuardAnalytics logs={logs} />
+          </div>
           
           {/* Quick Action Buttons */}
           <div className="flex flex-wrap gap-3">
             <Button
               onClick={() => navigate('/fraud-protection')}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white gap-2"
+              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white gap-2 rounded-xl"
             >
               <Settings className="w-4 h-4" />
               সেটিংস দেখুন
@@ -154,7 +194,7 @@ export function FraudGuardSection({ userId }: FraudGuardSectionProps) {
             <Button
               onClick={() => navigate('/fraud-protection')}
               variant="outline"
-              className="border-white/20 text-white hover:bg-white/10 gap-2"
+              className="border-gray-200 text-gray-700 hover:bg-gray-50 gap-2 rounded-xl"
             >
               <Download className="w-4 h-4" />
               Plugin ডাউনলোড
@@ -162,7 +202,7 @@ export function FraudGuardSection({ userId }: FraudGuardSectionProps) {
             <Button
               onClick={() => navigate('/fraud-guard')}
               variant="ghost"
-              className="text-white/60 hover:text-white gap-2"
+              className="text-gray-500 hover:text-gray-700 gap-2"
             >
               <ExternalLink className="w-4 h-4" />
               বিস্তারিত দেখুন
@@ -171,15 +211,15 @@ export function FraudGuardSection({ userId }: FraudGuardSectionProps) {
         </>
       )}
 
-      {/* Purchase Modal with Plan Selection */}
+      {/* Plan Selection Modal */}
       {showPurchaseModal && !pendingOrder && !merchant?.is_active && merchant?.id && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-          <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white border border-gray-200 rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-white font-bengali">Plan নির্বাচন করুন</h2>
+              <h2 className="text-xl font-bold text-gray-900 font-bengali">Plan নির্বাচন করুন</h2>
               <button 
                 onClick={() => setShowPurchaseModal(false)}
-                className="text-white/60 hover:text-white text-2xl"
+                className="text-gray-400 hover:text-gray-600 text-2xl"
               >
                 ×
               </button>

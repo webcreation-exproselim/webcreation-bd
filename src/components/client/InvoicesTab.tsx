@@ -30,47 +30,49 @@ export function InvoicesTab({ invoices }: InvoicesTabProps) {
     try {
       const container = document.createElement('div');
       container.innerHTML = `
-        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: white; padding: 20px; max-width: 800px;">
-          <div style="height: 6px; background: linear-gradient(to right, #3b82f6, #8b5cf6);"></div>
-          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin: 20px 0;">
-            <div style="display: flex; align-items: center; gap: 12px;">
-              <img src="${companyLogo}" alt="Logo" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;" onerror="this.style.display='none'">
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%); padding: 24px; max-width: 800px; color: white;">
+          <div style="height: 6px; background: linear-gradient(to right, #22d3ee, #3b82f6, #8b5cf6); border-radius: 4px;"></div>
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin: 24px 0;">
+            <div style="display: flex; align-items: center; gap: 14px;">
+              <div style="width: 60px; height: 60px; border-radius: 16px; overflow: hidden; border: 2px solid rgba(34, 211, 238, 0.3);">
+                <img src="${companyLogo}" alt="Logo" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'">
+              </div>
               <div>
-                <div style="font-weight: bold; font-size: 18px; color: #111827;">Web Creation BD</div>
-                <div style="color: #6b7280; font-size: 12px;">Professional Digital Agency</div>
+                <div style="font-weight: bold; font-size: 18px; color: #ffffff;">Web Creation BD</div>
+                <div style="color: #67e8f9; font-size: 12px;">Professional Digital Agency</div>
               </div>
             </div>
-            <div style="background: linear-gradient(to right, #3b82f6, #8b5cf6); color: white; padding: 8px 16px; border-radius: 8px; text-align: center;">
+            <div style="background: linear-gradient(135deg, #22d3ee, #3b82f6); color: white; padding: 10px 18px; border-radius: 10px; text-align: center;">
               <div style="font-size: 10px; text-transform: uppercase; opacity: 0.8;">ইনভয়েস</div>
               <div style="font-family: monospace; font-weight: bold; font-size: 14px;">${invoice.invoice_number}</div>
             </div>
           </div>
           
-          <div style="background: #f9fafb; padding: 12px; border-radius: 12px; border: 1px solid #e5e7eb; margin: 16px 0;">
-            <div style="font-size: 10px; color: #9ca3af; text-transform: uppercase; margin-bottom: 6px;">তারিখ</div>
-            <div style="font-weight: 600; font-size: 14px;">${new Date(invoice.created_at).toLocaleDateString('bn-BD')}</div>
+          <div style="background: rgba(255,255,255,0.08); padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); margin: 16px 0;">
+            <div style="font-size: 10px; color: #67e8f9; text-transform: uppercase; margin-bottom: 6px;">তারিখ</div>
+            <div style="font-weight: 600; font-size: 14px; color: #ffffff;">${new Date(invoice.created_at).toLocaleDateString('bn-BD')}</div>
           </div>
           
           <div style="margin: 16px 0;">
-            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f3f4f6;">
-              <span style="color: #374151;">মোট পরিমাণ</span>
-              <span style="color: #111827; font-weight: 600;">৳${Number(invoice.amount).toLocaleString()}</span>
+            <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+              <span style="color: #94a3b8;">মোট পরিমাণ</span>
+              <span style="color: #ffffff; font-weight: 600;">৳${Number(invoice.amount).toLocaleString()}</span>
             </div>
-            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f3f4f6;">
-              <span style="color: #374151;">পরিশোধিত</span>
-              <span style="color: #10b981; font-weight: 600;">- ৳${Number(invoice.paid_amount).toLocaleString()}</span>
+            <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+              <span style="color: #94a3b8;">পরিশোধিত</span>
+              <span style="color: #34d399; font-weight: 600;">- ৳${Number(invoice.paid_amount).toLocaleString()}</span>
             </div>
-            <div style="background: linear-gradient(to right, #3b82f6, #8b5cf6); color: white; padding: 12px 16px; border-radius: 12px; display: flex; justify-content: space-between; margin-top: 8px;">
+            <div style="background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; padding: 14px 18px; border-radius: 12px; display: flex; justify-content: space-between; margin-top: 10px;">
               <span style="font-weight: bold;">মোট বাকি</span>
-              <span style="font-weight: bold; font-size: 18px;">৳${(Number(invoice.amount) - Number(invoice.paid_amount)).toLocaleString()}</span>
+              <span style="font-weight: bold; font-size: 20px;">৳${(Number(invoice.amount) - Number(invoice.paid_amount)).toLocaleString()}</span>
             </div>
           </div>
           
-          <div style="border-top: 1px dashed #e5e7eb; padding-top: 16px; margin-top: 16px; display: flex; justify-content: space-between;">
-            <div style="font-size: 14px; color: #374151;">ধন্যবাদ! 🙏</div>
-            <div style="font-size: 10px; color: #9ca3af;">Web Creation BD</div>
+          <div style="border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 16px; margin-top: 16px; display: flex; justify-content: space-between;">
+            <div style="font-size: 14px; color: #e2e8f0;">ধন্যবাদ! 🙏</div>
+            <div style="font-size: 10px; color: #64748b;">Web Creation BD</div>
           </div>
-          <div style="height: 6px; background: linear-gradient(to right, #3b82f6, #8b5cf6); margin-top: 20px;"></div>
+          <div style="height: 6px; background: linear-gradient(to right, #22d3ee, #3b82f6, #8b5cf6); margin-top: 20px; border-radius: 4px;"></div>
         </div>
       `;
       

@@ -369,6 +369,17 @@ export function InvoiceSystem({ invoices, orders, onRefresh }: InvoiceSystemProp
       .eq("id", invoice.id);
 
     if (!error) {
+      // Create notification for the client
+      const dueAmount = Number(invoice.amount) - Number(invoice.paid_amount);
+      await supabase
+        .from("notifications")
+        .insert({
+          user_id: orderData.user_id,
+          type: "invoice",
+          title: `নতুন ইনভয়েস: ${invoice.invoice_number}`,
+          message: `আপনার জন্য ৳${dueAmount.toLocaleString()} এর ইনভয়েস পাঠানো হয়েছে।`,
+        });
+
       toast({ 
         title: "✅ ইনভয়েস পাঠানো হয়েছে", 
         description: "ক্লায়েন্ট তাদের ড্যাশবোর্ডে এটি দেখতে পাবেন" 

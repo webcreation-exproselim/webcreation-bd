@@ -12,10 +12,13 @@ import { useMerchantData } from "@/hooks/useMerchantData";
 import { useSubscriptionData } from "@/hooks/useSubscriptionData";
 import { SubscriptionPurchaseModal } from "@/components/fraud-protection/SubscriptionPurchaseModal";
 
-// New refactored components
+// Refactored components
+import { DashboardSidebar } from "@/components/client/DashboardSidebar";
+import { DashboardTopBar } from "@/components/client/DashboardTopBar";
 import { DashboardHeader } from "@/components/client/DashboardHeader";
 import { MobileBottomNav } from "@/components/client/MobileBottomNav";
 import { DashboardStatsCards } from "@/components/client/DashboardStatsCards";
+import { DashboardWelcome } from "@/components/client/DashboardWelcome";
 import { OrdersTab } from "@/components/client/OrdersTab";
 import { InvoicesTab } from "@/components/client/InvoicesTab";
 import { ChatTab } from "@/components/client/ChatTab";
@@ -69,6 +72,7 @@ export default function ClientDashboard() {
   const [activeTab, setActiveTab] = useState<TabType>("orders");
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [selectedPlanType, setSelectedPlanType] = useState<'monthly' | 'yearly'>('monthly');
   const navigate = useNavigate();
@@ -242,9 +246,11 @@ export default function ClientDashboard() {
     fetchMessages(order.id);
   };
 
+  const completedOrders = orders.filter((o) => o.status === "completed").length;
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto" />
           <p className="text-gray-500 mt-4 font-bengali">লোড হচ্ছে...</p>
@@ -254,140 +260,137 @@ export default function ClientDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 pb-20 md:pb-0">
-      {/* Header */}
-      <DashboardHeader
+    <div className="min-h-screen bg-gray-50 flex">
+      {/* Desktop Sidebar */}
+      <DashboardSidebar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
         profile={profile}
         userEmail={user?.email}
-        mobileMenuOpen={mobileMenuOpen}
-        setMobileMenuOpen={setMobileMenuOpen}
+        hasActiveSubscription={merchant?.is_active}
+        hasPendingOrder={!!pendingOrder}
+        collapsed={sidebarCollapsed}
+        setCollapsed={setSidebarCollapsed}
         onLogout={handleLogout}
       />
 
-      <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 md:py-6">
-        {/* Welcome Section - Compact on mobile */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-4 md:mb-6"
-        >
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bengali font-bold text-gray-900 mb-0.5 md:mb-1">
-            স্বাগতম, {profile?.full_name || "গ্রাহক"}! 👋
-          </h1>
-          <p className="text-gray-500 font-bengali text-xs sm:text-sm md:text-base">
-            আপনার অর্ডার ও সার্ভিস ট্র্যাক করুন
-          </p>
-        </motion.div>
-
-        {/* Fraud Guard Quick Status */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05 }}
-          className="mb-4 md:mb-6"
-        >
-          <FraudGuardQuickStatus
-            merchant={merchant}
-            pendingOrder={pendingOrder}
-            onOpenFraudGuard={() => setActiveTab("fraudguard")}
-            onPurchaseSuccess={() => {
-              refetchMerchant();
-              refetchSubscription();
-            }}
-            onUpdateCooldownMinutes={updateCooldownMinutes}
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-h-screen lg:max-h-screen lg:overflow-hidden">
+        {/* Mobile Header */}
+        <div className="lg:hidden">
+          <DashboardHeader
+            profile={profile}
+            userEmail={user?.email}
+            mobileMenuOpen={mobileMenuOpen}
+            setMobileMenuOpen={setMobileMenuOpen}
+            onLogout={handleLogout}
           />
-        </motion.div>
+        </div>
 
-        {/* Stats Cards */}
-        <DashboardStatsCards
-          orders={orders}
-          invoicesCount={invoices.length}
-          merchant={merchant}
-          hasPendingOrder={!!pendingOrder}
-          onFraudGuardClick={() => setActiveTab("fraudguard")}
+        {/* Desktop Top Bar */}
+        <DashboardTopBar
+          profile={profile}
+          userEmail={user?.email}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          onLogout={handleLogout}
         />
 
-        {/* Desktop Tab Navigation - Hidden on mobile (using bottom nav instead) */}
-        <div className="hidden md:flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
-          {[
-            { id: "orders" as TabType, label: "অর্ডার", icon: "📦" },
-            { id: "invoices" as TabType, label: "ইনভয়েস", icon: "📄" },
-            { id: "chat" as TabType, label: "চ্যাট", icon: "💬" },
-            { id: "fraudguard" as TabType, label: "Fraud Guard", icon: "🛡️" },
-            { id: "profile" as TabType, label: "প্রোফাইল", icon: "👤" },
-          ].map((tab) => {
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bengali font-medium whitespace-nowrap transition-all duration-200 ${
-                  isActive
-                    ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/25"
-                    : "bg-white text-gray-600 hover:bg-gray-50 border border-gray-100"
-                }`}
+        {/* Scrollable Content */}
+        <main className="flex-1 overflow-y-auto pb-24 lg:pb-6">
+          <div className="max-w-7xl mx-auto px-4 lg:px-6 py-4 lg:py-6">
+            {/* Welcome Section - Only show on orders tab */}
+            {activeTab === "orders" && (
+              <DashboardWelcome
+                fullName={profile?.full_name}
+                ordersCount={orders.length}
+                completedOrders={completedOrders}
+              />
+            )}
+
+            {/* Fraud Guard Quick Status - Show on main tabs */}
+            {(activeTab === "orders" || activeTab === "invoices") && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.05 }}
+                className="mb-6"
               >
-                <span>{tab.icon}</span>
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
+                <FraudGuardQuickStatus
+                  merchant={merchant}
+                  pendingOrder={pendingOrder}
+                  onOpenFraudGuard={() => setActiveTab("fraudguard")}
+                  onPurchaseSuccess={() => {
+                    refetchMerchant();
+                    refetchSubscription();
+                  }}
+                  onUpdateCooldownMinutes={updateCooldownMinutes}
+                />
+              </motion.div>
+            )}
 
-        {/* Mobile Tab Title */}
-        <div className="md:hidden mb-3">
-          <h2 className="text-base font-bengali font-semibold text-gray-900">
-            {activeTab === "orders" && "📦 অর্ডার সমূহ"}
-            {activeTab === "invoices" && "📄 ইনভয়েস"}
-            {activeTab === "chat" && "💬 চ্যাট"}
-            {activeTab === "fraudguard" && "🛡️ Fraud Guard"}
-            {activeTab === "profile" && "👤 প্রোফাইল"}
-          </h2>
-        </div>
+            {/* Stats Cards - Show on orders tab */}
+            {activeTab === "orders" && (
+              <DashboardStatsCards
+                orders={orders}
+                invoicesCount={invoices.length}
+                merchant={merchant}
+                hasPendingOrder={!!pendingOrder}
+                onFraudGuardClick={() => setActiveTab("fraudguard")}
+              />
+            )}
 
-        {/* Tab Contents */}
-        {activeTab === "orders" && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <OrdersTab orders={orders} />
-          </motion.div>
-        )}
+            {/* Tab Contents */}
+            {activeTab === "orders" && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-bold text-gray-900 font-bengali">সাম্প্রতিক অর্ডার</h2>
+                  <Link to="/#services" className="text-sm text-blue-600 hover:underline font-bengali">
+                    নতুন অর্ডার →
+                  </Link>
+                </div>
+                <OrdersTab orders={orders} />
+              </motion.div>
+            )}
 
-        {activeTab === "invoices" && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <InvoicesTab invoices={invoices} />
-          </motion.div>
-        )}
+            {activeTab === "invoices" && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <InvoicesTab invoices={invoices} />
+              </motion.div>
+            )}
 
-        {activeTab === "chat" && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <ChatTab
-              orders={orders}
-              selectedOrder={selectedOrder}
-              messages={messages}
-              newMessage={newMessage}
-              setNewMessage={setNewMessage}
-              onSelectOrder={handleSelectOrder}
-              onSendMessage={sendMessage}
-            />
-          </motion.div>
-        )}
+            {activeTab === "chat" && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <ChatTab
+                  orders={orders}
+                  selectedOrder={selectedOrder}
+                  messages={messages}
+                  newMessage={newMessage}
+                  setNewMessage={setNewMessage}
+                  onSelectOrder={handleSelectOrder}
+                  onSendMessage={sendMessage}
+                />
+              </motion.div>
+            )}
 
-        {activeTab === "fraudguard" && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            {user && <FraudGuardSection userId={user.id} />}
-          </motion.div>
-        )}
+            {activeTab === "fraudguard" && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                {user && <FraudGuardSection userId={user.id} />}
+              </motion.div>
+            )}
 
-        {activeTab === "profile" && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <ProfileSection
-              user={user}
-              profile={profile}
-              onProfileUpdate={() => user && fetchUserData(user.id)}
-            />
-          </motion.div>
-        )}
-      </main>
+            {activeTab === "profile" && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <ProfileSection
+                  user={user}
+                  profile={profile}
+                  onProfileUpdate={() => user && fetchUserData(user.id)}
+                />
+              </motion.div>
+            )}
+          </div>
+        </main>
+      </div>
 
       {/* Mobile Bottom Navigation */}
       <MobileBottomNav

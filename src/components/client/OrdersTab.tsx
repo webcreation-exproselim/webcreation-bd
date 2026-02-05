@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Package, CheckCircle, XCircle, Clock, AlertCircle } from "lucide-react";
+import { Package, CheckCircle, XCircle, Clock, AlertCircle, ArrowRight, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface OrderService {
@@ -26,46 +26,60 @@ interface OrdersTabProps {
   orders: Order[];
 }
 
-const getStatusIcon = (status: string) => {
+const getStatusConfig = (status: string) => {
   switch (status) {
     case "completed":
-      return <CheckCircle className="w-4 h-4 md:w-5 md:h-5 text-emerald-500" />;
+      return {
+        icon: CheckCircle,
+        text: "সম্পন্ন",
+        bgColor: "bg-emerald-50",
+        textColor: "text-emerald-600",
+        borderColor: "border-emerald-200",
+        iconColor: "text-emerald-500",
+      };
     case "cancelled":
-      return <XCircle className="w-4 h-4 md:w-5 md:h-5 text-red-500" />;
+      return {
+        icon: XCircle,
+        text: "বাতিল",
+        bgColor: "bg-red-50",
+        textColor: "text-red-600",
+        borderColor: "border-red-200",
+        iconColor: "text-red-500",
+      };
     case "processing":
-      return <Clock className="w-4 h-4 md:w-5 md:h-5 text-amber-500" />;
+      return {
+        icon: Clock,
+        text: "প্রসেসিং",
+        bgColor: "bg-amber-50",
+        textColor: "text-amber-600",
+        borderColor: "border-amber-200",
+        iconColor: "text-amber-500",
+      };
     default:
-      return <AlertCircle className="w-4 h-4 md:w-5 md:h-5 text-blue-500" />;
-  }
-};
-
-const getStatusText = (status: string) => {
-  switch (status) {
-    case "completed": return "সম্পন্ন";
-    case "cancelled": return "বাতিল";
-    case "processing": return "প্রসেসিং";
-    default: return "পেন্ডিং";
-  }
-};
-
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case "completed": return "bg-emerald-100 text-emerald-700 border-emerald-200";
-    case "cancelled": return "bg-red-100 text-red-700 border-red-200";
-    case "processing": return "bg-amber-100 text-amber-700 border-amber-200";
-    default: return "bg-blue-100 text-blue-700 border-blue-200";
+      return {
+        icon: AlertCircle,
+        text: "পেন্ডিং",
+        bgColor: "bg-blue-50",
+        textColor: "text-blue-600",
+        borderColor: "border-blue-200",
+        iconColor: "text-blue-500",
+      };
   }
 };
 
 export function OrdersTab({ orders }: OrdersTabProps) {
   if (orders.length === 0) {
     return (
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 md:p-12 text-center shadow-sm">
-        <Package className="w-12 h-12 md:w-16 md:h-16 text-gray-200 mx-auto mb-3 md:mb-4" />
-        <p className="text-gray-500 font-bengali mb-3 md:mb-4 text-sm md:text-base">আপনার কোন অর্ডার নেই</p>
+      <div className="bg-white rounded-2xl border border-gray-200 p-8 md:p-12 text-center">
+        <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-4">
+          <Package className="w-8 h-8 text-gray-400" />
+        </div>
+        <h3 className="text-lg font-semibold text-gray-900 font-bengali mb-2">কোন অর্ডার নেই</h3>
+        <p className="text-gray-500 font-bengali mb-4 text-sm">আপনার প্রথম অর্ডার করুন এবং আমাদের সার্ভিস উপভোগ করুন</p>
         <Link to="/#services">
-          <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:opacity-90 font-bengali text-sm">
+          <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:opacity-90 font-bengali gap-2">
             সার্ভিস দেখুন
+            <ArrowRight className="w-4 h-4" />
           </Button>
         </Link>
       </div>
@@ -73,71 +87,102 @@ export function OrdersTab({ orders }: OrdersTabProps) {
   }
 
   return (
-    <div className="space-y-3 md:space-y-4">
-      {orders.map((order, idx) => (
-        <motion.div
-          key={order.id}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: idx * 0.05 }}
-          className="bg-white rounded-2xl border border-gray-100 p-3.5 md:p-5 shadow-sm hover:shadow-md transition-shadow active:scale-[0.99]"
-        >
-          {/* Header */}
-          <div className="flex items-start justify-between gap-2 mb-3">
-            <div className="flex items-center gap-2.5 min-w-0 flex-1">
-              {getStatusIcon(order.status)}
-              <div className="min-w-0 flex-1">
-                <p className="text-gray-900 font-medium text-sm md:text-base truncate">
-                  অর্ডার #{order.id.slice(0, 8)}
-                </p>
-                <p className="text-gray-400 text-[11px] md:text-xs font-bengali">
-                  {new Date(order.created_at).toLocaleDateString("bn-BD")}
-                </p>
+    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      {orders.map((order, idx) => {
+        const statusConfig = getStatusConfig(order.status);
+        const StatusIcon = statusConfig.icon;
+
+        return (
+          <motion.div
+            key={order.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: idx * 0.05 }}
+            className="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-lg hover:border-gray-300 transition-all duration-300 group"
+          >
+            {/* Status Bar */}
+            <div className={`h-1 ${
+              order.status === "completed" ? "bg-emerald-500" :
+              order.status === "cancelled" ? "bg-red-500" :
+              order.status === "processing" ? "bg-amber-500" :
+              "bg-blue-500"
+            }`} />
+
+            <div className="p-4 md:p-5">
+              {/* Header */}
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-xl ${statusConfig.bgColor} flex items-center justify-center`}>
+                    <StatusIcon className={`w-5 h-5 ${statusConfig.iconColor}`} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">
+                      #{order.id.slice(0, 8).toUpperCase()}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {new Date(order.created_at).toLocaleDateString("bn-BD")}
+                    </p>
+                  </div>
+                </div>
+                <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${statusConfig.bgColor} ${statusConfig.textColor} ${statusConfig.borderColor}`}>
+                  {statusConfig.text}
+                </span>
+              </div>
+
+              {/* Progress */}
+              <div className="mb-4">
+                <div className="flex justify-between text-xs mb-1.5">
+                  <span className="text-gray-500 font-bengali">অগ্রগতি</span>
+                  <span className="text-gray-700 font-semibold">{order.progress || 0}%</span>
+                </div>
+                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${order.progress || 0}%` }}
+                    transition={{ duration: 0.5, delay: idx * 0.05 }}
+                    className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"
+                  />
+                </div>
+              </div>
+
+              {/* Services */}
+              <div className="flex flex-wrap gap-1.5 mb-4">
+                {Array.isArray(order.services) &&
+                  order.services.slice(0, 2).map((service, serviceIdx) => (
+                    <span
+                      key={serviceIdx}
+                      className="px-2.5 py-1 bg-gray-100 rounded-lg text-xs text-gray-600 font-bengali"
+                    >
+                      {service.serviceName}
+                    </span>
+                  ))}
+                {Array.isArray(order.services) && order.services.length > 2 && (
+                  <span className="px-2.5 py-1 bg-blue-100 rounded-lg text-xs text-blue-600 font-bengali">
+                    +{order.services.length - 2}
+                  </span>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                <div>
+                  <p className="text-xs text-gray-500 font-bengali">মোট মূল্য</p>
+                  <p className="text-lg font-bold text-gray-900">
+                    ৳{Number(order.total_price).toLocaleString()}
+                  </p>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  className="text-gray-500 hover:text-gray-700 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <MoreHorizontal className="w-5 h-5" />
+                </Button>
               </div>
             </div>
-            <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-              <span className={`px-2 py-0.5 rounded-full text-[10px] md:text-xs font-bengali border ${getStatusColor(order.status)}`}>
-                {getStatusText(order.status)}
-              </span>
-              <span className="text-gray-900 font-bold text-sm md:text-base">
-                ৳{Number(order.total_price).toLocaleString()}
-              </span>
-            </div>
-          </div>
-
-          {/* Progress Bar */}
-          <div className="mb-3">
-            <div className="flex justify-between text-[11px] md:text-xs mb-1.5">
-              <span className="text-gray-400 font-bengali">অগ্রগতি</span>
-              <span className="text-gray-600 font-bengali font-medium">{order.progress || 0}%</span>
-            </div>
-            <div className="h-1.5 md:h-2 bg-gray-100 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-500"
-                style={{ width: `${order.progress || 0}%` }}
-              />
-            </div>
-          </div>
-
-          {/* Services */}
-          <div className="flex flex-wrap gap-1.5 md:gap-2">
-            {Array.isArray(order.services) &&
-              order.services.slice(0, 2).map((service, serviceIdx) => (
-                <span
-                  key={serviceIdx}
-                  className="px-2 py-1 bg-gray-50 border border-gray-100 rounded-lg text-gray-600 text-[11px] md:text-xs font-bengali truncate max-w-[140px] md:max-w-none"
-                >
-                  {service.serviceName}
-                </span>
-              ))}
-            {Array.isArray(order.services) && order.services.length > 2 && (
-              <span className="px-2 py-1 bg-blue-50 border border-blue-100 rounded-lg text-blue-600 text-[11px] md:text-xs font-bengali">
-                +{order.services.length - 2} আরও
-              </span>
-            )}
-          </div>
-        </motion.div>
-      ))}
+          </motion.div>
+        );
+      })}
     </div>
   );
 }

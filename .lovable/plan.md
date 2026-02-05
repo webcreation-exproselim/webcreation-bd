@@ -1,111 +1,134 @@
 
-
-# WCBD Fraud Guard Plugin v3.3 - Complete Fix Plan
+# Cooldown Period Timer - Dashboard Banner Integration Plan
 
 ## সমস্যা বিশ্লেষণ
 
-### সনাক্ত করা সমস্যাগুলো:
+বর্তমানে **Cooldown Period Timer** (যেটা দিয়ে সেট করা যায় একজন customer কতক্ষণ পর আবার order করতে পারবে) শুধুমাত্র **Settings tab-এর ভেতরে** আছে। আপনি চাচ্ছেন এটা **Dashboard-এর main page-এ** সরাসরি দেখাক এবং সেখান থেকেই সহজে control করা যাক।
 
-1. **Popup Layout ভেঙ্গে যাচ্ছে / নিচে চলে যাচ্ছে**
-   - CSS properly load হচ্ছে না (WooCommerce dependency issue)
-   - z-index conflict অন্য থিম/plugin এর সাথে
+```text
+বর্তমান অবস্থা:
+┌─────────────────────────────────────────────────────────┐
+│  Dashboard Main Page                                     │
+│  ├── FraudGuardQuickStatus Banner                        │
+│  │   ├── Plan Status (Active/Inactive)                   │
+│  │   ├── API Usage                                       │
+│  │   ├── Plugin Download                                 │
+│  │   └── ❌ Cooldown Timer নেই                           │
+│  │                                                       │
+│  └── Fraud Guard Tab → Settings → Cooldown Timer ✓      │
+│      (অনেক ভেতরে!)                                       │
+└─────────────────────────────────────────────────────────┘
 
-2. **PHP String Escaping সমস্যা**
-   - Double-quoted PHP string এ `\$` escaping inconsistent
-   - JavaScript popup code PHP parsing এ corrupt হচ্ছে
-
-3. **Version Inconsistency**
-   - বিভিন্ন জায়গায় v3.0, v3.1, v3.2 মিশে আছে
+নতুন অবস্থা:
+┌─────────────────────────────────────────────────────────┐
+│  Dashboard Main Page                                     │
+│  ├── FraudGuardQuickStatus Banner                        │
+│  │   ├── Plan Status (Active/Inactive)                   │
+│  │   ├── API Usage                                       │
+│  │   ├── ⏱️ Cooldown: 5m [Quick Edit] ← নতুন!           │
+│  │   ├── Plugin Download                                 │
+│  │   └── Settings                                        │
+└─────────────────────────────────────────────────────────┘
+```
 
 ---
 
-## সমাধান পরিকল্পনা
+## সমাধান
 
-### ধাপ ১: Plugin Generator সম্পূর্ণ Rewrite (v3.3)
+Dashboard-এর `FraudGuardQuickStatus` banner-এ একটি **compact Cooldown Timer widget** যোগ করা হবে যেখানে:
 
-**উদ্দেশ্য**: সমস্ত PHP/JavaScript escaping সমস্যা ঠিক করা এবং robust popup নিশ্চিত করা
+1. **বর্তমান Cooldown সময় দেখাবে** (যেমন: "⏱️ 5 মিনিট")
+2. **Quick Edit বাটন** থাকবে যেটা একটি popup/dropdown খুলবে
+3. **Popup-এ Quick Select Presets** থাকবে (5m, 30m, 1h, 6h, 1d, 7d, 30d)
+4. **Custom minutes input** option থাকবে
+5. **One-click update** করা যাবে
 
-**পরিবর্তন সমূহ**:
+---
 
-- **CSS Injection উন্নত করা**:
-  - `wp_add_inline_style()` এর পরিবর্তে `<style>` tag সরাসরি footer এ inject করা
-  - `!important` দিয়ে z-index enforce করা (999999)
-  - CSS minified এবং self-contained রাখা
+## নতুন UI ডিজাইন
 
-- **JavaScript Code Isolation**:
-  - PHP heredoc (`<<<'JS'`) বা single-quoted string ব্যবহার (variable interpolation বন্ধ)
-  - JavaScript এ jQuery `$` কখনো ব্যবহার না করা, সবসময় `jQuery` বা `jQ` alias
-  - Popup HTML properly escaped রাখা
-
-- **Popup Rendering Fix**:
-  - `body.prepend()` এর পরিবর্তে `body.append()` ব্যবহার (current)
-  - Existing popup remove করে নতুন add করা
-  - Escape click এ popup close
-
-- **Branding সম্পূর্ণ অপসারণ**:
-  - Popup message এ কোনো logo/branding নেই (already done)
-  - Admin panel header এ minimal branding (version only)
-
-### ধাপ ২: Dashboard Version Sync
-
-**সকল জায়গায় v3.3 update**:
-
-| ফাইল | অবস্থান |
-|------|---------|
-| `pluginGenerator.ts` | Plugin header + admin panel |
-| `FraudGuardSection.tsx` | Header badge + download button |
-| `SetupGuide.tsx` | Plugin card title |
-| `PluginDownload.tsx` | Version badges + changelog |
-| `ClientDashboard.tsx` | Promo banner |
-
-### ধাপ ৩: Popup CSS Hardening
+Active Subscription Banner-এ নতুন Cooldown Section:
 
 ```text
-.fraud-popup-overlay {
-  position: fixed !important;
-  inset: 0 !important;
-  z-index: 2147483647 !important;  // Max z-index
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
+┌────────────────────────────────────────────────────────────────────────────┐
+│  🛡️ Fraud Guard সক্রিয়    [Yearly]     [15 দিন বাকি]                       │
+│                                                                             │
+│  ┌──────────────────────────────────────────────────────────────────────┐  │
+│  │ API Usage: 150/5,000                                  মেয়াদ: ১৫/০৩/২৬│  │
+│  │ ████████████████░░░░░░░░░░░░░  3%                                    │  │
+│  └──────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+│  ┌────────────────────────────────────────┐                                │
+│  │ ⏱️ Cooldown: 5 মিনিট      [পরিবর্তন]  │  ← নতুন সেকশন!                  │
+│  └────────────────────────────────────────┘                                │
+│                                                                             │
+│  [📥 Plugin v3.3]  [⚙️ Settings]                                           │
+└────────────────────────────────────────────────────────────────────────────┘
+```
+
+**"পরিবর্তন" বাটনে ক্লিক করলে Popup:**
+
+```text
+┌─────────────────────────────────────────────┐
+│  ⏱️ Cooldown পরিবর্তন করুন                  │
+│                                             │
+│  Quick Select:                              │
+│  [5m] [30m] [1h] [6h] [1d] [7d] [30d]       │
+│                                             │
+│  অথবা কাস্টম:                               │
+│  [ 5       ] minutes  = 5 মিনিট             │
+│                                             │
+│  [       সেভ করুন       ]                   │
+└─────────────────────────────────────────────┘
+```
+
+---
+
+## টেকনিক্যাল পরিবর্তন
+
+### ফাইল ১: `src/components/client/FraudGuardQuickStatus.tsx`
+
+**নতুন Props যোগ করা:**
+```typescript
+interface FraudGuardQuickStatusProps {
+  merchant: {
+    // ... existing fields
+    cooldown_period_minutes: number;  // নতুন
+  } | null;
+  onUpdateCooldownMinutes?: (minutes: number) => void;  // নতুন
+  // ... existing props
 }
 ```
 
-### ধাপ ৪: Error Handling যোগ করা
+**নতুন State ও UI যোগ করা:**
+- `showCooldownEditor` state for popup visibility
+- `tempCooldownMinutes` state for editing
+- Cooldown display badge in active subscription section
+- Quick Edit popup with presets and custom input
+- formatMinutes helper function
 
-- Console logging (debug mode)
-- Fallback alert যদি popup fail হয়
-- AJAX error handling improved
+### ফাইল ২: `src/pages/ClientDashboard.tsx`
 
----
-
-## প্রযুক্তিগত বিবরণ
-
-### ফাইল পরিবর্তন তালিকা
-
-| ফাইল | পরিবর্তনের ধরন |
-|------|---------------|
-| `src/utils/pluginGenerator.ts` | Major rewrite - CSS injection, JS escaping, version 3.3 |
-| `src/components/fraud-protection/FraudGuardSection.tsx` | Version update |
-| `src/components/fraud-protection/SetupGuide.tsx` | Version update |
-| `src/components/fraud-protection/PluginDownload.tsx` | Changelog + version update |
-| `src/pages/ClientDashboard.tsx` | Promo banner version update |
-
-### Plugin নতুন Features (v3.3)
-
-1. **Bulletproof Popup**: Maximum z-index + `!important` rules
-2. **Cross-theme Compatibility**: Isolated CSS namespace
-3. **ESC Key Support**: Popup close on Escape key press
-4. **Click Outside Close**: Overlay click এ popup close
-5. **Debug Console**: Browser console এ status logs
+**Props আপডেট করা:**
+```typescript
+<FraudGuardQuickStatus
+  merchant={merchant}
+  pendingOrder={pendingOrder}
+  onOpenFraudGuard={() => setActiveTab("fraudguard")}
+  onPurchaseSuccess={() => { refetchMerchant(); refetchSubscription(); }}
+  onUpdateCooldownMinutes={updateCooldownMinutes}  // নতুন
+/>
+```
 
 ---
 
-## Testing Checklist
+## Feature Summary
 
-- [ ] Plugin download করে WordPress এ install করুন
-- [ ] Checkout page এ order try করুন (cooldown trigger করতে)
-- [ ] Popup সঠিকভাবে center এ দেখাচ্ছে কিনা verify করুন
-- [ ] OK button এবং ESC key দিয়ে close হচ্ছে কিনা
-- [ ] Mobile responsive check করুন
-
+| Feature | Description |
+|---------|-------------|
+| **Dashboard-এ দেখানো** | Active plan থাকলে main banner-এ Cooldown time দেখাবে |
+| **Quick Edit Popup** | "পরিবর্তন" বাটনে ক্লিক করলে preset options দিয়ে popup আসবে |
+| **Preset Buttons** | 5m, 30m, 1h, 6h, 1d, 7d, 30d - one click selection |
+| **Custom Input** | নিজের ইচ্ছামতো minutes enter করা যাবে |
+| **Instant Update** | Save করলেই database update হবে, toast notification দেখাবে |
+| **Bengali Display** | "5 মিনিট", "1 ঘন্টা", "1 দিন" format-এ দেখাবে |

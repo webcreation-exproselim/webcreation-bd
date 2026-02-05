@@ -42,29 +42,68 @@ export function InvoicesTab({ invoices }: InvoicesTabProps) {
   const { toast } = useToast();
 
   // Fetch order details for invoices
+  const fetchOrderDetails = async () => {
+    const orderIds = invoices.filter(inv => inv.order_id).map(inv => inv.order_id!);
+    if (orderIds.length === 0) return;
+
+    const { data } = await supabase
+      .from("orders")
+      .select("id, customer_name, services, created_at")
+      .in("id", orderIds);
+
+    if (data) {
+      const map: Record<string, OrderData> = {};
+      data.forEach(order => {
+        map[order.id] = {
+          ...order,
+          services: (order.services as unknown) as OrderService[],
+        };
+      });
+      setOrdersMap(map);
+    }
+  };
+
   useEffect(() => {
-    const fetchOrderDetails = async () => {
-      const orderIds = invoices.filter(inv => inv.order_id).map(inv => inv.order_id!);
-      if (orderIds.length === 0) return;
-
-      const { data } = await supabase
-        .from("orders")
-        .select("id, customer_name, services, created_at")
-        .in("id", orderIds);
-
-      if (data) {
-        const map: Record<string, OrderData> = {};
-        data.forEach(order => {
-          map[order.id] = {
-            ...order,
-            services: (order.services as unknown) as OrderService[],
-          };
-        });
-        setOrdersMap(map);
-      }
-    };
-
     fetchOrderDetails();
+  }, [invoices]);
+
+  // Real-time subscription for orders to update service details
+  useEffect(() => {
+    const orderIds = invoices.filter(inv => inv.order_id).map(inv => inv.order_id!);
+    if (orderIds.length === 0) return;
+
+    const channelName = `invoices-orders-${Date.now()}`;
+    
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "orders",
+        },
+        (payload) => {
+          const updatedOrder = payload.new as any;
+          // Only update if this order is in our invoices
+          if (orderIds.includes(updatedOrder.id)) {
+            setOrdersMap(prev => ({
+              ...prev,
+              [updatedOrder.id]: {
+                ...updatedOrder,
+                services: (updatedOrder.services as unknown) as OrderService[],
+              }
+            }));
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log("InvoicesTab orders realtime status:", status);
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [invoices]);
 
   const downloadInvoice = async (invoice: Invoice) => {

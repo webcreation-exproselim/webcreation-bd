@@ -65,9 +65,9 @@ export function MobileBottomNav({
                 )}
               </motion.div>
               <motion.span
-                animate={{ opacity: isActive ? 1 : 0.6 }}
-                className={`text-[10px] font-bengali mt-0.5 transition-colors ${
-                  isActive ? "text-blue-600 font-semibold" : "text-gray-500"
+                animate={{ opacity: isActive ? 1 : 0.7 }}
+                className={`text-[11px] font-bengali mt-0.5 transition-colors ${
+                  isActive ? "text-blue-600 font-bold" : "text-gray-600"
                 }`}
               >
                 {tab.label}

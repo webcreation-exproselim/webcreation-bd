@@ -2,10 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Bell,
   Search,
-  Menu,
-  X,
   Home,
   LogOut,
   User,
@@ -15,8 +12,9 @@ import {
   MessageCircle,
   Shield,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { NotificationBell } from "./NotificationBell";
+import { Notification } from "@/hooks/useNotifications";
 
 type TabType = "orders" | "invoices" | "chat" | "fraudguard" | "profile";
 
@@ -31,6 +29,10 @@ interface DashboardTopBarProps {
   activeTab: TabType;
   setActiveTab: (tab: TabType) => void;
   onLogout: () => void;
+  notifications: Notification[];
+  unreadCount: number;
+  onMarkAsRead: (id: string) => void;
+  onMarkAllAsRead: () => void;
 }
 
 const tabTitles: Record<TabType, { title: string; icon: React.ElementType }> = {
@@ -47,6 +49,10 @@ export function DashboardTopBar({
   activeTab,
   setActiveTab,
   onLogout,
+  notifications,
+  unreadCount,
+  onMarkAsRead,
+  onMarkAllAsRead,
 }: DashboardTopBarProps) {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const CurrentIcon = tabTitles[activeTab].icon;
@@ -77,19 +83,21 @@ export function DashboardTopBar({
       <div className="flex items-center gap-3">
         {/* Search */}
         <div className="relative hidden xl:block">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
           <input
             type="text"
             placeholder="খুঁজুন..."
-            className="pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 w-64 font-bengali"
+            className="pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 w-64 font-bengali"
           />
         </div>
 
         {/* Notifications */}
-        <button className="relative p-2.5 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors">
-          <Bell className="w-5 h-5 text-gray-600" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
-        </button>
+        <NotificationBell
+          notifications={notifications}
+          unreadCount={unreadCount}
+          onMarkAsRead={onMarkAsRead}
+          onMarkAllAsRead={onMarkAllAsRead}
+        />
 
         {/* User Menu */}
         <div className="relative">

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Sheet,
@@ -7,7 +7,8 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, User } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.png";
 
 const serviceItems = [
@@ -27,6 +28,11 @@ interface MobileDrawerProps {
   onSignupClick: () => void;
 }
 
+interface Profile {
+  full_name: string | null;
+  avatar_url: string | null;
+}
+
 export function MobileDrawer({
   open,
   onOpenChange,
@@ -35,7 +41,48 @@ export function MobileDrawer({
   onSignupClick,
 }: MobileDrawerProps) {
   const [servicesOpen, setServicesOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setIsLoggedIn(!!session?.user);
+        
+        if (session?.user) {
+          setTimeout(() => {
+            fetchProfile(session.user.id);
+          }, 0);
+        } else {
+          setProfile(null);
+        }
+      }
+    );
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsLoggedIn(!!session?.user);
+      if (session?.user) {
+        fetchProfile(session.user.id);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const fetchProfile = async (userId: string) => {
+    try {
+      const { data } = await supabase
+        .from("profiles")
+        .select("full_name, avatar_url")
+        .eq("user_id", userId)
+        .maybeSingle();
+      
+      setProfile(data);
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+    }
+  };
 
   const handleNavClick = (href: string) => {
     onOpenChange(false);
@@ -50,6 +97,11 @@ export function MobileDrawer({
     } else {
       navigate(href);
     }
+  };
+
+  const handleDashboardClick = () => {
+    onOpenChange(false);
+    navigate("/dashboard");
   };
 
   return (
@@ -73,7 +125,33 @@ export function MobileDrawer({
             </div>
           </SheetTitle>
         </SheetHeader>
-        <nav className="flex flex-col gap-1 mt-8">
+        
+        {/* Show user info if logged in */}
+        {isLoggedIn && (
+          <div className="mt-6 px-4 py-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center overflow-hidden ring-2 ring-blue-100">
+                {profile?.avatar_url ? (
+                  <img
+                    src={profile.avatar_url}
+                    alt="Avatar"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <User className="w-5 h-5 text-white" />
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-bengali text-sm font-semibold text-gray-900 truncate">
+                  {profile?.full_name || "গ্রাহক"}
+                </p>
+                <p className="text-xs text-gray-500">স্বাগতম!</p>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        <nav className="flex flex-col gap-1 mt-6">
           {navItems.map((item) => (
             item.hasSubmenu ? (
               <div key={item.href}>
@@ -113,19 +191,30 @@ export function MobileDrawer({
           ))}
         </nav>
         <div className="flex flex-col gap-3 mt-8 px-4">
-          <Button
-            variant="outline"
-            onClick={onLoginClick}
-            className="w-full border-blue-500 text-blue-600 font-bengali font-medium hover:bg-blue-50"
-          >
-            লগইন
-          </Button>
-          <Button
-            onClick={onSignupClick}
-            className="w-full bg-gradient-to-r from-cyan-500 via-blue-500 to-blue-600 text-white font-bengali font-semibold hover:from-cyan-400 hover:via-blue-400 hover:to-blue-500"
-          >
-            সাইন আপ
-          </Button>
+          {isLoggedIn ? (
+            <Button
+              onClick={handleDashboardClick}
+              className="w-full bg-gradient-to-r from-cyan-500 via-blue-500 to-blue-600 text-white font-bengali font-semibold hover:from-cyan-400 hover:via-blue-400 hover:to-blue-500"
+            >
+              ড্যাশবোর্ড
+            </Button>
+          ) : (
+            <>
+              <Button
+                variant="outline"
+                onClick={onLoginClick}
+                className="w-full border-blue-500 text-blue-600 font-bengali font-medium hover:bg-blue-50"
+              >
+                লগইন
+              </Button>
+              <Button
+                onClick={onSignupClick}
+                className="w-full bg-gradient-to-r from-cyan-500 via-blue-500 to-blue-600 text-white font-bengali font-semibold hover:from-cyan-400 hover:via-blue-400 hover:to-blue-500"
+              >
+                সাইন আপ
+              </Button>
+            </>
+          )}
         </div>
       </SheetContent>
     </Sheet>

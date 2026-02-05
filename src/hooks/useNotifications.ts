@@ -144,22 +144,30 @@ export function useNotifications(userId: string | null) {
     }
   }, [userId, fetchNotifications, requestPermission]);
 
-  // Realtime subscription
+  // Realtime subscription with unique channel name
   useEffect(() => {
     if (!userId) return;
 
+    // Unique channel name with timestamp to avoid conflicts
+    const channelName = `notifications-${userId}-${Date.now()}`;
+    
     const channel = supabase
-      .channel("notifications-realtime")
+      .channel(channelName)
       .on(
         "postgres_changes",
         {
           event: "INSERT",
           schema: "public",
           table: "notifications",
-          filter: `user_id=eq.${userId}`,
         },
         (payload) => {
           const newNotification = payload.new as Notification;
+          
+          // Client-side filter - only process notifications for this user
+          // RLS should handle this, but double-check
+          if (newNotification.user_id !== userId) return;
+          
+          console.log("New notification received:", newNotification.title);
           
           // Add to state
           setNotifications((prev) => [newNotification, ...prev]);
@@ -178,7 +186,9 @@ export function useNotifications(userId: string | null) {
           });
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log("Notifications realtime status:", status);
+      });
 
     return () => {
       supabase.removeChannel(channel);

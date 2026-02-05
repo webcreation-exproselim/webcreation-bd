@@ -155,128 +155,98 @@ export default function ClientDashboard() {
     }
   };
 
-  // Real-time subscription for invoices
+  // Combined Real-time subscription for all dashboard data
   useEffect(() => {
     if (!user) return;
 
+    // Unique channel name with timestamp to avoid conflicts
+    const channelName = `dashboard-realtime-${user.id}-${Date.now()}`;
+    
     const channel = supabase
-      .channel(`client-invoices-${user.id}`)
+      .channel(channelName)
+      // Orders - listen to all events, RLS will filter by user
       .on(
         "postgres_changes",
         {
-          event: "INSERT",
+          event: "*",
+          schema: "public",
+          table: "orders",
+        },
+        (payload) => {
+          console.log("Order realtime event:", payload.eventType);
+          
+          if (payload.eventType === "INSERT") {
+            const newOrder = payload.new as any;
+            // Check if this order belongs to current user (RLS should handle this, but double-check)
+            if (newOrder.user_id === user.id) {
+              setOrders((prev) => [{
+                ...newOrder,
+                services: (newOrder.services as unknown) as OrderService[],
+                progress: newOrder.progress || 0,
+              }, ...prev]);
+            }
+          } else if (payload.eventType === "UPDATE") {
+            setOrders((prev) => 
+              prev.map(order => 
+                order.id === payload.new.id 
+                  ? { 
+                      ...payload.new, 
+                      services: ((payload.new as any).services as unknown) as OrderService[], 
+                      progress: (payload.new as any).progress || 0 
+                    } as Order 
+                  : order
+              )
+            );
+          } else if (payload.eventType === "DELETE") {
+            setOrders((prev) => prev.filter(order => order.id !== (payload.old as any).id));
+          }
+        }
+      )
+      // Invoices - listen to all events
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
           schema: "public",
           table: "invoices",
-          filter: `client_id=eq.${user.id}`,
         },
         (payload) => {
-          setInvoices((prev) => [payload.new as Invoice, ...prev]);
+          console.log("Invoice realtime event:", payload.eventType);
+          
+          if (payload.eventType === "INSERT") {
+            const newInvoice = payload.new as any;
+            // Check if this invoice belongs to current user
+            if (newInvoice.client_id === user.id) {
+              setInvoices((prev) => [newInvoice as Invoice, ...prev]);
+            }
+          } else if (payload.eventType === "UPDATE") {
+            setInvoices((prev) => 
+              prev.map(inv => inv.id === payload.new.id ? payload.new as Invoice : inv)
+            );
+          } else if (payload.eventType === "DELETE") {
+            setInvoices((prev) => prev.filter(inv => inv.id !== (payload.old as any).id));
+          }
         }
       )
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "invoices",
-          filter: `client_id=eq.${user.id}`,
-        },
-        (payload) => {
-          setInvoices((prev) => 
-            prev.map(inv => inv.id === payload.new.id ? payload.new as Invoice : inv)
-          );
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user?.id]);
-
-  // Real-time subscription for orders
-  useEffect(() => {
-    if (!user) return;
-
-    const channel = supabase
-      .channel(`client-orders-${user.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "orders",
-          filter: `user_id=eq.${user.id}`,
-        },
-        (payload) => {
-          const newOrder = {
-            ...payload.new,
-            services: (payload.new.services as unknown) as OrderService[],
-            progress: payload.new.progress || 0,
-          } as Order;
-          setOrders((prev) => [newOrder, ...prev]);
-        }
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "orders",
-          filter: `user_id=eq.${user.id}`,
-        },
-        (payload) => {
-          setOrders((prev) => 
-            prev.map(order => 
-              order.id === payload.new.id 
-                ? { 
-                    ...payload.new, 
-                    services: (payload.new.services as unknown) as OrderService[], 
-                    progress: payload.new.progress || 0 
-                  } as Order 
-                : order
-            )
-          );
-        }
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "DELETE",
-          schema: "public",
-          table: "orders",
-          filter: `user_id=eq.${user.id}`,
-        },
-        (payload) => {
-          setOrders((prev) => prev.filter(order => order.id !== payload.old.id));
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user?.id]);
-
-  // Real-time subscription for profile updates
-  useEffect(() => {
-    if (!user) return;
-
-    const channel = supabase
-      .channel(`client-profile-${user.id}`)
+      // Profile updates
       .on(
         "postgres_changes",
         {
           event: "UPDATE",
           schema: "public",
           table: "profiles",
-          filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
-          setProfile(payload.new);
+          const updatedProfile = payload.new as any;
+          if (updatedProfile.user_id === user.id) {
+            console.log("Profile realtime update received");
+            setProfile(updatedProfile);
+          }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log("Dashboard realtime status:", status);
+      });
 
     return () => {
       supabase.removeChannel(channel);

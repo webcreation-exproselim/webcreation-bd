@@ -8,7 +8,7 @@ const corsHeaders = {
 interface CourierRequest {
   api_key: string
   action: 'check_status' | 'sync_all' | 'save_credentials'
-  courier?: 'steadfast' | 'pathao'
+  courier?: 'steadfast' | 'pathao' | 'redx'
   invoice?: string
   consignment_id?: string
   tracking_code?: string
@@ -19,6 +19,7 @@ interface CourierRequest {
     pathao_client_secret?: string
     pathao_username?: string
     pathao_password?: string
+    redx_api_token?: string
   }
 }
 
@@ -86,6 +87,23 @@ async function checkPathao(token: string, consignmentId: string) {
   return await response.json()
 }
 
+// RedX API helper
+async function checkRedX(apiToken: string, trackingId: string) {
+  const response = await fetch(`https://openapi.redx.com.bd/v1.0.0-beta/parcel/track/${trackingId}`, {
+    method: 'GET',
+    headers: {
+      'API-ACCESS-TOKEN': `Bearer ${apiToken}`,
+      'Content-Type': 'application/json'
+    }
+  })
+
+  if (!response.ok) {
+    throw new Error(`RedX API error: ${response.status}`)
+  }
+
+  return await response.json()
+}
+
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -115,7 +133,7 @@ Deno.serve(async (req) => {
     // Validate API Key and get merchant data
     const { data: merchant, error: merchantError } = await supabase
       .from('merchants')
-      .select('id, steadfast_api_key, steadfast_secret_key, pathao_client_id, pathao_client_secret, pathao_username, pathao_password')
+      .select('id, steadfast_api_key, steadfast_secret_key, pathao_client_id, pathao_client_secret, pathao_username, pathao_password, redx_api_token')
       .eq('api_key', api_key)
       .single()
 
@@ -143,6 +161,7 @@ Deno.serve(async (req) => {
       if (credentials.pathao_client_secret !== undefined) updateData.pathao_client_secret = credentials.pathao_client_secret
       if (credentials.pathao_username !== undefined) updateData.pathao_username = credentials.pathao_username
       if (credentials.pathao_password !== undefined) updateData.pathao_password = credentials.pathao_password
+      if (credentials.redx_api_token !== undefined) updateData.redx_api_token = credentials.redx_api_token
 
       const { error: updateError } = await supabase
         .from('merchants')
@@ -277,6 +296,61 @@ Deno.serve(async (req) => {
           console.error('Pathao API error:', error)
           return new Response(
             JSON.stringify({ error: `Pathao API error: ${error.message}` }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          )
+        }
+      }
+
+      // RedX Courier
+      if (courier === 'redx') {
+        if (!merchant.redx_api_token) {
+          return new Response(
+            JSON.stringify({ error: 'RedX credentials not configured' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          )
+        }
+
+        const trackingId = tracking_code || consignment_id
+        if (!trackingId) {
+          return new Response(
+            JSON.stringify({ error: 'Tracking ID is required for RedX' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          )
+        }
+
+        try {
+          const result = await checkRedX(merchant.redx_api_token, trackingId)
+          
+          // Save/update in courier_orders table
+          if (result.tracking) {
+            const orderData = {
+              merchant_id: merchant.id,
+              courier_type: 'redx',
+              invoice_number: result.tracking.merchant_invoice_id || null,
+              consignment_id: trackingId,
+              tracking_code: trackingId,
+              recipient_name: result.tracking.customer_name || null,
+              recipient_phone: result.tracking.customer_phone || null,
+              recipient_address: result.tracking.customer_address || null,
+              cod_amount: result.tracking.cash_collection_amount || 0,
+              status: result.tracking.status || 'unknown',
+              delivery_fee: result.tracking.delivery_charge || 0,
+              last_synced_at: new Date().toISOString()
+            }
+
+            await supabase
+              .from('courier_orders')
+              .upsert(orderData, { onConflict: 'consignment_id' })
+          }
+
+          return new Response(
+            JSON.stringify({ success: true, courier: 'redx', data: result }),
+            { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          )
+        } catch (error) {
+          console.error('RedX API error:', error)
+          return new Response(
+            JSON.stringify({ error: `RedX API error: ${error.message}` }),
             { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           )
         }

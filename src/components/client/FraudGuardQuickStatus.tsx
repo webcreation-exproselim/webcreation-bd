@@ -1,10 +1,11 @@
-import { useState } from "react";
-import { Shield, Clock, AlertCircle, CheckCircle, Zap, Download, Settings, Sparkles } from "lucide-react";
+ import { useState } from "react";
+ import { Shield, Clock, AlertCircle, CheckCircle, Download, Settings, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { downloadPluginFile } from "@/utils/pluginGenerator";
 import { useToast } from "@/hooks/use-toast";
 import { SubscriptionPlans } from "@/components/fraud-protection/SubscriptionPlans";
 import { SubscriptionPurchaseModal } from "@/components/fraud-protection/SubscriptionPurchaseModal";
+ import { CooldownEditor, formatCooldownTime } from "./CooldownEditor";
 
 interface FraudGuardQuickStatusProps {
   merchant: {
@@ -15,6 +16,7 @@ interface FraudGuardQuickStatusProps {
     requests_used: number;
     max_requests: number;
     api_key: string;
+     cooldown_period_minutes: number;
   } | null;
   pendingOrder: {
     plan_type: string;
@@ -23,13 +25,15 @@ interface FraudGuardQuickStatusProps {
   } | null;
   onOpenFraudGuard: () => void;
   onPurchaseSuccess?: () => void;
+   onUpdateCooldownMinutes?: (minutes: number) => void;
 }
 
 export function FraudGuardQuickStatus({ 
   merchant, 
   pendingOrder, 
   onOpenFraudGuard,
-  onPurchaseSuccess 
+   onPurchaseSuccess,
+   onUpdateCooldownMinutes
 }: FraudGuardQuickStatusProps) {
   const { toast } = useToast();
   const [showPlanModal, setShowPlanModal] = useState(false);
@@ -207,6 +211,19 @@ export function FraudGuardQuickStatus({
               </div>
             </div>
           </div>
+           
+           {/* Cooldown Timer - Quick Access */}
+           {merchant?.id && onUpdateCooldownMinutes && (
+             <div className="mt-3 pt-3 border-t border-emerald-200/50">
+               <div className="flex items-center gap-3 flex-wrap">
+                 <span className="text-xs text-gray-500 font-bengali">⏱️ Cooldown:</span>
+                 <CooldownEditor
+                   cooldownMinutes={merchant.cooldown_period_minutes}
+                   onUpdate={onUpdateCooldownMinutes}
+                 />
+               </div>
+             </div>
+           )}
           
           <div className="flex gap-2 flex-wrap">
             <Button

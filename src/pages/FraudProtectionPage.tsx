@@ -11,9 +11,9 @@ import { PluginDownload } from "@/components/fraud-protection/PluginDownload";
 import { PluginRemoteSettings } from "@/components/fraud-protection/PluginRemoteSettings";
 import { AbandonedCarts } from "@/components/fraud-protection/AbandonedCarts";
 import { CourierOrders } from "@/components/fraud-protection/CourierOrders";
+import { CustomerTrustLookup } from "@/components/fraud-protection/CustomerTrustLookup";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Settings, Shield, FileText, Code, Loader2, Download, Globe, ShoppingCart, Truck } from "lucide-react";
-
+import { ArrowLeft, Settings, Shield, FileText, Code, Loader2, Download, Globe, ShoppingCart, Truck, UserCheck } from "lucide-react";
 export default function FraudProtectionPage() {
   const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -161,6 +161,13 @@ export default function FraudProtectionPage() {
               <Truck className="h-4 w-4 mr-2" />
               Courier
             </TabsTrigger>
+            <TabsTrigger 
+              value="trust-score"
+              className="data-[state=active]:bg-cyan-600 data-[state=active]:text-white"
+            >
+              <UserCheck className="h-4 w-4 mr-2" />
+              Trust Score
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="settings">
@@ -238,6 +245,12 @@ export default function FraudProtectionPage() {
                   redx_api_token: merchant.redx_api_token || ''
                 }}
               />
+            )}
+          </TabsContent>
+
+          <TabsContent value="trust-score">
+            {merchant && (
+              <CustomerTrustLookup apiKey={merchant.api_key} />
             )}
           </TabsContent>
         </Tabs>

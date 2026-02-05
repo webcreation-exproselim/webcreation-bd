@@ -1,6 +1,7 @@
 const ENDPOINT_URL = 'https://gtjmfvwkatrorhuyrpby.supabase.co/functions/v1/check-order-eligibility';
 const TRACK_ENDPOINT_URL = 'https://gtjmfvwkatrorhuyrpby.supabase.co/functions/v1/track-checkout';
 const COURIER_ENDPOINT_URL = 'https://gtjmfvwkatrorhuyrpby.supabase.co/functions/v1/courier-status';
+const TRUST_SCORE_ENDPOINT_URL = 'https://gtjmfvwkatrorhuyrpby.supabase.co/functions/v1/customer-trust-score';
 const DASHBOARD_URL = 'https://webcreation-bd.lovable.app/dashboard';
 const WHATSAPP_DEFAULT = '+8801332052874';
 import JSZip from 'jszip';
@@ -11,8 +12,8 @@ export const generateMainPluginFile = (apiKey: string): string => {
 /**
  * Plugin Name: WCBD Fraud Guard
  * Plugin URI: https://webcreation-bd.lovable.app/fraud-guard
- * Description: Order Limiter & Anti-Fraud System for WooCommerce - Protect your store from fake orders with remote settings, abandoned cart tracking, and more.
- * Version: 4.0.0
+ * Description: Order Limiter & Anti-Fraud System for WooCommerce - Protect your store from fake orders with remote settings, abandoned cart tracking, trust score, and more.
+ * Version: 5.0.0
  * Author: WebCreation BD
  * Author URI: https://webcreation-bd.lovable.app
  * Text Domain: wcbd-fraud-guard
@@ -22,7 +23,7 @@ export const generateMainPluginFile = (apiKey: string): string => {
 
 if (!defined('ABSPATH')) exit;
 
-define('WCBD_FRAUD_GUARD_VERSION', '4.0.0');
+define('WCBD_FRAUD_GUARD_VERSION', '5.0.0');
 define('WCBD_FRAUD_GUARD_PATH', plugin_dir_path(__FILE__));
 define('WCBD_FRAUD_GUARD_URL', plugin_dir_url(__FILE__));
 
@@ -32,6 +33,7 @@ class WCBD_Fraud_Guard {
     private $endpoint = '${ENDPOINT_URL}';
     private $track_endpoint = '${TRACK_ENDPOINT_URL}';
     private $courier_endpoint = '${COURIER_ENDPOINT_URL}';
+    private $trust_score_endpoint = '${TRUST_SCORE_ENDPOINT_URL}';
     private $dashboard_url = '${DASHBOARD_URL}';
     private $whatsapp_default = '${WHATSAPP_DEFAULT}';
     
@@ -54,6 +56,7 @@ class WCBD_Fraud_Guard {
         add_option('wcbd_fraud_guard_msg_blacklist', 'আপনার অর্ডার ব্লক করা হয়েছে। সমস্যা হলে যোগাযোগ করুন।');
         add_option('wcbd_fraud_guard_whatsapp', $this->whatsapp_default);
         add_option('wcbd_fraud_guard_phone', $this->whatsapp_default);
+        add_option('wcbd_fraud_guard_enable_trust_score', '1');
         add_option('wcbd_fraud_guard_show_contact', '1');
     }
     
@@ -143,6 +146,7 @@ var WCBD_FG={
 deviceId:null,
 endpoint:"%%ENDPOINT%%",
 trackEndpoint:"%%TRACK_ENDPOINT%%",
+trustScoreEndpoint:"%%TRUST_SCORE_ENDPOINT%%",
 apiKey:"%%APIKEY%%",
 lang:"%%LANG%%",
 popupTimer:%%TIMER%%,
@@ -152,11 +156,12 @@ whatsapp:"%%WHATSAPP%%",
 phone:"%%PHONE%%",
 showContact:%%SHOW_CONTACT%%,
 enableTracking:%%ENABLE_TRACKING%%,
+enableTrustScore:%%ENABLE_TRUST_SCORE%%,
 remoteSettings:null,
 
 init:function(){
 var self=this;
-console.log("[WCBD Fraud Guard v4.0] Initializing...");
+console.log("[WCBD Fraud Guard v5.0] Initializing with Trust Score...");
 if(typeof FingerprintJS!=="undefined"){
 FingerprintJS.load().then(function(fp){fp.get().then(function(r){self.deviceId=r.visitorId;console.log("[WCBD] Device ID ready");});});
 }
@@ -167,7 +172,7 @@ if(this.enableTracking){
 this.setupAbandonedTracking();
 }
 
-console.log("[WCBD Fraud Guard v4.0] Ready");
+console.log("[WCBD Fraud Guard v5.0] Ready");
 },
 
 setupAbandonedTracking:function(){
@@ -217,6 +222,110 @@ var btn=f.find("button[type=submit]");
 btn.prop("disabled",true).data("txt",btn.text()).html(this.lang==="bn"?"চেক করা হচ্ছে...":"Checking...");
 console.log("[WCBD] Validating order...");
 
+// If trust score is enabled, check it first and show to merchant
+if(this.enableTrustScore){
+this.checkTrustScore(phone,function(trustData){
+// After showing trust score, proceed with normal validation
+self.checkEligibility(f,phone,btn,trustData);
+});
+return false;
+}
+
+// Normal flow without trust score
+this.checkEligibility(f,phone,btn,null);
+return false;
+},
+
+checkTrustScore:function(phone,callback){
+var self=this;
+console.log("[WCBD] Checking trust score for:",phone);
+
+jQ.ajax({
+url:this.trustScoreEndpoint,
+method:"POST",
+contentType:"application/json",
+data:JSON.stringify({api_key:this.apiKey,phone:phone}),
+success:function(r){
+console.log("[WCBD] Trust score response:",r);
+// Show trust score popup with accept/reject decision
+self.showTrustScorePopup(r,callback);
+},
+error:function(xhr,status,err){
+console.error("[WCBD] Trust score error:",err);
+// On error, proceed without trust score
+callback(null);
+}
+});
+},
+
+showTrustScorePopup:function(trustData,callback){
+var self=this;
+console.log("[WCBD] Showing trust score popup:",trustData);
+
+jQ("#wcbdTrustPopup").remove();
+
+var score=trustData.trust_score;
+var status=trustData.status;
+var history=trustData.history;
+var labelBn=trustData.label_bn;
+var color=trustData.color;
+
+var scoreColor=color==="green"?"#10b981":color==="yellow"?"#f59e0b":"#ef4444";
+if(status==="new_customer")scoreColor="#6b7280";
+
+var scoreDisplay=score!==null?score+"%":"N/A";
+var scoreText=this.lang==="bn"?labelBn:trustData.label_en;
+
+var historyHtml='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:20px 0">';
+historyHtml+='<div style="background:rgba(16,185,129,0.15);border-radius:10px;padding:10px;text-align:center"><p style="font-size:24px;font-weight:bold;color:#10b981;margin:0">'+history.delivered+'</p><p style="font-size:11px;color:#94a3b8;margin:5px 0 0">'+(this.lang==="bn"?"Delivered":"Delivered")+'</p></div>';
+historyHtml+='<div style="background:rgba(239,68,68,0.15);border-radius:10px;padding:10px;text-align:center"><p style="font-size:24px;font-weight:bold;color:#ef4444;margin:0">'+history.returned+'</p><p style="font-size:11px;color:#94a3b8;margin:5px 0 0">'+(this.lang==="bn"?"Returned":"Returned")+'</p></div>';
+historyHtml+='<div style="background:rgba(245,158,11,0.15);border-radius:10px;padding:10px;text-align:center"><p style="font-size:24px;font-weight:bold;color:#f59e0b;margin:0">'+history.pending+'</p><p style="font-size:11px;color:#94a3b8;margin:5px 0 0">'+(this.lang==="bn"?"Pending":"Pending")+'</p></div>';
+historyHtml+='</div>';
+
+var html='<div class="wcbd-fraud-popup-overlay" id="wcbdTrustPopup" style="z-index:2147483646!important">';
+html+='<div class="wcbd-fraud-popup-modal" style="max-width:480px!important">';
+html+='<div style="width:100px;height:100px;border-radius:50%;background:linear-gradient(135deg,'+scoreColor+','+scoreColor+'cc);display:flex;align-items:center;justify-content:center;margin:0 auto 15px;box-shadow:0 0 30px '+scoreColor+'40">';
+html+='<span style="font-size:28px;font-weight:bold;color:#fff">'+scoreDisplay+'</span>';
+html+='</div>';
+html+='<h3 class="wcbd-fraud-popup-title" style="font-size:18px">📊 Customer Trust Score</h3>';
+html+='<p style="font-size:14px;color:#fff;background:'+scoreColor+'30;padding:8px 16px;border-radius:20px;display:inline-block;margin:0 0 15px">'+scoreText+'</p>';
+html+='<p style="font-size:13px;color:#a0a0a0;margin:0 0 5px">'+(this.lang==="bn"?"ফোন: ":"Phone: ")+trustData.phone+'</p>';
+html+='<p style="font-size:13px;color:#a0a0a0;margin:0 0 15px">'+(this.lang==="bn"?"মোট অর্ডার: ":"Total Orders: ")+history.total_orders+'</p>';
+html+=historyHtml;
+html+='<div style="display:flex;gap:15px;justify-content:center;margin-top:20px">';
+html+='<button type="button" id="wcbdTrustAccept" style="padding:14px 40px;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;background:linear-gradient(135deg,#10b981,#059669);color:#fff;box-shadow:0 4px 15px rgba(16,185,129,0.3)">'+(this.lang==="bn"?"✓ Accept":"✓ Accept")+'</button>';
+html+='<button type="button" id="wcbdTrustReject" style="padding:14px 40px;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;box-shadow:0 4px 15px rgba(239,68,68,0.3)">'+(this.lang==="bn"?"✗ Reject":"✗ Reject")+'</button>';
+html+='</div>';
+html+='<p style="font-size:11px;color:#64748b;margin-top:20px">'+(this.lang==="bn"?"Courier delivery history থেকে trust score গণনা করা হয়েছে":"Trust score calculated from courier delivery history")+'</p>';
+html+='</div></div>';
+
+jQ(document.documentElement).append(html);
+
+// Handle Accept - proceed with order
+jQ("#wcbdTrustAccept").on("click",function(){
+jQ("#wcbdTrustPopup").remove();
+callback(trustData);
+});
+
+// Handle Reject - cancel order
+jQ("#wcbdTrustReject").on("click",function(){
+jQ("#wcbdTrustPopup").remove();
+jQ("form.checkout button[type=submit]").prop("disabled",false).text(jQ("form.checkout button[type=submit]").data("txt")||"Place Order");
+});
+
+// ESC key to close (treat as reject)
+jQ(document).on("keydown.wcbdTrust",function(e){
+if(e.key==="Escape"){
+jQ("#wcbdTrustPopup").remove();
+jQ("form.checkout button[type=submit]").prop("disabled",false).text(jQ("form.checkout button[type=submit]").data("txt")||"Place Order");
+jQ(document).off("keydown.wcbdTrust");
+}
+});
+},
+
+checkEligibility:function(f,phone,btn,trustData){
+var self=this;
+
 jQ.ajax({
 url:this.endpoint,
 method:"POST",
@@ -248,7 +357,6 @@ console.error("[WCBD] API Error:",err);
 f.off("checkout_place_order").submit();
 }
 });
-return false;
 },
 
 applyRemoteSettings:function(){
@@ -347,11 +455,13 @@ jQ(function(){WCBD_FG.init();});
 JSTEMPLATE;
 
         $enable_tracking = get_option('wcbd_fraud_guard_enable_tracking', '0');
+        $enable_trust_score = get_option('wcbd_fraud_guard_enable_trust_score', '1');
+        $trust_score_endpoint = esc_js($this->trust_score_endpoint);
         
         // Replace placeholders with actual PHP values
         $js = str_replace(
-            array('%%ENDPOINT%%', '%%TRACK_ENDPOINT%%', '%%APIKEY%%', '%%LANG%%', '%%TIMER%%', '%%MSG_COOLDOWN%%', '%%MSG_BLACKLIST%%', '%%WHATSAPP%%', '%%PHONE%%', '%%SHOW_CONTACT%%', '%%ENABLE_TRACKING%%'),
-            array($endpoint, esc_js($this->track_endpoint), esc_js($api_key), $language, $popup_timer, $msg_cooldown, $msg_blacklist, $whatsapp, $phone, ($show_contact === '1' ? 'true' : 'false'), ($enable_tracking === '1' ? 'true' : 'false')),
+            array('%%ENDPOINT%%', '%%TRACK_ENDPOINT%%', '%%TRUST_SCORE_ENDPOINT%%', '%%APIKEY%%', '%%LANG%%', '%%TIMER%%', '%%MSG_COOLDOWN%%', '%%MSG_BLACKLIST%%', '%%WHATSAPP%%', '%%PHONE%%', '%%SHOW_CONTACT%%', '%%ENABLE_TRACKING%%', '%%ENABLE_TRUST_SCORE%%'),
+            array($endpoint, esc_js($this->track_endpoint), $trust_score_endpoint, esc_js($api_key), $language, $popup_timer, $msg_cooldown, $msg_blacklist, $whatsapp, $phone, ($show_contact === '1' ? 'true' : 'false'), ($enable_tracking === '1' ? 'true' : 'false'), ($enable_trust_score === '1' ? 'true' : 'false')),
             $js_template
         );
         
@@ -513,14 +623,15 @@ ADMINJSTEMPLATE;
         $phone = get_option('wcbd_fraud_guard_phone', '');
         $show_contact = get_option('wcbd_fraud_guard_show_contact', '1');
         $enable_tracking = get_option('wcbd_fraud_guard_enable_tracking', '0');
+        $enable_trust_score = get_option('wcbd_fraud_guard_enable_trust_score', '1');
         
         ?>
         <div class="wrap">
             <div class="fraud-wrap">
                 <div class="fraud-header">
                     <div class="fraud-header-text">
-                        <h1>🛡️ WCBD Fraud Guard <span class="version">v4.0.0</span></h1>
-                        <p>Order Limiter & Anti-Fraud Protection for WooCommerce with Remote Settings & Courier Tracking</p>
+                        <h1>🛡️ WCBD Fraud Guard <span class="version">v5.0.0</span></h1>
+                        <p>Order Limiter & Anti-Fraud Protection with Trust Score, Remote Settings & Courier Tracking</p>
                     </div>
                 </div>
                 
@@ -627,9 +738,26 @@ ADMINJSTEMPLATE;
                         </div>
                     </div>
                     
+                    <!-- Customer Trust Score (NEW in v5.0) -->
+                    <div class="fraud-card" style="background:linear-gradient(135deg,#065f46,#047857);border:none">
+                        <h2 style="color:#fff">📊 Customer Trust Score (v5.0 Feature)</h2>
+                        <div class="fraud-form-group">
+                            <label class="fraud-toggle" style="color:#fff">
+                                <input type="checkbox" name="enable_trust_score" value="1" <?php checked($enable_trust_score, '1'); ?>>
+                                <span class="fraud-toggle-slider"></span>
+                                Enable Trust Score check on checkout
+                            </label>
+                            <p style="color:#a7f3d0;margin:15px 0 0;font-size:13px">
+                                🎯 Order দেওয়ার আগে customer এর courier delivery history দেখুন।<br>
+                                📈 Delivered vs Returned orders এর উপর ভিত্তি করে Trust Score calculate হয়।<br>
+                                ✓ Manual decision - আপনি নিজে Accept বা Reject করতে পারবেন।
+                            </p>
+                        </div>
+                    </div>
+                    
                     <!-- Remote Settings Info -->
                     <div class="fraud-card" style="background:linear-gradient(135deg,#0f172a,#1e293b);border:1px solid #334155">
-                        <h2 style="color:#00d4ff">🌐 Remote Settings (v4.0 Feature)</h2>
+                        <h2 style="color:#00d4ff">🌐 Remote Settings</h2>
                         <p style="color:#94a3b8;margin:0 0 15px">এই settings গুলো Dashboard থেকে centrally control করা যায়। Dashboard এ গিয়ে "Remote" tab এ settings পরিবর্তন করলে সব connected sites এ automatic apply হবে।</p>
                         <a href="<?php echo esc_url($this->dashboard_url); ?>" target="_blank" class="fraud-btn fraud-btn-primary" style="display:inline-flex;align-items:center;gap:8px">
                             📊 Go to Dashboard
@@ -719,6 +847,7 @@ ADMINJSTEMPLATE;
         update_option('wcbd_fraud_guard_phone', sanitize_text_field($_POST['phone'] ?? ''));
         update_option('wcbd_fraud_guard_show_contact', isset($_POST['show_contact']) ? '1' : '0');
         update_option('wcbd_fraud_guard_enable_tracking', isset($_POST['enable_tracking']) ? '1' : '0');
+        update_option('wcbd_fraud_guard_enable_trust_score', isset($_POST['enable_trust_score']) ? '1' : '0');
         
         wp_redirect(admin_url('admin.php?page=wcbd-fraud-guard&saved=1'));
         exit;
@@ -858,30 +987,37 @@ export const downloadPluginFile = async (apiKey: string): Promise<void> => {
     // Add README
     const readmeContent = `=== WCBD Fraud Guard ===
 Contributors: WebCreation BD
-Tags: woocommerce, fraud, security, order-limiter, abandoned-cart, courier-tracking
+Tags: woocommerce, fraud, security, order-limiter, trust-score, courier-tracking
 Requires at least: 5.0
 Tested up to: 6.4
 Requires PHP: 7.4
-Stable tag: 4.0.0
+Stable tag: 5.0.0
 License: GPLv2 or later
 
-WooCommerce Anti-Fraud Protection System with Order Limiting, Device Fingerprinting, Remote Settings, Abandoned Cart Tracking & Courier Order Tracking
+WooCommerce Anti-Fraud Protection System with Customer Trust Score, Order Limiting, Device Fingerprinting & Courier Integration
 
 == Description ==
 
 WCBD Fraud Guard protects your WooCommerce store from fake orders and fraud attempts using:
 
+* Customer Trust Score (NEW in v5.0) - Based on courier delivery history
 * Device Fingerprinting
 * Phone Number Blacklist
 * IP Address Blocking
 * Cooldown Period Management
 * Beautiful Popup Notifications
 * Domain-Locked API Security
-* Remote Settings Control (NEW in v4.0)
-* Abandoned Cart Tracking (NEW in v4.0)
-* Courier Status Integration (NEW in v4.0) - Steadfast, Pathao, RedX
+* Remote Settings Control
+* Abandoned Cart Tracking
+* Courier Status Integration - Steadfast, Pathao, RedX
 
-== Features in v4.0 ==
+== Features in v5.0 ==
+
+📊 **Customer Trust Score (NEW)**
+- Calculate trust score based on courier delivery history
+- See Delivered vs Returned orders percentage
+- Manual Accept/Reject decision before order processing
+- Works with Steadfast, Pathao, and RedX courier data
 
 🌐 **Remote Settings**
 - Control popup settings from Dashboard
@@ -903,10 +1039,18 @@ WCBD Fraud Guard protects your WooCommerce store from fake orders and fraud atte
 1. Upload the plugin folder to /wp-content/plugins/
 2. Activate the plugin through WordPress admin
 3. Configure your API key in Fraud Guard settings
-4. Set up courier credentials in Dashboard (for courier tracking)
+4. Set up courier credentials in Dashboard (for courier tracking & trust score)
 5. Done! Protection is now active on checkout
 
 == Changelog ==
+
+= 5.0.0 =
+* NEW: Customer Trust Score - See customer reliability before accepting orders
+* NEW: Trust Score popup with Accept/Reject buttons on checkout
+* NEW: Delivery history breakdown (Delivered/Returned/Pending)
+* NEW: Dashboard Trust Score Lookup tab
+* Improved: Better integration with courier data
+* Improved: Enhanced popup design for trust score
 
 = 4.0.0 =
 * NEW: Remote Settings - Control popup settings from Dashboard
@@ -945,7 +1089,7 @@ Visit: https://webcreation-bd.lovable.app/dashboard
     // Clean up
     URL.revokeObjectURL(url);
     
-    console.log('[WCBD Plugin] v4.0.0 downloaded successfully');
+    console.log('[WCBD Plugin] v5.0.0 downloaded successfully');
   } catch (error) {
     console.error('[WCBD Plugin] Download error:', error);
     throw error;

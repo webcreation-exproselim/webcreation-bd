@@ -34,6 +34,7 @@ interface Merchant {
   pathao_client_secret: string | null;
   pathao_username: string | null;
   pathao_password: string | null;
+  redx_api_token: string | null;
 }
 
 interface BlacklistEntry {
@@ -127,6 +128,7 @@ export function useMerchantData() {
           pathao_client_secret: merchantData.pathao_client_secret ?? null,
           pathao_username: merchantData.pathao_username ?? null,
           pathao_password: merchantData.pathao_password ?? null,
+          redx_api_token: merchantData.redx_api_token ?? null,
         };
         setMerchant(fullMerchant);
       }

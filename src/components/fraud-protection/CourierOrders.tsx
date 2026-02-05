@@ -19,6 +19,7 @@ interface CourierCredentials {
   pathao_client_secret: string;
   pathao_username: string;
   pathao_password: string;
+  redx_api_token: string;
 }
 
 interface CourierOrder {
@@ -62,7 +63,7 @@ export function CourierOrders({ merchantId, apiKey, initialCredentials }: Courie
   const [savingCreds, setSavingCreds] = useState(false);
   const [orders, setOrders] = useState<CourierOrder[]>([]);
   const [activeTab, setActiveTab] = useState<'orders' | 'settings'>('orders');
-  const [selectedCourier, setSelectedCourier] = useState<'steadfast' | 'pathao'>('steadfast');
+  const [selectedCourier, setSelectedCourier] = useState<'steadfast' | 'pathao' | 'redx'>('steadfast');
   const [searchQuery, setSearchQuery] = useState('');
   const [credentials, setCredentials] = useState<CourierCredentials>({
     steadfast_api_key: initialCredentials?.steadfast_api_key || '',
@@ -70,7 +71,8 @@ export function CourierOrders({ merchantId, apiKey, initialCredentials }: Courie
     pathao_client_id: initialCredentials?.pathao_client_id || '',
     pathao_client_secret: initialCredentials?.pathao_client_secret || '',
     pathao_username: initialCredentials?.pathao_username || '',
-    pathao_password: initialCredentials?.pathao_password || ''
+    pathao_password: initialCredentials?.pathao_password || '',
+    redx_api_token: initialCredentials?.redx_api_token || ''
   });
 
   const fetchOrders = async () => {
@@ -108,6 +110,7 @@ export function CourierOrders({ merchantId, apiKey, initialCredentials }: Courie
           pathao_client_secret: credentials.pathao_client_secret || null,
           pathao_username: credentials.pathao_username || null,
           pathao_password: credentials.pathao_password || null,
+          redx_api_token: credentials.redx_api_token || null,
           updated_at: new Date().toISOString()
         })
         .eq('id', merchantId);
@@ -134,7 +137,8 @@ export function CourierOrders({ merchantId, apiKey, initialCredentials }: Courie
           action: 'check_status',
           courier: selectedCourier,
           invoice: selectedCourier === 'steadfast' ? searchQuery : undefined,
-          consignment_id: selectedCourier === 'pathao' ? searchQuery : undefined
+          consignment_id: selectedCourier === 'pathao' ? searchQuery : undefined,
+          tracking_code: selectedCourier === 'redx' ? searchQuery : undefined
         }
       });
 
@@ -343,6 +347,25 @@ export function CourierOrders({ merchantId, apiKey, initialCredentials }: Courie
                 </div>
               </div>
 
+              {/* RedX Settings */}
+              <div className="p-4 rounded-lg bg-slate-900/50 border border-slate-700">
+                <h3 className="text-white font-medium mb-4 flex items-center gap-2">
+                  <Package className="h-4 w-4 text-rose-400" />
+                  RedX Courier
+                </h3>
+                <div className="space-y-2">
+                  <Label className="text-slate-300">API Token</Label>
+                  <Input
+                    type="password"
+                    value={credentials.redx_api_token}
+                    onChange={(e) => setCredentials({ ...credentials, redx_api_token: e.target.value })}
+                    className="bg-slate-800 border-slate-600 text-white"
+                    placeholder="Enter RedX API Token (from openapi.redx.com.bd)"
+                  />
+                  <p className="text-xs text-slate-500">RedX Developer API থেকে token নিন</p>
+                </div>
+              </div>
+
               <Button
                 onClick={handleSaveCredentials}
                 disabled={savingCreds}
@@ -356,19 +379,20 @@ export function CourierOrders({ merchantId, apiKey, initialCredentials }: Courie
             <div className="space-y-4">
               {/* Search */}
               <div className="flex gap-3">
-                <Select value={selectedCourier} onValueChange={(v) => setSelectedCourier(v as 'steadfast' | 'pathao')}>
+                <Select value={selectedCourier} onValueChange={(v) => setSelectedCourier(v as 'steadfast' | 'pathao' | 'redx')}>
                   <SelectTrigger className="w-40 bg-slate-900 border-slate-600 text-white">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="steadfast">Steadfast</SelectItem>
                     <SelectItem value="pathao">Pathao</SelectItem>
+                    <SelectItem value="redx">RedX</SelectItem>
                   </SelectContent>
                 </Select>
                 <Input
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={selectedCourier === 'steadfast' ? 'Invoice Number' : 'Consignment ID'}
+                  placeholder={selectedCourier === 'steadfast' ? 'Invoice Number' : selectedCourier === 'pathao' ? 'Consignment ID' : 'Tracking ID'}
                   className="flex-1 bg-slate-900 border-slate-600 text-white"
                   onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 />

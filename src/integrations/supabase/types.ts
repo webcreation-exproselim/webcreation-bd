@@ -310,6 +310,7 @@ export type Database = {
           plan_expires_at: string | null
           popup_language: string | null
           popup_timer_seconds: number | null
+          redx_api_token: string | null
           requests_used: number
           show_contact_buttons: boolean | null
           steadfast_api_key: string | null
@@ -340,6 +341,7 @@ export type Database = {
           plan_expires_at?: string | null
           popup_language?: string | null
           popup_timer_seconds?: number | null
+          redx_api_token?: string | null
           requests_used?: number
           show_contact_buttons?: boolean | null
           steadfast_api_key?: string | null
@@ -370,6 +372,7 @@ export type Database = {
           plan_expires_at?: string | null
           popup_language?: string | null
           popup_timer_seconds?: number | null
+          redx_api_token?: string | null
           requests_used?: number
           show_contact_buttons?: boolean | null
           steadfast_api_key?: string | null

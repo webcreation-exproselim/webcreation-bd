@@ -234,7 +234,8 @@ export default function FraudProtectionPage() {
                   pathao_client_id: merchant.pathao_client_id || '',
                   pathao_client_secret: merchant.pathao_client_secret || '',
                   pathao_username: merchant.pathao_username || '',
-                  pathao_password: merchant.pathao_password || ''
+                  pathao_password: merchant.pathao_password || '',
+                  redx_api_token: merchant.redx_api_token || ''
                 }}
               />
             )}

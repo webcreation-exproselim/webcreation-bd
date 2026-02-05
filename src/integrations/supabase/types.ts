@@ -14,6 +14,59 @@ export type Database = {
   }
   public: {
     Tables: {
+      abandoned_checkouts: {
+        Row: {
+          cart_data: Json | null
+          checkout_url: string | null
+          created_at: string
+          customer_email: string | null
+          customer_name: string | null
+          customer_phone: string
+          device_fingerprint: string | null
+          id: string
+          ip_address: string | null
+          is_recovered: boolean | null
+          merchant_id: string
+          recovered_at: string | null
+        }
+        Insert: {
+          cart_data?: Json | null
+          checkout_url?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone: string
+          device_fingerprint?: string | null
+          id?: string
+          ip_address?: string | null
+          is_recovered?: boolean | null
+          merchant_id: string
+          recovered_at?: string | null
+        }
+        Update: {
+          cart_data?: Json | null
+          checkout_url?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string
+          device_fingerprint?: string | null
+          id?: string
+          ip_address?: string | null
+          is_recovered?: boolean | null
+          merchant_id?: string
+          recovered_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "abandoned_checkouts_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       blacklist: {
         Row: {
           block_type: string
@@ -42,6 +95,65 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "blacklist_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      courier_orders: {
+        Row: {
+          cod_amount: number | null
+          consignment_id: string | null
+          courier_type: string
+          created_at: string
+          delivery_fee: number | null
+          id: string
+          invoice_number: string | null
+          last_synced_at: string | null
+          merchant_id: string
+          recipient_address: string | null
+          recipient_name: string | null
+          recipient_phone: string | null
+          status: string | null
+          tracking_code: string | null
+        }
+        Insert: {
+          cod_amount?: number | null
+          consignment_id?: string | null
+          courier_type: string
+          created_at?: string
+          delivery_fee?: number | null
+          id?: string
+          invoice_number?: string | null
+          last_synced_at?: string | null
+          merchant_id: string
+          recipient_address?: string | null
+          recipient_name?: string | null
+          recipient_phone?: string | null
+          status?: string | null
+          tracking_code?: string | null
+        }
+        Update: {
+          cod_amount?: number | null
+          consignment_id?: string | null
+          courier_type?: string
+          created_at?: string
+          delivery_fee?: number | null
+          id?: string
+          invoice_number?: string | null
+          last_synced_at?: string | null
+          merchant_id?: string
+          recipient_address?: string | null
+          recipient_name?: string | null
+          recipient_phone?: string | null
+          status?: string | null
+          tracking_code?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "courier_orders_merchant_id_fkey"
             columns: ["merchant_id"]
             isOneToOne: false
             referencedRelation: "merchants"
@@ -178,49 +290,94 @@ export type Database = {
       }
       merchants: {
         Row: {
+          abandoned_timeout_minutes: number | null
           api_key: string
           cooldown_period_days: number
           cooldown_period_minutes: number
           created_at: string
           current_plan: string | null
+          enable_abandoned_tracking: boolean | null
           id: string
           is_active: boolean
           max_requests: number
+          msg_blacklist: string | null
+          msg_cooldown: string | null
+          pathao_client_id: string | null
+          pathao_client_secret: string | null
+          pathao_password: string | null
+          pathao_username: string | null
+          phone_number: string | null
           plan_expires_at: string | null
+          popup_language: string | null
+          popup_timer_seconds: number | null
           requests_used: number
+          show_contact_buttons: boolean | null
+          steadfast_api_key: string | null
+          steadfast_secret_key: string | null
           updated_at: string
           user_id: string
           website_url: string | null
+          whatsapp_number: string | null
         }
         Insert: {
+          abandoned_timeout_minutes?: number | null
           api_key?: string
           cooldown_period_days?: number
           cooldown_period_minutes?: number
           created_at?: string
           current_plan?: string | null
+          enable_abandoned_tracking?: boolean | null
           id?: string
           is_active?: boolean
           max_requests?: number
+          msg_blacklist?: string | null
+          msg_cooldown?: string | null
+          pathao_client_id?: string | null
+          pathao_client_secret?: string | null
+          pathao_password?: string | null
+          pathao_username?: string | null
+          phone_number?: string | null
           plan_expires_at?: string | null
+          popup_language?: string | null
+          popup_timer_seconds?: number | null
           requests_used?: number
+          show_contact_buttons?: boolean | null
+          steadfast_api_key?: string | null
+          steadfast_secret_key?: string | null
           updated_at?: string
           user_id: string
           website_url?: string | null
+          whatsapp_number?: string | null
         }
         Update: {
+          abandoned_timeout_minutes?: number | null
           api_key?: string
           cooldown_period_days?: number
           cooldown_period_minutes?: number
           created_at?: string
           current_plan?: string | null
+          enable_abandoned_tracking?: boolean | null
           id?: string
           is_active?: boolean
           max_requests?: number
+          msg_blacklist?: string | null
+          msg_cooldown?: string | null
+          pathao_client_id?: string | null
+          pathao_client_secret?: string | null
+          pathao_password?: string | null
+          pathao_username?: string | null
+          phone_number?: string | null
           plan_expires_at?: string | null
+          popup_language?: string | null
+          popup_timer_seconds?: number | null
           requests_used?: number
+          show_contact_buttons?: boolean | null
+          steadfast_api_key?: string | null
+          steadfast_secret_key?: string | null
           updated_at?: string
           user_id?: string
           website_url?: string | null
+          whatsapp_number?: string | null
         }
         Relationships: []
       }

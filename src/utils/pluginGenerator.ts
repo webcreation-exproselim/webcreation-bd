@@ -1,4 +1,5 @@
 const ENDPOINT_URL = 'https://gtjmfvwkatrorhuyrpby.supabase.co/functions/v1/check-order-eligibility';
+const TRACK_ENDPOINT_URL = 'https://gtjmfvwkatrorhuyrpby.supabase.co/functions/v1/track-checkout';
 const DASHBOARD_URL = 'https://webcreation-bd.lovable.app/dashboard';
 const WHATSAPP_DEFAULT = '+8801332052874';
 import JSZip from 'jszip';
@@ -10,8 +11,8 @@ export const generateMainPluginFile = (apiKey: string): string => {
 /**
  * Plugin Name: WCBD Fraud Guard
  * Plugin URI: https://webcreation-bd.lovable.app/fraud-guard
- * Description: Order Limiter & Anti-Fraud System for WooCommerce - Protect your store from fake orders
- * Version: 3.3.0
+ * Description: Order Limiter & Anti-Fraud System for WooCommerce - Protect your store from fake orders with remote settings, abandoned cart tracking, and more.
+ * Version: 4.0.0
  * Author: WebCreation BD
  * Author URI: https://webcreation-bd.lovable.app
  * Text Domain: wcbd-fraud-guard
@@ -21,7 +22,7 @@ export const generateMainPluginFile = (apiKey: string): string => {
 
 if (!defined('ABSPATH')) exit;
 
-define('WCBD_FRAUD_GUARD_VERSION', '3.3.0');
+define('WCBD_FRAUD_GUARD_VERSION', '4.0.0');
 define('WCBD_FRAUD_GUARD_PATH', plugin_dir_path(__FILE__));
 define('WCBD_FRAUD_GUARD_URL', plugin_dir_url(__FILE__));
 
@@ -29,6 +30,7 @@ class WCBD_Fraud_Guard {
     
     private $api_key = '${apiKey}';
     private $endpoint = '${ENDPOINT_URL}';
+    private $track_endpoint = '${TRACK_ENDPOINT_URL}';
     private $dashboard_url = '${DASHBOARD_URL}';
     private $whatsapp_default = '${WHATSAPP_DEFAULT}';
     
@@ -138,6 +140,7 @@ class WCBD_Fraud_Guard {
 var WCBD_FG={
 deviceId:null,
 endpoint:"%%ENDPOINT%%",
+trackEndpoint:"%%TRACK_ENDPOINT%%",
 apiKey:"%%APIKEY%%",
 lang:"%%LANG%%",
 popupTimer:%%TIMER%%,
@@ -146,15 +149,63 @@ msgBlacklist:"%%MSG_BLACKLIST%%",
 whatsapp:"%%WHATSAPP%%",
 phone:"%%PHONE%%",
 showContact:%%SHOW_CONTACT%%,
+enableTracking:%%ENABLE_TRACKING%%,
+remoteSettings:null,
 
 init:function(){
 var self=this;
-console.log("[WCBD Fraud Guard v3.3] Initializing...");
+console.log("[WCBD Fraud Guard v4.0] Initializing...");
 if(typeof FingerprintJS!=="undefined"){
 FingerprintJS.load().then(function(fp){fp.get().then(function(r){self.deviceId=r.visitorId;console.log("[WCBD] Device ID ready");});});
 }
 jQ("form.checkout").on("checkout_place_order",function(){return self.validate(jQ(this));});
-console.log("[WCBD Fraud Guard v3.3] Ready");
+
+// Track abandoned checkouts
+if(this.enableTracking){
+this.setupAbandonedTracking();
+}
+
+console.log("[WCBD Fraud Guard v4.0] Ready");
+},
+
+setupAbandonedTracking:function(){
+var self=this;
+var debounceTimer=null;
+var tracked=false;
+
+jQ("#billing_phone, #billing_first_name, #billing_last_name").on("blur",function(){
+if(tracked)return;
+clearTimeout(debounceTimer);
+debounceTimer=setTimeout(function(){
+var phone=jQ("#billing_phone").val();
+var name=jQ("#billing_first_name").val()+" "+jQ("#billing_last_name").val();
+if(phone&&phone.length>=10){
+tracked=true;
+self.trackCheckout("started",phone.trim(),name.trim());
+}
+},1000);
+});
+
+// Mark as completed when order is placed
+jQ(document.body).on("checkout_place_order_success woocommerce_checkout_place_order_success",function(){
+var phone=jQ("#billing_phone").val();
+if(phone){
+self.trackCheckout("completed",phone.trim());
+}
+});
+},
+
+trackCheckout:function(action,phone,name){
+var self=this;
+console.log("[WCBD] Tracking checkout:",action,phone);
+jQ.ajax({
+url:this.trackEndpoint,
+method:"POST",
+contentType:"application/json",
+data:JSON.stringify({api_key:this.apiKey,action:action,phone:phone,name:name||"",device_id:this.deviceId,checkout_url:window.location.href}),
+success:function(r){console.log("[WCBD] Tracking response:",r);},
+error:function(xhr,status,err){console.error("[WCBD] Tracking error:",err);}
+});
 },
 
 validate:function(f){
@@ -171,7 +222,18 @@ contentType:"application/json",
 data:JSON.stringify({api_key:this.apiKey,phone:phone,device_id:this.deviceId,domain:window.location.hostname}),
 success:function(r){
 console.log("[WCBD] API Response:",r);
+
+// Update settings from server if available
+if(r.popup_settings){
+self.remoteSettings=r.popup_settings;
+self.applyRemoteSettings();
+}
+
 if(r.allowed){
+// Track as completed before submitting
+if(self.enableTracking){
+self.trackCheckout("completed",phone);
+}
 f.off("checkout_place_order").submit();
 }else{
 var customMsg=r.reason==="blacklist"?self.msgBlacklist:self.msgCooldown;
@@ -185,6 +247,19 @@ f.off("checkout_place_order").submit();
 }
 });
 return false;
+},
+
+applyRemoteSettings:function(){
+if(!this.remoteSettings)return;
+var s=this.remoteSettings;
+if(s.timer!==undefined)this.popupTimer=s.timer;
+if(s.language)this.lang=s.language;
+if(s.msg_cooldown)this.msgCooldown=s.msg_cooldown;
+if(s.msg_blacklist)this.msgBlacklist=s.msg_blacklist;
+if(s.whatsapp)this.whatsapp=s.whatsapp;
+if(s.phone)this.phone=s.phone;
+if(s.show_contact!==undefined)this.showContact=s.show_contact;
+console.log("[WCBD] Applied remote settings");
 },
 
 formatTime:function(mins){
@@ -269,10 +344,12 @@ jQ(function(){WCBD_FG.init();});
 })(jQuery);
 JSTEMPLATE;
 
+        $enable_tracking = get_option('wcbd_fraud_guard_enable_tracking', '0');
+        
         // Replace placeholders with actual PHP values
         $js = str_replace(
-            array('%%ENDPOINT%%', '%%APIKEY%%', '%%LANG%%', '%%TIMER%%', '%%MSG_COOLDOWN%%', '%%MSG_BLACKLIST%%', '%%WHATSAPP%%', '%%PHONE%%', '%%SHOW_CONTACT%%'),
-            array($endpoint, esc_js($api_key), $language, $popup_timer, $msg_cooldown, $msg_blacklist, $whatsapp, $phone, ($show_contact === '1' ? 'true' : 'false')),
+            array('%%ENDPOINT%%', '%%TRACK_ENDPOINT%%', '%%APIKEY%%', '%%LANG%%', '%%TIMER%%', '%%MSG_COOLDOWN%%', '%%MSG_BLACKLIST%%', '%%WHATSAPP%%', '%%PHONE%%', '%%SHOW_CONTACT%%', '%%ENABLE_TRACKING%%'),
+            array($endpoint, esc_js($this->track_endpoint), esc_js($api_key), $language, $popup_timer, $msg_cooldown, $msg_blacklist, $whatsapp, $phone, ($show_contact === '1' ? 'true' : 'false'), ($enable_tracking === '1' ? 'true' : 'false')),
             $js_template
         );
         
@@ -369,14 +446,15 @@ ADMINJSTEMPLATE;
         $whatsapp = get_option('wcbd_fraud_guard_whatsapp', '');
         $phone = get_option('wcbd_fraud_guard_phone', '');
         $show_contact = get_option('wcbd_fraud_guard_show_contact', '1');
+        $enable_tracking = get_option('wcbd_fraud_guard_enable_tracking', '0');
         
         ?>
         <div class="wrap">
             <div class="fraud-wrap">
                 <div class="fraud-header">
                     <div class="fraud-header-text">
-                        <h1>🛡️ WCBD Fraud Guard <span class="version">v3.3.0</span></h1>
-                        <p>Order Limiter & Anti-Fraud Protection for WooCommerce</p>
+                        <h1>🛡️ WCBD Fraud Guard <span class="version">v4.0.0</span></h1>
+                        <p>Order Limiter & Anti-Fraud Protection for WooCommerce with Remote Settings</p>
                     </div>
                 </div>
                 
@@ -462,6 +540,28 @@ ADMINJSTEMPLATE;
                         </div>
                     </div>
                     
+                    <!-- Abandoned Cart Tracking -->
+                    <div class="fraud-card">
+                        <h2>🛒 Abandoned Cart Tracking</h2>
+                        <div class="fraud-form-group">
+                            <label class="fraud-toggle">
+                                <input type="checkbox" name="enable_tracking" value="1" <?php checked($enable_tracking, '1'); ?>>
+                                <span class="fraud-toggle-slider"></span>
+                                Track customers who leave checkout without ordering
+                            </label>
+                            <small style="display:block;margin-top:10px">যারা checkout থেকে order না করে চলে যায় তাদের track করুন। Dashboard এ abandoned carts দেখতে পাবেন।</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Remote Settings Info -->
+                    <div class="fraud-card" style="background:linear-gradient(135deg,#0f172a,#1e293b);border:1px solid #334155">
+                        <h2 style="color:#00d4ff">🌐 Remote Settings (v4.0 Feature)</h2>
+                        <p style="color:#94a3b8;margin:0 0 15px">এই settings গুলো Dashboard থেকে centrally control করা যায়। Dashboard এ গিয়ে "Remote" tab এ settings পরিবর্তন করলে সব connected sites এ automatic apply হবে।</p>
+                        <a href="<?php echo esc_url($this->dashboard_url); ?>" target="_blank" class="fraud-btn fraud-btn-primary" style="display:inline-flex;align-items:center;gap:8px">
+                            📊 Go to Dashboard
+                        </a>
+                    </div>
+                    
                     <button type="submit" class="fraud-btn fraud-btn-primary" style="width:100%;padding:15px;font-size:16px">
                         💾 Save Settings
                     </button>
@@ -507,6 +607,7 @@ ADMINJSTEMPLATE;
         update_option('wcbd_fraud_guard_whatsapp', sanitize_text_field($_POST['whatsapp'] ?? ''));
         update_option('wcbd_fraud_guard_phone', sanitize_text_field($_POST['phone'] ?? ''));
         update_option('wcbd_fraud_guard_show_contact', isset($_POST['show_contact']) ? '1' : '0');
+        update_option('wcbd_fraud_guard_enable_tracking', isset($_POST['enable_tracking']) ? '1' : '0');
         
         wp_redirect(admin_url('admin.php?page=wcbd-fraud-guard&saved=1'));
         exit;
@@ -567,14 +668,14 @@ export const downloadPluginFile = async (apiKey: string): Promise<void> => {
     // Add README
     const readmeContent = `=== WCBD Fraud Guard ===
 Contributors: WebCreation BD
-Tags: woocommerce, fraud, security, order-limiter
+Tags: woocommerce, fraud, security, order-limiter, abandoned-cart
 Requires at least: 5.0
 Tested up to: 6.4
 Requires PHP: 7.4
-Stable tag: 3.3.0
+Stable tag: 4.0.0
 License: GPLv2 or later
 
-WooCommerce Anti-Fraud Protection System with Order Limiting & Device Fingerprinting
+WooCommerce Anti-Fraud Protection System with Order Limiting, Device Fingerprinting, Remote Settings & Abandoned Cart Tracking
 
 == Description ==
 
@@ -586,6 +687,9 @@ WCBD Fraud Guard protects your WooCommerce store from fake orders and fraud atte
 * Cooldown Period Management
 * Beautiful Popup Notifications
 * Domain-Locked API Security
+* Remote Settings Control (NEW in v4.0)
+* Abandoned Cart Tracking (NEW in v4.0)
+* Courier Status Integration (NEW in v4.0)
 
 == Installation ==
 
@@ -595,6 +699,13 @@ WCBD Fraud Guard protects your WooCommerce store from fake orders and fraud atte
 4. Done! Protection is now active on checkout
 
 == Changelog ==
+
+= 4.0.0 =
+* NEW: Remote Settings - Control popup settings from Dashboard
+* NEW: Abandoned Cart Tracking - Track customers who leave without ordering
+* NEW: Courier Integration - Check Steadfast & Pathao order status
+* Improved: Server-side settings priority over local settings
+* Improved: Real-time settings sync without plugin update
 
 = 3.3.0 =
 * Fixed: PHP Heredoc syntax to prevent JavaScript variable escaping issues
@@ -624,7 +735,7 @@ Visit: https://webcreation-bd.lovable.app/dashboard
     // Clean up
     URL.revokeObjectURL(url);
     
-    console.log('[WCBD Plugin] v3.3.0 downloaded successfully');
+    console.log('[WCBD Plugin] v4.0.0 downloaded successfully');
   } catch (error) {
     console.error('[WCBD Plugin] Download error:', error);
     throw error;

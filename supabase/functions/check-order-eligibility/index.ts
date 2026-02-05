@@ -2,7 +2,18 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
+}
+
+// Default popup settings
+const DEFAULT_POPUP_SETTINGS = {
+  timer: 30,
+  language: 'bn',
+  msg_cooldown: 'আপনি সম্প্রতি অর্ডার করেছেন। অনুগ্রহ করে কিছুক্ষণ অপেক্ষা করুন।',
+  msg_blacklist: 'আপনার অর্ডার ব্লক করা হয়েছে। সমস্যা হলে যোগাযোগ করুন।',
+  whatsapp: '',
+  phone: '',
+  show_contact: true
 }
 
 interface CheckRequest {
@@ -60,10 +71,10 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Step 1: Validate API Key and get merchant data
+    // Step 1: Validate API Key and get merchant data (including popup settings)
     const { data: merchant, error: merchantError } = await supabase
       .from('merchants')
-      .select('id, cooldown_period_minutes, is_active, plan_expires_at, requests_used, max_requests, website_url')
+      .select('id, cooldown_period_minutes, is_active, plan_expires_at, requests_used, max_requests, website_url, popup_timer_seconds, popup_language, msg_cooldown, msg_blacklist, whatsapp_number, phone_number, show_contact_buttons')
       .eq('api_key', api_key)
       .single()
 
@@ -76,6 +87,17 @@ Deno.serve(async (req) => {
     }
 
     console.log('Merchant found:', merchant.id, 'Active:', merchant.is_active, 'Cooldown:', merchant.cooldown_period_minutes, 'minutes', 'Website:', merchant.website_url)
+
+    // Build popup settings from merchant data or use defaults
+    const popupSettings = {
+      timer: merchant.popup_timer_seconds ?? DEFAULT_POPUP_SETTINGS.timer,
+      language: merchant.popup_language ?? DEFAULT_POPUP_SETTINGS.language,
+      msg_cooldown: merchant.msg_cooldown ?? DEFAULT_POPUP_SETTINGS.msg_cooldown,
+      msg_blacklist: merchant.msg_blacklist ?? DEFAULT_POPUP_SETTINGS.msg_blacklist,
+      whatsapp: merchant.whatsapp_number ?? DEFAULT_POPUP_SETTINGS.whatsapp,
+      phone: merchant.phone_number ?? DEFAULT_POPUP_SETTINGS.phone,
+      show_contact: merchant.show_contact_buttons ?? DEFAULT_POPUP_SETTINGS.show_contact
+    }
 
     // Step 1.5: Validate Domain Binding (NEW)
     if (merchant.website_url && domain) {
@@ -176,8 +198,9 @@ Deno.serve(async (req) => {
         JSON.stringify({
           allowed: false,
           reason: 'blacklist',
-          message: 'আপনি অর্ডার করতে পারবেন না। আপনাকে ব্লক করা হয়েছে।',
-          blocked_type: entry.block_type
+          message: popupSettings.msg_blacklist,
+          blocked_type: entry.block_type,
+          popup_settings: popupSettings
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
@@ -247,8 +270,9 @@ Deno.serve(async (req) => {
         JSON.stringify({
           allowed: false,
           reason: 'cooldown',
-          message: `আপনি ইতিমধ্যে অর্ডার করেছেন। দয়া করে ${timeMessage} অপেক্ষা করুন।`,
-          minutes_remaining: minutesRemaining > 0 ? minutesRemaining : 1
+          message: popupSettings.msg_cooldown,
+          minutes_remaining: minutesRemaining > 0 ? minutesRemaining : 1,
+          popup_settings: popupSettings
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
@@ -280,7 +304,7 @@ Deno.serve(async (req) => {
     console.log('Order allowed for merchant:', merchant.id)
 
     return new Response(
-      JSON.stringify({ allowed: true }),
+      JSON.stringify({ allowed: true, popup_settings: popupSettings }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
 

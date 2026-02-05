@@ -5,3 +5,9 @@ verify_jwt = false
 
 [functions.check-order-eligibility]
 verify_jwt = false
+
+[functions.track-checkout]
+verify_jwt = false
+
+[functions.courier-status]
+verify_jwt = false

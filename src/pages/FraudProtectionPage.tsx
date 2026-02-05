@@ -8,8 +8,11 @@ import { BlacklistManager } from "@/components/fraud-protection/BlacklistManager
 import { FraudLogs } from "@/components/fraud-protection/FraudLogs";
 import { IntegrationCode } from "@/components/fraud-protection/IntegrationCode";
 import { PluginDownload } from "@/components/fraud-protection/PluginDownload";
+import { PluginRemoteSettings } from "@/components/fraud-protection/PluginRemoteSettings";
+import { AbandonedCarts } from "@/components/fraud-protection/AbandonedCarts";
+import { CourierOrders } from "@/components/fraud-protection/CourierOrders";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Settings, Shield, FileText, Code, Loader2, Download } from "lucide-react";
+import { ArrowLeft, Settings, Shield, FileText, Code, Loader2, Download, Globe, ShoppingCart, Truck } from "lucide-react";
 
 export default function FraudProtectionPage() {
   const navigate = useNavigate();
@@ -24,8 +27,22 @@ export default function FraudProtectionPage() {
     regenerateApiKey,
     addToBlacklist,
     removeFromBlacklist,
-    refetchLogs
+    refetchLogs,
+    refetchMerchant
   } = useMerchantData();
+
+  const handleToggleAbandonedTracking = async (enabled: boolean) => {
+    if (!merchant?.id) return;
+    
+    const { error } = await supabase
+      .from('merchants')
+      .update({ enable_abandoned_tracking: enabled })
+      .eq('id', merchant.id);
+    
+    if (!error) {
+      refetchMerchant();
+    }
+  };
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -87,7 +104,7 @@ export default function FraudProtectionPage() {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="settings" className="space-y-6">
-          <TabsList className="bg-slate-800/50 border border-slate-700 p-1">
+          <TabsList className="bg-slate-800/50 border border-slate-700 p-1 flex-wrap h-auto gap-1">
             <TabsTrigger 
               value="settings" 
               className="data-[state=active]:bg-cyan-600 data-[state=active]:text-white"
@@ -123,6 +140,27 @@ export default function FraudProtectionPage() {
               <Download className="h-4 w-4 mr-2" />
               Plugin
             </TabsTrigger>
+            <TabsTrigger 
+              value="remote"
+              className="data-[state=active]:bg-cyan-600 data-[state=active]:text-white"
+            >
+              <Globe className="h-4 w-4 mr-2" />
+              Remote
+            </TabsTrigger>
+            <TabsTrigger 
+              value="abandoned"
+              className="data-[state=active]:bg-cyan-600 data-[state=active]:text-white"
+            >
+              <ShoppingCart className="h-4 w-4 mr-2" />
+              Abandoned
+            </TabsTrigger>
+            <TabsTrigger 
+              value="courier"
+              className="data-[state=active]:bg-cyan-600 data-[state=active]:text-white"
+            >
+              <Truck className="h-4 w-4 mr-2" />
+              Courier
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="settings">
@@ -156,6 +194,50 @@ export default function FraudProtectionPage() {
 
           <TabsContent value="plugin">
             {merchant && <PluginDownload apiKey={merchant.api_key} />}
+          </TabsContent>
+
+          <TabsContent value="remote">
+            {merchant && (
+              <PluginRemoteSettings 
+                merchantId={merchant.id}
+                initialSettings={{
+                  popup_timer_seconds: merchant.popup_timer_seconds,
+                  popup_language: merchant.popup_language,
+                  msg_cooldown: merchant.msg_cooldown,
+                  msg_blacklist: merchant.msg_blacklist,
+                  whatsapp_number: merchant.whatsapp_number || '',
+                  phone_number: merchant.phone_number || '',
+                  show_contact_buttons: merchant.show_contact_buttons
+                }}
+              />
+            )}
+          </TabsContent>
+
+          <TabsContent value="abandoned">
+            {merchant && (
+              <AbandonedCarts 
+                merchantId={merchant.id}
+                trackingEnabled={merchant.enable_abandoned_tracking}
+                onToggleTracking={handleToggleAbandonedTracking}
+              />
+            )}
+          </TabsContent>
+
+          <TabsContent value="courier">
+            {merchant && (
+              <CourierOrders 
+                merchantId={merchant.id}
+                apiKey={merchant.api_key}
+                initialCredentials={{
+                  steadfast_api_key: merchant.steadfast_api_key || '',
+                  steadfast_secret_key: merchant.steadfast_secret_key || '',
+                  pathao_client_id: merchant.pathao_client_id || '',
+                  pathao_client_secret: merchant.pathao_client_secret || '',
+                  pathao_username: merchant.pathao_username || '',
+                  pathao_password: merchant.pathao_password || ''
+                }}
+              />
+            )}
           </TabsContent>
         </Tabs>
       </main>

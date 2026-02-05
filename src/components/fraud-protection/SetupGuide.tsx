@@ -85,10 +85,10 @@ export function SetupGuide({ apiKey, isActive, merchantId, onPurchaseSuccess }: 
           </div>
           <div className="flex-1">
             <h3 className="text-lg font-bold text-gray-900 font-bengali mb-1">
-              WCBD Fraud Guard Plugin v3.3.0
+              WCBD Fraud Guard Plugin v4.0.0
             </h3>
             <p className="text-sm text-gray-600 font-bengali mb-4">
-              WordPress/WooCommerce-এর জন্য Anti-Fraud Protection Plugin - Timer, Custom Messages, Contact Info সহ
+              WordPress/WooCommerce-এর জন্য Anti-Fraud Protection Plugin - Remote Settings, Abandoned Cart, Courier Tracking সহ
             </p>
             
             <div className="flex flex-wrap gap-3">

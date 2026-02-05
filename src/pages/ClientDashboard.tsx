@@ -89,7 +89,7 @@ export default function ClientDashboard() {
   const { toast } = useToast();
   
   // Fraud Guard merchant data
-  const { merchant, refetchMerchant } = useMerchantData();
+   const { merchant, refetchMerchant, updateCooldownMinutes } = useMerchantData();
   const { pendingOrder, refetch: refetchSubscription } = useSubscriptionData(merchant?.id || null);
 
   useEffect(() => {
@@ -499,6 +499,7 @@ export default function ClientDashboard() {
             refetchMerchant();
             refetchSubscription();
           }}
+           onUpdateCooldownMinutes={updateCooldownMinutes}
           />
         </motion.div>
 

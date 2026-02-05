@@ -214,15 +214,10 @@ export function FraudGuardQuickStatus({
            
            {/* Cooldown Timer - Quick Access */}
            {merchant?.id && onUpdateCooldownMinutes && (
-             <div className="mt-3 pt-3 border-t border-emerald-200/50">
-               <div className="flex items-center gap-3 flex-wrap">
-                 <span className="text-xs text-gray-500 font-bengali">⏱️ Cooldown:</span>
-                 <CooldownEditor
-                   cooldownMinutes={merchant.cooldown_period_minutes}
-                   onUpdate={onUpdateCooldownMinutes}
-                 />
-               </div>
-             </div>
+              <CooldownEditor
+                cooldownMinutes={merchant.cooldown_period_minutes}
+                onUpdate={onUpdateCooldownMinutes}
+              />
            )}
           
           <div className="flex gap-2 flex-wrap">

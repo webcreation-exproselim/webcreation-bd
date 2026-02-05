@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Search, User, Globe, Loader2, Check, Shield } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 
 interface UserProfile {
   user_id: string;
@@ -38,6 +39,7 @@ export function AssignPlanModal({ open, onOpenChange, onSuccess }: AssignPlanMod
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [planType, setPlanType] = useState<'monthly' | 'yearly'>('monthly');
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -48,6 +50,7 @@ export function AssignPlanModal({ open, onOpenChange, onSuccess }: AssignPlanMod
       setWebsiteUrl("");
       setPlanType('monthly');
       setSearch("");
+      setError(null);
     }
   }, [open]);
 
@@ -73,8 +76,23 @@ export function AssignPlanModal({ open, onOpenChange, onSuccess }: AssignPlanMod
     }
   };
 
+  // Normalize URL - accepts full URLs, subdomains, and paths
+  const normalizeUrl = (url: string): string => {
+    let normalized = url.trim();
+    // Remove protocol
+    normalized = normalized.replace(/^https?:\/\//, '');
+    // Remove www
+    normalized = normalized.replace(/^www\./, '');
+    // Remove trailing slash
+    normalized = normalized.replace(/\/$/, '');
+    return normalized;
+  };
+
   const handleAssignPlan = async () => {
+    setError(null);
+    
     if (!selectedUser) {
+      setError("অনুগ্রহ করে User নির্বাচন করুন");
       toast({
         title: "Error",
         description: "Please select a user",
@@ -98,8 +116,11 @@ export function AssignPlanModal({ open, onOpenChange, onSuccess }: AssignPlanMod
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + (planType === 'yearly' ? 365 : 30));
 
+      // Normalize the URL before saving
+      const normalizedUrl = normalizeUrl(websiteUrl);
+
       const planData = {
-        website_url: websiteUrl.trim(),
+        website_url: normalizedUrl,
         is_active: true,
         current_plan: planType,
         plan_expires_at: expiresAt.toISOString(),
@@ -116,17 +137,22 @@ export function AssignPlanModal({ open, onOpenChange, onSuccess }: AssignPlanMod
         .maybeSingle();
 
       if (checkError) throw checkError;
-
-      if (existingMerchant) {
+      
+      console.log('Merchant check result:', existingMerchant);
+      
+      if (existingMerchant && existingMerchant.id) {
         // Update existing merchant
+        console.log('Updating existing merchant:', existingMerchant.id);
         const { error: updateError } = await supabase
           .from('merchants')
           .update(planData)
           .eq('id', existingMerchant.id);
 
         if (updateError) throw updateError;
+        console.log('Merchant updated successfully');
       } else {
         // Create new merchant
+        console.log('Creating new merchant for user:', selectedUser.user_id);
         const { error: insertError } = await supabase
           .from('merchants')
           .insert({
@@ -135,20 +161,23 @@ export function AssignPlanModal({ open, onOpenChange, onSuccess }: AssignPlanMod
           });
 
         if (insertError) throw insertError;
+        console.log('Merchant created successfully');
       }
 
       toast({
         title: "✅ Plan Assigned Successfully",
-        description: `${planType === 'yearly' ? 'Yearly' : 'Monthly'} plan assigned to ${selectedUser.full_name || 'User'}`,
+        description: `${planType === 'yearly' ? 'Yearly' : 'Monthly'} plan assigned to ${selectedUser.full_name || 'User'} for ${normalizedUrl}`,
       });
 
       onOpenChange(false);
       onSuccess();
-    } catch (error) {
-      console.error('Error assigning plan:', error);
+    } catch (err: any) {
+      console.error('Error assigning plan:', err);
+      const errorMessage = err?.message || 'Unknown error';
+      setError(`Plan assign করতে সমস্যা: ${errorMessage}`);
       toast({
         title: "Error",
-        description: "Failed to assign plan",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -259,23 +288,44 @@ export function AssignPlanModal({ open, onOpenChange, onSuccess }: AssignPlanMod
             </Select>
           </div>
 
+          {/* Error Display */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-red-700 font-bengali">{error}</p>
+            </div>
+          )}
+
           {/* Selected User Summary */}
           {selectedUser && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
               <p className="text-sm text-blue-800 font-bengali">
                 <strong>{selectedUser.full_name || 'User'}</strong> কে{' '}
                 <strong>{planType === 'yearly' ? 'Yearly (৳699)' : 'Monthly (৳100)'}</strong>{' '}
-                plan assign করা হবে
+                plan assign করা হবে।
+                {websiteUrl.trim() && (
+                  <span className="block mt-1 text-xs text-blue-600">
+                    📍 Domain: <code className="bg-blue-100 px-1 rounded">{normalizeUrl(websiteUrl)}</code>
+                  </span>
+                )}
               </p>
             </div>
           )}
+
+          {/* URL Format Help */}
+          <div className="text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded-lg p-2 font-bengali">
+            💡 Full URL, subdomain, বা path সহ দিতে পারেন। যেমন: example.com, shop.example.com/store
+          </div>
 
           {/* Actions */}
           <div className="flex gap-2 pt-2">
             <Button
               variant="outline"
               className="flex-1 font-bengali"
-              onClick={() => onOpenChange(false)}
+              onClick={() => {
+                setError(null);
+                onOpenChange(false);
+              }}
             >
               বাতিল
             </Button>
@@ -284,7 +334,14 @@ export function AssignPlanModal({ open, onOpenChange, onSuccess }: AssignPlanMod
               onClick={handleAssignPlan}
               disabled={saving || !selectedUser || !websiteUrl.trim()}
             >
-              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Plan Assign করুন"}
+              {saving ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin mr-1" />
+                  Assigning...
+                </>
+              ) : (
+                "✅ Plan Assign করুন"
+              )}
             </Button>
           </div>
         </div>

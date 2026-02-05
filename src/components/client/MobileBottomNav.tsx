@@ -1,4 +1,4 @@
-import { Package, FileText, MessageCircle, Shield, User } from "lucide-react";
+import { Package, FileText, MessageCircle, Shield, User, LayoutDashboard } from "lucide-react";
 import { motion } from "framer-motion";
 
 type TabType = "orders" | "invoices" | "chat" | "fraudguard" | "profile";
@@ -12,10 +12,10 @@ interface MobileBottomNavProps {
 
 const tabs = [
   { id: "orders" as TabType, label: "অর্ডার", icon: Package },
-  { id: "invoices" as TabType, label: "ইনভয়েস", icon: FileText },
+  { id: "invoices" as TabType, label: "বিল", icon: FileText },
   { id: "chat" as TabType, label: "চ্যাট", icon: MessageCircle },
   { id: "fraudguard" as TabType, label: "Guard", icon: Shield },
-  { id: "profile" as TabType, label: "প্রোফাইল", icon: User },
+  { id: "profile" as TabType, label: "আমি", icon: User },
 ];
 
 export function MobileBottomNav({
@@ -25,23 +25,28 @@ export function MobileBottomNav({
   hasPendingOrder,
 }: MobileBottomNavProps) {
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl border-t border-gray-100 safe-area-pb">
-      <div className="flex items-center justify-around px-2 py-2">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl border-t border-gray-200 safe-area-pb">
+      <div className="flex items-center justify-around px-1 py-1.5">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
           const isFraudGuard = tab.id === "fraudguard";
-          
+
           return (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className="relative flex flex-col items-center justify-center py-1.5 px-3 min-w-[60px] rounded-xl transition-all"
+              className="relative flex flex-col items-center justify-center py-1 px-2 flex-1 max-w-[72px]"
             >
-              <div
-                className={`relative p-2 rounded-xl transition-all duration-200 ${
+              <motion.div
+                animate={{
+                  scale: isActive ? 1 : 0.9,
+                  y: isActive ? -4 : 0,
+                }}
+                transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                className={`relative p-2.5 rounded-2xl transition-all duration-200 ${
                   isActive
-                    ? "bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg shadow-blue-500/25"
+                    ? "bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg shadow-blue-500/30"
                     : "bg-transparent"
                 }`}
               >
@@ -58,21 +63,15 @@ export function MobileBottomNav({
                     }`}
                   />
                 )}
-              </div>
-              <span
-                className={`text-[10px] font-bengali mt-1 transition-colors ${
-                  isActive ? "text-blue-600 font-medium" : "text-gray-400"
+              </motion.div>
+              <motion.span
+                animate={{ opacity: isActive ? 1 : 0.6 }}
+                className={`text-[10px] font-bengali mt-0.5 transition-colors ${
+                  isActive ? "text-blue-600 font-semibold" : "text-gray-500"
                 }`}
               >
                 {tab.label}
-              </span>
-              {isActive && (
-                <motion.div
-                  layoutId="activeTabIndicator"
-                  className="absolute -bottom-1 w-1 h-1 rounded-full bg-blue-600"
-                  transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                />
-              )}
+              </motion.span>
             </button>
           );
         })}

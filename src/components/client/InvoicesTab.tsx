@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { FileText, CheckCircle, Clock, AlertCircle, Download, CreditCard, Loader2 } from "lucide-react";
+import { FileText, CheckCircle, Clock, AlertCircle, Download, CreditCard, Loader2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import html2pdf from "html2pdf.js";
@@ -95,32 +95,22 @@ export function InvoicesTab({ invoices }: InvoicesTabProps) {
 
   if (invoices.length === 0) {
     return (
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 md:p-12 text-center shadow-sm">
-        <FileText className="w-12 h-12 md:w-16 md:h-16 text-gray-200 mx-auto mb-3 md:mb-4" />
-        <p className="text-gray-500 font-bengali text-sm md:text-base">কোন ইনভয়েস নেই</p>
+      <div className="bg-white rounded-2xl border border-gray-200 p-8 md:p-12 text-center">
+        <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-4">
+          <FileText className="w-8 h-8 text-gray-400" />
+        </div>
+        <h3 className="text-lg font-semibold text-gray-900 font-bengali mb-2">কোন ইনভয়েস নেই</h3>
+        <p className="text-gray-500 font-bengali text-sm">আপনার ইনভয়েস এখানে দেখা যাবে</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-3 md:space-y-4">
+    <div className="space-y-4">
       {invoices.map((invoice, idx) => {
         const dueAmount = Number(invoice.amount) - Number(invoice.paid_amount);
-        const StatusIcon = invoice.status === "paid" 
-          ? CheckCircle 
-          : invoice.status === "partial" 
-          ? Clock 
-          : AlertCircle;
-        const statusColor = invoice.status === "paid"
-          ? "bg-emerald-100 text-emerald-600"
-          : invoice.status === "partial"
-          ? "bg-amber-100 text-amber-600"
-          : "bg-red-100 text-red-600";
-        const statusText = invoice.status === "paid" 
-          ? "পরিশোধিত" 
-          : invoice.status === "partial"
-          ? "আংশিক"
-          : "বাকি";
+        const isPaid = invoice.status === "paid";
+        const isPartial = invoice.status === "partial";
 
         return (
           <motion.div
@@ -128,76 +118,87 @@ export function InvoicesTab({ invoices }: InvoicesTabProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: idx * 0.05 }}
-            className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+            className="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-lg hover:border-gray-300 transition-all duration-300"
           >
-            <div className="h-1 bg-gradient-to-r from-blue-500 to-purple-500" />
-            
-            <div className="p-3.5 md:p-5">
-              {/* Header */}
-              <div className="flex items-start gap-3 mb-3 md:mb-4">
-                <div className={`w-10 h-10 md:w-11 md:h-11 rounded-xl ${statusColor} flex items-center justify-center flex-shrink-0`}>
-                  <StatusIcon className="w-5 h-5" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-mono text-sm md:text-base font-bold text-gray-900">
-                      {invoice.invoice_number}
-                    </span>
-                    <span className={`px-1.5 py-0.5 rounded-full text-[10px] md:text-xs font-bold ${statusColor}`}>
-                      {statusText}
-                    </span>
+            {/* Status Bar */}
+            <div className={`h-1 ${isPaid ? "bg-emerald-500" : isPartial ? "bg-amber-500" : "bg-red-500"}`} />
+
+            <div className="p-5">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                {/* Left Side */}
+                <div className="flex items-center gap-4">
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                    isPaid ? "bg-emerald-100" : isPartial ? "bg-amber-100" : "bg-red-100"
+                  }`}>
+                    {isPaid ? (
+                      <CheckCircle className="w-6 h-6 text-emerald-600" />
+                    ) : isPartial ? (
+                      <Clock className="w-6 h-6 text-amber-600" />
+                    ) : (
+                      <AlertCircle className="w-6 h-6 text-red-600" />
+                    )}
                   </div>
-                  <p className="text-gray-400 text-[11px] md:text-xs font-bengali mt-0.5">
-                    {new Date(invoice.created_at).toLocaleDateString("bn-BD")}
-                  </p>
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-mono text-base font-bold text-gray-900">
+                        {invoice.invoice_number}
+                      </span>
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                        isPaid ? "bg-emerald-100 text-emerald-600" :
+                        isPartial ? "bg-amber-100 text-amber-600" :
+                        "bg-red-100 text-red-600"
+                      }`}>
+                        {isPaid ? "পরিশোধিত" : isPartial ? "আংশিক" : "বাকি"}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-500">
+                      {new Date(invoice.created_at).toLocaleDateString("bn-BD")}
+                    </p>
+                  </div>
                 </div>
-              </div>
 
-              {/* Amount Grid */}
-              <div className="grid grid-cols-3 gap-2 mb-3 p-2.5 md:p-3.5 bg-gray-50 rounded-xl">
-                <div className="text-center">
-                  <p className="text-gray-400 text-[10px] md:text-xs font-bengali mb-0.5">মোট</p>
-                  <p className="text-gray-900 font-bold text-xs md:text-sm">৳{Number(invoice.amount).toLocaleString()}</p>
-                </div>
-                <div className="text-center border-x border-gray-200">
-                  <p className="text-gray-400 text-[10px] md:text-xs font-bengali mb-0.5">পরিশোধিত</p>
-                  <p className="text-emerald-600 font-bold text-xs md:text-sm">৳{Number(invoice.paid_amount).toLocaleString()}</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-gray-400 text-[10px] md:text-xs font-bengali mb-0.5">বাকি</p>
-                  <p className={`font-bold text-xs md:text-sm ${dueAmount > 0 ? 'text-red-500' : 'text-emerald-500'}`}>
-                    ৳{dueAmount.toLocaleString()}
-                  </p>
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => downloadInvoice(invoice)}
-                  disabled={downloadingInvoiceId === invoice.id}
-                  className="flex-1 text-blue-600 border-blue-200 hover:bg-blue-50 font-bengali text-xs md:text-sm h-9 md:h-10"
-                >
-                  {downloadingInvoiceId === invoice.id ? (
-                    <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                  ) : (
-                    <Download className="w-3.5 h-3.5 mr-1.5" />
+                {/* Amount Section */}
+                <div className="flex items-center gap-6">
+                  <div className="text-right">
+                    <p className="text-xs text-gray-500 font-bengali">মোট</p>
+                    <p className="text-lg font-bold text-gray-900">৳{Number(invoice.amount).toLocaleString()}</p>
+                  </div>
+                  {!isPaid && (
+                    <div className="text-right">
+                      <p className="text-xs text-gray-500 font-bengali">বাকি</p>
+                      <p className="text-lg font-bold text-red-500">৳{dueAmount.toLocaleString()}</p>
+                    </div>
                   )}
-                  {downloadingInvoiceId === invoice.id ? "..." : "PDF"}
-                </Button>
-                {invoice.status !== "paid" && (
-                  <Link to={`/checkout?invoice=${invoice.id}&amount=${dueAmount}`} className="flex-1">
-                    <Button
-                      size="sm"
-                      className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:opacity-90 text-white font-bengali text-xs md:text-sm h-9 md:h-10"
-                    >
-                      <CreditCard className="w-3.5 h-3.5 mr-1.5" />
-                      পেমেন্ট
-                    </Button>
-                  </Link>
-                )}
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => downloadInvoice(invoice)}
+                    disabled={downloadingInvoiceId === invoice.id}
+                    className="border-gray-200 hover:bg-gray-100 font-bengali"
+                  >
+                    {downloadingInvoiceId === invoice.id ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Download className="w-4 h-4 mr-2" />
+                    )}
+                    PDF
+                  </Button>
+                  {!isPaid && (
+                    <Link to={`/checkout?invoice=${invoice.id}&amount=${dueAmount}`}>
+                      <Button
+                        size="sm"
+                        className="bg-gradient-to-r from-blue-600 to-purple-600 hover:opacity-90 text-white font-bengali"
+                      >
+                        <CreditCard className="w-4 h-4 mr-2" />
+                        পেমেন্ট
+                      </Button>
+                    </Link>
+                  )}
+                </div>
               </div>
             </div>
           </motion.div>

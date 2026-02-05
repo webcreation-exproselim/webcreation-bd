@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Package, FileText, CheckCircle, Shield } from "lucide-react";
+import { Package, FileText, CheckCircle, Shield, TrendingUp, ArrowUpRight } from "lucide-react";
 
 interface Order {
   id: string;
@@ -18,6 +18,33 @@ interface DashboardStatsCardsProps {
   onFraudGuardClick: () => void;
 }
 
+const statCards = [
+  {
+    key: "total",
+    label: "মোট অর্ডার",
+    icon: Package,
+    gradient: "from-blue-500 to-blue-600",
+    lightBg: "bg-blue-50",
+    iconColor: "text-blue-600",
+  },
+  {
+    key: "completed",
+    label: "সম্পন্ন",
+    icon: CheckCircle,
+    gradient: "from-emerald-500 to-emerald-600",
+    lightBg: "bg-emerald-50",
+    iconColor: "text-emerald-600",
+  },
+  {
+    key: "invoices",
+    label: "ইনভয়েস",
+    icon: FileText,
+    gradient: "from-amber-500 to-orange-500",
+    lightBg: "bg-amber-50",
+    iconColor: "text-amber-600",
+  },
+];
+
 export function DashboardStatsCards({
   orders,
   invoicesCount,
@@ -26,95 +53,93 @@ export function DashboardStatsCards({
   onFraudGuardClick,
 }: DashboardStatsCardsProps) {
   const completedOrders = orders.filter((o) => o.status === "completed").length;
+  const pendingOrders = orders.filter((o) => o.status === "pending" || o.status === "processing").length;
+
+  const getStatValue = (key: string) => {
+    switch (key) {
+      case "total":
+        return orders.length;
+      case "completed":
+        return completedOrders;
+      case "invoices":
+        return invoicesCount;
+      default:
+        return 0;
+    }
+  };
 
   return (
-    <div className="grid grid-cols-2 gap-3 md:gap-4 mb-4 md:mb-6">
-      {/* Total Orders */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="bg-white rounded-2xl border border-gray-100 p-3.5 md:p-5 shadow-sm hover:shadow-md transition-shadow"
-      >
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 md:w-11 md:h-11 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
-            <Package className="w-5 h-5 md:w-5.5 md:h-5.5 text-blue-600" />
-          </div>
-          <div className="min-w-0">
-            <p className="text-gray-500 text-[11px] md:text-xs font-bengali truncate">মোট অর্ডার</p>
-            <p className="text-xl md:text-2xl font-bold text-gray-900">{orders.length}</p>
-          </div>
-        </div>
-      </motion.div>
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      {statCards.map((stat, idx) => {
+        const Icon = stat.icon;
+        const value = getStatValue(stat.key);
 
-      {/* Completed Orders */}
+        return (
+          <motion.div
+            key={stat.key}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: idx * 0.05 }}
+            className="group relative bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-xl hover:border-gray-200 transition-all duration-300 overflow-hidden"
+          >
+            {/* Gradient accent */}
+            <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${stat.gradient}`} />
+            
+            <div className="flex items-start justify-between mb-4">
+              <div className={`w-12 h-12 rounded-xl ${stat.lightBg} flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                <Icon className={`w-6 h-6 ${stat.iconColor}`} />
+              </div>
+              <div className="flex items-center gap-1 text-emerald-500 text-xs font-medium">
+                <TrendingUp className="w-3 h-3" />
+                <span>+12%</span>
+              </div>
+            </div>
+            
+            <div>
+              <p className="text-3xl font-bold text-gray-900 mb-1">{value}</p>
+              <p className="text-sm text-gray-500 font-bengali">{stat.label}</p>
+            </div>
+          </motion.div>
+        );
+      })}
+
+      {/* Fraud Guard Special Card */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15 }}
-        className="bg-white rounded-2xl border border-gray-100 p-3.5 md:p-5 shadow-sm hover:shadow-md transition-shadow"
-      >
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 md:w-11 md:h-11 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0">
-            <CheckCircle className="w-5 h-5 md:w-5.5 md:h-5.5 text-emerald-600" />
-          </div>
-          <div className="min-w-0">
-            <p className="text-gray-500 text-[11px] md:text-xs font-bengali truncate">সম্পন্ন</p>
-            <p className="text-xl md:text-2xl font-bold text-gray-900">{completedOrders}</p>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Total Invoices */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="bg-white rounded-2xl border border-gray-100 p-3.5 md:p-5 shadow-sm hover:shadow-md transition-shadow"
-      >
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 md:w-11 md:h-11 rounded-xl bg-amber-100 flex items-center justify-center flex-shrink-0">
-            <FileText className="w-5 h-5 md:w-5.5 md:h-5.5 text-amber-600" />
-          </div>
-          <div className="min-w-0">
-            <p className="text-gray-500 text-[11px] md:text-xs font-bengali truncate">ইনভয়েস</p>
-            <p className="text-xl md:text-2xl font-bold text-gray-900">{invoicesCount}</p>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Fraud Guard Status */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.25 }}
         onClick={onFraudGuardClick}
-        className={`rounded-2xl border p-3.5 md:p-5 shadow-sm hover:shadow-lg transition-all cursor-pointer group active:scale-[0.98] ${
-          merchant?.is_active 
-            ? "bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-200" 
-            : hasPendingOrder 
-              ? "bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200"
-              : "bg-gradient-to-br from-purple-50 to-blue-50 border-purple-200"
+        className={`group relative rounded-2xl p-5 cursor-pointer transition-all duration-300 overflow-hidden ${
+          merchant?.is_active
+            ? "bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/20 hover:shadow-xl hover:shadow-emerald-500/30"
+            : hasPendingOrder
+            ? "bg-gradient-to-br from-amber-500 to-orange-500 shadow-lg shadow-amber-500/20 hover:shadow-xl hover:shadow-amber-500/30"
+            : "bg-gradient-to-br from-purple-600 to-blue-600 shadow-lg shadow-purple-500/20 hover:shadow-xl hover:shadow-purple-500/30"
         }`}
       >
-        <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 md:w-11 md:h-11 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform flex-shrink-0 ${
-            merchant?.is_active 
-              ? "bg-gradient-to-br from-emerald-500 to-teal-500 shadow-emerald-500/25" 
-              : hasPendingOrder 
-                ? "bg-gradient-to-br from-amber-500 to-orange-500 shadow-amber-500/25"
-                : "bg-gradient-to-br from-purple-600 to-blue-600 shadow-purple-500/25"
-          }`}>
-            <Shield className="w-5 h-5 md:w-5.5 md:h-5.5 text-white" />
+        {/* Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full blur-2xl transform translate-x-1/2 -translate-y-1/2" />
+        </div>
+
+        <div className="relative z-10">
+          <div className="flex items-start justify-between mb-4">
+            <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 transition-transform">
+              <Shield className="w-6 h-6 text-white" />
+            </div>
+            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-white/30 transition-colors">
+              <ArrowUpRight className="w-4 h-4 text-white" />
+            </div>
           </div>
-          <div className="min-w-0 flex-1">
-            <p className={`text-[11px] md:text-xs font-bengali font-medium truncate ${
-              merchant?.is_active ? "text-emerald-600" : hasPendingOrder ? "text-amber-600" : "text-purple-600"
-            }`}>
-              Fraud Guard
-            </p>
-            <p className="text-sm md:text-base font-semibold text-gray-900 font-bengali truncate">
-              {merchant?.is_active ? "সক্রিয় ✓" : hasPendingOrder ? "Pending" : "Setup →"}
+
+          <div className="text-white">
+            <p className="text-2xl font-bold mb-1">Fraud Guard</p>
+            <p className="text-sm text-white/80 font-bengali">
+              {merchant?.is_active
+                ? "সক্রিয় ✓"
+                : hasPendingOrder
+                ? "অপেক্ষমাণ"
+                : "সেটআপ করুন →"}
             </p>
           </div>
         </div>

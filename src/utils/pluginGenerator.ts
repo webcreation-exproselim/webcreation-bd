@@ -1,9 +1,9 @@
 const ENDPOINT_URL = 'https://gtjmfvwkatrorhuyrpby.supabase.co/functions/v1/check-order-eligibility';
 const TRACK_ENDPOINT_URL = 'https://gtjmfvwkatrorhuyrpby.supabase.co/functions/v1/track-checkout';
+const COURIER_ENDPOINT_URL = 'https://gtjmfvwkatrorhuyrpby.supabase.co/functions/v1/courier-status';
 const DASHBOARD_URL = 'https://webcreation-bd.lovable.app/dashboard';
 const WHATSAPP_DEFAULT = '+8801332052874';
 import JSZip from 'jszip';
-
 export const generateMainPluginFile = (apiKey: string): string => {
   // Use PHP heredoc syntax (<<<'SCRIPT') to completely avoid PHP variable interpolation
   // This ensures JavaScript $ variables are NOT parsed by PHP
@@ -31,6 +31,7 @@ class WCBD_Fraud_Guard {
     private $api_key = '${apiKey}';
     private $endpoint = '${ENDPOINT_URL}';
     private $track_endpoint = '${TRACK_ENDPOINT_URL}';
+    private $courier_endpoint = '${COURIER_ENDPOINT_URL}';
     private $dashboard_url = '${DASHBOARD_URL}';
     private $whatsapp_default = '${WHATSAPP_DEFAULT}';
     
@@ -41,6 +42,7 @@ class WCBD_Fraud_Guard {
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
         add_action('admin_post_wcbd_fraud_guard_save_settings', array($this, 'save_settings'));
         add_action('wp_ajax_wcbd_fraud_guard_test_api', array($this, 'test_api_connection'));
+        add_action('wp_ajax_wcbd_fraud_guard_check_courier', array($this, 'ajax_check_courier'));
         add_action('wp_footer', array($this, 'inject_popup_styles'), 99);
         
         register_activation_hook(__FILE__, array($this, 'set_default_options'));
@@ -389,6 +391,17 @@ JSTEMPLATE;
         .fraud-form-group{margin-bottom:20px}
         .fraud-form-group label{display:block;font-weight:500;margin-bottom:8px;color:#374151}
         .fraud-form-group small{display:block;margin-top:5px;color:#9ca3af;font-size:12px}
+        .wcbd-tabs{display:flex;gap:10px;margin-bottom:25px;border-bottom:2px solid #e5e7eb;padding-bottom:15px}
+        .wcbd-tab-btn{padding:10px 20px;border:none;border-radius:10px 10px 0 0;cursor:pointer;font-size:14px;font-weight:600;background:#f1f5f9;color:#64748b;transition:all 0.2s}
+        .wcbd-tab-btn.active{background:linear-gradient(135deg,#0891b2,#0e7490);color:#fff}
+        .wcbd-tab-btn:hover:not(.active){background:#e2e8f0}
+        .wcbd-tab-content{display:none}
+        .wcbd-tab-content.active{display:block}
+        .courier-card{background:linear-gradient(145deg,#1a1a2e,#16213e);border:1px solid #334155;border-radius:16px;padding:25px}
+        .courier-card h2{color:#00d4ff;margin:0 0 20px;border-bottom:1px solid #334155}
+        .courier-card label{color:#e2e8f0}
+        .courier-card .fraud-input,.courier-card .fraud-select{background:#0f172a;border-color:#334155;color:#fff}
+        .courier-card .fraud-input:focus{border-color:#00d4ff}
         ';
     }
     
@@ -400,6 +413,16 @@ JSTEMPLATE;
         $js_template = <<<'ADMINJSTEMPLATE'
 (function(jQ){
 jQ(document).ready(function(){
+// Tab switching
+jQ(".wcbd-tab-btn").on("click",function(){
+var tab=jQ(this).data("tab");
+jQ(".wcbd-tab-btn").removeClass("active");
+jQ(this).addClass("active");
+jQ(".wcbd-tab-content").removeClass("active");
+jQ("#wcbd-tab-"+tab).addClass("active");
+});
+
+// Test API
 jQ("#wcbd-test-api").on("click",function(){
 var btn=jQ(this);
 var result=jQ("#wcbd-api-result");
@@ -422,6 +445,49 @@ result.addClass("error").text("✗ Connection failed");
 },
 complete:function(){
 btn.prop("disabled",false).text("Test Connection");
+}
+});
+});
+
+// Courier Tracking
+jQ("#wcbd-check-courier").on("click",function(){
+var btn=jQ(this);
+var courier=jQ("#wcbd-courier-type").val();
+var tracking=jQ("#wcbd-tracking-id").val();
+var resultBox=jQ("#wcbd-courier-result");
+
+if(!tracking){
+resultBox.html('<div style="color:#ef4444">Tracking ID দিন</div>');
+return;
+}
+
+btn.prop("disabled",true).html("Checking...");
+resultBox.html('<div style="color:#64748b">🔄 Loading...</div>');
+
+jQ.ajax({
+url:"%%AJAX_URL%%",
+method:"POST",
+data:{action:"wcbd_fraud_guard_check_courier",nonce:"%%NONCE%%",courier:courier,tracking:tracking},
+success:function(r){
+if(r.success&&r.data){
+var d=r.data;
+var html='<div style="background:#0f172a;border-radius:12px;padding:15px;border:1px solid #334155">';
+html+='<div style="display:flex;justify-content:space-between;margin-bottom:10px"><span style="color:#94a3b8">Courier</span><strong style="color:#00d4ff">'+courier.toUpperCase()+'</strong></div>';
+html+='<div style="display:flex;justify-content:space-between;margin-bottom:10px"><span style="color:#94a3b8">Status</span><strong style="color:#10b981">'+d.status+'</strong></div>';
+if(d.recipient_name){html+='<div style="display:flex;justify-content:space-between;margin-bottom:10px"><span style="color:#94a3b8">Recipient</span><span style="color:#fff">'+d.recipient_name+'</span></div>';}
+if(d.recipient_phone){html+='<div style="display:flex;justify-content:space-between;margin-bottom:10px"><span style="color:#94a3b8">Phone</span><span style="color:#fff">'+d.recipient_phone+'</span></div>';}
+if(d.cod_amount){html+='<div style="display:flex;justify-content:space-between;margin-bottom:10px"><span style="color:#94a3b8">COD Amount</span><strong style="color:#fbbf24">৳'+d.cod_amount+'</strong></div>';}
+html+='</div>';
+resultBox.html(html);
+}else{
+resultBox.html('<div style="color:#ef4444">❌ '+(r.data||"Not found")+'</div>');
+}
+},
+error:function(){
+resultBox.html('<div style="color:#ef4444">❌ Connection failed</div>');
+},
+complete:function(){
+btn.prop("disabled",false).html("🔍 Track Order");
 }
 });
 });
@@ -454,10 +520,18 @@ ADMINJSTEMPLATE;
                 <div class="fraud-header">
                     <div class="fraud-header-text">
                         <h1>🛡️ WCBD Fraud Guard <span class="version">v4.0.0</span></h1>
-                        <p>Order Limiter & Anti-Fraud Protection for WooCommerce with Remote Settings</p>
+                        <p>Order Limiter & Anti-Fraud Protection for WooCommerce with Remote Settings & Courier Tracking</p>
                     </div>
                 </div>
                 
+                <!-- Tabs -->
+                <div class="wcbd-tabs">
+                    <button type="button" class="wcbd-tab-btn active" data-tab="settings">⚙️ Settings</button>
+                    <button type="button" class="wcbd-tab-btn" data-tab="courier">🚚 Courier Tracking</button>
+                </div>
+                
+                <!-- Settings Tab -->
+                <div id="wcbd-tab-settings" class="wcbd-tab-content active">
                 <form method="post" action="<?php echo admin_url('admin-post.php'); ?>">
                     <input type="hidden" name="action" value="wcbd_fraud_guard_save_settings">
                     <?php wp_nonce_field('wcbd_fraud_guard_settings', 'wcbd_fraud_guard_nonce'); ?>
@@ -566,6 +640,43 @@ ADMINJSTEMPLATE;
                         💾 Save Settings
                     </button>
                 </form>
+                </div><!-- End Settings Tab -->
+                
+                <!-- Courier Tracking Tab -->
+                <div id="wcbd-tab-courier" class="wcbd-tab-content">
+                    <div class="courier-card">
+                        <h2>🚚 Courier Order Tracking</h2>
+                        <p style="color:#94a3b8;margin:-10px 0 20px">Steadfast, Pathao, RedX - যেকোনো courier এর order track করুন</p>
+                        
+                        <div class="fraud-grid fraud-grid-2" style="margin-bottom:20px">
+                            <div class="fraud-form-group">
+                                <label style="color:#e2e8f0">Courier Service</label>
+                                <select id="wcbd-courier-type" class="fraud-select" style="width:100%;background:#0f172a;border-color:#334155;color:#fff">
+                                    <option value="steadfast">Steadfast Courier</option>
+                                    <option value="pathao">Pathao</option>
+                                    <option value="redx">RedX</option>
+                                </select>
+                            </div>
+                            <div class="fraud-form-group">
+                                <label style="color:#e2e8f0">Invoice / Tracking ID</label>
+                                <input type="text" id="wcbd-tracking-id" class="fraud-input" style="background:#0f172a;border-color:#334155;color:#fff" placeholder="Enter Invoice or Tracking ID">
+                            </div>
+                        </div>
+                        
+                        <button type="button" id="wcbd-check-courier" class="fraud-btn fraud-btn-primary" style="width:100%;padding:15px;font-size:16px;margin-bottom:20px">
+                            🔍 Track Order
+                        </button>
+                        
+                        <div id="wcbd-courier-result"></div>
+                        
+                        <div style="margin-top:20px;padding:15px;background:#0f172a;border-radius:10px;border:1px solid #334155">
+                            <p style="color:#64748b;font-size:13px;margin:0">
+                                💡 <strong style="color:#e2e8f0">Tips:</strong> Courier credentials Dashboard এ সেট করুন। 
+                                <a href="<?php echo esc_url($this->dashboard_url); ?>" target="_blank" style="color:#00d4ff">Dashboard → Fraud Guard → Courier</a> এ গিয়ে API keys দিন।
+                            </p>
+                        </div>
+                    </div>
+                </div><!-- End Courier Tab -->
                 
                 <!-- WebCreation BD Branding -->
                 <div style="margin-top:30px;padding:25px;background:linear-gradient(135deg,#0f172a,#1e293b);border-radius:16px;text-align:center;border:1px solid #334155">
@@ -645,6 +756,85 @@ ADMINJSTEMPLATE;
         
         wp_send_json_success();
     }
+    
+    public function ajax_check_courier() {
+        check_ajax_referer('wcbd_fraud_guard_nonce', 'nonce');
+        
+        $api_key = get_option('wcbd_fraud_guard_api_key', '');
+        $courier = sanitize_text_field($_POST['courier'] ?? 'steadfast');
+        $tracking = sanitize_text_field($_POST['tracking'] ?? '');
+        
+        if (empty($api_key)) {
+            wp_send_json_error('API key not configured');
+        }
+        
+        if (empty($tracking)) {
+            wp_send_json_error('Tracking ID required');
+        }
+        
+        $body_data = array(
+            'api_key' => $api_key,
+            'action' => 'check_status',
+            'courier' => $courier
+        );
+        
+        // Set the right identifier based on courier
+        if ($courier === 'steadfast') {
+            $body_data['invoice'] = $tracking;
+        } elseif ($courier === 'pathao') {
+            $body_data['consignment_id'] = $tracking;
+        } else {
+            $body_data['tracking_code'] = $tracking;
+        }
+        
+        $response = wp_remote_post($this->courier_endpoint, array(
+            'timeout' => 30,
+            'headers' => array('Content-Type' => 'application/json'),
+            'body' => json_encode($body_data)
+        ));
+        
+        if (is_wp_error($response)) {
+            wp_send_json_error($response->get_error_message());
+        }
+        
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+        
+        if (isset($body['error'])) {
+            wp_send_json_error($body['error']);
+        }
+        
+        if (isset($body['success']) && $body['success'] && isset($body['data'])) {
+            // Extract relevant data from different courier response formats
+            $data = $body['data'];
+            $result = array(
+                'status' => 'Unknown',
+                'recipient_name' => null,
+                'recipient_phone' => null,
+                'cod_amount' => null
+            );
+            
+            if ($courier === 'steadfast' && isset($data['delivery'])) {
+                $result['status'] = $data['delivery']['delivery_status'] ?? 'Unknown';
+                $result['recipient_name'] = $data['delivery']['recipient_name'] ?? null;
+                $result['recipient_phone'] = $data['delivery']['recipient_phone'] ?? null;
+                $result['cod_amount'] = $data['delivery']['cod_amount'] ?? null;
+            } elseif ($courier === 'pathao' && isset($data['data'])) {
+                $result['status'] = $data['data']['order_status'] ?? 'Unknown';
+                $result['recipient_name'] = $data['data']['recipient_name'] ?? null;
+                $result['recipient_phone'] = $data['data']['recipient_phone'] ?? null;
+                $result['cod_amount'] = $data['data']['amount_to_collect'] ?? null;
+            } elseif ($courier === 'redx' && isset($data['tracking'])) {
+                $result['status'] = $data['tracking']['status'] ?? 'Unknown';
+                $result['recipient_name'] = $data['tracking']['customer_name'] ?? null;
+                $result['recipient_phone'] = $data['tracking']['customer_phone'] ?? null;
+                $result['cod_amount'] = $data['tracking']['cash_collection_amount'] ?? null;
+            }
+            
+            wp_send_json_success($result);
+        }
+        
+        wp_send_json_error('Could not fetch tracking data');
+    }
 }
 
 new WCBD_Fraud_Guard();
@@ -668,14 +858,14 @@ export const downloadPluginFile = async (apiKey: string): Promise<void> => {
     // Add README
     const readmeContent = `=== WCBD Fraud Guard ===
 Contributors: WebCreation BD
-Tags: woocommerce, fraud, security, order-limiter, abandoned-cart
+Tags: woocommerce, fraud, security, order-limiter, abandoned-cart, courier-tracking
 Requires at least: 5.0
 Tested up to: 6.4
 Requires PHP: 7.4
 Stable tag: 4.0.0
 License: GPLv2 or later
 
-WooCommerce Anti-Fraud Protection System with Order Limiting, Device Fingerprinting, Remote Settings & Abandoned Cart Tracking
+WooCommerce Anti-Fraud Protection System with Order Limiting, Device Fingerprinting, Remote Settings, Abandoned Cart Tracking & Courier Order Tracking
 
 == Description ==
 
@@ -689,23 +879,43 @@ WCBD Fraud Guard protects your WooCommerce store from fake orders and fraud atte
 * Domain-Locked API Security
 * Remote Settings Control (NEW in v4.0)
 * Abandoned Cart Tracking (NEW in v4.0)
-* Courier Status Integration (NEW in v4.0)
+* Courier Status Integration (NEW in v4.0) - Steadfast, Pathao, RedX
+
+== Features in v4.0 ==
+
+🌐 **Remote Settings**
+- Control popup settings from Dashboard
+- Changes apply to all connected sites automatically
+- No need to update plugin for settings changes
+
+🛒 **Abandoned Cart Tracking**
+- Track customers who leave checkout without ordering
+- View abandoned carts in Dashboard
+- Follow up with potential customers
+
+🚚 **Courier Order Tracking**
+- Track orders from Steadfast, Pathao, and RedX
+- Check status directly from WordPress admin
+- COD amount, recipient info, delivery status
 
 == Installation ==
 
 1. Upload the plugin folder to /wp-content/plugins/
 2. Activate the plugin through WordPress admin
 3. Configure your API key in Fraud Guard settings
-4. Done! Protection is now active on checkout
+4. Set up courier credentials in Dashboard (for courier tracking)
+5. Done! Protection is now active on checkout
 
 == Changelog ==
 
 = 4.0.0 =
 * NEW: Remote Settings - Control popup settings from Dashboard
 * NEW: Abandoned Cart Tracking - Track customers who leave without ordering
-* NEW: Courier Integration - Check Steadfast & Pathao order status
+* NEW: Courier Tracking Tab - Track Steadfast, Pathao, RedX orders from WordPress
+* NEW: RedX Courier Support
 * Improved: Server-side settings priority over local settings
 * Improved: Real-time settings sync without plugin update
+* Improved: Tab-based admin interface
 
 = 3.3.0 =
 * Fixed: PHP Heredoc syntax to prevent JavaScript variable escaping issues

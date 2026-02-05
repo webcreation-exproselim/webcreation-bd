@@ -1,134 +1,161 @@
 
-# Cooldown Period Timer - Dashboard Banner Integration Plan
+
+# 🎯 Client Dashboard উন্নতি ও Real-time Notification System Plan
 
 ## সমস্যা বিশ্লেষণ
 
-বর্তমানে **Cooldown Period Timer** (যেটা দিয়ে সেট করা যায় একজন customer কতক্ষণ পর আবার order করতে পারবে) শুধুমাত্র **Settings tab-এর ভেতরে** আছে। আপনি চাচ্ছেন এটা **Dashboard-এর main page-এ** সরাসরি দেখাক এবং সেখান থেকেই সহজে control করা যাক।
+### ১. Logged-in User Redirection সমস্যা
+- বর্তমানে: যারা logged in, তারা homepage (`/`) ভিজিট করলে login/signup button দেখায়
+- সমাধান: Header এ auth state চেক করে logged-in users এর জন্য "Dashboard" button দেখানো
+
+### ২. Real-time Notification System
+- নতুন Order, Invoice বা Message আসলে sound সহ notification
+- Browser notification + In-app notification bell
+- Notification badge count
+
+### ৩. Dashboard UI/UX সমস্যা
+- কিছু জায়গায় text color low contrast
+- Button colors সমস্যা
+- Mobile এ কিছু element ঠিকমতো দেখায় না
+
+---
+
+## বাস্তবায়ন পরিকল্পনা
+
+### ধাপ ১: Header Auth State Integration
+**ফাইল:** `src/components/Header.tsx`
+
+- Supabase auth state listener যোগ করা
+- Logged-in users এর জন্য UI পরিবর্তন:
+  - "লগইন" + "সাইন আপ" buttons → "ড্যাশবোর্ড" button
+  - User avatar দেখানো
 
 ```text
-বর্তমান অবস্থা:
-┌─────────────────────────────────────────────────────────┐
-│  Dashboard Main Page                                     │
-│  ├── FraudGuardQuickStatus Banner                        │
-│  │   ├── Plan Status (Active/Inactive)                   │
-│  │   ├── API Usage                                       │
-│  │   ├── Plugin Download                                 │
-│  │   └── ❌ Cooldown Timer নেই                           │
-│  │                                                       │
-│  └── Fraud Guard Tab → Settings → Cooldown Timer ✓      │
-│      (অনেক ভেতরে!)                                       │
-└─────────────────────────────────────────────────────────┘
-
-নতুন অবস্থা:
-┌─────────────────────────────────────────────────────────┐
-│  Dashboard Main Page                                     │
-│  ├── FraudGuardQuickStatus Banner                        │
-│  │   ├── Plan Status (Active/Inactive)                   │
-│  │   ├── API Usage                                       │
-│  │   ├── ⏱️ Cooldown: 5m [Quick Edit] ← নতুন!           │
-│  │   ├── Plugin Download                                 │
-│  │   └── Settings                                        │
-└─────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│ LOGO    হোম  সার্ভিস  Portfolio        [Avatar] [Dashboard] │
+│                                        (logged in user)     │
+└─────────────────────────────────────────────────────────────┘
 ```
 
+### ধাপ ২: Real-time Notification System তৈরি
+
+**নতুন ফাইল:** `src/hooks/useNotifications.ts`
+- Supabase realtime subscription
+- Browser Notification API integration
+- Sound playback functionality
+- Notification state management
+
+**নতুন ফাইল:** `src/components/client/NotificationBell.tsx`
+- Animated notification icon
+- Dropdown notification list
+- Unread count badge
+- Mark as read functionality
+
+**নতুন ফাইল:** `public/sounds/notification.mp3`
+- Notification sound file
+
+### ধাপ ৩: Dashboard UI/UX উন্নতি
+
+**ফাইল পরিবর্তন:**
+
+| ফাইল | সমস্যা | সমাধান |
+|------|--------|--------|
+| `DashboardSidebar.tsx` | Collapsed state এ tooltip দেখা কঠিন | Tooltip styling improve |
+| `DashboardTopBar.tsx` | Search input placeholder color | Contrast বাড়ানো |
+| `DashboardStatsCards.tsx` | "+12%" static text | Dynamic data বা remove |
+| `OrdersTab.tsx` | Mobile এ card spacing | Responsive padding |
+| `InvoicesTab.tsx` | Status badge contrast | Better color scheme |
+| `MobileBottomNav.tsx` | Active tab highlight | Clearer active state |
+
+### ধাপ ৪: Notification Database Table
+
+নতুন `notifications` table তৈরি:
+- `id`, `user_id`, `type`, `title`, `message`, `is_read`, `created_at`
+- RLS policy: শুধু নিজের notification দেখতে পারবে
+
 ---
 
-## সমাধান
+## Technical Details
 
-Dashboard-এর `FraudGuardQuickStatus` banner-এ একটি **compact Cooldown Timer widget** যোগ করা হবে যেখানে:
-
-1. **বর্তমান Cooldown সময় দেখাবে** (যেমন: "⏱️ 5 মিনিট")
-2. **Quick Edit বাটন** থাকবে যেটা একটি popup/dropdown খুলবে
-3. **Popup-এ Quick Select Presets** থাকবে (5m, 30m, 1h, 6h, 1d, 7d, 30d)
-4. **Custom minutes input** option থাকবে
-5. **One-click update** করা যাবে
-
----
-
-## নতুন UI ডিজাইন
-
-Active Subscription Banner-এ নতুন Cooldown Section:
-
+### Notification Sound System
 ```text
-┌────────────────────────────────────────────────────────────────────────────┐
-│  🛡️ Fraud Guard সক্রিয়    [Yearly]     [15 দিন বাকি]                       │
-│                                                                             │
-│  ┌──────────────────────────────────────────────────────────────────────┐  │
-│  │ API Usage: 150/5,000                                  মেয়াদ: ১৫/০৩/২৬│  │
-│  │ ████████████████░░░░░░░░░░░░░  3%                                    │  │
-│  └──────────────────────────────────────────────────────────────────────┘  │
-│                                                                             │
-│  ┌────────────────────────────────────────┐                                │
-│  │ ⏱️ Cooldown: 5 মিনিট      [পরিবর্তন]  │  ← নতুন সেকশন!                  │
-│  └────────────────────────────────────────┘                                │
-│                                                                             │
-│  [📥 Plugin v3.3]  [⚙️ Settings]                                           │
-└────────────────────────────────────────────────────────────────────────────┘
+User Dashboard → Supabase Realtime Listener
+                         ↓
+                 New Order/Invoice/Message
+                         ↓
+         ┌───────────────┴───────────────┐
+         ↓                               ↓
+  Browser Notification              In-app Toast
+  (with sound)                     (with badge update)
 ```
 
-**"পরিবর্তন" বাটনে ক্লিক করলে Popup:**
-
+### Auth State Flow
 ```text
-┌─────────────────────────────────────────────┐
-│  ⏱️ Cooldown পরিবর্তন করুন                  │
-│                                             │
-│  Quick Select:                              │
-│  [5m] [30m] [1h] [6h] [1d] [7d] [30d]       │
-│                                             │
-│  অথবা কাস্টম:                               │
-│  [ 5       ] minutes  = 5 মিনিট             │
-│                                             │
-│  [       সেভ করুন       ]                   │
-└─────────────────────────────────────────────┘
+User visits / → Check Auth State
+                    ↓
+         ┌─────────┴─────────┐
+         ↓                   ↓
+    Logged Out           Logged In
+         ↓                   ↓
+    Show Login/         Show Dashboard
+    Signup buttons      button + Avatar
 ```
 
 ---
 
-## টেকনিক্যাল পরিবর্তন
+## UI Color Fixes
 
-### ফাইল ১: `src/components/client/FraudGuardQuickStatus.tsx`
+### Text Contrast Improvements
+- `text-gray-400` → `text-gray-600` (important labels)
+- Search placeholder: `placeholder:text-gray-500`
+- Badge texts: Higher contrast colors
 
-**নতুন Props যোগ করা:**
-```typescript
-interface FraudGuardQuickStatusProps {
-  merchant: {
-    // ... existing fields
-    cooldown_period_minutes: number;  // নতুন
-  } | null;
-  onUpdateCooldownMinutes?: (minutes: number) => void;  // নতুন
-  // ... existing props
-}
-```
-
-**নতুন State ও UI যোগ করা:**
-- `showCooldownEditor` state for popup visibility
-- `tempCooldownMinutes` state for editing
-- Cooldown display badge in active subscription section
-- Quick Edit popup with presets and custom input
-- formatMinutes helper function
-
-### ফাইল ২: `src/pages/ClientDashboard.tsx`
-
-**Props আপডেট করা:**
-```typescript
-<FraudGuardQuickStatus
-  merchant={merchant}
-  pendingOrder={pendingOrder}
-  onOpenFraudGuard={() => setActiveTab("fraudguard")}
-  onPurchaseSuccess={() => { refetchMerchant(); refetchSubscription(); }}
-  onUpdateCooldownMinutes={updateCooldownMinutes}  // নতুন
-/>
-```
+### Button Styling
+- Consistent gradient usage
+- Better hover states
+- Clearer disabled states
 
 ---
 
-## Feature Summary
+## ফাইল তালিকা
 
-| Feature | Description |
-|---------|-------------|
-| **Dashboard-এ দেখানো** | Active plan থাকলে main banner-এ Cooldown time দেখাবে |
-| **Quick Edit Popup** | "পরিবর্তন" বাটনে ক্লিক করলে preset options দিয়ে popup আসবে |
-| **Preset Buttons** | 5m, 30m, 1h, 6h, 1d, 7d, 30d - one click selection |
-| **Custom Input** | নিজের ইচ্ছামতো minutes enter করা যাবে |
-| **Instant Update** | Save করলেই database update হবে, toast notification দেখাবে |
-| **Bengali Display** | "5 মিনিট", "1 ঘন্টা", "1 দিন" format-এ দেখাবে |
+| ফাইল | পরিবর্তন |
+|------|---------|
+| `src/components/Header.tsx` | Auth state integration |
+| `src/hooks/useNotifications.ts` | নতুন - Notification hook |
+| `src/components/client/NotificationBell.tsx` | নতুন - Notification UI |
+| `src/pages/ClientDashboard.tsx` | Notification integration |
+| `src/components/client/DashboardTopBar.tsx` | NotificationBell যোগ + UI fix |
+| `src/components/client/DashboardSidebar.tsx` | Tooltip + color fix |
+| `src/components/client/DashboardStatsCards.tsx` | Static data remove |
+| `src/components/client/OrdersTab.tsx` | Mobile padding fix |
+| `src/components/client/InvoicesTab.tsx` | Status badge contrast |
+| `src/components/client/MobileBottomNav.tsx` | Active state clarity |
+| `src/components/client/DashboardHeader.tsx` | Mobile notification bell |
+
+---
+
+## Database Migration
+
+```sql
+-- notifications table
+CREATE TABLE notifications (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL,
+  type TEXT NOT NULL, -- 'order', 'invoice', 'message'
+  title TEXT NOT NULL,
+  message TEXT,
+  is_read BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- RLS Policy
+ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can view own notifications"
+  ON notifications FOR SELECT
+  USING (auth.uid() = user_id);
+
+-- Realtime enabled
+ALTER PUBLICATION supabase_realtime ADD TABLE notifications;
+```
+

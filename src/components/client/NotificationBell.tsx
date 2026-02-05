@@ -9,12 +9,13 @@ interface NotificationBellProps {
   unreadCount: number;
   onMarkAsRead: (id: string) => void;
   onMarkAllAsRead: () => void;
+  onNotificationClick?: (type: string) => void;
 }
 
 const typeConfig = {
-  order: { icon: Package, color: "text-blue-600", bg: "bg-blue-100" },
-  invoice: { icon: FileText, color: "text-amber-600", bg: "bg-amber-100" },
-  message: { icon: MessageCircle, color: "text-green-600", bg: "bg-green-100" },
+  order: { icon: Package, color: "text-blue-600", bg: "bg-blue-100", tab: "orders" },
+  invoice: { icon: FileText, color: "text-amber-600", bg: "bg-amber-100", tab: "invoices" },
+  message: { icon: MessageCircle, color: "text-green-600", bg: "bg-green-100", tab: "chat" },
 };
 
 export function NotificationBell({
@@ -22,6 +23,7 @@ export function NotificationBell({
   unreadCount,
   onMarkAsRead,
   onMarkAllAsRead,
+  onNotificationClick,
 }: NotificationBellProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -50,6 +52,22 @@ export function NotificationBell({
     if (minutes < 60) return `${minutes} মিনিট আগে`;
     if (hours < 24) return `${hours} ঘন্টা আগে`;
     return `${days} দিন আগে`;
+  };
+
+  const handleNotificationClick = (notification: Notification) => {
+    // Mark as read if not already
+    if (!notification.is_read) {
+      onMarkAsRead(notification.id);
+    }
+    
+    // Navigate to relevant tab
+    const config = typeConfig[notification.type as keyof typeof typeConfig];
+    if (config && onNotificationClick) {
+      onNotificationClick(config.tab);
+    }
+    
+    // Close dropdown
+    setIsOpen(false);
   };
 
   return (
@@ -129,7 +147,7 @@ export function NotificationBell({
                           "flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer",
                           !notification.is_read && "bg-blue-50/50"
                         )}
-                        onClick={() => !notification.is_read && onMarkAsRead(notification.id)}
+                        onClick={() => handleNotificationClick(notification)}
                       >
                         <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0", config.bg)}>
                           <Icon className={cn("w-5 h-5", config.color)} />

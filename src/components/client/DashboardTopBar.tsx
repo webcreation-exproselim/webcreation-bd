@@ -97,6 +97,7 @@ export function DashboardTopBar({
           unreadCount={unreadCount}
           onMarkAsRead={onMarkAsRead}
           onMarkAllAsRead={onMarkAllAsRead}
+          onNotificationClick={(tab) => setActiveTab(tab as TabType)}
         />
 
         {/* User Menu */}

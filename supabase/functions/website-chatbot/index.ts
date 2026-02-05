@@ -1,5 +1,3 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
@@ -61,7 +59,7 @@ const WEBSITE_INFO = `
 গ্রাহকদের সাথে বন্ধুত্বপূর্ণ এবং সহায়ক আচরণ করুন। সংক্ষিপ্ত এবং স্পষ্ট উত্তর দিন।
 `;
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }

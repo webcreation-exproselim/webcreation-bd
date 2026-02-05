@@ -1,97 +1,130 @@
-# WCBD Fraud Guard v4.0 - Implementation Complete ✅
 
-## 📋 সারসংক্ষেপ
+# Customer Trust Score System - Implementation Plan
 
-তিনটি নতুন feature সফলভাবে implement করা হয়েছে:
+## Overview
+একটি **Customer Trust Score** সিস্টেম তৈরি করা হবে যেখানে customer এর phone number দিয়ে courier delivery history চেক করে একটি trust percentage দেওয়া হবে। এটি merchant কে order accept/reject করতে সাহায্য করবে।
 
-1. ✅ **Remote Settings Control** - Dashboard থেকে plugin settings control
-2. ✅ **Abandoned Cart Tracking** - Incomplete order recovery system
-3. ✅ **Courier Status Integration** - Pathao এবং Steadfast order tracking
+## Trust Score Calculation Logic
 
----
+```text
+┌─────────────────────────────────────────────────────────────┐
+│                    TRUST SCORE FORMULA                       │
+├─────────────────────────────────────────────────────────────┤
+│  Score = (Delivered Orders / Total Orders) × 100            │
+│                                                              │
+│  ✓ Delivered = Positive (+1)                                 │
+│  ✗ Returned/Cancelled = Negative (counts in total)          │
+│  ⋯ Pending/In Transit = Neutral (excluded from calculation) │
+├─────────────────────────────────────────────────────────────┤
+│  Examples:                                                   │
+│  • 5 Delivered, 0 Returned = 100% Trust                      │
+│  • 3 Delivered, 2 Returned = 60% Trust                       │
+│  • 0 History = "New Customer" (no score)                     │
+└─────────────────────────────────────────────────────────────┘
+```
 
-## ✅ Completed Features
+## Score Display
 
-### 1. Remote Settings Control (Phase 1)
-- Dashboard থেকে popup settings (timer, language, messages) control করা যায়
-- Server settings plugin এর local settings এর উপরে priority পায়
-- API response এ `popup_settings` object return হয়
+```text
+Score Range          Badge Color         Label
+─────────────────────────────────────────────────
+80-100%              🟢 Green            "Trusted Customer"
+50-79%               🟡 Yellow           "Medium Risk"
+0-49%                🔴 Red              "High Risk"
+No History           ⚪ Gray             "New Customer"
+```
 
-### 2. Abandoned Cart Tracking (Phase 2)
-- যারা checkout থেকে order না করে চলে যায় তাদের track করা হয়
-- Dashboard এ "Abandoned" tab এ সব abandoned checkouts দেখা যায়
-- WhatsApp send button দিয়ে recovery message পাঠানো যায়
-- Mark as Recovered এবং Delete options
+## Implementation Steps
 
-### 3. Courier Integration (Phase 3)
-- Steadfast এবং Pathao courier API integration
-- Dashboard থেকে credentials save করা যায়
-- Invoice/Consignment ID দিয়ে order status check করা যায়
-- Orders table এ status, COD amount, delivery fee দেখা যায়
+### Step 1: New Edge Function - `customer-trust-score`
+একটি নতুন edge function তৈরি করা হবে যা:
+- Phone number নিয়ে courier_orders টেবিলে search করবে
+- সব courier (Steadfast/Pathao/RedX) এর combined history বের করবে
+- Trust score calculate করবে
+- Order history summary return করবে
 
----
+### Step 2: Dashboard Component - Customer Lookup
+Dashboard এ নতুন UI:
+- Phone number search box
+- Trust Score display (percentage + badge)
+- Delivery history breakdown
+- Accept/Reject buttons (manual decision)
 
-## 📂 New/Updated Files
+### Step 3: WordPress Plugin Update
+Plugin এ নতুন feature:
+- Checkout page এ order place এর আগে score চেক
+- Merchant কে popup দিয়ে score দেখানো
+- Manual decision নেওয়ার option
 
-### Edge Functions
-- `supabase/functions/check-order-eligibility/index.ts` - Updated with popup_settings
-- `supabase/functions/track-checkout/index.ts` - NEW - Abandoned cart tracking
-- `supabase/functions/courier-status/index.ts` - NEW - Courier API integration
+### Step 4: API Response Structure
 
-### UI Components
-- `src/components/fraud-protection/PluginRemoteSettings.tsx` - NEW
-- `src/components/fraud-protection/AbandonedCarts.tsx` - NEW
-- `src/components/fraud-protection/CourierOrders.tsx` - NEW
+```text
+{
+  "phone": "01700000000",
+  "trust_score": 75,
+  "status": "medium_risk",
+  "history": {
+    "total_orders": 8,
+    "delivered": 6,
+    "returned": 2,
+    "pending": 0
+  },
+  "last_order_date": "2026-01-15",
+  "couriers": ["steadfast", "pathao"]
+}
+```
 
-### Updated Files
-- `src/pages/FraudProtectionPage.tsx` - New tabs added
-- `src/hooks/useMerchantData.ts` - New fields support
-- `src/utils/pluginGenerator.ts` - Plugin v4.0.0
+## Technical Details
 
-### Database Changes
-- `merchants` table - New columns for popup settings and courier credentials
-- `abandoned_checkouts` table - NEW
-- `courier_orders` table - NEW
+### Database Query Logic
+```sql
+-- Phone number দিয়ে courier_orders থেকে history বের করা
+SELECT 
+  status,
+  COUNT(*) as count,
+  courier_type
+FROM courier_orders
+WHERE recipient_phone LIKE '%01700000000%'
+  AND merchant_id = '<merchant_id>'
+GROUP BY status, courier_type
+```
 
----
+### Files to Create/Modify
 
-## 🔧 Plugin v4.0.0 Features
+| File | Change Type | Description |
+|------|-------------|-------------|
+| `supabase/functions/customer-trust-score/index.ts` | Create | নতুন edge function |
+| `src/components/fraud-protection/CustomerTrustLookup.tsx` | Create | Dashboard UI component |
+| `src/pages/FraudProtectionPage.tsx` | Modify | নতুন tab যোগ |
+| `src/utils/pluginGenerator.ts` | Modify | Plugin এ trust score check যোগ |
+| `supabase/functions/check-order-eligibility/index.ts` | Modify | Trust score response এ যোগ |
 
-1. **Remote Settings Sync** - Dashboard থেকে settings পরিবর্তন করলে সব connected sites এ automatic apply
-2. **Abandoned Cart Tracking** - Plugin settings এ enable করলে checkout visitors track হবে
-3. **Backward Compatible** - পুরাতন plugin ও কাজ করবে, নতুন features পেতে update করতে হবে
+### Plugin Flow
 
----
+```text
+Customer Places Order
+        ↓
+Plugin checks phone number
+        ↓
+API returns trust score
+        ↓
+┌───────────────────────┐
+│  Show Score to        │
+│  Merchant in Popup    │
+│                       │
+│  Score: 45% (High Risk)│
+│  History: 4 orders    │
+│  Returned: 2          │
+│                       │
+│  [Accept] [Reject]    │
+└───────────────────────┘
+        ↓
+Merchant decides manually
+```
 
-## 📝 Usage Notes
-
-### Remote Settings
-1. Dashboard → Fraud Protection → Remote tab
-2. Settings পরিবর্তন করে Save করুন
-3. পরবর্তী checkout এ নতুন settings apply হবে
-
-### Abandoned Cart
-1. Dashboard → Fraud Protection → Abandoned tab
-2. Tracking toggle enable করুন
-3. Plugin settings এ ও "Enable Tracking" checkbox চেক করুন
-4. যারা checkout form fill করে কিন্তু order করে না তাদের list দেখা যাবে
-
-### Courier Status
-1. Dashboard → Fraud Protection → Courier tab
-2. Settings এ Steadfast/Pathao credentials দিন
-3. Invoice বা Consignment ID দিয়ে status check করুন
-
----
-
-## 🎯 Dashboard Tabs
-
-| Tab | Description |
-|-----|-------------|
-| Settings | API key, cooldown, website URL |
-| Blacklist | Phone/IP/Device block management |
-| Logs | Fraud check logs |
-| Integration | API documentation |
-| Plugin | Download WordPress plugin |
-| **Remote** | Remote popup settings (NEW) |
-| **Abandoned** | Abandoned cart tracking (NEW) |
-| **Courier** | Steadfast/Pathao order status (NEW) |
+## Summary
+এই সিস্টেমে:
+1. **Edge Function** - Phone number দিয়ে courier history থেকে trust score calculate
+2. **Dashboard UI** - Customer lookup এবং history view
+3. **Plugin Integration** - Checkout এ real-time score দেখানো
+4. **Manual Decision** - Merchant নিজে accept/reject করবে, auto-block নয়

@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
-import { Menu, ChevronDown } from "lucide-react";
+import { Menu, ChevronDown, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MobileDrawer } from "./MobileDrawer";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { CartButton } from "./CartButton";
 import { Link, useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { User as SupabaseUser } from "@supabase/supabase-js";
 import logo from "@/assets/logo.png";
 
 const serviceItems = [
@@ -25,10 +27,17 @@ const navItems = [
   { label: "যোগাযোগ", href: "#contact", hasSubmenu: false },
 ];
 
+interface Profile {
+  full_name: string | null;
+  avatar_url: string | null;
+}
+
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [serviceDropdownOpen, setServiceDropdownOpen] = useState(false);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const isMobile = useIsMobile();
   const navigate = useNavigate();
 
@@ -41,12 +50,58 @@ export function Header() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Auth state listener
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setUser(session?.user ?? null);
+        
+        // Fetch profile when user is available
+        if (session?.user) {
+          setTimeout(() => {
+            fetchProfile(session.user.id);
+          }, 0);
+        } else {
+          setProfile(null);
+        }
+      }
+    );
+
+    // Check initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        fetchProfile(session.user.id);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const fetchProfile = async (userId: string) => {
+    try {
+      const { data } = await supabase
+        .from("profiles")
+        .select("full_name, avatar_url")
+        .eq("user_id", userId)
+        .maybeSingle();
+      
+      setProfile(data);
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+    }
+  };
+
   const handleLoginClick = () => {
     navigate("/auth");
   };
 
   const handleSignupClick = () => {
     navigate("/auth");
+  };
+
+  const handleDashboardClick = () => {
+    navigate("/dashboard");
   };
 
   return (
@@ -138,19 +193,46 @@ export function Header() {
             {/* Auth Buttons */}
             <div className="flex items-center gap-2 sm:gap-3">
               <CartButton />
-              <Button
-                variant="outline"
-                onClick={handleLoginClick}
-                className="font-bengali font-medium transition-all duration-300 border-blue-500 text-blue-600 hover:bg-blue-50 text-xs sm:text-sm px-2 sm:px-4"
-              >
-                লগইন
-              </Button>
-              <Button
-                onClick={handleSignupClick}
-                className="bg-gradient-to-r from-cyan-500 via-blue-500 to-blue-600 text-white font-bengali font-semibold hover:from-cyan-400 hover:via-blue-400 hover:to-blue-500 hover:scale-[1.03] transition-all duration-300 shadow-lg text-xs sm:text-sm px-2 sm:px-4"
-              >
-                সাইন আপ
-              </Button>
+              
+              {user ? (
+                // Logged in - Show Dashboard button with avatar
+                <div className="flex items-center gap-2">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center overflow-hidden ring-2 ring-blue-100">
+                    {profile?.avatar_url ? (
+                      <img
+                        src={profile.avatar_url}
+                        alt="Avatar"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <User className="w-4 h-4 text-white" />
+                    )}
+                  </div>
+                  <Button
+                    onClick={handleDashboardClick}
+                    className="bg-gradient-to-r from-cyan-500 via-blue-500 to-blue-600 text-white font-bengali font-semibold hover:from-cyan-400 hover:via-blue-400 hover:to-blue-500 hover:scale-[1.03] transition-all duration-300 shadow-lg text-xs sm:text-sm px-3 sm:px-5"
+                  >
+                    ড্যাশবোর্ড
+                  </Button>
+                </div>
+              ) : (
+                // Logged out - Show Login/Signup buttons
+                <>
+                  <Button
+                    variant="outline"
+                    onClick={handleLoginClick}
+                    className="font-bengali font-medium transition-all duration-300 border-blue-500 text-blue-600 hover:bg-blue-50 text-xs sm:text-sm px-2 sm:px-4"
+                  >
+                    লগইন
+                  </Button>
+                  <Button
+                    onClick={handleSignupClick}
+                    className="bg-gradient-to-r from-cyan-500 via-blue-500 to-blue-600 text-white font-bengali font-semibold hover:from-cyan-400 hover:via-blue-400 hover:to-blue-500 hover:scale-[1.03] transition-all duration-300 shadow-lg text-xs sm:text-sm px-2 sm:px-4"
+                  >
+                    সাইন আপ
+                  </Button>
+                </>
+              )}
               
               {/* Mobile Menu Button */}
               {isMobile && (

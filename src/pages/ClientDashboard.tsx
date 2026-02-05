@@ -11,6 +11,7 @@ import { FraudGuardQuickStatus } from "@/components/client/FraudGuardQuickStatus
 import { useMerchantData } from "@/hooks/useMerchantData";
 import { useSubscriptionData } from "@/hooks/useSubscriptionData";
 import { SubscriptionPurchaseModal } from "@/components/fraud-protection/SubscriptionPurchaseModal";
+import { useNotifications } from "@/hooks/useNotifications";
 
 // Refactored components
 import { DashboardSidebar } from "@/components/client/DashboardSidebar";
@@ -81,6 +82,14 @@ export default function ClientDashboard() {
   // Fraud Guard merchant data
   const { merchant, refetchMerchant, updateCooldownMinutes } = useMerchantData();
   const { pendingOrder, refetch: refetchSubscription } = useSubscriptionData(merchant?.id || null);
+  
+  // Notifications
+  const {
+    notifications,
+    unreadCount,
+    markAsRead,
+    markAllAsRead,
+  } = useNotifications(user?.id || null);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -294,6 +303,10 @@ export default function ClientDashboard() {
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           onLogout={handleLogout}
+          notifications={notifications}
+          unreadCount={unreadCount}
+          onMarkAsRead={markAsRead}
+          onMarkAllAsRead={markAllAsRead}
         />
 
         {/* Scrollable Content */}

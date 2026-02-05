@@ -89,10 +89,6 @@ export function DashboardStatsCards({
               <div className={`w-12 h-12 rounded-xl ${stat.lightBg} flex items-center justify-center group-hover:scale-110 transition-transform`}>
                 <Icon className={`w-6 h-6 ${stat.iconColor}`} />
               </div>
-              <div className="flex items-center gap-1 text-emerald-500 text-xs font-medium">
-                <TrendingUp className="w-3 h-3" />
-                <span>+12%</span>
-              </div>
             </div>
             
             <div>

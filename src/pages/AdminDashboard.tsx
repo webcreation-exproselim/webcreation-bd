@@ -232,6 +232,89 @@ const AdminDashboard = () => {
     checkAdmin();
   }, [navigate]);
 
+  // Real-time subscriptions for all data
+  useEffect(() => {
+    if (!isAdmin) return;
+
+    // Orders realtime
+    const ordersChannel = supabase
+      .channel('admin-orders-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'orders' },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            const newOrder = {
+              ...payload.new,
+              services: (payload.new.services as unknown) as OrderService[],
+              progress: payload.new.progress || 0,
+            } as Order;
+            setOrders(prev => [newOrder, ...prev]);
+          } else if (payload.eventType === 'UPDATE') {
+            setOrders(prev => prev.map(o => 
+              o.id === payload.new.id 
+                ? { ...payload.new, services: (payload.new.services as unknown) as OrderService[], progress: payload.new.progress || 0 } as Order
+                : o
+            ));
+          } else if (payload.eventType === 'DELETE') {
+            setOrders(prev => prev.filter(o => o.id !== payload.old.id));
+          }
+        }
+      )
+      .subscribe();
+
+    // Invoices realtime
+    const invoicesChannel = supabase
+      .channel('admin-invoices-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'invoices' },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            setInvoices(prev => [payload.new as Invoice, ...prev]);
+          } else if (payload.eventType === 'UPDATE') {
+            setInvoices(prev => prev.map(inv => 
+              inv.id === payload.new.id ? payload.new as Invoice : inv
+            ));
+          } else if (payload.eventType === 'DELETE') {
+            setInvoices(prev => prev.filter(inv => inv.id !== payload.old.id));
+          }
+        }
+      )
+      .subscribe();
+
+    // Users/profiles realtime
+    const profilesChannel = supabase
+      .channel('admin-profiles-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'profiles' },
+        () => {
+          fetchUsers();
+        }
+      )
+      .subscribe();
+
+    // Portfolio realtime
+    const portfolioChannel = supabase
+      .channel('admin-portfolio-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'portfolio_items' },
+        () => {
+          fetchPortfolio();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(ordersChannel);
+      supabase.removeChannel(invoicesChannel);
+      supabase.removeChannel(profilesChannel);
+      supabase.removeChannel(portfolioChannel);
+    };
+  }, [isAdmin]);
+
   const fetchAllData = async () => {
     await Promise.all([
       fetchOrders(),

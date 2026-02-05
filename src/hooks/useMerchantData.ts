@@ -16,6 +16,24 @@ interface Merchant {
   max_requests: number;
   created_at: string;
   updated_at: string;
+  // Plugin remote settings
+  popup_timer_seconds: number;
+  popup_language: string;
+  msg_cooldown: string;
+  msg_blacklist: string;
+  whatsapp_number: string | null;
+  phone_number: string | null;
+  show_contact_buttons: boolean;
+  // Abandoned cart tracking
+  enable_abandoned_tracking: boolean;
+  abandoned_timeout_minutes: number;
+  // Courier credentials
+  steadfast_api_key: string | null;
+  steadfast_secret_key: string | null;
+  pathao_client_id: string | null;
+  pathao_client_secret: string | null;
+  pathao_username: string | null;
+  pathao_password: string | null;
 }
 
 interface BlacklistEntry {
@@ -91,6 +109,24 @@ export function useMerchantData() {
           plan_expires_at: merchantData.plan_expires_at ?? null,
           requests_used: merchantData.requests_used ?? 0,
           max_requests: merchantData.max_requests ?? 0,
+          // Plugin remote settings defaults
+          popup_timer_seconds: merchantData.popup_timer_seconds ?? 30,
+          popup_language: merchantData.popup_language ?? 'bn',
+          msg_cooldown: merchantData.msg_cooldown ?? 'আপনি সম্প্রতি অর্ডার করেছেন। অনুগ্রহ করে কিছুক্ষণ অপেক্ষা করুন।',
+          msg_blacklist: merchantData.msg_blacklist ?? 'আপনার অর্ডার ব্লক করা হয়েছে। সমস্যা হলে যোগাযোগ করুন।',
+          whatsapp_number: merchantData.whatsapp_number ?? null,
+          phone_number: merchantData.phone_number ?? null,
+          show_contact_buttons: merchantData.show_contact_buttons ?? true,
+          // Abandoned cart tracking defaults
+          enable_abandoned_tracking: merchantData.enable_abandoned_tracking ?? false,
+          abandoned_timeout_minutes: merchantData.abandoned_timeout_minutes ?? 5,
+          // Courier credentials defaults
+          steadfast_api_key: merchantData.steadfast_api_key ?? null,
+          steadfast_secret_key: merchantData.steadfast_secret_key ?? null,
+          pathao_client_id: merchantData.pathao_client_id ?? null,
+          pathao_client_secret: merchantData.pathao_client_secret ?? null,
+          pathao_username: merchantData.pathao_username ?? null,
+          pathao_password: merchantData.pathao_password ?? null,
         };
         setMerchant(fullMerchant);
       }

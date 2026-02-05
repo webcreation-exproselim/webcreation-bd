@@ -495,10 +495,10 @@ export default function ClientDashboard() {
             merchant={merchant}
             pendingOrder={pendingOrder}
             onOpenFraudGuard={() => setActiveTab("fraudguard")}
-            onPurchase={(planType) => {
-              setSelectedPlanType(planType);
-              setShowPurchaseModal(true);
-            }}
+          onPurchaseSuccess={() => {
+            refetchMerchant();
+            refetchSubscription();
+          }}
           />
         </motion.div>
 

@@ -50,6 +50,8 @@ interface Invoice {
   paid_amount: number;
   status: string;
   created_at: string;
+  order_id?: string | null;
+  due_date?: string | null;
 }
 
 interface Message {

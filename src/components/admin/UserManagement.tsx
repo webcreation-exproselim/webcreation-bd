@@ -119,6 +119,30 @@ export function UserManagement() {
 
   useEffect(() => {
     fetchUsers();
+
+    // Real-time subscription for profiles and user_roles
+    const profilesChannel = supabase
+      .channel('user-mgmt-profiles')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'profiles' },
+        () => fetchUsers()
+      )
+      .subscribe();
+
+    const rolesChannel = supabase
+      .channel('user-mgmt-roles')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'user_roles' },
+        () => fetchUsers()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(profilesChannel);
+      supabase.removeChannel(rolesChannel);
+    };
   }, []);
 
   const handleAddRole = async () => {

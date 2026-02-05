@@ -155,6 +155,7 @@ export default function ClientDashboard() {
     }
   };
 
+  // Real-time subscription for invoices
   useEffect(() => {
     if (!user) return;
 
@@ -184,6 +185,95 @@ export default function ClientDashboard() {
           setInvoices((prev) => 
             prev.map(inv => inv.id === payload.new.id ? payload.new as Invoice : inv)
           );
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id]);
+
+  // Real-time subscription for orders
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel(`client-orders-${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "orders",
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          const newOrder = {
+            ...payload.new,
+            services: (payload.new.services as unknown) as OrderService[],
+            progress: payload.new.progress || 0,
+          } as Order;
+          setOrders((prev) => [newOrder, ...prev]);
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "orders",
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          setOrders((prev) => 
+            prev.map(order => 
+              order.id === payload.new.id 
+                ? { 
+                    ...payload.new, 
+                    services: (payload.new.services as unknown) as OrderService[], 
+                    progress: payload.new.progress || 0 
+                  } as Order 
+                : order
+            )
+          );
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "DELETE",
+          schema: "public",
+          table: "orders",
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          setOrders((prev) => prev.filter(order => order.id !== payload.old.id));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id]);
+
+  // Real-time subscription for profile updates
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel(`client-profile-${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "profiles",
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          setProfile(payload.new);
         }
       )
       .subscribe();

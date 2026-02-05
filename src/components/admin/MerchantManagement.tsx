@@ -108,7 +108,36 @@ export function MerchantManagement() {
 
   useEffect(() => {
     fetchMerchants();
-  }, []);
+
+    // Real-time subscription for merchants
+    const merchantsChannel = supabase
+      .channel('merchants-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'merchants' },
+        () => fetchMerchants()
+      )
+      .subscribe();
+
+    // Real-time subscription for subscription orders
+    const subscriptionChannel = supabase
+      .channel('subscription-orders-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'subscription_orders' },
+        () => {
+          if (selectedMerchant) {
+            fetchSubscriptionHistory(selectedMerchant.id);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(merchantsChannel);
+      supabase.removeChannel(subscriptionChannel);
+    };
+  }, [selectedMerchant?.id]);
 
   const activateMerchant = async (merchantId: string, planType: 'monthly' | 'yearly') => {
     setSaving(true);

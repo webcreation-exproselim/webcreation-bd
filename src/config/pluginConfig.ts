@@ -4,7 +4,7 @@
 
 export const PLUGIN_CONFIG = {
   // Current version - UPDATE THIS WHEN RELEASING NEW VERSIONS
-  version: "7.0.0",
+  version: "7.1.0",
   
   // Plugin metadata
   name: "WCBD Fraud Guard",
@@ -16,15 +16,15 @@ export const PLUGIN_CONFIG = {
   badgeLabel: "STABLE",
   
   // Current version highlights (for banners and feature lists)
-  versionHighlight: "CartFlows Checkout Fix + Universal Page Detection",
+  versionHighlight: "Homepage Checkout + Bulletproof CartFlows Fix",
   
   // What's new in this version (for feature list)
   whatsNew: [
-    { icon: "🛒", title: "CartFlows Support", description: "CartFlows checkout page এ popup ও tracking সম্পূর্ণ কাজ করবে" },
-    { icon: "🎯", title: "Universal Page Detection", description: "যেকোনো checkout builder (CartFlows, Elementor, Block) detect করবে" },
-    { icon: "🛡️", title: "Server-Side + Client-Side", description: "দুই স্তরে সুরক্ষা - JS bypass করলেও PHP তে block" },
-    { icon: "⏱️", title: "Cooldown Control", description: "WordPress admin থেকে Cooldown timer নিয়ন্ত্রণ করুন" },
-    { icon: "📱", title: "Incomplete Order Tracking", description: "Phone blur, checkout error ও page exit detect করুন" },
+    { icon: "🏠", title: "Homepage Checkout Fix", description: "Homepage এ CartFlows checkout থাকলেও popup ও tracking কাজ করবে" },
+    { icon: "🔍", title: "7-Level Page Detection", description: "7 স্তরে checkout page detect করে - কোনো page মিস হবে না" },
+    { icon: "🛡️", title: "Footer Fallback Injection", description: "Primary detection মিস করলে wp_footer থেকে script inject হবে" },
+    { icon: "🎯", title: "JS Self-Detection", description: "Checkout element না থাকলে অপ্রয়োজনীয় API call হবে না" },
+    { icon: "🔧", title: "PHP check_type Fix", description: "Server-side validation এ duplicate log entry আর হবে না" },
   ],
   
   // All features list

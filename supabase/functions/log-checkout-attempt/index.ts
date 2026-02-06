@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
     // Validate API key and get merchant
     const { data: merchant, error: merchantError } = await supabase
       .from('merchants')
-      .select('id, is_active, enable_incomplete_tracking, incomplete_auto_block_threshold, incomplete_time_window_minutes')
+      .select('id, is_active, incomplete_auto_block_threshold, incomplete_time_window_minutes')
       .eq('api_key', api_key)
       .single();
 
@@ -57,18 +57,12 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check if incomplete tracking is enabled for this merchant
-    if (!merchant.enable_incomplete_tracking) {
-      console.log('[log-checkout-attempt] Incomplete tracking disabled for merchant');
+    // Check if merchant subscription is active
+    if (!merchant.is_active) {
+      console.log('[log-checkout-attempt] Merchant subscription inactive');
       return new Response(
-        JSON.stringify({ 
-          success: true, 
-          message: 'Tracking disabled',
-          risk_level: 'low',
-          attempts_count: 0,
-          is_suspicious: false
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ success: false, error: 'Subscription inactive' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 

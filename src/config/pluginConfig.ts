@@ -4,7 +4,7 @@
 
 export const PLUGIN_CONFIG = {
   // Current version - UPDATE THIS WHEN RELEASING NEW VERSIONS
-  version: "6.4.0",
+  version: "6.5.0",
   
   // Plugin metadata
   name: "WCBD Fraud Guard",
@@ -16,7 +16,7 @@ export const PLUGIN_CONFIG = {
   badgeLabel: "STABLE",
   
   // Current version highlights (for banners and feature lists)
-  versionHighlight: "Cooldown Control + Order Conversion",
+  versionHighlight: "License Optimization + Cooldown Fix",
   
   // What's new in this version (for feature list)
   whatsNew: [

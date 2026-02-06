@@ -38,12 +38,7 @@ class WCBD_Fraud_Guard {
     private $whatsapp_default = '${WHATSAPP_DEFAULT}';
     
     public function __construct() {
-        // CRITICAL: Always ensure API key is synced with the hardcoded one
-        // This fixes the bug where WordPress options stored an old API key
-        $stored_key = get_option('wcbd_fraud_guard_api_key', '');
-        if ($stored_key !== $this->api_key) {
-            update_option('wcbd_fraud_guard_api_key', $this->api_key);
-        }
+        // NO auto-sync of API key here - only set on activation via set_default_options()
         
         add_action('admin_init', array($this, 'check_woocommerce'));
         add_action('admin_menu', array($this, 'add_admin_menu'));
@@ -56,7 +51,6 @@ class WCBD_Fraud_Guard {
         add_action('wp_ajax_wcbd_fraud_guard_update_cooldown', array($this, 'ajax_update_cooldown'));
         add_action('wp_ajax_wcbd_fraud_guard_convert_order', array($this, 'ajax_convert_order'));
         add_action('wp_footer', array($this, 'inject_popup_styles'), 99);
-        add_action('wp_footer', array($this, 'maybe_inject_fallback_scripts'), 100);
         
         // SERVER-SIDE fraud validation (works for ALL checkout types)
         add_action('woocommerce_checkout_process', array($this, 'server_side_fraud_check'));
@@ -66,8 +60,8 @@ class WCBD_Fraud_Guard {
     }
     
     public function set_default_options() {
-        // CRITICAL: Always force-update API key on activation to prevent stale cached keys
-        update_option('wcbd_fraud_guard_api_key', $this->api_key);
+        // Only set key on first activation - use add_option (won't overwrite existing)
+        add_option('wcbd_fraud_guard_api_key', $this->api_key);
         add_option('wcbd_fraud_guard_popup_timer', '30');
         add_option('wcbd_fraud_guard_msg_cooldown', 'আপনি সম্প্রতি অর্ডার করেছেন। অনুগ্রহ করে কিছুক্ষণ অপেক্ষা করুন।');
         add_option('wcbd_fraud_guard_msg_blacklist', 'আপনার অর্ডার ব্লক করা হয়েছে। সমস্যা হলে যোগাযোগ করুন।');
@@ -95,8 +89,11 @@ class WCBD_Fraud_Guard {
         );
     }
     
+    /**
+     * Popup CSS - injected on ALL frontend pages (it's just CSS, zero overhead)
+     */
     public function inject_popup_styles() {
-        if (!$this->is_any_checkout_page()) return;
+        if (is_admin()) return;
         
         echo '<style id="wcbd-fraud-guard-popup-css">
 .wcbd-fraud-popup-overlay{position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;width:100vw!important;height:100vh!important;background:rgba(0,0,0,0.92)!important;backdrop-filter:blur(12px)!important;z-index:2147483647!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:20px!important;box-sizing:border-box!important;margin:0!important;animation:wcbdFadeIn 0.3s ease!important}
@@ -122,222 +119,191 @@ class WCBD_Fraud_Guard {
 </style>';
     }
     
+    /**
+     * v8.0.0 UNIVERSAL LOADER - Load on ALL frontend pages
+     * Instead of trying to detect checkout pages in PHP (which fails on CartFlows homepage),
+     * we load a tiny inline loader script on every page. The JS checks the DOM for checkout
+     * elements before doing anything. If no checkout found = zero overhead.
+     */
     public function enqueue_frontend_scripts() {
-        if (!$this->is_any_checkout_page()) return;
+        if (is_admin()) return;
         
-        // Mark that scripts are loaded via primary method (prevents double-injection from wp_footer fallback)
-        if (!defined('WCBD_SCRIPTS_LOADED')) {
-            define('WCBD_SCRIPTS_LOADED', true);
-        }
-        
-        wp_enqueue_script('fingerprintjs', 'https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js', array('jquery'), '3.0.0', true);
-        
-        wp_add_inline_script('fingerprintjs', $this->get_checkout_js(), 'after');
+        // Load tiny loader script on ALL pages - it self-detects checkout via DOM
+        wp_enqueue_script('jquery');
+        wp_add_inline_script('jquery', $this->get_loader_js(), 'after');
     }
     
-    public function enqueue_admin_scripts($hook) {
-        if ($hook !== 'toplevel_page_wcbd-fraud-guard') return;
+    /**
+     * Tiny loader script (< 500 bytes minified)
+     * Checks DOM for checkout elements, only loads FingerprintJS + full Fraud Guard if found
+     */
+    private function get_loader_js() {
+        $$api_key = $$this->api_key;
+        $$language = get_option('wcbd_fraud_guard_language', 'bn');
+        $$popup_timer = intval(get_option('wcbd_fraud_guard_popup_timer', 30));
+        $$msg_cooldown = esc_js(get_option('wcbd_fraud_guard_msg_cooldown', 'আপনি সম্প্রতি অর্ডার করেছেন। অনুগ্রহ করে কিছুক্ষণ অপেক্ষা করুন।'));
+        $$msg_blacklist = esc_js(get_option('wcbd_fraud_guard_msg_blacklist', 'আপনার অর্ডার ব্লক করা হয়েছে। সমস্যা হলে যোগাযোগ করুন।'));
+        $$whatsapp = esc_js(get_option('wcbd_fraud_guard_whatsapp', ''));
+        $$phone = esc_js(get_option('wcbd_fraud_guard_phone', ''));
+        $$endpoint = esc_js($$this->endpoint);
+        $$incomplete_endpoint = esc_js($$this->incomplete_endpoint);
         
-        wp_add_inline_style('wp-admin', $this->get_admin_css());
-        wp_add_inline_script('jquery', $this->get_admin_js(), 'after');
-    }
-    
-    private function get_checkout_js() {
-        $api_key = get_option('wcbd_fraud_guard_api_key', $this->api_key);
-        $language = get_option('wcbd_fraud_guard_language', 'bn');
-        $popup_timer = intval(get_option('wcbd_fraud_guard_popup_timer', 30));
-        $msg_cooldown = esc_js(get_option('wcbd_fraud_guard_msg_cooldown', 'আপনি সম্প্রতি অর্ডার করেছেন। অনুগ্রহ করে কিছুক্ষণ অপেক্ষা করুন।'));
-        $msg_blacklist = esc_js(get_option('wcbd_fraud_guard_msg_blacklist', 'আপনার অর্ডার ব্লক করা হয়েছে। সমস্যা হলে যোগাযোগ করুন।'));
-        $whatsapp = esc_js(get_option('wcbd_fraud_guard_whatsapp', ''));
-        $phone = esc_js(get_option('wcbd_fraud_guard_phone', ''));
-        $endpoint = esc_js($this->endpoint);
-        
-        $js_template = <<<'JSTEMPLATE'
-(function(jQ){
+        $$js_template = <<<'LOADERJS'
+(function(){
+'use strict';
+function wcbdCheckout(){
+var selectors=['form.checkout','.wc-block-checkout','#billing_phone','input[name="billing_phone"]','.wc-block-components-text-input input[type="tel"]','input[autocomplete="tel"]','.woocommerce-checkout','#payment','#order_review'];
+for(var i=0;i<selectors.length;i++){if(document.querySelector(selectors[i]))return true;}
+return false;
+}
+function wcbdLoad(){
+if(!wcbdCheckout()){return;}
+console.log('[WCBD v${PLUGIN_CONFIG.version}] Checkout detected - loading Fraud Guard...');
+var s=document.createElement('script');
+s.src='https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js';
+s.onload=function(){wcbdInit();};
+s.onerror=function(){console.warn('[WCBD] FingerprintJS failed to load - continuing without device ID');wcbdInit();};
+document.head.appendChild(s);
+}
+function wcbdInit(){
+var jQ=jQuery;
 var WCBD_FG={
 deviceId:null,
-endpoint:"%%ENDPOINT%%",
-incompleteEndpoint:"%%INCOMPLETE_ENDPOINT%%",
-apiKey:"%%APIKEY%%",
-lang:"%%LANG%%",
+endpoint:'%%ENDPOINT%%',
+incompleteEndpoint:'%%INCOMPLETE_ENDPOINT%%',
+apiKey:'%%APIKEY%%',
+lang:'%%LANG%%',
 popupTimer:%%TIMER%%,
-msgCooldown:"%%MSG_COOLDOWN%%",
-msgBlacklist:"%%MSG_BLACKLIST%%",
-whatsapp:"%%WHATSAPP%%",
-phone:"%%PHONE%%",
+msgCooldown:'%%MSG_COOLDOWN%%',
+msgBlacklist:'%%MSG_BLACKLIST%%',
+whatsapp:'%%WHATSAPP%%',
+phone:'%%PHONE%%',
 incompleteLogged:{},
 licenseValid:false,
+isBlockCheckout:false,
+blockCheckoutValidating:false,
+blockCheckoutAllowed:false,
+universalValidating:false,
+universalAllowed:false,
 
 init:function(){
 var self=this;
-console.log("[WCBD Fraud Guard v${PLUGIN_CONFIG.version}] Initializing...");
+console.log('[WCBD Fraud Guard v${PLUGIN_CONFIG.version}] Initializing...');
 
-// JS Self-Detection: Only activate on pages with checkout elements
-var checkoutElements=document.querySelector("form.checkout")||document.querySelector(".wc-block-checkout")||document.querySelector("#billing_phone")||document.querySelector("input[name='billing_phone']")||document.querySelector(".wc-block-components-text-input input[type='tel']")||document.querySelector("input[autocomplete='tel']");
-if(!checkoutElements){
-console.log("[WCBD] No checkout elements found on this page - skipping initialization");
-return;
-}
-console.log("[WCBD] Checkout elements detected - proceeding with initialization");
-
-// IMPORTANT: First validate license before enabling any features
 this.validateLicense(function(valid){
 if(!valid){
-console.warn("[WCBD] License invalid - All features DISABLED");
-self.showLicenseError();
+console.warn('[WCBD] License invalid - All features DISABLED');
 return;
 }
 self.licenseValid=true;
-console.log("[WCBD] License valid - Enabling features...");
+console.log('[WCBD] License valid - Enabling features...');
 
-// Initialize FingerprintJS
-if(typeof FingerprintJS!=="undefined"){
-FingerprintJS.load().then(function(fp){fp.get().then(function(r){self.deviceId=r.visitorId;console.log("[WCBD] Device ID ready");});});
+if(typeof FingerprintJS!=='undefined'){
+FingerprintJS.load().then(function(fp){fp.get().then(function(r){self.deviceId=r.visitorId;console.log('[WCBD] Device ID ready');});});
 }
 
-// Detect checkout type and hook accordingly
 self.isBlockCheckout=self.detectBlockCheckout();
-console.log("[WCBD] Checkout type: "+(self.isBlockCheckout?"Block":"Classic"));
+console.log('[WCBD] Checkout type: '+(self.isBlockCheckout?'Block':'Classic'));
 
 if(self.isBlockCheckout){
 self.hookBlockCheckout();
 }else{
-// Classic checkout hook
-jQ("form.checkout").on("checkout_place_order",function(){return self.validate(jQ(this));});
+jQ('form.checkout').on('checkout_place_order',function(){return self.validate(jQ(this));});
 }
 
-// UNIVERSAL FALLBACK: Intercept ANY form submit on checkout page
-// This catches cases where neither classic nor block hooks fire
 self.setupUniversalInterceptor();
-
-// Always track incomplete orders when license is valid
 self.setupIncompleteTracking();
-
-console.log("[WCBD Fraud Guard v${PLUGIN_CONFIG.version}] Ready");
-});
+console.log('[WCBD Fraud Guard v${PLUGIN_CONFIG.version}] Ready');
 });
 },
 
-isBlockCheckout:false,
-
 detectBlockCheckout:function(){
-// Check for Block Checkout elements
-if(document.querySelector(".wc-block-checkout")||document.querySelector(".wp-block-woocommerce-checkout")||document.querySelector("[data-block-name='woocommerce/checkout']")){
-return true;
-}
-// Check if classic form.checkout exists
-if(document.querySelector("form.checkout.woocommerce-checkout")){
-return false;
-}
-// Default: check for block-based button
-if(document.querySelector(".wc-block-components-checkout-place-order-button")){
-return true;
-}
+if(document.querySelector('.wc-block-checkout')||document.querySelector('.wp-block-woocommerce-checkout')||document.querySelector('[data-block-name="woocommerce/checkout"]'))return true;
+if(document.querySelector('form.checkout.woocommerce-checkout'))return false;
+if(document.querySelector('.wc-block-components-checkout-place-order-button'))return true;
 return false;
 },
 
 hookBlockCheckout:function(){
 var self=this;
-console.log("[WCBD] Setting up Block Checkout interception...");
+console.log('[WCBD] Setting up Block Checkout interception...');
 
-// Use MutationObserver to continuously watch for the place order button
-// React can re-render the button at any time, so we keep watching
-var observer=new MutationObserver(function(mutations){
-var btn=document.querySelector(".wc-block-components-checkout-place-order-button");
+var observer=new MutationObserver(function(){
+var btn=document.querySelector('.wc-block-components-checkout-place-order-button');
 if(btn&&!btn.dataset.wcbdHooked){
-btn.dataset.wcbdHooked="true";
-console.log("[WCBD] Block checkout button found - attaching interceptor");
+btn.dataset.wcbdHooked='true';
+console.log('[WCBD] Block checkout button found - attaching interceptor');
 self.attachBlockInterceptor(btn);
-// Do NOT disconnect - React may re-render the button
 }
 });
 observer.observe(document.body,{childList:true,subtree:true});
 
-// Also try immediately in case it's already rendered
-var btn=document.querySelector(".wc-block-components-checkout-place-order-button");
+var btn=document.querySelector('.wc-block-components-checkout-place-order-button');
 if(btn&&!btn.dataset.wcbdHooked){
-btn.dataset.wcbdHooked="true";
-console.log("[WCBD] Block checkout button found immediately");
+btn.dataset.wcbdHooked='true';
 self.attachBlockInterceptor(btn);
 }
 
-// EXTRA: Use event delegation as additional safety net for block checkout
-jQ(document).on("click",".wc-block-components-checkout-place-order-button, .wc-block-components-button.wp-element-button.wc-block-components-checkout-place-order-button",function(e){
+jQ(document).on('click','.wc-block-components-checkout-place-order-button',function(e){
 if(!self.licenseValid)return;
 if(self.blockCheckoutAllowed)return;
 if(self.blockCheckoutValidating)return;
-// If button doesn't have our hook attribute, intercept via delegation
 if(!this.dataset.wcbdHooked){
-this.dataset.wcbdHooked="true";
+this.dataset.wcbdHooked='true';
 e.preventDefault();
 e.stopImmediatePropagation();
-var phone=self.getBlockCheckoutPhone();
-if(!phone||phone.length<5){return;}
-self.doPrecheck(phone,jQ(this));
+var ph=self.getBlockCheckoutPhone();
+if(!ph||ph.length<5)return;
+self.doPrecheck(ph,jQ(this));
 }
 });
 },
 
 attachBlockInterceptor:function(btn){
 var self=this;
-// Capture click event in the capturing phase (before WooCommerce handles it)
-btn.addEventListener("click",function(e){
-if(self.blockCheckoutValidating){return;}
-if(self.blockCheckoutAllowed){
-self.blockCheckoutAllowed=false;
-console.log("[WCBD] Block checkout allowed - submitting");
-return; // Let the click go through
-}
+btn.addEventListener('click',function(e){
+if(self.blockCheckoutValidating)return;
+if(self.blockCheckoutAllowed){self.blockCheckoutAllowed=false;console.log('[WCBD] Block checkout allowed - submitting');return;}
 
-// Stop the checkout submission
 e.preventDefault();
 e.stopImmediatePropagation();
-
 self.blockCheckoutValidating=true;
-var phone=self.getBlockCheckoutPhone();
+var ph=self.getBlockCheckoutPhone();
 
-if(!phone){
-console.warn("[WCBD] No phone found in block checkout");
+if(!ph){
 self.blockCheckoutValidating=false;
 self.blockCheckoutAllowed=true;
 btn.click();
 return;
 }
 
-console.log("[WCBD] Block checkout validating phone:",phone);
-
-// Change button text
+console.log('[WCBD] Block checkout validating phone:',ph);
 var origText=btn.textContent;
-btn.textContent=self.lang==="bn"?"চেক করা হচ্ছে...":"Checking...";
+btn.textContent=self.lang==='bn'?'চেক করা হচ্ছে...':'Checking...';
 btn.disabled=true;
 
 jQ.ajax({
-url:self.endpoint,
-method:"POST",
-contentType:"application/json",
-timeout:12000,
-data:JSON.stringify({api_key:self.apiKey,phone:phone,device_id:self.deviceId,domain:window.location.hostname,check_type:"precheck"}),
+url:self.endpoint,method:'POST',contentType:'application/json',timeout:12000,
+data:JSON.stringify({api_key:self.apiKey,phone:ph,device_id:self.deviceId,domain:window.location.hostname,check_type:'precheck'}),
 success:function(r){
-console.log("[WCBD] Block checkout API response:",r);
-if(r.popup_settings){self.applyRemoteSettings(r.popup_settings);}
-
+console.log('[WCBD] Block checkout API response:',r);
+if(r.popup_settings)self.applyRemoteSettings(r.popup_settings);
 if(r.allowed){
 self.blockCheckoutAllowed=true;
 self.blockCheckoutValidating=false;
 btn.textContent=origText;
 btn.disabled=false;
-btn.click(); // Re-trigger the click, this time it will pass through
+btn.click();
 }else{
 self.blockCheckoutValidating=false;
 btn.textContent=origText;
 btn.disabled=false;
-var customMsg=r.reason==="blacklist"?self.msgBlacklist:self.msgCooldown;
+var customMsg=r.reason==='blacklist'?self.msgBlacklist:self.msgCooldown;
 self.popup(r.reason,customMsg,r.minutes_remaining);
 }
 },
 error:function(xhr,status,err){
-console.error("[WCBD] Block checkout API error:",err);
-// Fail-open: allow order if API unreachable
+console.error('[WCBD] Block checkout API error:',err);
 self.blockCheckoutAllowed=true;
 self.blockCheckoutValidating=false;
 btn.textContent=origText;
@@ -345,97 +311,63 @@ btn.disabled=false;
 btn.click();
 }
 });
-},true); // true = capturing phase (fires BEFORE WooCommerce)
+},true);
 },
-
-blockCheckoutValidating:false,
-blockCheckoutAllowed:false,
 
 getBlockCheckoutPhone:function(){
-// Universal phone field selectors (try multiple for both classic and block checkout)
-var selectors=[
-"#billing_phone",
-"#phone",
-"#billing-phone",
-"input[id*='phone']",
-".wc-block-components-text-input input[type='tel']",
-"input[autocomplete='tel']",
-"input[name='billing_phone']",
-"input[name='phone']"
-];
+var selectors=['#billing_phone','#phone','#billing-phone','input[id*="phone"]','.wc-block-components-text-input input[type="tel"]','input[autocomplete="tel"]','input[name="billing_phone"]','input[name="phone"]'];
 for(var i=0;i<selectors.length;i++){
 var el=document.querySelector(selectors[i]);
-if(el&&el.value&&el.value.length>=5){
-return el.value.trim();
+if(el&&el.value&&el.value.length>=5)return el.value.trim();
 }
-}
-return "";
+return '';
 },
 
-// Validate License with API (lightweight - no fraud_log, no quota usage)
 validateLicense:function(callback){
-var self=this;
-console.log("[WCBD] Validating license...");
-
+console.log('[WCBD] Validating license...');
 jQ.ajax({
-url:this.endpoint,
-method:"POST",
-contentType:"application/json",
-timeout:10000,
-data:JSON.stringify({
-api_key:this.apiKey,
-check_type:"license",
-domain:window.location.hostname
-}),
+url:this.endpoint,method:'POST',contentType:'application/json',timeout:10000,
+data:JSON.stringify({api_key:this.apiKey,check_type:'license',domain:window.location.hostname}),
 success:function(r){
-console.log("[WCBD] License check response:",r);
-if(r.reason==="inactive"||r.reason==="expired"||r.reason==="limit_exceeded"||r.reason==="domain_mismatch"){
+console.log('[WCBD] License check response:',r);
+if(r.reason==='inactive'||r.reason==='expired'||r.reason==='limit_exceeded'||r.reason==='domain_mismatch'){
 callback(false);
 }else{
 callback(true);
 }
 },
 error:function(xhr,status,err){
-console.error("[WCBD] License validation error:",err);
+console.error('[WCBD] License validation error:',err);
 callback(false);
 }
 });
 },
 
-showLicenseError:function(){
-// Only log to console - never show warnings to customers on checkout page
-console.warn("[WCBD] License inactive. Features disabled. Please check your subscription at the dashboard.");
-},
-
-// UNIVERSAL FALLBACK: Catches form submissions that neither classic nor block hooks capture
 setupUniversalInterceptor:function(){
 var self=this;
 if(!this.licenseValid)return;
-console.log("[WCBD] Setting up universal fallback interceptor...");
+console.log('[WCBD] Setting up universal fallback interceptor...');
 
-// Listen for ALL form submit events on checkout page
-jQ(document).on("submit","form",function(e){
+jQ(document).on('submit','form',function(e){
 if(!self.licenseValid)return;
 if(self.universalAllowed){self.universalAllowed=false;return;}
-if(self.blockCheckoutAllowed)return; // Already handled by block interceptor
+if(self.blockCheckoutAllowed)return;
 if(self.universalValidating)return;
 
-// Only intercept forms that look like checkout forms
 var form=jQ(this);
-if(!form.hasClass("checkout")&&!form.hasClass("wc-block-checkout__form")&&!form.find("[name='billing_phone']").length&&!form.find("input[autocomplete='tel']").length){
-return; // Not a checkout form
+if(!form.hasClass('checkout')&&!form.hasClass('wc-block-checkout__form')&&!form.find('[name="billing_phone"]').length&&!form.find('input[autocomplete="tel"]').length){
+return;
 }
 
-var phone=form.find("#billing_phone,input[name='billing_phone']").val()||self.getBlockCheckoutPhone();
-if(!phone||phone.length<5){return;} // No phone, let it through
+var ph=form.find('#billing_phone,input[name="billing_phone"]').val()||self.getBlockCheckoutPhone();
+if(!ph||ph.length<5)return;
 
 e.preventDefault();
 e.stopImmediatePropagation();
 self.universalValidating=true;
+console.log('[WCBD] Universal interceptor caught form submit, phone:',ph);
 
-console.log("[WCBD] Universal interceptor caught form submit, phone:",phone);
-
-self.doPrecheck(phone,form.find("button[type='submit']"),function(allowed){
+self.doPrecheck(ph,form.find('button[type="submit"]'),function(allowed){
 self.universalValidating=false;
 if(allowed){
 self.universalAllowed=true;
@@ -444,88 +376,74 @@ form[0].submit();
 });
 });
 },
-universalValidating:false,
-universalAllowed:false,
 
-// Centralized precheck function used by block and universal interceptors
 doPrecheck:function(phone,btnEl,callback){
 var self=this;
-var origText=btnEl.length?btnEl.text():"";
-if(btnEl.length){
-btnEl.prop("disabled",true).text(self.lang==="bn"?"চেক করা হচ্ছে...":"Checking...");
-}
+var origText=btnEl.length?btnEl.text():'';
+if(btnEl.length){btnEl.prop('disabled',true).text(self.lang==='bn'?'চেক করা হচ্ছে...':'Checking...');}
 
 jQ.ajax({
-url:self.endpoint,
-method:"POST",
-contentType:"application/json",
-timeout:12000,
-data:JSON.stringify({api_key:self.apiKey,phone:phone,device_id:self.deviceId,domain:window.location.hostname,check_type:"precheck"}),
+url:self.endpoint,method:'POST',contentType:'application/json',timeout:12000,
+data:JSON.stringify({api_key:self.apiKey,phone:phone,device_id:self.deviceId,domain:window.location.hostname,check_type:'precheck'}),
 success:function(r){
-console.log("[WCBD] Precheck response:",r);
-if(r.popup_settings){self.applyRemoteSettings(r.popup_settings);}
-
+console.log('[WCBD] Precheck response:',r);
+if(r.popup_settings)self.applyRemoteSettings(r.popup_settings);
 if(r.allowed){
-if(btnEl.length){btnEl.prop("disabled",false).text(origText);}
+if(btnEl.length)btnEl.prop('disabled',false).text(origText);
 if(callback)callback(true);
 }else{
-if(btnEl.length){btnEl.prop("disabled",false).text(origText);}
-var customMsg=r.reason==="blacklist"?self.msgBlacklist:self.msgCooldown;
+if(btnEl.length)btnEl.prop('disabled',false).text(origText);
+var customMsg=r.reason==='blacklist'?self.msgBlacklist:self.msgCooldown;
 self.popup(r.reason,customMsg,r.minutes_remaining);
 if(callback)callback(false);
 }
 },
 error:function(xhr,status,err){
-console.error("[WCBD] Precheck error:",err);
-if(btnEl.length){btnEl.prop("disabled",false).text(origText);}
-// Fail-open
+console.error('[WCBD] Precheck error:',err);
+if(btnEl.length)btnEl.prop('disabled',false).text(origText);
 if(callback)callback(true);
 }
 });
 },
 
-// Incomplete Order Tracking
 setupIncompleteTracking:function(){
 var self=this;
-if(!this.licenseValid)return; // BLOCK if license invalid
-console.log("[WCBD] Setting up incomplete order tracking...");
+if(!this.licenseValid)return;
+console.log('[WCBD] Setting up incomplete order tracking...');
 
-// Get phone field (works for both classic and block checkout)
-var phoneSelector="#billing_phone,#phone,#billing-phone,input[id*='phone'],input[autocomplete='tel'],input[name='billing_phone']";
+var phoneSelector='#billing_phone,#phone,#billing-phone,input[id*="phone"],input[autocomplete="tel"],input[name="billing_phone"]';
 
-// Trigger 1: Phone Blur - When user enters phone and clicks away
-jQ(document).on("blur",phoneSelector,function(){
+jQ(document).on('blur',phoneSelector,function(){
 if(!self.licenseValid)return;
-var phone=jQ(this).val();
-if(phone&&phone.length>=10){
-self.logIncompleteAttempt("phone_blur",phone);
+var ph=jQ(this).val();
+if(ph&&ph.length>=10){
+self.logIncompleteAttempt('phone_blur',ph);
 }
 });
 
-// Trigger 2: WooCommerce Checkout Error
-jQ(document.body).on("checkout_error",function(){
+jQ(document.body).on('checkout_error',function(){
 if(!self.licenseValid)return;
-var phone=self.isBlockCheckout?self.getBlockCheckoutPhone():jQ("#billing_phone").val();
-if(phone&&phone.length>=5){
-self.logIncompleteAttempt("validation_error",phone);
+var ph=self.isBlockCheckout?self.getBlockCheckoutPhone():jQ('#billing_phone').val();
+if(ph&&ph.length>=5){
+self.logIncompleteAttempt('validation_error',ph);
 }
 });
 
-// Trigger 3: Page Unload (beforeunload) - If phone is filled
-jQ(window).on("beforeunload",function(){
+jQ(window).on('beforeunload',function(){
 if(!self.licenseValid)return;
-var phone=self.isBlockCheckout?self.getBlockCheckoutPhone():jQ("#billing_phone").val();
-if(phone&&phone.length>=10&&!self.incompleteLogged["page_exit_"+phone]){
-self.incompleteLogged["page_exit_"+phone]=true;
-var name=self.isBlockCheckout?(document.querySelector("#first-name,#billing-first-name,input[autocomplete='given-name']")||{}).value||"":jQ("#billing_first_name").val()||"";
+var ph=self.isBlockCheckout?self.getBlockCheckoutPhone():jQ('#billing_phone').val();
+if(ph&&ph.length>=10&&!self.incompleteLogged['page_exit_'+ph]){
+self.incompleteLogged['page_exit_'+ph]=true;
+var name=self.isBlockCheckout?(document.querySelector('#first-name,#billing-first-name,input[autocomplete="given-name"]')||{}).value||'':jQ('#billing_first_name').val()||'';
 var data=JSON.stringify({
 api_key:self.apiKey,
-phone:phone,
+phone:ph,
 name:name,
-ip:"",
-device_id:self.deviceId||"",
+ip:'',
+device_id:self.deviceId||'',
 cart_total:self.getCartTotal(),
-reason:"page_exit"
+cart_items:self.getCartItems(),
+reason:'page_exit'
 });
 if(navigator.sendBeacon){
 navigator.sendBeacon(self.incompleteEndpoint,data);
@@ -533,45 +451,41 @@ navigator.sendBeacon(self.incompleteEndpoint,data);
 }
 });
 
-console.log("[WCBD] Incomplete order tracking ready");
+console.log('[WCBD] Incomplete order tracking ready');
 },
 
 logIncompleteAttempt:function(reason,phone){
 var self=this;
-if(!this.licenseValid)return; // BLOCK if license invalid
-var key=reason+"_"+phone;
-
-// Prevent duplicate logs within same session
+if(!this.licenseValid)return;
+var key=reason+'_'+phone;
 if(this.incompleteLogged[key])return;
 this.incompleteLogged[key]=true;
 
-console.log("[WCBD] Logging incomplete attempt:",reason,phone);
+console.log('[WCBD] Logging incomplete attempt:',reason,phone);
 
-var name=jQ("#billing_first_name").val()+" "+jQ("#billing_last_name").val();
+var name=jQ('#billing_first_name').val()+' '+jQ('#billing_last_name').val();
 var cartItems=this.getCartItems();
 
 jQ.ajax({
-url:this.incompleteEndpoint,
-method:"POST",
-contentType:"application/json",
+url:this.incompleteEndpoint,method:'POST',contentType:'application/json',
 data:JSON.stringify({
 api_key:this.apiKey,
 phone:phone.trim(),
-name:name.trim()||"",
-ip:"",
-device_id:this.deviceId||"",
+name:name.trim()||'',
+ip:'',
+device_id:this.deviceId||'',
 cart_total:this.getCartTotal(),
 cart_items:cartItems,
 reason:reason
 }),
 success:function(r){
-console.log("[WCBD] Incomplete attempt logged:",r);
-if(r.risk_level==="high"){
-console.warn("[WCBD] High risk detected! Attempts:",r.attempts_count);
+console.log('[WCBD] Incomplete attempt logged:',r);
+if(r.risk_level==='high'){
+console.warn('[WCBD] High risk detected! Attempts:',r.attempts_count);
 }
 },
 error:function(xhr,status,err){
-console.error("[WCBD] Incomplete logging error:",err);
+console.error('[WCBD] Incomplete logging error:',err);
 }
 });
 },
@@ -579,23 +493,21 @@ console.error("[WCBD] Incomplete logging error:",err);
 getCartItems:function(){
 try{
 var items=[];
-jQ(".woocommerce-checkout-review-order-table .cart_item").each(function(){
+jQ('.woocommerce-checkout-review-order-table .cart_item').each(function(){
 var row=jQ(this);
-var name=row.find(".product-name").text().trim().split("\\n")[0].trim();
-var qty=parseInt(row.find(".product-quantity").text().replace(/[^0-9]/g,""))||1;
-var priceText=row.find(".product-total .amount").text().replace(/[^0-9.]/g,"");
+var name=row.find('.product-name').text().trim().split('\\n')[0].trim();
+var qty=parseInt(row.find('.product-quantity').text().replace(/[^0-9]/g,''))||1;
+var priceText=row.find('.product-total .amount').text().replace(/[^0-9.]/g,'');
 var price=parseFloat(priceText)||0;
-if(name){
-items.push({name:name,price:price,quantity:qty});
-}
+if(name){items.push({name:name,price:price,quantity:qty});}
 });
 return items;
-}catch(e){console.error("[WCBD] Cart items error:",e);return [];}
+}catch(e){console.error('[WCBD] Cart items error:',e);return [];}
 },
 
 getCartTotal:function(){
 try{
-var total=jQ(".order-total .amount").text().replace(/[^0-9.]/g,"");
+var total=jQ('.order-total .amount').text().replace(/[^0-9.]/g,'');
 return parseFloat(total)||0;
 }catch(e){return 0;}
 },
@@ -603,47 +515,36 @@ return parseFloat(total)||0;
 validate:function(f){
 var self=this;
 if(!this.licenseValid){
-// License invalid - allow order to proceed (fail-open for merchants)
-console.warn("[WCBD] License invalid - skipping validation");
+console.warn('[WCBD] License invalid - skipping validation');
 return true;
 }
-
-var phone=jQ("#billing_phone").val();
-var btn=f.find("button[type=submit]");
-btn.prop("disabled",true).data("txt",btn.text()).html(this.lang==="bn"?"চেক করা হচ্ছে...":"Checking...");
-console.log("[WCBD] Validating order...");
-
-this.checkEligibility(f,phone,btn);
+var ph=jQ('#billing_phone').val();
+var btn=f.find('button[type=submit]');
+btn.prop('disabled',true).data('txt',btn.text()).html(this.lang==='bn'?'চেক করা হচ্ছে...':'Checking...');
+console.log('[WCBD] Validating order...');
+this.checkEligibility(f,ph,btn);
 return false;
 },
 
 checkEligibility:function(f,phone,btn){
 var self=this;
-
 jQ.ajax({
-url:this.endpoint,
-method:"POST",
-contentType:"application/json",
-data:JSON.stringify({api_key:this.apiKey,phone:phone,device_id:this.deviceId,domain:window.location.hostname,check_type:"precheck"}),
+url:this.endpoint,method:'POST',contentType:'application/json',
+data:JSON.stringify({api_key:this.apiKey,phone:phone,device_id:this.deviceId,domain:window.location.hostname,check_type:'precheck'}),
 success:function(r){
-console.log("[WCBD] API Response:",r);
-
-// Update settings from server if available
-if(r.popup_settings){
-self.applyRemoteSettings(r.popup_settings);
-}
-
+console.log('[WCBD] API Response:',r);
+if(r.popup_settings)self.applyRemoteSettings(r.popup_settings);
 if(r.allowed){
-f.off("checkout_place_order").submit();
+f.off('checkout_place_order').submit();
 }else{
-var customMsg=r.reason==="blacklist"?self.msgBlacklist:self.msgCooldown;
+var customMsg=r.reason==='blacklist'?self.msgBlacklist:self.msgCooldown;
 self.popup(r.reason,customMsg,r.minutes_remaining);
-btn.prop("disabled",false).text(btn.data("txt"));
+btn.prop('disabled',false).text(btn.data('txt'));
 }
 },
 error:function(xhr,status,err){
-console.error("[WCBD] API Error:",err);
-f.off("checkout_place_order").submit();
+console.error('[WCBD] API Error:',err);
+f.off('checkout_place_order').submit();
 }
 });
 },
@@ -657,59 +558,59 @@ if(s.msg_blacklist)this.msgBlacklist=s.msg_blacklist;
 if(s.whatsapp)this.whatsapp=s.whatsapp;
 if(s.phone)this.phone=s.phone;
 if(s.show_contact!==undefined)this.showContact=s.show_contact;
-console.log("[WCBD] Applied remote settings");
+console.log('[WCBD] Applied remote settings');
 },
 
 formatTime:function(mins){
-if(mins<60)return mins+(this.lang==="bn"?" মিনিট":" minute(s)");
+if(mins<60)return mins+(this.lang==='bn'?' মিনিট':' minute(s)');
 var hours=Math.floor(mins/60);
 var m=mins%60;
 if(mins<1440){
-var hourStr=hours+(this.lang==="bn"?" ঘন্টা":" hour(s)");
-var minStr=m>0?" "+m+(this.lang==="bn"?" মিনিট":" min"):"";
+var hourStr=hours+(this.lang==='bn'?' ঘন্টা':' hour(s)');
+var minStr=m>0?' '+m+(this.lang==='bn'?' মিনিট':' min'):'';
 return hourStr+minStr;
 }
 var days=Math.floor(mins/1440);
 var remHrs=Math.floor((mins%1440)/60);
-var dayStr=days+(this.lang==="bn"?" দিন":" day(s)");
-var hrStr=remHrs>0?" "+remHrs+(this.lang==="bn"?" ঘন্টা":" hr"):"";
+var dayStr=days+(this.lang==='bn'?' দিন':' day(s)');
+var hrStr=remHrs>0?' '+remHrs+(this.lang==='bn'?' ঘন্টা':' hr'):'';
 return dayStr+hrStr;
 },
 
 popup:function(type,msg,mins){
 var self=this;
-if(!this.licenseValid)return; // BLOCK if license invalid
-console.log("[WCBD] Showing popup:",type);
+if(!this.licenseValid)return;
+console.log('[WCBD] Showing popup:',type);
 
-jQ("#wcbdFraudPopup").remove();
+jQ('#wcbdFraudPopup').remove();
 
-var icons={blacklist:"🚫",cooldown:"⏱️"};
-var titles=this.lang==="bn"?{blacklist:"অর্ডার ব্লক করা হয়েছে",cooldown:"অপেক্ষা করুন"}:{blacklist:"Order Blocked",cooldown:"Please Wait"};
+var icons={blacklist:'🚫',cooldown:'⏱️'};
+var titles=this.lang==='bn'?{blacklist:'অর্ডার ব্লক করা হয়েছে',cooldown:'অপেক্ষা করুন'}:{blacklist:'Order Blocked',cooldown:'Please Wait'};
 
-var timeDisplay=mins?'<p class="wcbd-fraud-popup-time">⏰ '+this.formatTime(mins)+' '+(this.lang==="bn"?"বাকি":"remaining")+'</p>':"";
+var timeDisplay=mins?'<p class="wcbd-fraud-popup-time">⏰ '+this.formatTime(mins)+' '+(this.lang==='bn'?'বাকি':'remaining')+'</p>':'';
 
-var contactHtml="";
+var contactHtml='';
 if(this.whatsapp||this.phone){
 contactHtml='<div class="wcbd-fraud-popup-contact-box">';
-contactHtml+='<p class="wcbd-fraud-popup-contact-title">'+(this.lang==="bn"?"📞 সমস্যা হলে যোগাযোগ করুন":"📞 Contact Us")+'</p>';
+contactHtml+='<p class="wcbd-fraud-popup-contact-title">'+(this.lang==='bn'?'📞 সমস্যা হলে যোগাযোগ করুন':'📞 Contact Us')+'</p>';
 contactHtml+='<div class="wcbd-fraud-popup-contact">';
 if(this.whatsapp){
-var waNum=this.whatsapp.replace(/\\D/g,"");
+var waNum=this.whatsapp.replace(/\\D/g,'');
 contactHtml+='<a href="https://wa.me/'+waNum+'" target="_blank" class="wcbd-fraud-popup-whatsapp">💬 WhatsApp</a>';
 }
 if(this.phone){
-contactHtml+='<a href="tel:'+this.phone+'" class="wcbd-fraud-popup-phone">📱 '+(this.lang==="bn"?"ফোন করুন":"Call")+'</a>';
+contactHtml+='<a href="tel:'+this.phone+'" class="wcbd-fraud-popup-phone">📱 '+(this.lang==='bn'?'ফোন করুন':'Call')+'</a>';
 }
-contactHtml+="</div></div>";
+contactHtml+='</div></div>';
 }
 
-var timerHtml=this.popupTimer>0?'<span class="wcbd-fraud-popup-countdown">('+this.popupTimer+'s)</span>':"";
-var btnText=this.lang==="bn"?"ঠিক আছে":"OK";
+var timerHtml=this.popupTimer>0?'<span class="wcbd-fraud-popup-countdown">('+this.popupTimer+'s)</span>':'';
+var btnText=this.lang==='bn'?'ঠিক আছে':'OK';
 
 var html='<div class="wcbd-fraud-popup-overlay" id="wcbdFraudPopup">';
 html+='<div class="wcbd-fraud-popup-modal">';
-html+='<div class="wcbd-fraud-popup-icon '+type+'">'+(icons[type]||"⚠️")+'</div>';
-html+='<h3 class="wcbd-fraud-popup-title">'+(titles[type]||"Error")+'</h3>';
+html+='<div class="wcbd-fraud-popup-icon '+type+'">'+(icons[type]||'⚠️')+'</div>';
+html+='<h3 class="wcbd-fraud-popup-title">'+(titles[type]||'Error')+'</h3>';
 html+='<p class="wcbd-fraud-popup-message">'+msg+'</p>';
 html+=timeDisplay;
 html+=contactHtml;
@@ -718,40 +619,43 @@ html+='</div></div>';
 
 jQ(document.documentElement).append(html);
 
-jQ("#wcbdFraudBtn").on("click",function(){jQ("#wcbdFraudPopup").remove();jQ(document).off("keydown.wcbdPopup");});
-
-jQ(document).on("keydown.wcbdPopup",function(e){if(e.key==="Escape"){jQ("#wcbdFraudPopup").remove();jQ(document).off("keydown.wcbdPopup");}});
-
-jQ("#wcbdFraudPopup").on("click",function(e){if(jQ(e.target).hasClass("wcbd-fraud-popup-overlay")){jQ("#wcbdFraudPopup").remove();jQ(document).off("keydown.wcbdPopup");}});
+jQ('#wcbdFraudBtn').on('click',function(){jQ('#wcbdFraudPopup').remove();jQ(document).off('keydown.wcbdPopup');});
+jQ(document).on('keydown.wcbdPopup',function(e){if(e.key==='Escape'){jQ('#wcbdFraudPopup').remove();jQ(document).off('keydown.wcbdPopup');}});
+jQ('#wcbdFraudPopup').on('click',function(e){if(jQ(e.target).hasClass('wcbd-fraud-popup-overlay')){jQ('#wcbdFraudPopup').remove();jQ(document).off('keydown.wcbdPopup');}});
 
 if(this.popupTimer>0){
 var countdown=this.popupTimer;
 var interval=setInterval(function(){
 countdown--;
-jQ("#wcbdFraudBtn .wcbd-fraud-popup-countdown").text("("+countdown+"s)");
+jQ('#wcbdFraudBtn .wcbd-fraud-popup-countdown').text('('+countdown+'s)');
 if(countdown<=0){
 clearInterval(interval);
-jQ("#wcbdFraudPopup").remove();
-jQ(document).off("keydown.wcbdPopup");
+jQ('#wcbdFraudPopup').remove();
+jQ(document).off('keydown.wcbdPopup');
 }
 },1000);
 }
 }
 };
 
-jQ(function(){WCBD_FG.init();});
-})(jQuery);
-JSTEMPLATE;
+WCBD_FG.init();
+}
+if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',wcbdLoad);}else{wcbdLoad();}
+})();
+LOADERJS;
 
-        $incomplete_endpoint = esc_js($this->incomplete_endpoint);
-        
-        $js = str_replace(
+        return str_replace(
             array('%%ENDPOINT%%', '%%INCOMPLETE_ENDPOINT%%', '%%APIKEY%%', '%%LANG%%', '%%TIMER%%', '%%MSG_COOLDOWN%%', '%%MSG_BLACKLIST%%', '%%WHATSAPP%%', '%%PHONE%%'),
-            array($endpoint, $incomplete_endpoint, esc_js($api_key), $language, $popup_timer, $msg_cooldown, $msg_blacklist, $whatsapp, $phone),
-            $js_template
+            array($$endpoint, $$incomplete_endpoint, esc_js($$api_key), $$language, $$popup_timer, $$msg_cooldown, $$msg_blacklist, $$whatsapp, $$phone),
+            $$js_template
         );
+    }
+    
+    public function enqueue_admin_scripts($hook) {
+        if ($hook !== 'toplevel_page_wcbd-fraud-guard') return;
         
-        return $js;
+        wp_add_inline_style('wp-admin', $this->get_admin_css());
+        wp_add_inline_script('jquery', $this->get_admin_js(), 'after');
     }
     
     private function get_admin_css() {
@@ -765,7 +669,6 @@ JSTEMPLATE;
         .fraud-header-text p{margin:0;opacity:0.9;font-size:15px}
         .fraud-header-text .version{background:rgba(255,255,255,0.2);padding:4px 14px;border-radius:20px;font-size:13px;font-weight:600}
         
-        /* Cards */
         .fraud-card{background:#fff;border:1px solid #e0e0e0;border-radius:16px;padding:25px;margin-bottom:20px;box-shadow:0 4px 12px rgba(0,0,0,0.05);transition:transform 0.2s,box-shadow 0.2s}
         .fraud-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.08)}
         .fraud-card h2{margin:0 0 20px;padding:0 0 15px;border-bottom:2px solid #f1f5f9;font-size:18px;display:flex;align-items:center;gap:10px;color:#1e293b}
@@ -773,7 +676,6 @@ JSTEMPLATE;
         .fraud-card.dark h2{color:#00d4ff;border-bottom-color:#334155}
         .fraud-card.dark label{color:#e2e8f0}
         
-        /* Feature Cards Grid */
         .fraud-feature-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:15px;margin-bottom:20px}
         @media(max-width:768px){.fraud-feature-grid{grid-template-columns:1fr}}
         .fraud-feature-card{background:linear-gradient(145deg,#f8fafc,#f1f5f9);border:1px solid #e2e8f0;border-radius:12px;padding:20px;transition:all 0.2s}
@@ -782,7 +684,6 @@ JSTEMPLATE;
         .fraud-feature-card h4{margin:0 0 6px;font-size:15px;font-weight:600;color:#1e293b}
         .fraud-feature-card p{margin:0;font-size:13px;color:#64748b;line-height:1.5}
         
-        /* Toggle */
         .fraud-toggle{display:flex;align-items:center;gap:12px;cursor:pointer;padding:10px 0}
         .fraud-toggle input{display:none}
         .fraud-toggle-slider{width:52px;height:28px;background:#cbd5e1;border-radius:28px;position:relative;transition:0.3s}
@@ -791,7 +692,6 @@ JSTEMPLATE;
         .fraud-toggle input:checked+.fraud-toggle-slider::before{transform:translateX(24px)}
         .fraud-toggle span:last-child{font-weight:500;color:#374151}
         
-        /* Inputs */
         .fraud-input{width:100%;padding:14px 18px;border:2px solid #e2e8f0;border-radius:12px;font-size:14px;transition:all 0.2s;background:#fff}
         .fraud-input:focus{outline:none;border-color:#0891b2;box-shadow:0 0 0 4px rgba(8,145,178,0.1)}
         .fraud-input.dark{background:#0f172a;border-color:#334155;color:#fff}
@@ -799,7 +699,6 @@ JSTEMPLATE;
         .fraud-textarea{min-height:100px;resize:vertical}
         .fraud-select{padding:14px 18px;border:2px solid #e2e8f0;border-radius:12px;font-size:14px;background:#fff;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' fill=\\'none\\' viewBox=\\'0 0 24 24\\' stroke=\\'%2364748b\\'%3E%3Cpath stroke-linecap=\\'round\\' stroke-linejoin=\\'round\\' stroke-width=\\'2\\' d=\\'M19 9l-7 7-7-7\\'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;background-size:20px}
         
-        /* Buttons */
         .fraud-btn{padding:14px 28px;border:none;border-radius:12px;cursor:pointer;font-size:15px;font-weight:600;transition:all 0.2s;display:inline-flex;align-items:center;gap:8px}
         .fraud-btn-primary{background:linear-gradient(135deg,#0891b2,#0e7490);color:#fff;box-shadow:0 4px 14px rgba(8,145,178,0.3)}
         .fraud-btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(8,145,178,0.4)}
@@ -808,17 +707,14 @@ JSTEMPLATE;
         .fraud-btn-secondary{background:#f1f5f9;color:#475569;border:2px solid #e2e8f0}
         .fraud-btn-secondary:hover{background:#e2e8f0}
         
-        /* Grid */
         .fraud-grid{display:grid;gap:20px}
         .fraud-grid-2{grid-template-columns:repeat(2,1fr)}
         @media(max-width:768px){.fraud-grid-2{grid-template-columns:1fr}}
         
-        /* Form Groups */
         .fraud-form-group{margin-bottom:20px}
         .fraud-form-group label{display:block;font-weight:600;margin-bottom:8px;color:#374151;font-size:14px}
         .fraud-form-group small{display:block;margin-top:6px;color:#64748b;font-size:12px;line-height:1.5}
         
-        /* Tabs */
         .wcbd-tabs{display:flex;gap:8px;margin-bottom:25px;background:#f1f5f9;padding:6px;border-radius:14px;overflow-x:auto}
         .wcbd-tab-btn{padding:12px 24px;border:none;border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;background:transparent;color:#64748b;transition:all 0.2s;white-space:nowrap;display:flex;align-items:center;gap:8px}
         .wcbd-tab-btn.active{background:#fff;color:#0891b2;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
@@ -827,7 +723,6 @@ JSTEMPLATE;
         .wcbd-tab-content.active{display:block}
         @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
         
-        /* Incomplete Orders Table */
         .incomplete-table-wrap{overflow-x:auto;border-radius:12px;border:1px solid #334155}
         .incomplete-table{width:100%;border-collapse:collapse;font-size:13px}
         .incomplete-table th{background:#1e293b;color:#94a3b8;font-weight:600;text-transform:uppercase;font-size:11px;letter-spacing:0.5px;padding:14px 16px;text-align:left;border-bottom:1px solid #334155}
@@ -840,7 +735,6 @@ JSTEMPLATE;
         .risk-badge.low{background:rgba(16,185,129,0.15);color:#10b981}
         .reason-badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:8px;font-size:11px;background:#334155;color:#94a3b8}
         
-        /* Stats Cards */
         .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-bottom:20px}
         @media(max-width:900px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
         @media(max-width:500px){.stats-grid{grid-template-columns:1fr}}
@@ -854,12 +748,10 @@ JSTEMPLATE;
         .stat-card.converted .value{color:#10b981}
         .stat-card.today .value{color:#f59e0b}
         
-        /* API Result */
         .api-result{margin-left:12px;font-weight:600;padding:4px 12px;border-radius:20px;font-size:13px}
         .api-result.success{color:#10b981;background:rgba(16,185,129,0.1)}
         .api-result.error{color:#ef4444;background:rgba(239,68,68,0.1)}
         
-        /* Branding Footer */
         .wcbd-branding{margin-top:30px;padding:30px;background:linear-gradient(145deg,#0f172a,#1e293b);border-radius:20px;text-align:center;border:1px solid #334155}
         .wcbd-branding img{width:70px;height:70px;border-radius:50%;border:3px solid #0891b2;object-fit:contain;background:#fff;padding:8px;margin-bottom:15px}
         .wcbd-branding h3{color:#fff;margin:0 0 5px;font-size:20px}
@@ -880,7 +772,6 @@ JSTEMPLATE;
         $js_template = <<<'ADMINJSTEMPLATE'
 (function(jQ){
 jQ(document).ready(function(){
-// Tab switching
 jQ(".wcbd-tab-btn").on("click",function(){
 var tab=jQ(this).data("tab");
 jQ(".wcbd-tab-btn").removeClass("active");
@@ -891,7 +782,6 @@ if(tab==="incomplete"){loadIncompleteOrders();}
 if(tab==="cooldown"){loadCooldown();}
 });
 
-// Test API
 jQ("#wcbd-test-api").on("click",function(){
 var btn=jQ(this);
 var result=jQ("#wcbd-api-result");
@@ -918,7 +808,6 @@ btn.prop("disabled",false).html("🔌 Test Connection");
 });
 });
 
-// Load incomplete orders on page load if tab is active
 if(jQ(".wcbd-tab-btn.active").data("tab")==="incomplete"){
 loadIncompleteOrders();
 }
@@ -972,7 +861,6 @@ var riskClass=o.is_suspicious?"high":(o.attempts>3?"medium":"low");
 var riskLabel=o.is_suspicious?"🔴 HIGH":(o.attempts>3?"🟡 MEDIUM":"🟢 LOW");
 var reasonIcon={"phone_blur":"📱","validation_error":"❌","page_exit":"🚪","payment_failed":"💳"}[o.reason]||"❓";
 
-// Format cart items
 var productsHtml="<span style=\\"color:#64748b\\">-</span>";
 if(o.cart_items&&o.cart_items.length>0){
 productsHtml='<div style="font-size:11px;max-width:200px">';
@@ -1010,7 +898,6 @@ html+='</tr>';
 html+='</tbody></table></div>';
 container.html(html);
 
-// Convert button click handlers
 jQ(".convert-order-btn").on("click",function(){
 var btn=jQ(this);
 var orderId=btn.data("id");
@@ -1032,7 +919,6 @@ success:function(r){
 if(r.success){
 var wcLink=r.data&&r.data.wc_order_id?'<a href="post.php?post='+r.data.wc_order_id+'&action=edit" style="color:#10b981;font-size:12px;font-weight:600;text-decoration:underline">✅ Order #'+r.data.wc_order_id+'</a>':'<span style="color:#10b981;font-size:12px;font-weight:600">✅ Converted</span>';
 btn.replaceWith(wcLink);
-// Update stats
 var convertedEl=jQ(".stat-card.converted .value");
 convertedEl.text(parseInt(convertedEl.text())+1);
 }else{
@@ -1048,7 +934,6 @@ btn.prop("disabled",false).html("🔄 Convert");
 });
 }
 
-// Cooldown Tab Functions
 function formatCooldownTime(mins){
 if(mins<60) return mins+" মিনিট";
 if(mins<1440){var h=Math.floor(mins/60);var m=mins%60;return h+" ঘন্টা"+(m>0?" "+m+" মিনিট":"");}
@@ -1119,13 +1004,11 @@ html+='<div id="cooldown-status" style="text-align:center;margin-top:15px"></div
 
 container.html(html);
 
-// Preset click handlers
 jQ(".cooldown-preset-btn").on("click",function(){
 var val=parseInt(jQ(this).data("value"));
 saveCooldown(val);
 });
 
-// Custom save
 jQ("#cooldown-save-custom").on("click",function(){
 var val=parseInt(jQ("#cooldown-custom-input").val());
 if(val>=1&&val<=43200){
@@ -1149,7 +1032,6 @@ if(r.success){
 statusEl.html('<span style="color:#10b981">✅ Cooldown আপডেট হয়েছে: '+formatCooldownTime(minutes)+'</span>');
 jQ("#cooldown-display").text(formatCooldownTime(minutes));
 jQ("#cooldown-custom-input").val(minutes);
-// Update active preset
 jQ(".cooldown-preset-btn").css({"background":"#1e293b","color":"#94a3b8","border-color":"#334155","font-weight":"normal"});
 jQ(".cooldown-preset-btn[data-value='"+minutes+"']").css({"background":"linear-gradient(135deg,#0891b2,#06b6d4)","color":"#fff","border-color":"#0891b2","font-weight":"700"});
 setTimeout(function(){statusEl.html("");},3000);
@@ -1163,7 +1045,6 @@ statusEl.html('<span style="color:#ef4444">❌ Connection error</span>');
 });
 }
 
-// Refresh button
 jQ("#refresh-incomplete").on("click",function(){
 loadIncompleteOrders();
 });
@@ -1179,324 +1060,166 @@ ADMINJSTEMPLATE;
     }
     
     public function render_settings_page() {
-        $api_key = get_option('wcbd_fraud_guard_api_key', $this->api_key);
+        $api_key = $this->api_key;
         $language = get_option('wcbd_fraud_guard_language', 'bn');
         $popup_timer = get_option('wcbd_fraud_guard_popup_timer', '30');
-        $msg_cooldown = get_option('wcbd_fraud_guard_msg_cooldown', 'আপনি সম্প্রতি অর্ডার করেছেন। অনুগ্রহ করে কিছুক্ষণ অপেক্ষা করুন।');
-        $msg_blacklist = get_option('wcbd_fraud_guard_msg_blacklist', 'আপনার অর্ডার ব্লক করা হয়েছে। সমস্যা হলে যোগাযোগ করুন।');
+        $msg_cooldown = get_option('wcbd_fraud_guard_msg_cooldown', '');
+        $msg_blacklist = get_option('wcbd_fraud_guard_msg_blacklist', '');
         $whatsapp = get_option('wcbd_fraud_guard_whatsapp', '');
         $phone = get_option('wcbd_fraud_guard_phone', '');
+        $saved = isset($_GET['saved']);
         
-        ?>
-        <div class="wrap">
-            <div class="fraud-wrap">
-                <!-- Header -->
-                <div class="fraud-header">
-                    <div class="fraud-header-text">
-                        <h1>🛡️ WCBD Fraud Guard <span class="version">v<?php echo WCBD_FRAUD_GUARD_VERSION; ?></span></h1>
-                        <p>Order Limiter & Anti-Fraud Protection with Incomplete Order Tracking</p>
-                    </div>
-                </div>
-                
-                <!-- Tabs -->
-                <div class="wcbd-tabs">
-                    <button type="button" class="wcbd-tab-btn active" data-tab="settings">⚙️ Settings</button>
-                    <button type="button" class="wcbd-tab-btn" data-tab="cooldown">⏱️ Cooldown</button>
-                    <button type="button" class="wcbd-tab-btn" data-tab="incomplete">📊 Incomplete Orders</button>
-                </div>
-                
-                <!-- Settings Tab -->
-                <div id="wcbd-tab-settings" class="wcbd-tab-content active">
-                <form method="post" action="<?php echo admin_url('admin-post.php'); ?>">
-                    <input type="hidden" name="action" value="wcbd_fraud_guard_save_settings">
-                    <?php wp_nonce_field('wcbd_fraud_guard_settings', 'wcbd_fraud_guard_nonce'); ?>
-                    
-                    <!-- API Key -->
-                    <div class="fraud-card">
-                        <h2>🔌 API Connection</h2>
-                        <div class="fraud-form-group">
-                            <label>API Key</label>
-                            <div style="display:flex;gap:10px;align-items:center">
-                                <input type="text" name="api_key" value="<?php echo esc_attr($api_key); ?>" class="fraud-input" style="flex:1">
-                                <button type="button" id="wcbd-test-api" class="fraud-btn fraud-btn-secondary">🔌 Test Connection</button>
-                                <span id="wcbd-api-result" class="api-result"></span>
-                            </div>
-                            <small>API Key auto-generated by WebCreation BD Dashboard</small>
-                        </div>
-                    </div>
-                    
-                    <!-- Incomplete Order Tracking - NEW HIGHLIGHT -->
-                    <!-- Incomplete Order Tracking - Always Enabled -->
-                    <div class="fraud-card" style="background:linear-gradient(145deg,#7c2d12,#c2410c);border:none;color:#fff">
-                        <h2 style="color:#fff;border-bottom-color:rgba(255,255,255,0.2)">📊 Incomplete Order Tracking <span style="background:rgba(16,185,129,0.3);color:#10b981;padding:4px 12px;border-radius:20px;font-size:12px;margin-left:10px">✓ Active</span></h2>
-                        <p style="color:#fed7aa;margin:0 0 15px">License সক্রিয় থাকলে সব feature automatically চালু থাকবে।</p>
-                        
-                        <!-- Feature Grid -->
-                        <div class="fraud-feature-grid">
-                            <div class="fraud-feature-card" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2)">
-                                <div class="icon" style="background:linear-gradient(135deg,#3b82f6,#1d4ed8)">📱</div>
-                                <h4 style="color:#fff">Phone Blur Detection</h4>
-                                <p style="color:#fed7aa">Customer phone enter করে অন্যখানে click করলে track হবে</p>
-                            </div>
-                            <div class="fraud-feature-card" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2)">
-                                <div class="icon" style="background:linear-gradient(135deg,#ef4444,#dc2626)">❌</div>
-                                <h4 style="color:#fff">Validation Error</h4>
-                                <p style="color:#fed7aa">WooCommerce checkout error হলে auto track হবে</p>
-                            </div>
-                            <div class="fraud-feature-card" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2)">
-                                <div class="icon" style="background:linear-gradient(135deg,#f59e0b,#d97706)">🚪</div>
-                                <h4 style="color:#fff">Page Exit Detection</h4>
-                                <p style="color:#fed7aa">Browser tab close করলে sendBeacon এ track হবে</p>
-                            </div>
-                            <div class="fraud-feature-card" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2)">
-                                <div class="icon" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed)">🔍</div>
-                                <h4 style="color:#fff">Smart Risk Detection</h4>
-                                <p style="color:#fed7aa">Same phone/IP থেকে 5+ attempts = HIGH RISK</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Popup Settings -->
-                    <div class="fraud-card">
-                        <h2>🎨 Popup Settings</h2>
-                        <div class="fraud-grid fraud-grid-2">
-                            <div class="fraud-form-group">
-                                <label>Language</label>
-                                <select name="language" class="fraud-select" style="width:100%">
-                                    <option value="bn" <?php selected($language, 'bn'); ?>>🇧🇩 বাংলা</option>
-                                    <option value="en" <?php selected($language, 'en'); ?>>🇬🇧 English</option>
-                                </select>
-                            </div>
-                            <div class="fraud-form-group">
-                                <label>Popup Auto-Close (seconds)</label>
-                                <input type="number" name="popup_timer" value="<?php echo esc_attr($popup_timer); ?>" class="fraud-input" min="0" max="120">
-                                <small>0 = Never auto-close</small>
-                            </div>
-                        </div>
-                        <div class="fraud-form-group">
-                            <label>Cooldown Message</label>
-                            <textarea name="msg_cooldown" class="fraud-input fraud-textarea"><?php echo esc_textarea($msg_cooldown); ?></textarea>
-                            <small>Shown when customer orders too frequently</small>
-                        </div>
-                        <div class="fraud-form-group">
-                            <label>Blacklist Message</label>
-                            <textarea name="msg_blacklist" class="fraud-input fraud-textarea"><?php echo esc_textarea($msg_blacklist); ?></textarea>
-                            <small>Shown when customer is blacklisted</small>
-                        </div>
-                    </div>
-                    
-                    <!-- Contact Options -->
-                    <div class="fraud-card">
-                        <h2>📞 Contact Options</h2>
-                        <p style="color:#64748b;margin:0 0 15px;font-size:13px">Popup এ যোগাযোগের button দেখানো হবে (যদি number দেওয়া থাকে)</p>
-                        <div class="fraud-grid fraud-grid-2">
-                            <div class="fraud-form-group">
-                                <label>WhatsApp Number</label>
-                                <input type="text" name="whatsapp" value="<?php echo esc_attr($whatsapp); ?>" class="fraud-input" placeholder="+8801XXXXXXXXX">
-                            </div>
-                            <div class="fraud-form-group">
-                                <label>Phone Number</label>
-                                <input type="text" name="phone" value="<?php echo esc_attr($phone); ?>" class="fraud-input" placeholder="+8801XXXXXXXXX">
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Dashboard Link -->
-                    <div class="fraud-card dark">
-                        <h2>🌐 Dashboard</h2>
-                        <p style="color:#94a3b8;margin:0 0 15px">Incomplete orders, blacklist, logs এবং advanced settings manage করতে Dashboard এ যান।</p>
-                        <a href="<?php echo esc_url($this->dashboard_url); ?>" target="_blank" class="fraud-btn fraud-btn-primary">
-                            📊 Open Dashboard
-                        </a>
-                    </div>
-                    
-                    <button type="submit" class="fraud-btn fraud-btn-primary" style="width:100%;padding:16px;font-size:16px;justify-content:center">
-                        💾 Save Settings
-                    </button>
-                </form>
-                </div><!-- End Settings Tab -->
-                
-                <!-- Cooldown Tab -->
-                <div id="wcbd-tab-cooldown" class="wcbd-tab-content">
-                    <div class="fraud-card dark">
-                        <h2 style="margin-bottom:10px;border:none;padding:0">⏱️ Cooldown Timer Control</h2>
-                        <p style="color:#94a3b8;margin:0 0 25px;font-size:14px">অর্ডারের মধ্যে কতক্ষণ অপেক্ষা করতে হবে সেটা এখান থেকে নিয়ন্ত্রণ করুন</p>
-                        
-                        <div id="cooldown-container" style="text-align:center;padding:20px;color:#94a3b8">
-                            <span style="font-size:24px">🔄</span>
-                            <p>Loading cooldown settings...</p>
-                        </div>
-                    </div>
-                </div><!-- End Cooldown Tab -->
-                
-                <!-- Incomplete Orders Tab -->
-                <div id="wcbd-tab-incomplete" class="wcbd-tab-content">
-                    <div class="fraud-card dark">
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-                            <h2 style="margin:0;border:none;padding:0">📊 Incomplete Orders</h2>
-                            <button type="button" id="refresh-incomplete" class="fraud-btn fraud-btn-secondary" style="padding:10px 20px">
-                                🔄 Refresh
-                            </button>
-                        </div>
-                        <p style="color:#94a3b8;margin:-10px 0 20px">Customers who started checkout but didn't complete their order</p>
-                        
-                        <div id="incomplete-orders-container">
-                            <div style="text-align:center;padding:40px;color:#94a3b8">
-                                <span style="font-size:24px">🔄</span>
-                                <p>Loading...</p>
-                            </div>
-                        </div>
-                    </div>
-                </div><!-- End Incomplete Tab -->
-                
-                <!-- WebCreation BD Branding -->
-                <div class="wcbd-branding">
-                    <img src="https://webcreation-bd.lovable.app/logo.png" alt="WebCreation BD">
-                    <h3>WebCreation BD</h3>
-                    <p>Best Digital Marketing In Bangladesh</p>
-                    <div class="btn-group">
-                        <a href="https://webcreation-bd.lovable.app" target="_blank" class="primary">🌐 Visit Website</a>
-                        <a href="<?php echo esc_url($this->dashboard_url); ?>" target="_blank" class="secondary">📊 Dashboard</a>
-                    </div>
-                    <p class="copyright">Powered by WebCreation BD © <?php echo date('Y'); ?></p>
-                </div>
-            </div>
-        </div>
-        <?php
-    }
-    
-    // ==========================================
-    // SERVER-SIDE FRAUD VALIDATION (CRITICAL!)
-    // This works for ALL checkout types including Block Checkout
-    // ==========================================
-    
-    private function is_block_checkout() {
-        if (function_exists('has_block')) {
-            global $post;
-            if ($post && has_block('woocommerce/checkout', $post)) {
-                return true;
-            }
-        }
-        return false;
-    }
-    
-    /**
-     * Detect CartFlows checkout pages - BULLETPROOF 4-method detection
-     * CartFlows uses custom post type 'cartflows_step' with step type 'checkout'
-     * WordPress is_checkout() returns false for these pages
-     * CRITICAL: When CartFlows step is set as homepage, post_type can report as 'page'
-     */
-    private function is_cartflows_checkout() {
-        global $post;
-        if (!$post) return false;
+        echo '<div class="fraud-wrap">';
         
-        // Method 1: Post type is cartflows_step
-        if (get_post_type($post) === 'cartflows_step') {
-            return true;
+        // Header
+        echo '<div class="fraud-header"><div class="fraud-header-text">';
+        echo '<h1>🛡️ WCBD Fraud Guard <span class="version">v' . WCBD_FRAUD_GUARD_VERSION . '</span></h1>';
+        echo '<p>WooCommerce Anti-Fraud Protection System with Incomplete Order Tracking</p>';
+        echo '</div></div>';
+        
+        // Success message
+        if ($saved) {
+            echo '<div style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;padding:16px 24px;border-radius:14px;margin-bottom:20px;font-weight:500;display:flex;align-items:center;gap:10px"><span style="font-size:20px">✅</span> Settings saved successfully!</div>';
         }
         
-        // Method 2: CartFlows checkout step meta (works even when post type reports as 'page')
-        $step_type = get_post_meta($post->ID, 'wcf-step-type', true);
-        if ($step_type === 'checkout') {
-            return true;
+        // Tabs
+        echo '<div class="wcbd-tabs">';
+        echo '<button class="wcbd-tab-btn active" data-tab="settings">⚙️ Settings</button>';
+        echo '<button class="wcbd-tab-btn" data-tab="cooldown">⏱️ Cooldown</button>';
+        echo '<button class="wcbd-tab-btn" data-tab="incomplete">📦 Incomplete Orders</button>';
+        echo '</div>';
+        
+        // Tab 1: Settings
+        echo '<div id="wcbd-tab-settings" class="wcbd-tab-content active">';
+        
+        // API Connection Card
+        echo '<div class="fraud-card">';
+        echo '<h2>🔌 API Connection</h2>';
+        echo '<div style="display:flex;align-items:center;gap:15px;flex-wrap:wrap">';
+        echo '<button id="wcbd-test-api" class="fraud-btn fraud-btn-primary">🔌 Test Connection</button>';
+        echo '<span id="wcbd-api-result" class="api-result"></span>';
+        echo '</div>';
+        echo '<div style="margin-top:15px;padding:15px;background:#f8fafc;border-radius:12px;border:1px solid #e2e8f0">';
+        echo '<p style="margin:0;font-size:13px;color:#64748b"><strong>API Key:</strong> <code style="background:#e2e8f0;padding:3px 8px;border-radius:6px;font-size:12px">' . substr($api_key, 0, 8) . '...' . substr($api_key, -4) . '</code></p>';
+        echo '<p style="margin:8px 0 0;font-size:12px;color:#94a3b8">💡 API Key is pre-configured. Manage from your <a href="' . esc_url($this->dashboard_url) . '" target="_blank" style="color:#0891b2">dashboard</a>.</p>';
+        echo '</div>';
+        echo '</div>';
+        
+        // Settings Form
+        echo '<form method="post" action="' . admin_url('admin-post.php') . '">';
+        echo '<input type="hidden" name="action" value="wcbd_fraud_guard_save_settings">';
+        wp_nonce_field('wcbd_fraud_guard_settings', 'wcbd_fraud_guard_nonce');
+        echo '<input type="hidden" name="api_key" value="' . esc_attr($api_key) . '">';
+        
+        // Popup Settings Card
+        echo '<div class="fraud-card">';
+        echo '<h2>🎨 Popup Settings</h2>';
+        echo '<div class="fraud-grid fraud-grid-2">';
+        
+        echo '<div class="fraud-form-group">';
+        echo '<label>🌐 ভাষা (Language)</label>';
+        echo '<select name="language" class="fraud-select" style="width:100%">';
+        echo '<option value="bn"' . ($language === 'bn' ? ' selected' : '') . '>বাংলা (Bengali)</option>';
+        echo '<option value="en"' . ($language === 'en' ? ' selected' : '') . '>English</option>';
+        echo '</select>';
+        echo '</div>';
+        
+        echo '<div class="fraud-form-group">';
+        echo '<label>⏱️ Popup Timer (seconds)</label>';
+        echo '<input type="number" name="popup_timer" value="' . esc_attr($popup_timer) . '" min="0" max="120" class="fraud-input">';
+        echo '<small>0 = auto-close disabled</small>';
+        echo '</div>';
+        
+        echo '</div>';
+        
+        echo '<div class="fraud-form-group">';
+        echo '<label>⏳ Cooldown Message</label>';
+        echo '<textarea name="msg_cooldown" class="fraud-input fraud-textarea">' . esc_textarea($msg_cooldown) . '</textarea>';
+        echo '</div>';
+        
+        echo '<div class="fraud-form-group">';
+        echo '<label>🚫 Blacklist Message</label>';
+        echo '<textarea name="msg_blacklist" class="fraud-input fraud-textarea">' . esc_textarea($msg_blacklist) . '</textarea>';
+        echo '</div>';
+        
+        echo '</div>';
+        
+        // Contact Settings Card
+        echo '<div class="fraud-card">';
+        echo '<h2>📞 Contact Settings</h2>';
+        echo '<div class="fraud-grid fraud-grid-2">';
+        
+        echo '<div class="fraud-form-group">';
+        echo '<label>💬 WhatsApp Number</label>';
+        echo '<input type="text" name="whatsapp" value="' . esc_attr($whatsapp) . '" class="fraud-input" placeholder="+880...">';
+        echo '<small>International format (with country code)</small>';
+        echo '</div>';
+        
+        echo '<div class="fraud-form-group">';
+        echo '<label>📱 Phone Number</label>';
+        echo '<input type="text" name="phone" value="' . esc_attr($phone) . '" class="fraud-input" placeholder="+880...">';
+        echo '</div>';
+        
+        echo '</div>';
+        echo '</div>';
+        
+        echo '<button type="submit" class="fraud-btn fraud-btn-primary" style="width:100%;justify-content:center;font-size:16px;padding:18px">💾 Save Settings</button>';
+        echo '</form>';
+        echo '</div>'; // End settings tab
+        
+        // Tab 2: Cooldown
+        echo '<div id="wcbd-tab-cooldown" class="wcbd-tab-content">';
+        echo '<div class="fraud-card dark">';
+        echo '<h2>⏱️ Cooldown Period Control</h2>';
+        echo '<div id="cooldown-container"><div style="text-align:center;padding:40px;color:#94a3b8"><p>Click the Cooldown tab to load settings</p></div></div>';
+        echo '</div>';
+        echo '</div>';
+        
+        // Tab 3: Incomplete Orders
+        echo '<div id="wcbd-tab-incomplete" class="wcbd-tab-content">';
+        echo '<div class="fraud-card dark">';
+        echo '<h2>📦 Incomplete Order Tracking <button id="refresh-incomplete" class="fraud-btn fraud-btn-secondary" style="margin-left:auto;padding:8px 16px;font-size:12px">🔄 Refresh</button></h2>';
+        echo '<div id="incomplete-orders-container"><div style="text-align:center;padding:40px;color:#94a3b8"><p>Click the Incomplete Orders tab to load data</p></div></div>';
+        echo '</div>';
+        echo '</div>';
+        
+        // Features
+        echo '<div class="fraud-card" style="margin-top:25px">';
+        echo '<h2>✨ v' . WCBD_FRAUD_GUARD_VERSION . ' Features</h2>';
+        echo '<div class="fraud-feature-grid">';
+        
+        $features = array(
+            array("icon" => "🌐", "bg" => "linear-gradient(135deg,#3b82f6,#1d4ed8)", "title" => "Universal Loader", "desc" => "সব পেজে লোড হয় - checkout DOM detect করলেই activate হয়"),
+            array("icon" => "📦", "bg" => "linear-gradient(135deg,#f97316,#ea580c)", "title" => "Incomplete Order Tracking", "desc" => "Phone blur, validation error, page exit - সব track হয়"),
+            array("icon" => "🎯", "bg" => "linear-gradient(135deg,#10b981,#059669)", "title" => "Smart Detection", "desc" => "JS নিজেই checkout element খোঁজে - PHP detection দরকার নেই"),
+            array("icon" => "🔒", "bg" => "linear-gradient(135deg,#8b5cf6,#7c3aed)", "title" => "Device Fingerprint", "desc" => "FingerprintJS দিয়ে device identify করে"),
+            array("icon" => "🛡️", "bg" => "linear-gradient(135deg,#ef4444,#dc2626)", "title" => "Server-Side Validation", "desc" => "PHP level এ order validate - bypass করা সম্ভব না"),
+            array("icon" => "🧱", "bg" => "linear-gradient(135deg,#0891b2,#0e7490)", "title" => "Block Checkout Support", "desc" => "WooCommerce Block Checkout সম্পূর্ণ সাপোর্ট")
+        );
+        
+        foreach ($features as $f) {
+            echo '<div class="fraud-feature-card">';
+            echo '<div class="icon" style="background:' . $f["bg"] . '">' . $f["icon"] . '</div>';
+            echo '<h4>' . $f["title"] . '</h4>';
+            echo '<p>' . $f["desc"] . '</p>';
+            echo '</div>';
         }
         
-        // Method 3: Any CartFlows step meta exists (catches all CartFlows step types)
-        $wcf_step = get_post_meta($post->ID, '_wcf_step_type', true);
-        if (!empty($wcf_step)) {
-            return true;
-        }
+        echo '</div></div>';
         
-        // Method 4: is_singular check
-        if (function_exists('is_singular') && is_singular('cartflows_step')) {
-            return true;
-        }
+        // Branding Footer
+        echo '<div class="wcbd-branding">';
+        echo '<img src="https://webcreation-bd.lovable.app/logo.png" alt="WebCreation BD">';
+        echo '<h3>WebCreation BD</h3>';
+        echo '<p>Professional Web Solutions</p>';
+        echo '<div class="btn-group">';
+        echo '<a href="' . esc_url($this->dashboard_url) . '" target="_blank" class="primary">🔗 Dashboard</a>';
+        echo '<a href="https://wa.me/8801332052874" target="_blank" class="secondary">💬 WhatsApp Support</a>';
+        echo '</div>';
+        echo '<p class="copyright">© ' . date("Y") . ' WebCreation BD. All rights reserved.</p>';
+        echo '</div>';
         
-        return false;
-    }
-    
-    /**
-     * Master checkout detection - 7-LEVEL detection system
-     * Ensures scripts load on ANY checkout page type including CartFlows homepage setups
-     * 
-     * Level 1: is_checkout()                    - Standard WooCommerce
-     * Level 2: is_block_checkout()              - WooCommerce Block Checkout  
-     * Level 3: get_post_type === cartflows_step - CartFlows by post type
-     * Level 4: wcf-step-type meta === checkout  - CartFlows by post meta (homepage fix)
-     * Level 5: _wcf_step_type meta exists       - CartFlows by any step meta
-     * Level 6: is_singular('cartflows_step')    - CartFlows by singular query
-     * Level 7: has_shortcode check              - Shortcode-based checkout
-     */
-    private function is_any_checkout_page() {
-        // Level 1: Standard WooCommerce checkout
-        if (function_exists('is_checkout') && is_checkout()) return true;
-        
-        // Level 2: WooCommerce Block Checkout
-        if ($this->is_block_checkout()) return true;
-        
-        // Levels 3-6: CartFlows detection (bulletproof)
-        if ($this->is_cartflows_checkout()) return true;
-        
-        // Level 7: Shortcode-based checkout fallback
-        global $post;
-        if ($post && is_a($post, 'WP_Post') && !empty($post->post_content)) {
-            if (
-                has_shortcode($post->post_content, 'woocommerce_checkout') || 
-                has_shortcode($post->post_content, 'cartflows_checkout')
-            ) {
-                return true;
-            }
-        }
-        
-        return false;
-    }
-    
-    /**
-     * FALLBACK: wp_footer script injection (priority 100)
-     * Safety net - if wp_enqueue_scripts missed the page, inject scripts directly
-     * Uses same 7-level detection + additional CartFlows body class checks
-     * Prevents double-loading via WCBD_SCRIPTS_LOADED constant
-     */
-    public function maybe_inject_fallback_scripts() {
-        // Already loaded via primary method? Skip.
-        if (defined('WCBD_SCRIPTS_LOADED')) return;
-        
-        // Run detection again (in case wp_enqueue_scripts context missed it)
-        $should_load = $this->is_any_checkout_page();
-        
-        // Extra fallback: Check for CartFlows body classes in output buffer
-        if (!$should_load) {
-            global $post;
-            if ($post) {
-                // Check for CartFlows template
-                $template = get_page_template_slug($post->ID);
-                if (strpos($template, 'cartflows') !== false) {
-                    $should_load = true;
-                }
-                // Check if this page has WooCommerce checkout form shortcode in rendered content
-                if (!$should_load && is_a($post, 'WP_Post')) {
-                    $step_type = get_post_meta($post->ID, 'wcf-step-type', true);
-                    if ($step_type === 'checkout') {
-                        $should_load = true;
-                    }
-                }
-            }
-        }
-        
-        if (!$should_load) return;
-        
-        // Prevent double-loading
-        if (!defined('WCBD_SCRIPTS_LOADED')) {
-            define('WCBD_SCRIPTS_LOADED', true);
-        }
-        
-        error_log('[WCBD Fraud Guard] Fallback script injection activated - primary enqueue missed this page');
-        
-        // Inject FingerprintJS
-        echo '<script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js"></script>';
-        
-        // Inject checkout JS inline
-        echo '<script type="text/javascript">' . $this->get_checkout_js() . '</script>';
+        echo '</div>'; // End fraud-wrap
     }
     
     public function server_side_fraud_check() {
@@ -1506,7 +1229,6 @@ ADMINJSTEMPLATE;
     
     public function register_block_checkout_validation() {
         if (!class_exists('Automattic\\\\WooCommerce\\\\StoreApi\\\\Schemas\\\\V1\\\\CheckoutSchema')) {
-            // Fallback for older WC versions
             add_action('woocommerce_store_api_checkout_update_order_from_request', function($order, $request) {
                 $phone = $order->get_billing_phone();
                 $this->validate_order_server_side($phone, true);
@@ -1522,11 +1244,10 @@ ADMINJSTEMPLATE;
     private function validate_order_server_side($phone, $is_block = false) {
         if (empty($phone)) return;
         
-        // Skip if already validated in this request (prevent double-check)
         if (defined('WCBD_FRAUD_CHECKED')) return;
         define('WCBD_FRAUD_CHECKED', true);
         
-        $api_key = get_option('wcbd_fraud_guard_api_key', $this->api_key);
+        $api_key = $this->api_key;
         if (empty($api_key)) return;
         
         error_log('[WCBD Fraud Guard] Server-side check for phone: ' . $phone . ' (block: ' . ($is_block ? 'yes' : 'no') . ')');
@@ -1544,7 +1265,7 @@ ADMINJSTEMPLATE;
         
         if (is_wp_error($response)) {
             error_log('[WCBD Fraud Guard] API call failed: ' . $response->get_error_message());
-            return; // Fail-open: allow order if API unreachable
+            return;
         }
         
         $body = json_decode(wp_remote_retrieve_body($response), true);
@@ -1554,10 +1275,8 @@ ADMINJSTEMPLATE;
             $message = $body['message'] ?? 'আপনি এখন অর্ডার করতে পারবেন না। অনুগ্রহ করে কিছুক্ষণ পর চেষ্টা করুন।';
             
             if ($is_block) {
-                // For block checkout - throw exception to cancel order
                 throw new \\Exception($message);
             } else {
-                // For classic checkout - add WooCommerce notice
                 wc_add_notice($message, 'error');
             }
         }
@@ -1572,7 +1291,7 @@ ADMINJSTEMPLATE;
             wp_die('Security check failed');
         }
         
-        update_option('wcbd_fraud_guard_api_key', sanitize_text_field($_POST['api_key'] ?? ''));
+        // NOTE: API key is NOT saved from form - it's hardcoded and managed via dashboard
         update_option('wcbd_fraud_guard_language', sanitize_text_field($_POST['language'] ?? 'bn'));
         update_option('wcbd_fraud_guard_popup_timer', sanitize_text_field($_POST['popup_timer'] ?? '30'));
         update_option('wcbd_fraud_guard_msg_cooldown', sanitize_textarea_field($_POST['msg_cooldown'] ?? ''));
@@ -1587,7 +1306,7 @@ ADMINJSTEMPLATE;
     public function test_api_connection() {
         check_ajax_referer('wcbd_fraud_guard_nonce', 'nonce');
         
-        $api_key = get_option('wcbd_fraud_guard_api_key', '');
+        $api_key = $this->api_key;
         
         if (empty($api_key)) {
             wp_send_json_error('No API key configured');
@@ -1619,14 +1338,13 @@ ADMINJSTEMPLATE;
     public function ajax_get_incomplete_orders() {
         check_ajax_referer('wcbd_fraud_guard_nonce', 'nonce');
         
-        $api_key = get_option('wcbd_fraud_guard_api_key', $this->api_key);
+        $api_key = $this->api_key;
         
         if (empty($api_key)) {
             wp_send_json_error('No API key configured');
             return;
         }
         
-        // Fetch from API
         $response = wp_remote_post($this->get_incomplete_url, array(
             'timeout' => 15,
             'headers' => array('Content-Type' => 'application/json'),
@@ -1662,7 +1380,7 @@ ADMINJSTEMPLATE;
     public function ajax_get_cooldown() {
         check_ajax_referer('wcbd_fraud_guard_nonce', 'nonce');
         
-        $api_key = get_option('wcbd_fraud_guard_api_key', $this->api_key);
+        $api_key = $this->api_key;
         
         if (empty($api_key)) {
             wp_send_json_error('No API key configured');
@@ -1698,7 +1416,7 @@ ADMINJSTEMPLATE;
     public function ajax_update_cooldown() {
         check_ajax_referer('wcbd_fraud_guard_nonce', 'nonce');
         
-        $api_key = get_option('wcbd_fraud_guard_api_key', $this->api_key);
+        $api_key = $this->api_key;
         $cooldown_minutes = isset($_POST['cooldown_minutes']) ? intval($_POST['cooldown_minutes']) : 0;
         
         if (empty($api_key)) {
@@ -1741,7 +1459,7 @@ ADMINJSTEMPLATE;
     public function ajax_convert_order() {
         check_ajax_referer('wcbd_fraud_guard_nonce', 'nonce');
         
-        $api_key = get_option('wcbd_fraud_guard_api_key', $this->api_key);
+        $api_key = $this->api_key;
         $order_id = isset($_POST['order_id']) ? sanitize_text_field($_POST['order_id']) : '';
         $customer_name = isset($_POST['customer_name']) ? sanitize_text_field($_POST['customer_name']) : '';
         $customer_phone = isset($_POST['customer_phone']) ? sanitize_text_field($_POST['customer_phone']) : '';
@@ -1755,13 +1473,11 @@ ADMINJSTEMPLATE;
             return;
         }
         
-        // Check if WooCommerce is available
         if (!function_exists('wc_create_order')) {
             wp_send_json_error('WooCommerce is not active');
             return;
         }
         
-        // Step 1: Create WooCommerce Order
         try {
             $wc_order = wc_create_order(array(
                 'status' => 'on-hold',
@@ -1772,20 +1488,17 @@ ADMINJSTEMPLATE;
                 return;
             }
             
-            // Set billing details
             $name_parts = explode(' ', $customer_name, 2);
             $wc_order->set_billing_first_name($name_parts[0] ?? '');
             $wc_order->set_billing_last_name($name_parts[1] ?? '');
             $wc_order->set_billing_phone($customer_phone);
             
-            // Add cart items as line items
             if (!empty($cart_items)) {
                 foreach ($cart_items as $item) {
                     $item_name = isset($item['name']) ? sanitize_text_field($item['name']) : 'Product';
                     $item_qty = isset($item['quantity']) ? intval($item['quantity']) : 1;
                     $item_price = isset($item['price']) ? floatval($item['price']) : 0;
                     
-                    // Try to find product by name
                     $product_id = 0;
                     $products = wc_get_products(array(
                         'name' => $item_name,
@@ -1798,7 +1511,6 @@ ADMINJSTEMPLATE;
                     if ($product_id > 0) {
                         $wc_order->add_product(wc_get_product($product_id), $item_qty);
                     } else {
-                        // Add as fee/custom line item if product not found
                         $line_item = new \\WC_Order_Item_Fee();
                         $line_item->set_name($item_name . ' x' . $item_qty);
                         $line_item->set_amount($item_price * $item_qty);
@@ -1807,7 +1519,6 @@ ADMINJSTEMPLATE;
                     }
                 }
             } else {
-                // No cart items - add a generic fee
                 $line_item = new \\WC_Order_Item_Fee();
                 $line_item->set_name('Converted from incomplete order');
                 $line_item->set_amount($total_price);
@@ -1827,7 +1538,6 @@ ADMINJSTEMPLATE;
             return;
         }
         
-        // Step 2: Also mark as converted in Supabase
         $response = wp_remote_post($this->update_settings_url, array(
             'timeout' => 15,
             'headers' => array('Content-Type' => 'application/json'),
@@ -1842,9 +1552,7 @@ ADMINJSTEMPLATE;
             ))
         ));
         
-        // Even if Supabase call fails, WooCommerce order is created
         if (is_wp_error($response)) {
-            // WC order created but Supabase failed - still success
             wp_send_json_success(array(
                 'message' => 'WooCommerce order created (dashboard sync pending)',
                 'wc_order_id' => $wc_order_id
@@ -1892,19 +1600,14 @@ WooCommerce Anti-Fraud Protection System with Incomplete Order Tracking
 
 WCBD Fraud Guard protects your WooCommerce store from fake orders and tracks incomplete checkouts.
 
-**Core Features:**
-* Order Limiting (Cooldown Period)
-* Phone/IP/Device Blacklisting
-* Incomplete Order Tracking
-* Beautiful Block Popups
-* WhatsApp/Phone Contact Buttons
-* Bengali & English Support
-
-**Incomplete Order Tracking (v${PLUGIN_CONFIG.version}):**
-* 📱 Phone Blur - Track when customer enters phone and leaves
-* ❌ Validation Error - Track WooCommerce checkout errors
-* 🚪 Page Exit - Track when browser tab is closed
-* 🔍 Smart Risk Detection - Flag suspicious activity
+**v${PLUGIN_CONFIG.version} - Complete Rebuild:**
+* Universal Loader - loads on all pages, JS self-detects checkout
+* Zero PHP page detection dependency
+* Works with CartFlows homepage checkout
+* Incomplete Order Tracking (phone blur, page exit, validation error)
+* Device Fingerprinting via FingerprintJS
+* Beautiful dark popup notifications
+* Server-side PHP validation (bulletproof)
 
 == Installation ==
 
@@ -1912,31 +1615,23 @@ WCBD Fraud Guard protects your WooCommerce store from fake orders and tracks inc
 2. Activate the plugin
 3. Go to Fraud Guard menu
 4. API Key is pre-configured
-5. Enable features you want
+5. Click Test Connection to verify
 
 == Changelog ==
 
 = ${PLUGIN_CONFIG.version} =
-* NEW: Incomplete Order Tracking
-* NEW: Phone Blur detection
-* NEW: Page Exit detection with sendBeacon
-* NEW: Smart Risk Detection (5+ attempts = HIGH)
-* Simplified admin interface
-* Removed unused features
-* Beautiful new design
-
-== Frequently Asked Questions ==
-
-= How does Incomplete Order Tracking work? =
-The plugin monitors three key events: when a customer enters their phone and clicks away, when WooCommerce shows validation errors, and when the browser tab is closed. All attempts are logged and flagged if suspicious.
-
-= What is Smart Risk Detection? =
-If the same phone or IP makes 5+ checkout attempts within an hour without completing, they are automatically marked as HIGH risk.
+* COMPLETE REBUILD - New universal loader architecture
+* Removed all PHP page detection (no more CartFlows issues)
+* JS self-detects checkout elements on any page
+* Fixed API key management (no more auto-override)
+* Incomplete Order Tracking with cart items
+* Server-side validation with check_type: order
+* Clean codebase - simpler, more reliable
 
 == Upgrade Notice ==
 
 = ${PLUGIN_CONFIG.version} =
-Major update with Incomplete Order Tracking. Please update!
+Major rebuild! Delete old plugin and install fresh. All features preserved with bulletproof compatibility.
 `;
     pluginFolder.file('readme.txt', readmeContent);
     

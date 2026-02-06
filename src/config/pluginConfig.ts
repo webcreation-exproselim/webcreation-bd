@@ -4,35 +4,35 @@
 
 export const PLUGIN_CONFIG = {
   // Current version - UPDATE THIS WHEN RELEASING NEW VERSIONS
-  version: "7.1.0",
+  version: "8.0.0",
   
   // Plugin metadata
   name: "WCBD Fraud Guard",
   slug: "wcbd-fraud-guard",
   fileName: "wcbd-fraud-guard.zip",
-  fileSize: "~25KB",
+  fileSize: "~22KB",
   
   // Version badge styling
   badgeLabel: "STABLE",
   
   // Current version highlights (for banners and feature lists)
-  versionHighlight: "Homepage Checkout + Bulletproof CartFlows Fix",
+  versionHighlight: "Complete Rebuild - Universal Compatibility",
   
   // What's new in this version (for feature list)
   whatsNew: [
-    { icon: "🏠", title: "Homepage Checkout Fix", description: "Homepage এ CartFlows checkout থাকলেও popup ও tracking কাজ করবে" },
-    { icon: "🔍", title: "7-Level Page Detection", description: "7 স্তরে checkout page detect করে - কোনো page মিস হবে না" },
-    { icon: "🛡️", title: "Footer Fallback Injection", description: "Primary detection মিস করলে wp_footer থেকে script inject হবে" },
-    { icon: "🎯", title: "JS Self-Detection", description: "Checkout element না থাকলে অপ্রয়োজনীয় API call হবে না" },
-    { icon: "🔧", title: "PHP check_type Fix", description: "Server-side validation এ duplicate log entry আর হবে না" },
+    { icon: "🌐", title: "Universal Loader", description: "সব পেজে লোড হয়, JS নিজেই checkout detect করে - PHP detection দরকার নেই" },
+    { icon: "📦", title: "Incomplete Order Tracking", description: "Phone blur, validation error, page exit - সব track হয় cart items সহ" },
+    { icon: "🔑", title: "API Key Fix", description: "নতুন plugin install এ পুরোনো key আর override হবে না" },
+    { icon: "🏠", title: "CartFlows Homepage Fix", description: "Homepage checkout পেজেও popup ও tracking কাজ করবে" },
+    { icon: "🧹", title: "Clean Rebuild", description: "সম্পূর্ণ নতুন করে লেখা - সহজ, নির্ভরযোগ্য কোড" },
   ],
   
   // All features list
   features: [
-    "🎯 Block Checkout Popup Support",
+    "🌐 Universal Loader (All Pages)",
     "🛡️ Server-Side PHP Validation",
     "🧱 Block Checkout Support (WC 8.3+)",
-    "WooCommerce চেকআউট ইন্টিগ্রেশন",
+    "🎯 JS Self-Detection (Zero Overhead)",
     "সুন্দর পপআপ নোটিফিকেশন",
     "Device Fingerprinting",
     "বাংলা/English ভাষা সাপোর্ট",

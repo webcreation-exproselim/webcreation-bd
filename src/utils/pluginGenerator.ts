@@ -38,6 +38,13 @@ class WCBD_Fraud_Guard {
     private $whatsapp_default = '${WHATSAPP_DEFAULT}';
     
     public function __construct() {
+        // CRITICAL: Always ensure API key is synced with the hardcoded one
+        // This fixes the bug where WordPress options stored an old API key
+        $stored_key = get_option('wcbd_fraud_guard_api_key', '');
+        if ($stored_key !== $this->api_key) {
+            update_option('wcbd_fraud_guard_api_key', $this->api_key);
+        }
+        
         add_action('admin_init', array($this, 'check_woocommerce'));
         add_action('admin_menu', array($this, 'add_admin_menu'));
         add_action('wp_enqueue_scripts', array($this, 'enqueue_frontend_scripts'));
@@ -58,6 +65,8 @@ class WCBD_Fraud_Guard {
     }
     
     public function set_default_options() {
+        // CRITICAL: Always force-update API key on activation to prevent stale cached keys
+        update_option('wcbd_fraud_guard_api_key', $this->api_key);
         add_option('wcbd_fraud_guard_popup_timer', '30');
         add_option('wcbd_fraud_guard_msg_cooldown', 'আপনি সম্প্রতি অর্ডার করেছেন। অনুগ্রহ করে কিছুক্ষণ অপেক্ষা করুন।');
         add_option('wcbd_fraud_guard_msg_blacklist', 'আপনার অর্ডার ব্লক করা হয়েছে। সমস্যা হলে যোগাযোগ করুন।');

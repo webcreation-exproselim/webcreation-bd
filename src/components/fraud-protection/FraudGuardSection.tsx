@@ -17,7 +17,8 @@ import {
   Crown,
   AlertCircle,
   ExternalLink,
-  Download
+  Download,
+  ArrowUpCircle
 } from "lucide-react";
 import { downloadPluginFile } from "@/utils/pluginGenerator";
 import { PLUGIN_CONFIG, getVersionString } from "@/config/pluginConfig";
@@ -116,29 +117,7 @@ export function FraudGuardSection({ userId }: FraudGuardSectionProps) {
     setShowPaymentModal(true);
   };
 
-  const handleRegenerateKey = async () => {
-    if (!merchant?.id) return;
-    
-    const newApiKey = crypto.randomUUID();
-    const { error } = await supabase
-      .from('merchants')
-      .update({ api_key: newApiKey, updated_at: new Date().toISOString() })
-      .eq('id', merchant.id);
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: "API Key রিজেনারেট করতে সমস্যা হয়েছে",
-        variant: "destructive"
-      });
-    } else {
-      setMerchant({ ...merchant, api_key: newApiKey });
-      toast({
-        title: "✅ API Key রিজেনারেট হয়েছে",
-        description: "WordPress Plugin-এ নতুন key আপডেট করুন!",
-      });
-    }
-  };
+  // handleRegenerateKey removed - key is hardcoded in plugin
 
   const handlePurchaseSuccess = async () => {
     refetchSubscription();
@@ -206,10 +185,19 @@ export function FraudGuardSection({ userId }: FraudGuardSectionProps) {
               <span className="font-bengali">Plugin {getVersionString()} Download</span>
             </Button>
             {merchant?.is_active && (
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-400/30">
-                <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-sm font-medium text-emerald-200">Active</span>
-              </div>
+              <>
+                <Button
+                  onClick={() => setShowPurchaseModal(true)}
+                  className="bg-white/20 hover:bg-white/30 border border-white/30 text-white gap-2 rounded-xl"
+                >
+                  <ArrowUpCircle className="w-4 h-4" />
+                  <span className="font-bengali">{merchant.current_plan === 'monthly' ? 'Upgrade' : 'Renew'}</span>
+                </Button>
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-400/30">
+                  <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-sm font-medium text-emerald-200">Active</span>
+                </div>
+              </>
             )}
           </div>
         </div>
@@ -397,7 +385,6 @@ export function FraudGuardSection({ userId }: FraudGuardSectionProps) {
             isActive={merchant?.is_active || false} 
             merchantId={merchant?.id}
             onPurchaseSuccess={handlePurchaseSuccess}
-            onRegenerateKey={handleRegenerateKey}
           />
         </TabsContent>
 
@@ -430,12 +417,14 @@ export function FraudGuardSection({ userId }: FraudGuardSectionProps) {
         )}
       </Tabs>
 
-      {/* Plan Selection Modal */}
-      {showPurchaseModal && !pendingOrder && !merchant?.is_active && (
+      {/* Plan Selection Modal - available for all states */}
+      {showPurchaseModal && !pendingOrder && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="bg-white border border-gray-200 rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-gray-900 font-bengali">Plan নির্বাচন করুন</h2>
+              <h2 className="text-xl font-bold text-gray-900 font-bengali">
+                {merchant?.is_active ? 'Plan পরিবর্তন / রিনিউ করুন' : 'Plan নির্বাচন করুন'}
+              </h2>
               <button 
                 onClick={() => setShowPurchaseModal(false)}
                 className="text-gray-400 hover:text-gray-600 text-2xl w-10 h-10 rounded-full hover:bg-gray-100 flex items-center justify-center"
@@ -448,10 +437,10 @@ export function FraudGuardSection({ userId }: FraudGuardSectionProps) {
         </div>
       )}
 
-      {/* Payment Modal */}
+      {/* Payment Modal - available for all states */}
       {merchant?.id && (
         <SubscriptionPurchaseModal
-          isOpen={showPaymentModal && !pendingOrder && !merchant?.is_active}
+          isOpen={showPaymentModal && !pendingOrder}
           onClose={() => setShowPaymentModal(false)}
           planType={selectedPlan}
           merchantId={merchant.id}

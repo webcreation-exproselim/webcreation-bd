@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Lock, Copy, Check, Sparkles, RefreshCw } from "lucide-react";
+import { Lock, Copy, Check, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { SubscriptionPlans } from "./SubscriptionPlans";
@@ -10,16 +10,13 @@ interface APIKeySectionProps {
   isActive: boolean;
   merchantId?: string;
   onPurchaseSuccess?: () => void;
-  onRegenerateKey?: () => void;
 }
 
-export function APIKeySection({ apiKey, isActive, merchantId, onPurchaseSuccess, onRegenerateKey }: APIKeySectionProps) {
+export function APIKeySection({ apiKey, isActive, merchantId, onPurchaseSuccess }: APIKeySectionProps) {
   const [copied, setCopied] = useState(false);
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('monthly');
-  const [regenerating, setRegenerating] = useState(false);
-  const [showRegenerateConfirm, setShowRegenerateConfirm] = useState(false);
   const { toast } = useToast();
 
   const copyToClipboard = async () => {
@@ -48,16 +45,6 @@ export function APIKeySection({ apiKey, isActive, merchantId, onPurchaseSuccess,
   const handlePurchaseSuccess = () => {
     setShowPaymentModal(false);
     onPurchaseSuccess?.();
-  };
-
-  const handleRegenerate = async () => {
-    setRegenerating(true);
-    try {
-      await onRegenerateKey?.();
-      setShowRegenerateConfirm(false);
-    } finally {
-      setRegenerating(false);
-    }
   };
 
   if (!isActive) {
@@ -162,15 +149,6 @@ export function APIKeySection({ apiKey, isActive, merchantId, onPurchaseSuccess,
           >
             {copied ? <Check className="w-4 h-4 sm:w-5 sm:h-5" /> : <Copy className="w-4 h-4 sm:w-5 sm:h-5" />}
           </Button>
-          <Button
-            onClick={() => setShowRegenerateConfirm(true)}
-            size="icon"
-            variant="outline"
-            className="rounded-xl h-10 w-10 sm:h-12 sm:w-12 border-amber-300 text-amber-600 hover:bg-amber-50 shrink-0"
-            title="Regenerate API Key"
-          >
-            <RefreshCw className="w-4 h-4 sm:w-5 sm:h-5" />
-          </Button>
         </div>
 
         <p className="text-xs text-emerald-600 mt-3 font-bengali">
@@ -178,41 +156,6 @@ export function APIKeySection({ apiKey, isActive, merchantId, onPurchaseSuccess,
         </p>
       </div>
 
-      {/* Regenerate Confirmation Modal */}
-      {showRegenerateConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white border border-gray-200 rounded-2xl p-6 max-w-sm w-full shadow-2xl">
-            <div className="text-center mb-4">
-              <div className="w-14 h-14 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-4">
-                <RefreshCw className="w-7 h-7 text-amber-600" />
-              </div>
-              <h3 className="text-lg font-bold text-gray-900 font-bengali mb-2">API Key রিজেনারেট?</h3>
-              <p className="text-sm text-gray-500 font-bengali">
-                নতুন key তৈরি হলে পুরোনো key আর কাজ করবে না। আপনাকে WordPress plugin এ নতুন key আপডেট করতে হবে।
-              </p>
-            </div>
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                className="flex-1 rounded-xl"
-                onClick={() => setShowRegenerateConfirm(false)}
-              >
-                বাতিল
-              </Button>
-              <Button
-                className="flex-1 rounded-xl bg-amber-500 hover:bg-amber-600 text-white"
-                onClick={handleRegenerate}
-                disabled={regenerating}
-              >
-                {regenerating ? (
-                  <RefreshCw className="w-4 h-4 animate-spin mr-2" />
-                ) : null}
-                {regenerating ? "Regenerating..." : "রিজেনারেট করুন"}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }

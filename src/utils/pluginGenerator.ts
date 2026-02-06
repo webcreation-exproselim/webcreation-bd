@@ -50,6 +50,10 @@ class WCBD_Fraud_Guard {
         add_action('wp_ajax_wcbd_fraud_guard_convert_order', array($this, 'ajax_convert_order'));
         add_action('wp_footer', array($this, 'inject_popup_styles'), 99);
         
+        // SERVER-SIDE fraud validation (works for ALL checkout types)
+        add_action('woocommerce_checkout_process', array($this, 'server_side_fraud_check'));
+        add_action('woocommerce_blocks_loaded', array($this, 'register_block_checkout_validation'));
+        
         register_activation_hook(__FILE__, array($this, 'set_default_options'));
     }
     
@@ -82,7 +86,7 @@ class WCBD_Fraud_Guard {
     }
     
     public function inject_popup_styles() {
-        if (!is_checkout()) return;
+        if (!is_checkout() && !$this->is_block_checkout()) return;
         
         echo '<style id="wcbd-fraud-guard-popup-css">
 .wcbd-fraud-popup-overlay{position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;width:100vw!important;height:100vh!important;background:rgba(0,0,0,0.92)!important;backdrop-filter:blur(12px)!important;z-index:2147483647!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:20px!important;box-sizing:border-box!important;margin:0!important;animation:wcbdFadeIn 0.3s ease!important}
@@ -109,7 +113,7 @@ class WCBD_Fraud_Guard {
     }
     
     public function enqueue_frontend_scripts() {
-        if (!is_checkout()) return;
+        if (!is_checkout() && !$this->is_block_checkout()) return;
         
         wp_enqueue_script('fingerprintjs', 'https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js', array(), '3.0.0', true);
         
@@ -1088,6 +1092,84 @@ ADMINJSTEMPLATE;
             </div>
         </div>
         <?php
+    }
+    
+    // ==========================================
+    // SERVER-SIDE FRAUD VALIDATION (CRITICAL!)
+    // This works for ALL checkout types including Block Checkout
+    // ==========================================
+    
+    private function is_block_checkout() {
+        if (function_exists('has_block')) {
+            global $post;
+            if ($post && has_block('woocommerce/checkout', $post)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    public function server_side_fraud_check() {
+        $phone = isset($_POST['billing_phone']) ? sanitize_text_field($_POST['billing_phone']) : '';
+        $this->validate_order_server_side($phone);
+    }
+    
+    public function register_block_checkout_validation() {
+        if (!class_exists('Automattic\\\\WooCommerce\\\\StoreApi\\\\Schemas\\\\V1\\\\CheckoutSchema')) {
+            // Fallback for older WC versions
+            add_action('woocommerce_store_api_checkout_update_order_from_request', function($order, $request) {
+                $phone = $order->get_billing_phone();
+                $this->validate_order_server_side($phone, true);
+            }, 10, 2);
+            return;
+        }
+        add_action('woocommerce_store_api_checkout_update_order_from_request', function($order, $request) {
+            $phone = $order->get_billing_phone();
+            $this->validate_order_server_side($phone, true);
+        }, 10, 2);
+    }
+    
+    private function validate_order_server_side($phone, $is_block = false) {
+        if (empty($phone)) return;
+        
+        // Skip if already validated in this request (prevent double-check)
+        if (defined('WCBD_FRAUD_CHECKED')) return;
+        define('WCBD_FRAUD_CHECKED', true);
+        
+        $api_key = get_option('wcbd_fraud_guard_api_key', $this->api_key);
+        if (empty($api_key)) return;
+        
+        error_log('[WCBD Fraud Guard] Server-side check for phone: ' . $phone . ' (block: ' . ($is_block ? 'yes' : 'no') . ')');
+        
+        $response = wp_remote_post($this->endpoint, array(
+            'timeout' => 10,
+            'headers' => array('Content-Type' => 'application/json'),
+            'body' => json_encode(array(
+                'api_key' => $api_key,
+                'phone' => $phone,
+                'domain' => wp_parse_url(home_url(), PHP_URL_HOST)
+            ))
+        ));
+        
+        if (is_wp_error($response)) {
+            error_log('[WCBD Fraud Guard] API call failed: ' . $response->get_error_message());
+            return; // Fail-open: allow order if API unreachable
+        }
+        
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+        error_log('[WCBD Fraud Guard] API response: ' . wp_remote_retrieve_body($response));
+        
+        if (isset($body['allowed']) && $body['allowed'] === false) {
+            $message = $body['message'] ?? 'আপনি এখন অর্ডার করতে পারবেন না। অনুগ্রহ করে কিছুক্ষণ পর চেষ্টা করুন।';
+            
+            if ($is_block) {
+                // For block checkout - throw exception to cancel order
+                throw new \\Exception($message);
+            } else {
+                // For classic checkout - add WooCommerce notice
+                wc_add_notice($message, 'error');
+            }
+        }
     }
     
     public function save_settings() {

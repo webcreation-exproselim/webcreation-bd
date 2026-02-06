@@ -4,31 +4,33 @@
 
 export const PLUGIN_CONFIG = {
   // Current version - UPDATE THIS WHEN RELEASING NEW VERSIONS
-  version: "6.5.0",
+  version: "6.6.0",
   
   // Plugin metadata
   name: "WCBD Fraud Guard",
   slug: "wcbd-fraud-guard",
   fileName: "wcbd-fraud-guard.zip",
-  fileSize: "~20KB",
+  fileSize: "~22KB",
   
   // Version badge styling
   badgeLabel: "STABLE",
   
   // Current version highlights (for banners and feature lists)
-  versionHighlight: "License Optimization + Cooldown Fix",
+  versionHighlight: "Server-Side Validation + Block Checkout Support",
   
   // What's new in this version (for feature list)
   whatsNew: [
+    { icon: "🛡️", title: "Server-Side Validation", description: "PHP level এ order block - কোনো JS bypass সম্ভব না" },
+    { icon: "🧱", title: "Block Checkout Support", description: "WooCommerce Block Checkout (8.3+) পূর্ণ সাপোর্ট" },
     { icon: "⏱️", title: "Cooldown Control", description: "WordPress admin থেকে Cooldown timer নিয়ন্ত্রণ করুন" },
-    { icon: "🔄", title: "Order Conversion", description: "Incomplete order কে main order এ convert করুন (WordPress + Dashboard)" },
-    { icon: "🛒", title: "Cart Products Tracking", description: "Customer কি product কিনছিল সেটা দেখুন" },
+    { icon: "🔄", title: "Order Conversion", description: "Incomplete order কে main order এ convert করুন" },
     { icon: "📱", title: "Incomplete Order Tracking", description: "Phone blur, checkout error ও page exit detect করুন" },
-    { icon: "🔍", title: "Smart Risk Detection", description: "5+ attempts = HIGH risk auto flag" },
   ],
   
   // All features list
   features: [
+    "🛡️ Server-Side PHP Validation",
+    "🧱 Block Checkout Support (WC 8.3+)",
     "WooCommerce চেকআউট ইন্টিগ্রেশন",
     "সুন্দর পপআপ নোটিফিকেশন",
     "Device Fingerprinting",
@@ -38,7 +40,6 @@ export const PLUGIN_CONFIG = {
     "⏱️ Cooldown Control (WordPress)",
     "💬 Custom Block Messages",
     "📞 WhatsApp/Phone Contact",
-    "🎨 Circle Logo + Branding",
     "📊 Incomplete Order Tracking",
     "🛒 Cart Products Tracking",
     "🔄 Order Conversion",

@@ -96,8 +96,8 @@ class WCBD_Fraud_Guard {
         if (is_admin()) return;
         
         echo '<style id="wcbd-fraud-guard-popup-css">
-.wcbd-fraud-popup-overlay{position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;width:100vw!important;height:100vh!important;background:rgba(0,0,0,0.92)!important;backdrop-filter:blur(12px)!important;z-index:2147483647!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:20px!important;box-sizing:border-box!important;margin:0!important;animation:wcbdFadeIn 0.3s ease!important}
-.wcbd-fraud-popup-modal{background:linear-gradient(145deg,#1a1a2e,#16213e)!important;border:1px solid rgba(255,255,255,0.12)!important;border-radius:24px!important;padding:40px 30px!important;max-width:420px!important;width:100%!important;text-align:center!important;box-shadow:0 25px 60px rgba(0,0,0,0.6)!important;animation:wcbdScaleIn 0.4s cubic-bezier(0.175,0.885,0.32,1.275)!important;position:relative!important;box-sizing:border-box!important}
+.wcbd-fraud-popup-overlay{position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;width:100vw!important;height:100vh!important;background:rgba(0,0,0,0.92)!important;backdrop-filter:blur(12px)!important;z-index:2147483647!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:20px!important;box-sizing:border-box!important;margin:0!important;animation:wcbdFadeIn 0.3s ease!important;transform:none!important}
+.wcbd-fraud-popup-modal{background:linear-gradient(145deg,#1a1a2e,#16213e)!important;border:1px solid rgba(255,255,255,0.12)!important;border-radius:24px!important;padding:40px 30px!important;max-width:420px!important;width:100%!important;text-align:center!important;box-shadow:0 25px 60px rgba(0,0,0,0.6)!important;animation:wcbdScaleIn 0.4s cubic-bezier(0.175,0.885,0.32,1.275)!important;position:relative!important;box-sizing:border-box!important;transform:none!important}
 .wcbd-fraud-popup-icon{width:80px!important;height:80px!important;border-radius:50%!important;display:flex!important;align-items:center!important;justify-content:center!important;margin:0 auto 20px!important;font-size:40px!important}
 .wcbd-fraud-popup-icon.blocked{background:linear-gradient(135deg,#ff4757,#c0392b)!important}
 .wcbd-fraud-popup-icon.cooldown{background:linear-gradient(135deg,#ffa502,#e67e22)!important}
@@ -607,8 +607,8 @@ contactHtml+='</div></div>';
 var timerHtml=this.popupTimer>0?'<span class="wcbd-fraud-popup-countdown">('+this.popupTimer+'s)</span>':'';
 var btnText=this.lang==='bn'?'ঠিক আছে':'OK';
 
-var html='<div class="wcbd-fraud-popup-overlay" id="wcbdFraudPopup">';
-html+='<div class="wcbd-fraud-popup-modal">';
+var html='<div class="wcbd-fraud-popup-overlay" id="wcbdFraudPopup" style="position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;width:100vw!important;height:100vh!important;z-index:2147483647!important;display:flex!important;align-items:center!important;justify-content:center!important;background:rgba(0,0,0,0.92)!important;backdrop-filter:blur(12px)!important;margin:0!important;padding:20px!important;box-sizing:border-box!important;transform:none!important">';
+html+='<div class="wcbd-fraud-popup-modal" style="position:relative!important;transform:none!important;max-width:420px!important;width:100%!important">';
 html+='<div class="wcbd-fraud-popup-icon '+type+'">'+(icons[type]||'⚠️')+'</div>';
 html+='<h3 class="wcbd-fraud-popup-title">'+(titles[type]||'Error')+'</h3>';
 html+='<p class="wcbd-fraud-popup-message">'+msg+'</p>';
@@ -617,11 +617,19 @@ html+=contactHtml;
 html+='<button class="wcbd-fraud-popup-button" id="wcbdFraudBtn">'+btnText+' '+timerHtml+'</button>';
 html+='</div></div>';
 
-jQ(document.documentElement).append(html);
+var existing=document.getElementById('wcbdFraudPopup');
+if(existing){existing.remove();}
+var container=document.createElement('div');
+container.innerHTML=html;
+var popup=container.firstChild;
+document.body.appendChild(popup);
+document.body.style.overflow='hidden';
+window.scrollTo(0,0);
 
-jQ('#wcbdFraudBtn').on('click',function(){jQ('#wcbdFraudPopup').remove();jQ(document).off('keydown.wcbdPopup');});
-jQ(document).on('keydown.wcbdPopup',function(e){if(e.key==='Escape'){jQ('#wcbdFraudPopup').remove();jQ(document).off('keydown.wcbdPopup');}});
-jQ('#wcbdFraudPopup').on('click',function(e){if(jQ(e.target).hasClass('wcbd-fraud-popup-overlay')){jQ('#wcbdFraudPopup').remove();jQ(document).off('keydown.wcbdPopup');}});
+var wcbdClosePopup=function(){var el=document.getElementById('wcbdFraudPopup');if(el){el.remove();}document.body.style.overflow='';jQ(document).off('keydown.wcbdPopup');};
+jQ('#wcbdFraudBtn').on('click',wcbdClosePopup);
+jQ(document).on('keydown.wcbdPopup',function(e){if(e.key==='Escape'){wcbdClosePopup();}});
+jQ('#wcbdFraudPopup').on('click',function(e){if(jQ(e.target).hasClass('wcbd-fraud-popup-overlay')){wcbdClosePopup();}});
 
 if(this.popupTimer>0){
 var countdown=this.popupTimer;
@@ -630,8 +638,7 @@ countdown--;
 jQ('#wcbdFraudBtn .wcbd-fraud-popup-countdown').text('('+countdown+'s)');
 if(countdown<=0){
 clearInterval(interval);
-jQ('#wcbdFraudPopup').remove();
-jQ(document).off('keydown.wcbdPopup');
+wcbdClosePopup();
 }
 },1000);
 }

@@ -1,129 +1,142 @@
 
 
-# WCBD Fraud Guard v7.1.0 - Bulletproof CartFlows Homepage Fix
+# WCBD Fraud Guard v8.0.0 - Complete Clean Rebuild
 
-## Problem Summary
+## Why a Full Rebuild?
 
-The website `adhunikbeautycare.shop` uses its **homepage (/)** as a CartFlows checkout page (page-id-66, template: cartflows-canvas). The current plugin's JavaScript never loads because all detection methods fail for this specific setup:
+The current plugin has been patched multiple times (v6.x to v7.1.0), and despite a "7-level detection system," the JavaScript STILL never loads on your CartFlows homepage. Database evidence confirms this:
+- All fraud_logs entries have device_fingerprint = NULL (JS not running)
+- incomplete_orders table is completely empty (JS tracking not firing)
+- Phone numbers arrive with +88 prefix (PHP sends raw format)
 
-- `is_checkout()` returns FALSE on CartFlows pages
-- `is_singular('cartflows_step')` can return FALSE when the CartFlows step is set as the homepage
-- Result: Only PHP server-side validation works (plain WooCommerce error notices), while the popup, FingerprintJS, and Incomplete Order Tracking are completely non-functional
+The root cause: PHP-based page detection simply cannot reliably detect CartFlows checkout pages when they are set as the homepage. No matter how many levels we add, WordPress's global $post and template system behaves unpredictably in this configuration.
 
-Database evidence confirms:
-- All `fraud_logs` entries have `device_fingerprint = NULL`
-- `incomplete_orders` table is completely empty
-- Phone numbers arrive with `+88` prefix (PHP sends raw, JS would normalize)
+## New Architecture: "Load Everywhere, Activate Smartly"
 
-## Solution: Multi-Layer Detection + Fallback Injection
-
-### Changes to `src/utils/pluginGenerator.ts`
-
-#### 1. Rewrite `is_any_checkout_page()` with 7-level detection
-
-Replace the current function with a more aggressive detection system:
+Instead of trying to detect checkout pages in PHP (which keeps failing), the new approach is:
 
 ```text
-Level 1: is_checkout()                    -- Standard WooCommerce
-Level 2: is_block_checkout()              -- WooCommerce Block Checkout
-Level 3: get_post_type === cartflows_step -- CartFlows by post type
-Level 4: wcf-step-type meta === checkout  -- CartFlows by post meta (works even if post type reports as 'page')
-Level 5: _wcf_step_type meta exists       -- CartFlows by any step meta
-Level 6: is_singular('cartflows_step')    -- CartFlows by singular query
-Level 7: has_shortcode check              -- Shortcode-based checkout
+OLD (BROKEN):
+  PHP detects checkout page --> If detected, load JS --> JS runs
+  Problem: PHP detection fails on CartFlows homepage = JS never loads
+
+NEW (BULLETPROOF):
+  PHP loads tiny script on ALL pages --> JS checks DOM for checkout elements
+  --> If checkout found: Load FingerprintJS + activate full Fraud Guard
+  --> If not found: Do nothing (zero overhead)
 ```
 
-This ensures detection works even when:
-- CartFlows step is set as the homepage/front page
-- WordPress reports the post type as 'page' instead of 'cartflows_step'
-- The CartFlows canvas template is used
+This completely eliminates the PHP detection problem. The JavaScript is the one that checks for checkout elements like #billing_phone, form.checkout, etc.
 
-#### 2. Add `wp_footer` Fallback Script Injection (NEW)
+## Changes Overview
 
-Add a new method `maybe_inject_fallback_scripts()` hooked to `wp_footer` at priority 100. This acts as a safety net:
+### File 1: `src/utils/pluginGenerator.ts` (Complete Rewrite)
 
-- If the primary `wp_enqueue_scripts` detection missed the page, this fallback will inject the scripts directly into the footer
-- Uses the same 7-level detection plus additional CartFlows class checks
-- Injects FingerprintJS via a raw `<script>` tag and the checkout JS inline
-- Sets a PHP constant `WCBD_SCRIPTS_LOADED` to prevent double-loading
+The entire plugin PHP file will be rebuilt from scratch with these principles:
 
-Constructor will add:
-```text
-add_action('wp_footer', array($this, 'maybe_inject_fallback_scripts'), 100);
-```
+**1. Remove ALL PHP page detection functions:**
+- Remove `is_any_checkout_page()` (7-level detection)
+- Remove `is_cartflows_checkout()` 
+- Remove `is_block_checkout()`
+- Remove `maybe_inject_fallback_scripts()` (wp_footer fallback)
+- Remove `WCBD_SCRIPTS_LOADED` constant logic
 
-#### 3. Add JavaScript Self-Detection
+**2. New simple script loading:**
+- `enqueue_frontend_scripts()` will load on ALL frontend pages (no detection check)
+- Enqueue a tiny inline "loader" script (under 500 bytes)
+- The loader checks for checkout DOM elements before doing anything
+- If checkout elements found: dynamically load FingerprintJS and initialize
 
-Add a DOM check at the start of `WCBD_FG.init()` function:
+**3. Fix API Key management:**
+- Remove the constructor auto-sync that forces hardcoded key into wp_options
+- On activation only: set the initial key (using `add_option`, not `update_option`)
+- Settings page still shows the key for informational purposes
+- All API calls use the hardcoded key directly (`$this->api_key`)
 
-```text
-Before initializing, check if checkout elements exist:
-- form.checkout
-- .wc-block-checkout
-- #billing_phone
-- input[name="billing_phone"]
+**4. Keep what works:**
+- Server-side PHP validation (`woocommerce_checkout_process` hook) - this always works
+- Block checkout validation hook
+- Popup CSS injection (but on all pages, it's just CSS)
+- Admin settings page (Settings, Cooldown, Incomplete Orders tabs)
+- All AJAX handlers (test connection, incomplete orders, cooldown, convert order)
+- Popup JavaScript (beautiful dark modal)
+- Incomplete order tracking (phone_blur, validation_error, page_exit)
 
-If none found -> skip initialization (no unnecessary API calls on non-checkout pages)
-```
-
-This makes the JS safe to load on any page while only activating on checkout pages.
-
-#### 4. Fix PHP Server-Side `check_type`
-
-Update `validate_order_server_side()` to pass `check_type: 'order'` in the API request body. Currently it sends no `check_type`, which causes the edge function to treat it as a full order check and create duplicate `fraud_logs` entries alongside the JS precheck.
-
-#### 5. Add Primary `enqueue_frontend_scripts` Flag
-
-In `enqueue_frontend_scripts()`, define `WCBD_SCRIPTS_LOADED` constant when scripts are successfully enqueued, so the `wp_footer` fallback knows not to double-inject.
-
-### Changes to `src/config/pluginConfig.ts`
-
-- Version bump: `7.0.0` to `7.1.0`
-- Update `versionHighlight` to "Homepage Checkout + Bulletproof CartFlows Fix"
-- Update `whatsNew` array with the new fixes
-- Update `badgeLabel` to "STABLE"
-
-### No Edge Function Changes Needed
-
-All 4 edge functions (`check-order-eligibility`, `log-checkout-attempt`, `get-incomplete-orders`, `update-merchant-settings`) are confirmed working correctly via direct testing.
-
-## Technical Flow After Fix
+**5. JavaScript initialization flow:**
 
 ```text
-Page Load (Homepage = CartFlows Checkout)
+Page Load (ANY page)
   |
-  +-- wp_enqueue_scripts fires
-  |     |-- is_any_checkout_page() runs 7-level detection
-  |     |-- Level 4 matches: wcf-step-type meta = 'checkout'
-  |     |-- FingerprintJS + Checkout JS enqueued
-  |     +-- WCBD_SCRIPTS_LOADED = true
+  +-- Tiny loader script runs (inline, < 500 bytes)
+  |     |-- Check DOM: form.checkout? .wc-block-checkout? #billing_phone?
+  |     |-- If NO checkout elements found --> STOP (zero overhead)
+  |     |-- If checkout found --> Load FingerprintJS dynamically
   |
-  +-- wp_footer fires (priority 99)
-  |     +-- inject_popup_styles() outputs popup CSS
+  +-- FingerprintJS loaded
+  |     |-- Initialize full WCBD_FG object
+  |     |-- License validation (check_type: 'license')
+  |     |-- If invalid --> log to console, stop
+  |     |-- If valid --> activate all features
   |
-  +-- wp_footer fires (priority 100)
-  |     +-- maybe_inject_fallback_scripts() checks WCBD_SCRIPTS_LOADED
-  |     +-- Already loaded -> skip (no double injection)
-  |
-  +-- JS executes
-        |-- DOM self-check: finds form.checkout + #billing_phone -> proceed
-        |-- License validation -> success
-        |-- FingerprintJS -> device ID captured
-        |-- Classic checkout hook -> form.checkout intercept
-        |-- Universal fallback interceptor -> active
-        |-- Incomplete tracking -> phone_blur, page_exit active
-        |
-        +-- Customer places order:
-              |-- JS precheck (check_type: precheck) -> popup if blocked
-              |-- If allowed -> form submits
-              +-- PHP server-side (check_type: order) -> final validation
+  +-- Features active:
+        |-- Classic checkout: form.checkout submit intercept
+        |-- Block checkout: MutationObserver + button intercept
+        |-- Universal fallback interceptor
+        |-- Incomplete tracking (phone_blur, page_exit, validation_error)
+        |-- Device fingerprinting active
 ```
 
-## What the User Needs to Do After Approval
+**6. Server-side validation (unchanged, always works):**
 
-1. Download v7.1.0 plugin from the dashboard
-2. Delete old plugin from WordPress
-3. Upload and activate new plugin
-4. Click "Test Connection" in plugin settings
-5. Place a test order to verify the popup appears
+```text
+Customer submits order
+  |
+  +-- woocommerce_checkout_process fires
+  |     |-- PHP sends check_type: 'order' to API
+  |     |-- If blocked --> WooCommerce error notice
+  |     |-- If allowed --> order proceeds
+```
+
+### File 2: `src/config/pluginConfig.ts` (Version Update)
+
+- Version: "7.1.0" --> "8.0.0"
+- Version highlight: "Complete Rebuild - Universal Compatibility"
+- Badge: "STABLE"
+- Updated whatsNew list with v8.0.0 features
+- Same features list (all features retained)
+
+### No Edge Function Changes
+
+All 4 edge functions are confirmed working correctly:
+- `check-order-eligibility` - fraud validation works
+- `log-checkout-attempt` - incomplete order logging works
+- `get-incomplete-orders` - data retrieval works
+- `update-merchant-settings` - cooldown/settings management works
+
+### No Database Changes
+
+All tables and data remain the same. The merchant record already has:
+- is_active: true
+- enable_incomplete_tracking: true
+- website_url: adhunikbeautycare.shop
+
+## What This Fixes
+
+| Problem | Before (v7.1.0) | After (v8.0.0) |
+|---------|-----------------|-----------------|
+| JS not loading on CartFlows homepage | 7-level PHP detection still fails | JS loads on ALL pages, self-detects checkout |
+| device_fingerprint always NULL | FingerprintJS never loads | FingerprintJS loads when checkout detected |
+| Incomplete orders empty | Tracking JS never runs | Tracking activates on checkout pages |
+| API key auto-override | Constructor forces old key | Only sets key once on activation |
+| Domain mismatch on key regeneration | Old key forced back by constructor | New downloaded plugin uses new key cleanly |
+| Code complexity | 1958 lines with patches on patches | Clean rewrite, same features, simpler logic |
+
+## After Approval - What You Need To Do
+
+1. Download v8.0.0 plugin from your dashboard
+2. WordPress Admin -> Plugins -> Delete old WCBD Fraud Guard
+3. Upload and activate v8.0.0
+4. Go to Fraud Guard settings -> Click "Test Connection"
+5. Place a test order to verify popup appears
+6. Check dashboard for incomplete orders (enter phone on checkout, then leave page)
 

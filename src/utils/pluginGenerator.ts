@@ -95,7 +95,7 @@ class WCBD_Fraud_Guard {
     }
     
     public function inject_popup_styles() {
-        if (!is_checkout() && !$this->is_block_checkout()) return;
+        if (!$this->is_any_checkout_page()) return;
         
         echo '<style id="wcbd-fraud-guard-popup-css">
 .wcbd-fraud-popup-overlay{position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;width:100vw!important;height:100vh!important;background:rgba(0,0,0,0.92)!important;backdrop-filter:blur(12px)!important;z-index:2147483647!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:20px!important;box-sizing:border-box!important;margin:0!important;animation:wcbdFadeIn 0.3s ease!important}
@@ -122,7 +122,7 @@ class WCBD_Fraud_Guard {
     }
     
     public function enqueue_frontend_scripts() {
-        if (!is_checkout() && !$this->is_block_checkout()) return;
+        if (!$this->is_any_checkout_page()) return;
         
         wp_enqueue_script('fingerprintjs', 'https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js', array('jquery'), '3.0.0', true);
         
@@ -1362,6 +1362,52 @@ ADMINJSTEMPLATE;
             if ($post && has_block('woocommerce/checkout', $post)) {
                 return true;
             }
+        }
+        return false;
+    }
+    
+    /**
+     * Detect CartFlows checkout pages
+     * CartFlows uses custom post type 'cartflows_step' with step type 'checkout'
+     * WordPress is_checkout() returns false for these pages
+     */
+    private function is_cartflows_checkout() {
+        // Method 1: Check CartFlows step type
+        if (class_exists('Cartflows_Loader') || class_exists('CartFlows_Loader')) {
+            global $post;
+            if ($post && get_post_type($post) === 'cartflows_step') {
+                $step_type = get_post_meta($post->ID, 'wcf-step-type', true);
+                if ($step_type === 'checkout') {
+                    return true;
+                }
+            }
+        }
+        // Method 2: Check body class (CartFlows adds woocommerce-checkout class)
+        // This works even if CartFlows class names change
+        if (function_exists('is_singular') && is_singular('cartflows_step')) {
+            return true;
+        }
+        return false;
+    }
+    
+    /**
+     * Master checkout detection - checks ALL possible checkout page types
+     * Supports: WooCommerce native, Block Checkout, CartFlows, and other builders
+     */
+    private function is_any_checkout_page() {
+        // 1. Standard WooCommerce checkout
+        if (is_checkout()) return true;
+        // 2. WooCommerce Block Checkout
+        if ($this->is_block_checkout()) return true;
+        // 3. CartFlows checkout
+        if ($this->is_cartflows_checkout()) return true;
+        // 4. Fallback: Check if WooCommerce checkout shortcode is present
+        global $post;
+        if ($post && (
+            has_shortcode($post->post_content, 'woocommerce_checkout') || 
+            has_shortcode($post->post_content, 'cartflows_checkout')
+        )) {
+            return true;
         }
         return false;
     }

@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { Download, Upload, Settings, Key, ChevronDown, ChevronUp, AlertTriangle, CheckCircle } from "lucide-react";
+import { Download, Upload, Settings, Key, Check, AlertTriangle, CheckCircle, ArrowRight, Sparkles } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { APIKeySection } from "./APIKeySection";
 import { downloadPluginFile } from "@/utils/pluginGenerator";
 import { useToast } from "@/hooks/use-toast";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { PLUGIN_CONFIG, getVersionString } from "@/config/pluginConfig";
 
 interface SetupGuideProps {
@@ -19,47 +19,49 @@ interface Step {
   title: string;
   description: string;
   icon: React.ReactNode;
+  gradient: string;
+  tip?: string;
 }
 
 const steps: Step[] = [
   {
     id: 1,
     title: "Plugin ডাউনলোড করুন",
-    description: "নিচের Download বাটনে ক্লিক করে wcbd-fraud-guard.zip ফাইল ডাউনলোড করুন।",
+    description: "উপরের Download বাটনে ক্লিক করে wcbd-fraud-guard.zip ফাইল ডাউনলোড করুন।",
     icon: <Download className="w-5 h-5" />,
+    gradient: "from-blue-500 to-cyan-500",
+    tip: "💡 ডাউনলোড হওয়া .zip ফাইলটি unzip করবেন না",
   },
   {
     id: 2,
     title: "WordPress-এ আপলোড করুন",
     description: "WordPress Admin → Plugins → Add New → Upload Plugin → wcbd-fraud-guard.zip সিলেক্ট করুন → Install Now ক্লিক করুন।",
     icon: <Upload className="w-5 h-5" />,
+    gradient: "from-purple-500 to-pink-500",
+    tip: "💡 পুরোনো version আগে delete করুন তারপর নতুন আপলোড করুন",
   },
   {
     id: 3,
     title: "Plugin Activate করুন",
     description: "Install হওয়ার পর 'Activate Plugin' বাটনে ক্লিক করুন। Left sidebar-এ 'Fraud Guard' মেনু দেখতে পাবেন।",
     icon: <Settings className="w-5 h-5" />,
+    gradient: "from-amber-500 to-orange-500",
   },
   {
     id: 4,
-    title: "API Key সেট করুন",
-    description: "Fraud Guard → Settings → API Key field-এ আপনার API Key paste করুন → Save Settings ক্লিক করুন।",
+    title: "সম্পন্ন — Protection চালু!",
+    description: "Plugin activate করলেই আপনার API Key automatically সেট হয়ে যাবে। Fraud Guard → Settings থেকে কনফার্ম করুন।",
     icon: <Key className="w-5 h-5" />,
+    gradient: "from-emerald-500 to-green-500",
+    tip: "✅ Test Connection বাটনে ক্লিক করে যাচাই করুন",
   },
 ];
 
 export function SetupGuide({ apiKey, isActive, merchantId, onPurchaseSuccess }: SetupGuideProps) {
-  const [openSteps, setOpenSteps] = useState<number[]>([1]);
+  const [activeStep, setActiveStep] = useState(1);
   const { toast } = useToast();
 
-  const toggleStep = (stepId: number) => {
-    setOpenSteps((prev) =>
-      prev.includes(stepId) ? prev.filter((id) => id !== stepId) : [...prev, stepId]
-    );
-  };
-
   const handleDownload = async () => {
-    // Download with placeholder if inactive, real key if active
     const keyToUse = isActive ? apiKey : "YOUR_API_KEY_HERE";
     await downloadPluginFile(keyToUse);
 
@@ -78,100 +80,191 @@ export function SetupGuide({ apiKey, isActive, merchantId, onPurchaseSuccess }: 
 
   return (
     <div className="space-y-6">
-      {/* Plugin Download Card */}
-      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl border border-blue-200 p-6">
-        <div className="flex items-start gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/25 flex-shrink-0">
-            <Download className="w-7 h-7 text-white" />
-          </div>
-          <div className="flex-1">
-            <h3 className="text-lg font-bold text-gray-900 font-bengali mb-1">
-              {PLUGIN_CONFIG.name} Plugin {getVersionString()}
-            </h3>
-            <p className="text-sm text-gray-600 font-bengali mb-4">
-              WordPress/WooCommerce-এর জন্য Anti-Fraud Protection Plugin - {PLUGIN_CONFIG.versionHighlight} সহ
-            </p>
-            
-            <div className="flex flex-wrap gap-3">
-              <Button
-                onClick={handleDownload}
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white gap-2 rounded-xl shadow-lg shadow-blue-500/25"
-              >
-                <Download className="w-4 h-4" />
-                <span className="font-bengali">Plugin ডাউনলোড করুন</span>
-              </Button>
+      {/* Plugin Download Card - Vibrant */}
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative overflow-hidden rounded-2xl border border-blue-200"
+      >
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700" />
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-cyan-400/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+        
+        <div className="relative z-10 p-6">
+          <div className="flex items-start gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-lg flex-shrink-0">
+              <Download className="w-7 h-7 text-white" />
             </div>
-
-            {!isActive && (
-              <div className="flex items-start gap-2 mt-4 p-3 bg-amber-50 rounded-xl border border-amber-200">
-                <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-amber-700 font-bengali">
-                  Plugin কাজ করতে Plan কিনতে হবে এবং API Key সেট করতে হবে
-                </p>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="text-lg font-bold text-white font-bengali">
+                  {PLUGIN_CONFIG.name} Plugin
+                </h3>
+                <span className="px-2 py-0.5 rounded-full bg-white/20 text-white text-xs font-bold">
+                  {getVersionString()}
+                </span>
               </div>
-            )}
-
-            {isActive && (
-              <div className="flex items-start gap-2 mt-4 p-3 bg-emerald-50 rounded-xl border border-emerald-200">
-                <CheckCircle className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-emerald-700 font-bengali">
-                  আপনার Plan সক্রিয়! Plugin-এ API Key সেট করে ব্যবহার শুরু করুন
-                </p>
+              <p className="text-sm text-white/70 font-bengali mb-4">
+                Anti-Fraud Protection — {PLUGIN_CONFIG.versionHighlight} সহ
+              </p>
+              
+              <div className="flex flex-wrap gap-3">
+                <Button
+                  onClick={handleDownload}
+                  className="bg-white hover:bg-gray-50 text-blue-700 font-bold gap-2 rounded-xl shadow-lg shadow-black/20"
+                >
+                  <Download className="w-4 h-4" />
+                  <span className="font-bengali">Plugin ডাউনলোড করুন</span>
+                </Button>
               </div>
-            )}
+
+              {!isActive && (
+                <div className="flex items-start gap-2 mt-4 p-3 bg-amber-500/20 backdrop-blur-sm rounded-xl border border-amber-400/30">
+                  <AlertTriangle className="w-5 h-5 text-amber-300 flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-amber-100 font-bengali">
+                    Plugin কাজ করতে Plan কিনতে হবে এবং API Key সেট করতে হবে
+                  </p>
+                </div>
+              )}
+
+              {isActive && (
+                <div className="flex items-start gap-2 mt-4 p-3 bg-emerald-500/20 backdrop-blur-sm rounded-xl border border-emerald-400/30">
+                  <CheckCircle className="w-5 h-5 text-emerald-300 flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-emerald-100 font-bengali">
+                    আপনার Plan সক্রিয়! Plugin-এ API Key automatically সেট হবে
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* API Key Section */}
       <APIKeySection apiKey={apiKey} isActive={isActive} merchantId={merchantId} onPurchaseSuccess={onPurchaseSuccess} />
 
-      {/* Step-by-Step Guide */}
-      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
-          <h3 className="text-lg font-bold text-gray-900 font-bengali">📚 ইন্সটলেশন গাইড</h3>
-          <p className="text-sm text-gray-500 font-bengali">ধাপে ধাপে Plugin সেটআপ করুন</p>
+      {/* Step-by-Step Guide - Interactive Timeline */}
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="bg-white rounded-2xl border border-gray-200 overflow-hidden"
+      >
+        <div className="px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-gray-50 via-white to-gray-50">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
+              <Sparkles className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-gray-900 font-bengali">ইন্সটলেশন গাইড</h3>
+              <p className="text-sm text-gray-500 font-bengali">মাত্র ৪ ধাপে সেটআপ সম্পন্ন করুন</p>
+            </div>
+          </div>
         </div>
 
-        <div className="divide-y divide-gray-100">
+        {/* Progress Bar */}
+        <div className="px-6 pt-4">
+          <div className="flex items-center gap-1 mb-1">
+            {steps.map((step, idx) => (
+              <div key={step.id} className="flex-1 flex items-center gap-1">
+                <div className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${
+                  activeStep >= step.id 
+                    ? `bg-gradient-to-r ${step.gradient}` 
+                    : 'bg-gray-200'
+                }`} />
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-gray-400 text-right font-bengali">ধাপ {activeStep} / {steps.length}</p>
+        </div>
+
+        {/* Steps */}
+        <div className="p-4 space-y-3">
           {steps.map((step) => (
-            <Collapsible
+            <motion.button
               key={step.id}
-              open={openSteps.includes(step.id)}
-              onOpenChange={() => toggleStep(step.id)}
+              onClick={() => setActiveStep(step.id)}
+              className={`w-full text-left rounded-xl p-4 transition-all duration-300 border-2 ${
+                activeStep === step.id
+                  ? 'border-blue-300 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 shadow-md shadow-blue-100/50'
+                  : 'border-transparent hover:border-gray-200 hover:bg-gray-50'
+              }`}
+              layout
             >
-              <CollapsibleTrigger className="w-full px-6 py-4 flex items-center gap-4 hover:bg-gray-50 transition-colors text-left">
-                <div
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                    openSteps.includes(step.id)
-                      ? "bg-gradient-to-br from-blue-600 to-purple-600 text-white"
-                      : "bg-gray-100 text-gray-500"
-                  }`}
-                >
-                  {step.icon}
+              <div className="flex items-start gap-4">
+                {/* Step Number Circle */}
+                <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-300 ${
+                  activeStep === step.id
+                    ? `bg-gradient-to-br ${step.gradient} text-white shadow-lg`
+                    : activeStep > step.id
+                      ? 'bg-emerald-100 text-emerald-600'
+                      : 'bg-gray-100 text-gray-400'
+                }`}>
+                  {activeStep > step.id ? (
+                    <Check className="w-5 h-5" />
+                  ) : (
+                    step.icon
+                  )}
                 </div>
-                <div className="flex-1">
-                  <p className="font-medium text-gray-900 font-bengali">
-                    Step {step.id}: {step.title}
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                      activeStep === step.id
+                        ? `bg-gradient-to-r ${step.gradient} text-white`
+                        : activeStep > step.id
+                          ? 'bg-emerald-100 text-emerald-700'
+                          : 'bg-gray-100 text-gray-500'
+                    }`}>
+                      {activeStep > step.id ? '✓' : `Step ${step.id}`}
+                    </span>
+                  </div>
+                  <p className={`font-semibold font-bengali transition-colors ${
+                    activeStep === step.id ? 'text-gray-900' : 'text-gray-600'
+                  }`}>
+                    {step.title}
                   </p>
+
+                  {/* Expanded Content */}
+                  <AnimatePresence>
+                    {activeStep === step.id && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden"
+                      >
+                        <p className="text-sm text-gray-500 font-bengali mt-2 leading-relaxed">
+                          {step.description}
+                        </p>
+                        {step.tip && (
+                          <div className="mt-2 px-3 py-2 bg-white rounded-lg border border-gray-200 text-xs text-gray-600 font-bengali">
+                            {step.tip}
+                          </div>
+                        )}
+                        {step.id < steps.length && (
+                          <Button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveStep(step.id + 1);
+                            }}
+                            size="sm"
+                            className={`mt-3 bg-gradient-to-r ${step.gradient} hover:opacity-90 text-white rounded-lg gap-1 text-xs`}
+                          >
+                            পরবর্তী ধাপ
+                            <ArrowRight className="w-3 h-3" />
+                          </Button>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
-                {openSteps.includes(step.id) ? (
-                  <ChevronUp className="w-5 h-5 text-gray-400" />
-                ) : (
-                  <ChevronDown className="w-5 h-5 text-gray-400" />
-                )}
-              </CollapsibleTrigger>
-              <CollapsibleContent className="px-6 pb-4">
-                <div className="ml-14 p-4 bg-gray-50 rounded-xl">
-                  <p className="text-sm text-gray-600 font-bengali leading-relaxed">
-                    {step.description}
-                  </p>
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
+              </div>
+            </motion.button>
           ))}
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

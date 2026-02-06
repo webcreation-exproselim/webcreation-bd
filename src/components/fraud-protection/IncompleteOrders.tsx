@@ -85,11 +85,13 @@ export function IncompleteOrders({
 
       if (error) throw error;
       setOrders(data || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching incomplete orders:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch incomplete orders",
+        description: error?.message
+          ? `Failed to fetch incomplete orders: ${error.message}`
+          : "Failed to fetch incomplete orders",
         variant: "destructive"
       });
     } finally {
@@ -99,7 +101,37 @@ export function IncompleteOrders({
   };
 
   useEffect(() => {
+    // show skeleton while switching merchant / filters
+    setLoading(true);
     fetchOrders();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [merchantId, filterReason, filterRisk]);
+
+  useEffect(() => {
+    // Realtime updates (new attempts should appear without manual refresh)
+    if (!merchantId) return;
+
+    const channel = supabase
+      .channel(`incomplete-orders-${merchantId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'incomplete_orders',
+        },
+        (payload) => {
+          // RLS will ensure only authorized rows are delivered
+          console.log('[IncompleteOrders] Realtime update:', payload.eventType);
+          fetchOrders();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [merchantId, filterReason, filterRisk]);
 
   const handleRefresh = () => {

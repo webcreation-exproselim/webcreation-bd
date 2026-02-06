@@ -116,6 +116,30 @@ export function FraudGuardSection({ userId }: FraudGuardSectionProps) {
     setShowPaymentModal(true);
   };
 
+  const handleRegenerateKey = async () => {
+    if (!merchant?.id) return;
+    
+    const newApiKey = crypto.randomUUID();
+    const { error } = await supabase
+      .from('merchants')
+      .update({ api_key: newApiKey, updated_at: new Date().toISOString() })
+      .eq('id', merchant.id);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "API Key রিজেনারেট করতে সমস্যা হয়েছে",
+        variant: "destructive"
+      });
+    } else {
+      setMerchant({ ...merchant, api_key: newApiKey });
+      toast({
+        title: "✅ API Key রিজেনারেট হয়েছে",
+        description: "WordPress Plugin-এ নতুন key আপডেট করুন!",
+      });
+    }
+  };
+
   const handlePurchaseSuccess = async () => {
     refetchSubscription();
     
@@ -373,6 +397,7 @@ export function FraudGuardSection({ userId }: FraudGuardSectionProps) {
             isActive={merchant?.is_active || false} 
             merchantId={merchant?.id}
             onPurchaseSuccess={handlePurchaseSuccess}
+            onRegenerateKey={handleRegenerateKey}
           />
         </TabsContent>
 

@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.get-incomplete-orders]
 verify_jwt = false
+
+[functions.update-merchant-settings]
+verify_jwt = false

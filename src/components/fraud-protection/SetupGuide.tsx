@@ -12,6 +12,7 @@ interface SetupGuideProps {
   isActive: boolean;
   merchantId?: string;
   onPurchaseSuccess?: () => void;
+  onRegenerateKey?: () => void;
 }
 
 interface Step {
@@ -48,7 +49,7 @@ const steps: Step[] = [
   },
 ];
 
-export function SetupGuide({ apiKey, isActive, merchantId, onPurchaseSuccess }: SetupGuideProps) {
+export function SetupGuide({ apiKey, isActive, merchantId, onPurchaseSuccess, onRegenerateKey }: SetupGuideProps) {
   const [openSteps, setOpenSteps] = useState<number[]>([1]);
   const { toast } = useToast();
 
@@ -124,7 +125,7 @@ export function SetupGuide({ apiKey, isActive, merchantId, onPurchaseSuccess }: 
       </div>
 
       {/* API Key Section */}
-      <APIKeySection apiKey={apiKey} isActive={isActive} merchantId={merchantId} onPurchaseSuccess={onPurchaseSuccess} />
+      <APIKeySection apiKey={apiKey} isActive={isActive} merchantId={merchantId} onPurchaseSuccess={onPurchaseSuccess} onRegenerateKey={onRegenerateKey} />
 
       {/* Step-by-Step Guide */}
       <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">

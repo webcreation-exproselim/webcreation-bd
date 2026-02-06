@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Lock, Copy, Check, Sparkles } from "lucide-react";
+import { Lock, Copy, Check, Sparkles, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { SubscriptionPlans } from "./SubscriptionPlans";
@@ -10,13 +10,16 @@ interface APIKeySectionProps {
   isActive: boolean;
   merchantId?: string;
   onPurchaseSuccess?: () => void;
+  onRegenerateKey?: () => void;
 }
 
-export function APIKeySection({ apiKey, isActive, merchantId, onPurchaseSuccess }: APIKeySectionProps) {
+export function APIKeySection({ apiKey, isActive, merchantId, onPurchaseSuccess, onRegenerateKey }: APIKeySectionProps) {
   const [copied, setCopied] = useState(false);
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('monthly');
+  const [regenerating, setRegenerating] = useState(false);
+  const [showRegenerateConfirm, setShowRegenerateConfirm] = useState(false);
   const { toast } = useToast();
 
   const copyToClipboard = async () => {
@@ -45,6 +48,16 @@ export function APIKeySection({ apiKey, isActive, merchantId, onPurchaseSuccess 
   const handlePurchaseSuccess = () => {
     setShowPaymentModal(false);
     onPurchaseSuccess?.();
+  };
+
+  const handleRegenerate = async () => {
+    setRegenerating(true);
+    try {
+      await onRegenerateKey?.();
+      setShowRegenerateConfirm(false);
+    } finally {
+      setRegenerating(false);
+    }
   };
 
   if (!isActive) {
@@ -120,37 +133,86 @@ export function APIKeySection({ apiKey, isActive, merchantId, onPurchaseSuccess 
   }
 
   return (
-    <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-2xl border border-emerald-200 p-6">
-      <div className="flex items-center gap-3 mb-4">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-green-500 flex items-center justify-center shadow-lg shadow-emerald-500/25">
-          <Check className="w-5 h-5 text-white" />
+    <>
+      <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-2xl border border-emerald-200 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-green-500 flex items-center justify-center shadow-lg shadow-emerald-500/25">
+              <Check className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-emerald-700 font-bengali">আপনার API Key</p>
+              <p className="text-xs text-emerald-600">Plugin settings-এ এই key ব্যবহার করুন</p>
+            </div>
+          </div>
         </div>
-        <div>
-          <p className="text-sm font-medium text-emerald-700 font-bengali">আপনার API Key</p>
-          <p className="text-xs text-emerald-600">Plugin settings-এ এই key ব্যবহার করুন</p>
+
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex-1 bg-white rounded-xl border border-emerald-200 p-3 sm:p-4 font-mono text-xs sm:text-sm text-gray-800 overflow-x-auto">
+            {apiKey}
+          </div>
+          <Button
+            onClick={copyToClipboard}
+            size="icon"
+            className={`rounded-xl h-10 w-10 sm:h-12 sm:w-12 transition-all shrink-0 ${
+              copied
+                ? "bg-emerald-500 hover:bg-emerald-600"
+                : "bg-gradient-to-br from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+            } text-white shadow-lg`}
+          >
+            {copied ? <Check className="w-4 h-4 sm:w-5 sm:h-5" /> : <Copy className="w-4 h-4 sm:w-5 sm:h-5" />}
+          </Button>
+          <Button
+            onClick={() => setShowRegenerateConfirm(true)}
+            size="icon"
+            variant="outline"
+            className="rounded-xl h-10 w-10 sm:h-12 sm:w-12 border-amber-300 text-amber-600 hover:bg-amber-50 shrink-0"
+            title="Regenerate API Key"
+          >
+            <RefreshCw className="w-4 h-4 sm:w-5 sm:h-5" />
+          </Button>
         </div>
+
+        <p className="text-xs text-emerald-600 mt-3 font-bengali">
+          💡 Tip: WordPress Admin → Fraud Guard → API Key field-এ paste করুন
+        </p>
       </div>
 
-      <div className="flex items-center gap-3">
-        <div className="flex-1 bg-white rounded-xl border border-emerald-200 p-4 font-mono text-sm text-gray-800 overflow-x-auto">
-          {apiKey}
+      {/* Regenerate Confirmation Modal */}
+      {showRegenerateConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white border border-gray-200 rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+            <div className="text-center mb-4">
+              <div className="w-14 h-14 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-4">
+                <RefreshCw className="w-7 h-7 text-amber-600" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 font-bengali mb-2">API Key রিজেনারেট?</h3>
+              <p className="text-sm text-gray-500 font-bengali">
+                নতুন key তৈরি হলে পুরোনো key আর কাজ করবে না। আপনাকে WordPress plugin এ নতুন key আপডেট করতে হবে।
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1 rounded-xl"
+                onClick={() => setShowRegenerateConfirm(false)}
+              >
+                বাতিল
+              </Button>
+              <Button
+                className="flex-1 rounded-xl bg-amber-500 hover:bg-amber-600 text-white"
+                onClick={handleRegenerate}
+                disabled={regenerating}
+              >
+                {regenerating ? (
+                  <RefreshCw className="w-4 h-4 animate-spin mr-2" />
+                ) : null}
+                {regenerating ? "Regenerating..." : "রিজেনারেট করুন"}
+              </Button>
+            </div>
+          </div>
         </div>
-        <Button
-          onClick={copyToClipboard}
-          size="icon"
-          className={`rounded-xl h-12 w-12 transition-all ${
-            copied
-              ? "bg-emerald-500 hover:bg-emerald-600"
-              : "bg-gradient-to-br from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-          } text-white shadow-lg`}
-        >
-          {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
-        </Button>
-      </div>
-
-      <p className="text-xs text-emerald-600 mt-3 font-bengali">
-        💡 Tip: WordPress Admin → Fraud Guard → API Key field-এ paste করুন
-      </p>
-    </div>
+      )}
+    </>
   );
 }

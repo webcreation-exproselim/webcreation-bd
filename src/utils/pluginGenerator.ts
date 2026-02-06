@@ -47,6 +47,7 @@ class WCBD_Fraud_Guard {
         add_action('wp_ajax_wcbd_fraud_guard_get_incomplete', array($this, 'ajax_get_incomplete_orders'));
         add_action('wp_ajax_wcbd_fraud_guard_get_cooldown', array($this, 'ajax_get_cooldown'));
         add_action('wp_ajax_wcbd_fraud_guard_update_cooldown', array($this, 'ajax_update_cooldown'));
+        add_action('wp_ajax_wcbd_fraud_guard_convert_order', array($this, 'ajax_convert_order'));
         add_action('wp_footer', array($this, 'inject_popup_styles'), 99);
         
         register_activation_hook(__FILE__, array($this, 'set_default_options'));
@@ -691,7 +692,7 @@ return;
 }
 
 html+='<div class="incomplete-table-wrap"><table class="incomplete-table">';
-html+='<thead><tr><th>Phone</th><th>Customer</th><th>Products</th><th>Reason</th><th>Risk</th><th>Cart Total</th><th>Time</th></tr></thead>';
+html+='<thead><tr><th>Phone</th><th>Customer</th><th>Products</th><th>Reason</th><th>Risk</th><th>Cart Total</th><th>Time</th><th>Action</th></tr></thead>';
 html+='<tbody>';
 
 for(var i=0;i<orders.length;i++){
@@ -725,11 +726,52 @@ html+='<td><span class="reason-badge">'+reasonIcon+' '+o.reason.replace("_"," ")
 html+='<td><span class="risk-badge '+riskClass+'">'+riskLabel+'</span></td>';
 html+='<td>'+(o.cart_total?'৳'+o.cart_total:'<span style="color:#64748b">-</span>')+'</td>';
 html+='<td style="color:#94a3b8">'+o.time_ago+'</td>';
+html+='<td>';
+if(o.is_converted){
+html+='<span style="color:#10b981;font-size:12px;font-weight:600">✅ Converted</span>';
+}else{
+html+='<button type="button" class="convert-order-btn fraud-btn fraud-btn-success" style="padding:6px 14px;font-size:12px;border-radius:8px" data-id="'+o.id+'" data-phone="'+o.phone+'" data-name="'+(o.name||"")+'" data-total="'+(o.cart_total||0)+'" data-items=\\''+JSON.stringify(o.cart_items||[])+'\\'>🔄 Convert</button>';
+}
+html+='</td>';
 html+='</tr>';
 }
 
 html+='</tbody></table></div>';
 container.html(html);
+
+// Convert button click handlers
+jQ(".convert-order-btn").on("click",function(){
+var btn=jQ(this);
+var orderId=btn.data("id");
+var phone=btn.data("phone");
+var name=btn.data("name")||"";
+var total=btn.data("total")||0;
+
+if(!confirm("📦 Convert to Order?\\n\\nPhone: "+phone+"\\nName: "+(name||"Unknown")+"\\nTotal: ৳"+total+"\\n\\nConfirm conversion?")){return;}
+
+btn.prop("disabled",true).html("🔄 Converting...");
+
+jQ.ajax({
+url:"%%AJAX_URL%%",
+method:"POST",
+data:{action:"wcbd_fraud_guard_convert_order",nonce:"%%NONCE%%",order_id:orderId,customer_name:name,customer_phone:phone,total_price:total},
+success:function(r){
+if(r.success){
+btn.replaceWith('<span style="color:#10b981;font-size:12px;font-weight:600">✅ Converted</span>');
+// Update stats
+var convertedEl=jQ(".stat-card.converted .value");
+convertedEl.text(parseInt(convertedEl.text())+1);
+}else{
+alert("❌ Error: "+(r.data||"Conversion failed"));
+btn.prop("disabled",false).html("🔄 Convert");
+}
+},
+error:function(){
+alert("❌ Connection error");
+btn.prop("disabled",false).html("🔄 Convert");
+}
+});
+});
 }
 
 // Cooldown Tab Functions
@@ -1223,6 +1265,49 @@ ADMINJSTEMPLATE;
         wp_send_json_success(array(
             'cooldown_minutes' => $body['cooldown_minutes'] ?? $cooldown_minutes
         ));
+    }
+    
+    public function ajax_convert_order() {
+        check_ajax_referer('wcbd_fraud_guard_nonce', 'nonce');
+        
+        $api_key = get_option('wcbd_fraud_guard_api_key', $this->api_key);
+        $order_id = isset($_POST['order_id']) ? sanitize_text_field($_POST['order_id']) : '';
+        $customer_name = isset($_POST['customer_name']) ? sanitize_text_field($_POST['customer_name']) : '';
+        $customer_phone = isset($_POST['customer_phone']) ? sanitize_text_field($_POST['customer_phone']) : '';
+        $total_price = isset($_POST['total_price']) ? floatval($_POST['total_price']) : 0;
+        
+        if (empty($api_key) || empty($order_id)) {
+            wp_send_json_error('Missing required fields');
+            return;
+        }
+        
+        $response = wp_remote_post($this->update_settings_url, array(
+            'timeout' => 15,
+            'headers' => array('Content-Type' => 'application/json'),
+            'body' => json_encode(array(
+                'api_key' => $api_key,
+                'action' => 'convert_order',
+                'order_id' => $order_id,
+                'customer_name' => $customer_name,
+                'customer_phone' => $customer_phone,
+                'total_price' => $total_price,
+                'notes' => 'Converted from WordPress admin'
+            ))
+        ));
+        
+        if (is_wp_error($response)) {
+            wp_send_json_error($response->get_error_message());
+            return;
+        }
+        
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+        
+        if (!isset($body['success']) || !$body['success']) {
+            wp_send_json_error($body['error'] ?? 'Conversion failed');
+            return;
+        }
+        
+        wp_send_json_success(array('message' => 'Order converted successfully'));
     }
 }
 

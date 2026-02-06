@@ -89,6 +89,92 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Convert incomplete order to real order
+    if (action === 'convert_order') {
+      const { order_id, customer_name, customer_phone, customer_email, total_price, notes, services } = body;
+
+      if (!order_id) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'Missing order_id' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Verify the incomplete order belongs to this merchant
+      const { data: incOrder, error: incError } = await supabase
+        .from('incomplete_orders')
+        .select('*')
+        .eq('id', order_id)
+        .eq('merchant_id', merchant.id)
+        .single();
+
+      if (incError || !incOrder) {
+        console.error('[update-merchant-settings] Incomplete order not found:', incError);
+        return new Response(
+          JSON.stringify({ success: false, error: 'Order not found' }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (incOrder.is_converted) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'Already converted' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Build services from cart items or use provided
+      const orderServices = services && services.length > 0 
+        ? services 
+        : (incOrder.cart_items && Array.isArray(incOrder.cart_items) && incOrder.cart_items.length > 0)
+          ? (incOrder.cart_items as any[]).map((item: any) => ({ name: item.name, price: item.price, quantity: item.quantity }))
+          : [{ name: 'Converted from incomplete order', price: total_price || incOrder.cart_total || 0, quantity: 1 }];
+
+      const finalName = customer_name || incOrder.customer_name || 'Unknown Customer';
+      const finalPhone = customer_phone || incOrder.phone_number;
+      const finalTotal = total_price || incOrder.cart_total || 0;
+
+      // Create real order
+      const { error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          customer_name: finalName,
+          customer_phone: finalPhone,
+          customer_email: customer_email || null,
+          payment_method: 'manual',
+          services: orderServices,
+          total_price: finalTotal,
+          total_savings: 0,
+          status: 'pending',
+          notes: notes || `Converted from incomplete order #${order_id.substring(0, 8)}`,
+        });
+
+      if (orderError) {
+        console.error('[update-merchant-settings] Order creation error:', orderError);
+        return new Response(
+          JSON.stringify({ success: false, error: 'Failed to create order: ' + orderError.message }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Mark incomplete order as converted
+      const { error: updateErr } = await supabase
+        .from('incomplete_orders')
+        .update({ is_converted: true })
+        .eq('id', order_id);
+
+      if (updateErr) {
+        console.error('[update-merchant-settings] Mark converted error:', updateErr);
+      }
+
+      console.log('[update-merchant-settings] Order converted successfully:', order_id);
+
+      return new Response(
+        JSON.stringify({ success: true, message: 'Order converted successfully' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     return new Response(
       JSON.stringify({ success: false, error: 'Unknown action' }),
       { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

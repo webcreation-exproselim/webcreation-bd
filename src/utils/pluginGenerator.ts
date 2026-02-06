@@ -138,17 +138,17 @@ class WCBD_Fraud_Guard {
      * Checks DOM for checkout elements, only loads FingerprintJS + full Fraud Guard if found
      */
     private function get_loader_js() {
-        $$api_key = $$this->api_key;
-        $$language = get_option('wcbd_fraud_guard_language', 'bn');
-        $$popup_timer = intval(get_option('wcbd_fraud_guard_popup_timer', 30));
-        $$msg_cooldown = esc_js(get_option('wcbd_fraud_guard_msg_cooldown', 'আপনি সম্প্রতি অর্ডার করেছেন। অনুগ্রহ করে কিছুক্ষণ অপেক্ষা করুন।'));
-        $$msg_blacklist = esc_js(get_option('wcbd_fraud_guard_msg_blacklist', 'আপনার অর্ডার ব্লক করা হয়েছে। সমস্যা হলে যোগাযোগ করুন।'));
-        $$whatsapp = esc_js(get_option('wcbd_fraud_guard_whatsapp', ''));
-        $$phone = esc_js(get_option('wcbd_fraud_guard_phone', ''));
-        $$endpoint = esc_js($$this->endpoint);
-        $$incomplete_endpoint = esc_js($$this->incomplete_endpoint);
+        $api_key = $this->api_key;
+        $language = get_option('wcbd_fraud_guard_language', 'bn');
+        $popup_timer = intval(get_option('wcbd_fraud_guard_popup_timer', 30));
+        $msg_cooldown = esc_js(get_option('wcbd_fraud_guard_msg_cooldown', 'আপনি সম্প্রতি অর্ডার করেছেন। অনুগ্রহ করে কিছুক্ষণ অপেক্ষা করুন।'));
+        $msg_blacklist = esc_js(get_option('wcbd_fraud_guard_msg_blacklist', 'আপনার অর্ডার ব্লক করা হয়েছে। সমস্যা হলে যোগাযোগ করুন।'));
+        $whatsapp = esc_js(get_option('wcbd_fraud_guard_whatsapp', ''));
+        $phone = esc_js(get_option('wcbd_fraud_guard_phone', ''));
+        $endpoint = esc_js($this->endpoint);
+        $incomplete_endpoint = esc_js($this->incomplete_endpoint);
         
-        $$js_template = <<<'LOADERJS'
+        $js_template = <<<'LOADERJS'
 (function(){
 'use strict';
 function wcbdCheckout(){
@@ -646,8 +646,8 @@ LOADERJS;
 
         return str_replace(
             array('%%ENDPOINT%%', '%%INCOMPLETE_ENDPOINT%%', '%%APIKEY%%', '%%LANG%%', '%%TIMER%%', '%%MSG_COOLDOWN%%', '%%MSG_BLACKLIST%%', '%%WHATSAPP%%', '%%PHONE%%'),
-            array($$endpoint, $$incomplete_endpoint, esc_js($$api_key), $$language, $$popup_timer, $$msg_cooldown, $$msg_blacklist, $$whatsapp, $$phone),
-            $$js_template
+            array($endpoint, $incomplete_endpoint, esc_js($api_key), $language, $popup_timer, $msg_cooldown, $msg_blacklist, $whatsapp, $phone),
+            $js_template
         );
     }
     

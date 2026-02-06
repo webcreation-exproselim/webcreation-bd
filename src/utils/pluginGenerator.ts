@@ -2,6 +2,7 @@ const ENDPOINT_URL = 'https://gtjmfvwkatrorhuyrpby.supabase.co/functions/v1/chec
 const TRACK_ENDPOINT_URL = 'https://gtjmfvwkatrorhuyrpby.supabase.co/functions/v1/track-checkout';
 const COURIER_ENDPOINT_URL = 'https://gtjmfvwkatrorhuyrpby.supabase.co/functions/v1/courier-status';
 const TRUST_SCORE_ENDPOINT_URL = 'https://gtjmfvwkatrorhuyrpby.supabase.co/functions/v1/customer-trust-score';
+const INCOMPLETE_ENDPOINT_URL = 'https://gtjmfvwkatrorhuyrpby.supabase.co/functions/v1/log-checkout-attempt';
 const DASHBOARD_URL = 'https://webcreation-bd.lovable.app/dashboard';
 const WHATSAPP_DEFAULT = '+8801332052874';
 import JSZip from 'jszip';
@@ -12,8 +13,8 @@ export const generateMainPluginFile = (apiKey: string): string => {
 /**
  * Plugin Name: WCBD Fraud Guard
  * Plugin URI: https://webcreation-bd.lovable.app/fraud-guard
- * Description: Order Limiter & Anti-Fraud System for WooCommerce - Protect your store from fake orders with remote settings, abandoned cart tracking, trust score, and more.
- * Version: 5.0.0
+ * Description: Order Limiter & Anti-Fraud System for WooCommerce - Protect your store from fake orders with remote settings, abandoned cart tracking, incomplete order tracking, trust score, and more.
+ * Version: 6.0.0
  * Author: WebCreation BD
  * Author URI: https://webcreation-bd.lovable.app
  * Text Domain: wcbd-fraud-guard
@@ -23,7 +24,7 @@ export const generateMainPluginFile = (apiKey: string): string => {
 
 if (!defined('ABSPATH')) exit;
 
-define('WCBD_FRAUD_GUARD_VERSION', '5.0.0');
+define('WCBD_FRAUD_GUARD_VERSION', '6.0.0');
 define('WCBD_FRAUD_GUARD_PATH', plugin_dir_path(__FILE__));
 define('WCBD_FRAUD_GUARD_URL', plugin_dir_url(__FILE__));
 
@@ -34,6 +35,7 @@ class WCBD_Fraud_Guard {
     private $track_endpoint = '${TRACK_ENDPOINT_URL}';
     private $courier_endpoint = '${COURIER_ENDPOINT_URL}';
     private $trust_score_endpoint = '${TRUST_SCORE_ENDPOINT_URL}';
+    private $incomplete_endpoint = '${INCOMPLETE_ENDPOINT_URL}';
     private $dashboard_url = '${DASHBOARD_URL}';
     private $whatsapp_default = '${WHATSAPP_DEFAULT}';
     
@@ -57,6 +59,7 @@ class WCBD_Fraud_Guard {
         add_option('wcbd_fraud_guard_whatsapp', $this->whatsapp_default);
         add_option('wcbd_fraud_guard_phone', $this->whatsapp_default);
         add_option('wcbd_fraud_guard_enable_trust_score', '1');
+        add_option('wcbd_fraud_guard_enable_incomplete_tracking', '1');
         add_option('wcbd_fraud_guard_show_contact', '1');
     }
     
@@ -147,6 +150,7 @@ deviceId:null,
 endpoint:"%%ENDPOINT%%",
 trackEndpoint:"%%TRACK_ENDPOINT%%",
 trustScoreEndpoint:"%%TRUST_SCORE_ENDPOINT%%",
+incompleteEndpoint:"%%INCOMPLETE_ENDPOINT%%",
 apiKey:"%%APIKEY%%",
 lang:"%%LANG%%",
 popupTimer:%%TIMER%%,
@@ -157,11 +161,13 @@ phone:"%%PHONE%%",
 showContact:%%SHOW_CONTACT%%,
 enableTracking:%%ENABLE_TRACKING%%,
 enableTrustScore:%%ENABLE_TRUST_SCORE%%,
+enableIncompleteTracking:%%ENABLE_INCOMPLETE_TRACKING%%,
 remoteSettings:null,
+incompleteLogged:{},
 
 init:function(){
 var self=this;
-console.log("[WCBD Fraud Guard v5.0] Initializing with Trust Score...");
+console.log("[WCBD Fraud Guard v6.0] Initializing with Incomplete Order Tracking...");
 if(typeof FingerprintJS!=="undefined"){
 FingerprintJS.load().then(function(fp){fp.get().then(function(r){self.deviceId=r.visitorId;console.log("[WCBD] Device ID ready");});});
 }
@@ -172,7 +178,101 @@ if(this.enableTracking){
 this.setupAbandonedTracking();
 }
 
-console.log("[WCBD Fraud Guard v5.0] Ready");
+// Track incomplete orders (v6.0)
+if(this.enableIncompleteTracking){
+this.setupIncompleteTracking();
+}
+
+console.log("[WCBD Fraud Guard v6.0] Ready");
+},
+
+// v6.0: Incomplete Order Tracking
+setupIncompleteTracking:function(){
+var self=this;
+console.log("[WCBD] Setting up incomplete order tracking...");
+
+// Trigger 1: Phone Blur - When user enters phone and clicks away
+jQ("#billing_phone").on("blur",function(){
+var phone=jQ(this).val();
+if(phone&&phone.length>=10){
+self.logIncompleteAttempt("phone_blur",phone);
+}
+});
+
+// Trigger 2: WooCommerce Checkout Error
+jQ(document.body).on("checkout_error",function(){
+var phone=jQ("#billing_phone").val();
+if(phone&&phone.length>=5){
+self.logIncompleteAttempt("validation_error",phone);
+}
+});
+
+// Trigger 3: Page Unload (beforeunload) - If phone is filled
+jQ(window).on("beforeunload",function(){
+var phone=jQ("#billing_phone").val();
+if(phone&&phone.length>=10&&!self.incompleteLogged["page_exit_"+phone]){
+self.incompleteLogged["page_exit_"+phone]=true;
+// Use sendBeacon for reliable unload tracking
+var data=JSON.stringify({
+api_key:self.apiKey,
+phone:phone,
+name:jQ("#billing_first_name").val()+" "+jQ("#billing_last_name").val(),
+ip:"",
+device_id:self.deviceId||"",
+cart_total:self.getCartTotal(),
+reason:"page_exit"
+});
+if(navigator.sendBeacon){
+navigator.sendBeacon(self.incompleteEndpoint,data);
+}
+}
+});
+
+console.log("[WCBD] Incomplete order tracking ready");
+},
+
+logIncompleteAttempt:function(reason,phone){
+var self=this;
+var key=reason+"_"+phone;
+
+// Prevent duplicate logs within same session
+if(this.incompleteLogged[key])return;
+this.incompleteLogged[key]=true;
+
+console.log("[WCBD] Logging incomplete attempt:",reason,phone);
+
+var name=jQ("#billing_first_name").val()+" "+jQ("#billing_last_name").val();
+
+jQ.ajax({
+url:this.incompleteEndpoint,
+method:"POST",
+contentType:"application/json",
+data:JSON.stringify({
+api_key:this.apiKey,
+phone:phone.trim(),
+name:name.trim()||"",
+ip:"",
+device_id:this.deviceId||"",
+cart_total:this.getCartTotal(),
+reason:reason
+}),
+success:function(r){
+console.log("[WCBD] Incomplete attempt logged:",r);
+if(r.risk_level==="high"){
+console.warn("[WCBD] High risk detected! Attempts:",r.attempts_count);
+}
+},
+error:function(xhr,status,err){
+console.error("[WCBD] Incomplete logging error:",err);
+}
+});
+},
+
+getCartTotal:function(){
+try{
+var total=jQ(".order-total .amount").text().replace(/[^0-9.]/g,"");
+return parseFloat(total)||0;
+}catch(e){return 0;}
 },
 
 setupAbandonedTracking:function(){
@@ -456,12 +556,14 @@ JSTEMPLATE;
 
         $enable_tracking = get_option('wcbd_fraud_guard_enable_tracking', '0');
         $enable_trust_score = get_option('wcbd_fraud_guard_enable_trust_score', '1');
+        $enable_incomplete_tracking = get_option('wcbd_fraud_guard_enable_incomplete_tracking', '1');
         $trust_score_endpoint = esc_js($this->trust_score_endpoint);
+        $incomplete_endpoint = esc_js($this->incomplete_endpoint);
         
         // Replace placeholders with actual PHP values
         $js = str_replace(
-            array('%%ENDPOINT%%', '%%TRACK_ENDPOINT%%', '%%TRUST_SCORE_ENDPOINT%%', '%%APIKEY%%', '%%LANG%%', '%%TIMER%%', '%%MSG_COOLDOWN%%', '%%MSG_BLACKLIST%%', '%%WHATSAPP%%', '%%PHONE%%', '%%SHOW_CONTACT%%', '%%ENABLE_TRACKING%%', '%%ENABLE_TRUST_SCORE%%'),
-            array($endpoint, esc_js($this->track_endpoint), $trust_score_endpoint, esc_js($api_key), $language, $popup_timer, $msg_cooldown, $msg_blacklist, $whatsapp, $phone, ($show_contact === '1' ? 'true' : 'false'), ($enable_tracking === '1' ? 'true' : 'false'), ($enable_trust_score === '1' ? 'true' : 'false')),
+            array('%%ENDPOINT%%', '%%TRACK_ENDPOINT%%', '%%TRUST_SCORE_ENDPOINT%%', '%%INCOMPLETE_ENDPOINT%%', '%%APIKEY%%', '%%LANG%%', '%%TIMER%%', '%%MSG_COOLDOWN%%', '%%MSG_BLACKLIST%%', '%%WHATSAPP%%', '%%PHONE%%', '%%SHOW_CONTACT%%', '%%ENABLE_TRACKING%%', '%%ENABLE_TRUST_SCORE%%', '%%ENABLE_INCOMPLETE_TRACKING%%'),
+            array($endpoint, esc_js($this->track_endpoint), $trust_score_endpoint, $incomplete_endpoint, esc_js($api_key), $language, $popup_timer, $msg_cooldown, $msg_blacklist, $whatsapp, $phone, ($show_contact === '1' ? 'true' : 'false'), ($enable_tracking === '1' ? 'true' : 'false'), ($enable_trust_score === '1' ? 'true' : 'false'), ($enable_incomplete_tracking === '1' ? 'true' : 'false')),
             $js_template
         );
         
@@ -624,14 +726,15 @@ ADMINJSTEMPLATE;
         $show_contact = get_option('wcbd_fraud_guard_show_contact', '1');
         $enable_tracking = get_option('wcbd_fraud_guard_enable_tracking', '0');
         $enable_trust_score = get_option('wcbd_fraud_guard_enable_trust_score', '1');
+        $enable_incomplete_tracking = get_option('wcbd_fraud_guard_enable_incomplete_tracking', '1');
         
         ?>
         <div class="wrap">
             <div class="fraud-wrap">
                 <div class="fraud-header">
                     <div class="fraud-header-text">
-                        <h1>🛡️ WCBD Fraud Guard <span class="version">v5.0.0</span></h1>
-                        <p>Order Limiter & Anti-Fraud Protection with Trust Score, Remote Settings & Courier Tracking</p>
+                        <h1>🛡️ WCBD Fraud Guard <span class="version">v6.0.0</span></h1>
+                        <p>Order Limiter & Anti-Fraud Protection with Trust Score, Incomplete Order Tracking & Courier Tracking</p>
                     </div>
                 </div>
                 
@@ -740,7 +843,7 @@ ADMINJSTEMPLATE;
                     
                     <!-- Customer Trust Score (NEW in v5.0) -->
                     <div class="fraud-card" style="background:linear-gradient(135deg,#065f46,#047857);border:none">
-                        <h2 style="color:#fff">📊 Customer Trust Score (v5.0 Feature)</h2>
+                        <h2 style="color:#fff">📊 Customer Trust Score</h2>
                         <div class="fraud-form-group">
                             <label class="fraud-toggle" style="color:#fff">
                                 <input type="checkbox" name="enable_trust_score" value="1" <?php checked($enable_trust_score, '1'); ?>>
@@ -751,6 +854,24 @@ ADMINJSTEMPLATE;
                                 🎯 Order দেওয়ার আগে customer এর courier delivery history দেখুন।<br>
                                 📈 Delivered vs Returned orders এর উপর ভিত্তি করে Trust Score calculate হয়।<br>
                                 ✓ Manual decision - আপনি নিজে Accept বা Reject করতে পারবেন।
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Incomplete Order Tracking (NEW in v6.0) -->
+                    <div class="fraud-card" style="background:linear-gradient(135deg,#7c2d12,#c2410c);border:none">
+                        <h2 style="color:#fff">⚠️ Incomplete Order Tracking (v6.0 Feature)</h2>
+                        <div class="fraud-form-group">
+                            <label class="fraud-toggle" style="color:#fff">
+                                <input type="checkbox" name="enable_incomplete_tracking" value="1" <?php checked($enable_incomplete_tracking, '1'); ?>>
+                                <span class="fraud-toggle-slider"></span>
+                                Enable Incomplete Order Tracking
+                            </label>
+                            <p style="color:#fed7aa;margin:15px 0 0;font-size:13px">
+                                📱 Phone Blur - Customer phone enter করে চলে গেলে track হবে।<br>
+                                ❌ Validation Error - WooCommerce error হলে track হবে।<br>
+                                🚪 Page Exit - Page close করলে track হবে।<br>
+                                🔍 Smart Detection - Same phone/IP থেকে 5+ attempts হলে Suspicious mark হবে।
                             </p>
                         </div>
                     </div>
@@ -848,6 +969,7 @@ ADMINJSTEMPLATE;
         update_option('wcbd_fraud_guard_show_contact', isset($_POST['show_contact']) ? '1' : '0');
         update_option('wcbd_fraud_guard_enable_tracking', isset($_POST['enable_tracking']) ? '1' : '0');
         update_option('wcbd_fraud_guard_enable_trust_score', isset($_POST['enable_trust_score']) ? '1' : '0');
+        update_option('wcbd_fraud_guard_enable_incomplete_tracking', isset($_POST['enable_incomplete_tracking']) ? '1' : '0');
         
         wp_redirect(admin_url('admin.php?page=wcbd-fraud-guard&saved=1'));
         exit;

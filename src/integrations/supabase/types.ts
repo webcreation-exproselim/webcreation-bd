@@ -241,6 +241,56 @@ export type Database = {
           },
         ]
       }
+      incomplete_orders: {
+        Row: {
+          cart_total: number | null
+          created_at: string
+          customer_name: string | null
+          device_fingerprint: string | null
+          failure_reason: string
+          id: string
+          ip_address: string | null
+          is_converted: boolean
+          is_suspicious: boolean
+          merchant_id: string
+          phone_number: string
+        }
+        Insert: {
+          cart_total?: number | null
+          created_at?: string
+          customer_name?: string | null
+          device_fingerprint?: string | null
+          failure_reason?: string
+          id?: string
+          ip_address?: string | null
+          is_converted?: boolean
+          is_suspicious?: boolean
+          merchant_id: string
+          phone_number: string
+        }
+        Update: {
+          cart_total?: number | null
+          created_at?: string
+          customer_name?: string | null
+          device_fingerprint?: string | null
+          failure_reason?: string
+          id?: string
+          ip_address?: string | null
+          is_converted?: boolean
+          is_suspicious?: boolean
+          merchant_id?: string
+          phone_number?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incomplete_orders_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
           amount: number
@@ -297,7 +347,10 @@ export type Database = {
           created_at: string
           current_plan: string | null
           enable_abandoned_tracking: boolean | null
+          enable_incomplete_tracking: boolean | null
           id: string
+          incomplete_auto_block_threshold: number | null
+          incomplete_time_window_minutes: number | null
           is_active: boolean
           max_requests: number
           msg_blacklist: string | null
@@ -328,7 +381,10 @@ export type Database = {
           created_at?: string
           current_plan?: string | null
           enable_abandoned_tracking?: boolean | null
+          enable_incomplete_tracking?: boolean | null
           id?: string
+          incomplete_auto_block_threshold?: number | null
+          incomplete_time_window_minutes?: number | null
           is_active?: boolean
           max_requests?: number
           msg_blacklist?: string | null
@@ -359,7 +415,10 @@ export type Database = {
           created_at?: string
           current_plan?: string | null
           enable_abandoned_tracking?: boolean | null
+          enable_incomplete_tracking?: boolean | null
           id?: string
+          incomplete_auto_block_threshold?: number | null
+          incomplete_time_window_minutes?: number | null
           is_active?: boolean
           max_requests?: number
           msg_blacklist?: string | null

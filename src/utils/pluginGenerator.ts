@@ -212,13 +212,8 @@ callback(false);
 },
 
 showLicenseError:function(){
-var msg=this.lang==="bn"?
-"⚠️ Fraud Guard সক্রিয় নয়। সাবস্ক্রিপশন কিনুন অথবা অ্যাডমিনের সাথে যোগাযোগ করুন।":
-"⚠️ Fraud Guard is not active. Please purchase a subscription or contact admin.";
-
-var html='<div id="wcbd-license-warning" style="position:fixed;bottom:20px;right:20px;z-index:9999;background:#ff4757;color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;box-shadow:0 4px 12px rgba(0,0,0,0.3);max-width:300px;display:flex;align-items:center;gap:10px;cursor:pointer" onclick="this.remove()">'+msg+'</div>';
-jQ("body").append(html);
-setTimeout(function(){jQ("#wcbd-license-warning").fadeOut(function(){jQ(this).remove();});},8000);
+// Only log to console - never show warnings to customers on checkout page
+console.warn("[WCBD] License inactive. Features disabled. Please check your subscription at the dashboard.");
 },
 
 // Incomplete Order Tracking

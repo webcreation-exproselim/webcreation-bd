@@ -178,7 +178,7 @@ console.log("[WCBD Fraud Guard v${PLUGIN_CONFIG.version}] Ready");
 });
 },
 
-// Validate License with API
+// Validate License with API (lightweight - no fraud_log, no quota usage)
 validateLicense:function(callback){
 var self=this;
 console.log("[WCBD] Validating license...");
@@ -190,23 +190,19 @@ contentType:"application/json",
 timeout:10000,
 data:JSON.stringify({
 api_key:this.apiKey,
-phone:"license_check",
-device_id:"license_validation",
+check_type:"license",
 domain:window.location.hostname
 }),
 success:function(r){
 console.log("[WCBD] License check response:",r);
-// If we get inactive/expired/limit_exceeded, license is invalid
 if(r.reason==="inactive"||r.reason==="expired"||r.reason==="limit_exceeded"||r.reason==="domain_mismatch"){
 callback(false);
 }else{
-// allowed:true OR blocked by cooldown/blacklist means license is valid
 callback(true);
 }
 },
 error:function(xhr,status,err){
 console.error("[WCBD] License validation error:",err);
-// On network error, disable features for safety
 callback(false);
 }
 });
@@ -1129,8 +1125,7 @@ ADMINJSTEMPLATE;
             'headers' => array('Content-Type' => 'application/json'),
             'body' => json_encode(array(
                 'api_key' => $api_key,
-                'phone' => '01700000000',
-                'device_id' => 'test-connection',
+                'check_type' => 'test',
                 'domain' => wp_parse_url(home_url(), PHP_URL_HOST)
             ))
         ));

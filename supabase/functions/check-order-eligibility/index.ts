@@ -22,6 +22,7 @@ interface CheckRequest {
   ip?: string
   device_id?: string
   domain?: string
+  check_type?: 'license' | 'test' | 'order'
 }
 
 // Normalize domain for comparison (remove protocol, www, trailing slashes)
@@ -52,9 +53,16 @@ Deno.serve(async (req) => {
 
     // Parse request body
     const body: CheckRequest = await req.json()
-    const { api_key, phone, ip, device_id, domain } = body
+    const { api_key, phone, ip, device_id, domain, check_type } = body
 
-    console.log('Received check request:', { api_key: api_key?.slice(0, 8) + '...', phone, ip, device_id: device_id?.slice(0, 10) + '...', domain })
+    const isLicenseOrTest = check_type === 'license' || check_type === 'test'
+
+    console.log('Received check request:', { 
+      api_key: api_key?.slice(0, 8) + '...', 
+      phone: isLicenseOrTest ? '[' + check_type + ']' : phone, 
+      check_type: check_type || 'order',
+      domain 
+    })
 
     // Validate required fields
     if (!api_key) {
@@ -64,14 +72,15 @@ Deno.serve(async (req) => {
       )
     }
 
-    if (!phone && !ip && !device_id) {
+    // For real order checks, require at least one identifier
+    if (!isLicenseOrTest && !phone && !ip && !device_id) {
       return new Response(
         JSON.stringify({ error: 'At least one identifier (phone, ip, or device_id) is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    // Step 1: Validate API Key and get merchant data (including popup settings)
+    // Step 1: Validate API Key and get merchant data
     const { data: merchant, error: merchantError } = await supabase
       .from('merchants')
       .select('id, cooldown_period_minutes, is_active, plan_expires_at, requests_used, max_requests, website_url, popup_timer_seconds, popup_language, msg_cooldown, msg_blacklist, whatsapp_number, phone_number, show_contact_buttons')
@@ -86,7 +95,7 @@ Deno.serve(async (req) => {
       )
     }
 
-    console.log('Merchant found:', merchant.id, 'Active:', merchant.is_active, 'Cooldown:', merchant.cooldown_period_minutes, 'minutes', 'Website:', merchant.website_url)
+    console.log('Merchant found:', merchant.id, 'Active:', merchant.is_active, 'Check type:', check_type || 'order')
 
     // Build popup settings from merchant data or use defaults
     const popupSettings = {
@@ -99,7 +108,7 @@ Deno.serve(async (req) => {
       show_contact: merchant.show_contact_buttons ?? DEFAULT_POPUP_SETTINGS.show_contact
     }
 
-    // Step 1.5: Validate Domain Binding (NEW)
+    // Domain validation (for all check types)
     if (merchant.website_url && domain) {
       const allowedDomain = normalizeDomain(merchant.website_url)
       const requestDomain = normalizeDomain(domain)
@@ -120,7 +129,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Step 2: Check if account is activated
+    // Check if account is activated
     if (!merchant.is_active) {
       console.log('Account not activated:', merchant.id)
       return new Response(
@@ -134,11 +143,11 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Step 3: Check if subscription has expired
+    // Check if subscription has expired
     if (merchant.plan_expires_at) {
       const expiryDate = new Date(merchant.plan_expires_at)
       if (expiryDate < new Date()) {
-        console.log('Subscription expired:', merchant.id, 'Expired at:', merchant.plan_expires_at)
+        console.log('Subscription expired:', merchant.id)
         return new Response(
           JSON.stringify({ 
             error: 'Subscription expired',
@@ -151,9 +160,9 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Step 4: Check request limits
+    // Check request limits
     if (merchant.max_requests > 0 && merchant.requests_used >= merchant.max_requests) {
-      console.log('Request limit exceeded:', merchant.id, 'Used:', merchant.requests_used, 'Max:', merchant.max_requests)
+      console.log('Request limit exceeded:', merchant.id)
       return new Response(
         JSON.stringify({ 
           error: 'Request limit exceeded',
@@ -164,6 +173,25 @@ Deno.serve(async (req) => {
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
+
+    // ============================================
+    // LICENSE CHECK / TEST: Stop here - don't create logs or increment usage
+    // ============================================
+    if (isLicenseOrTest) {
+      console.log(check_type + ' check passed for merchant:', merchant.id)
+      return new Response(
+        JSON.stringify({ 
+          allowed: true, 
+          check_type: check_type,
+          popup_settings: popupSettings 
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // ============================================
+    // FULL ORDER CHECK: Blacklist, Cooldown, Logging
+    // ============================================
 
     // Step 5: Check Blacklist
     const blacklistConditions = []
@@ -207,12 +235,12 @@ Deno.serve(async (req) => {
     }
 
     // Step 6: Check Cooldown Period (MINUTES based)
-    const cooldownMinutes = merchant.cooldown_period_minutes || 1440 // Default to 1 day
+    const cooldownMinutes = merchant.cooldown_period_minutes || 1440
     const cooldownMs = cooldownMinutes * 60 * 1000
     const cooldownDate = new Date(Date.now() - cooldownMs)
     const cooldownDateString = cooldownDate.toISOString()
 
-    console.log('Checking logs since:', cooldownDateString, '(cooldown:', cooldownMinutes, 'minutes)')
+    console.log('Checking cooldown since:', cooldownDateString, '(cooldown:', cooldownMinutes, 'minutes)')
 
     // Build OR conditions for fraud_logs check
     let fraudQuery = supabase
@@ -245,7 +273,7 @@ Deno.serve(async (req) => {
       const remainingMs = cooldownMs - elapsedMs
       const minutesRemaining = Math.ceil(remainingMs / (1000 * 60))
 
-      console.log('Found existing order within cooldown:', log, 'Minutes remaining:', minutesRemaining)
+      console.log('Blocked by cooldown. Minutes remaining:', minutesRemaining)
       
       // Log the blocked attempt
       await supabase.from('fraud_logs').insert({
@@ -255,16 +283,6 @@ Deno.serve(async (req) => {
         device_fingerprint: device_id || null,
         status: 'blocked_cooldown'
       })
-
-      // Format the remaining time for display
-      let timeMessage: string
-      if (minutesRemaining < 60) {
-        timeMessage = `${minutesRemaining} মিনিট`
-      } else if (minutesRemaining < 1440) {
-        timeMessage = `${Math.ceil(minutesRemaining / 60)} ঘন্টা`
-      } else {
-        timeMessage = `${Math.ceil(minutesRemaining / 1440)} দিন`
-      }
 
       return new Response(
         JSON.stringify({

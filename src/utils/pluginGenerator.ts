@@ -746,18 +746,21 @@ var orderId=btn.data("id");
 var phone=btn.data("phone");
 var name=(btn.attr("data-name")||"").replace(/&#39;/g,"'");
 var total=btn.data("total")||0;
+var cartItems=btn.attr("data-items")||"[]";
+try{cartItems=decodeURIComponent(cartItems);}catch(e){cartItems="[]";}
 
-if(!confirm("📦 Convert to Order?\\n\\nPhone: "+phone+"\\nName: "+(name||"Unknown")+"\\nTotal: ৳"+total+"\\n\\nConfirm conversion?")){return;}
+if(!confirm("📦 Convert to WooCommerce Order?\\n\\nPhone: "+phone+"\\nName: "+(name||"Unknown")+"\\nTotal: ৳"+total+"\\n\\nThis will create a real WooCommerce order.")){return;}
 
 btn.prop("disabled",true).html("🔄 Converting...");
 
 jQ.ajax({
 url:"%%AJAX_URL%%",
 method:"POST",
-data:{action:"wcbd_fraud_guard_convert_order",nonce:"%%NONCE%%",order_id:orderId,customer_name:name,customer_phone:phone,total_price:total},
+data:{action:"wcbd_fraud_guard_convert_order",nonce:"%%NONCE%%",order_id:orderId,customer_name:name,customer_phone:phone,total_price:total,cart_items:cartItems},
 success:function(r){
 if(r.success){
-btn.replaceWith('<span style="color:#10b981;font-size:12px;font-weight:600">✅ Converted</span>');
+var wcLink=r.data&&r.data.wc_order_id?'<a href="post.php?post='+r.data.wc_order_id+'&action=edit" style="color:#10b981;font-size:12px;font-weight:600;text-decoration:underline">✅ Order #'+r.data.wc_order_id+'</a>':'<span style="color:#10b981;font-size:12px;font-weight:600">✅ Converted</span>';
+btn.replaceWith(wcLink);
 // Update stats
 var convertedEl=jQ(".stat-card.converted .value");
 convertedEl.text(parseInt(convertedEl.text())+1);
@@ -1275,12 +1278,88 @@ ADMINJSTEMPLATE;
         $customer_name = isset($_POST['customer_name']) ? sanitize_text_field($_POST['customer_name']) : '';
         $customer_phone = isset($_POST['customer_phone']) ? sanitize_text_field($_POST['customer_phone']) : '';
         $total_price = isset($_POST['total_price']) ? floatval($_POST['total_price']) : 0;
+        $cart_items_json = isset($_POST['cart_items']) ? wp_unslash($_POST['cart_items']) : '[]';
+        $cart_items = json_decode($cart_items_json, true);
+        if (!is_array($cart_items)) $cart_items = array();
         
         if (empty($api_key) || empty($order_id)) {
             wp_send_json_error('Missing required fields');
             return;
         }
         
+        // Check if WooCommerce is available
+        if (!function_exists('wc_create_order')) {
+            wp_send_json_error('WooCommerce is not active');
+            return;
+        }
+        
+        // Step 1: Create WooCommerce Order
+        try {
+            $wc_order = wc_create_order(array(
+                'status' => 'on-hold',
+            ));
+            
+            if (is_wp_error($wc_order)) {
+                wp_send_json_error('Failed to create WooCommerce order: ' . $wc_order->get_error_message());
+                return;
+            }
+            
+            // Set billing details
+            $name_parts = explode(' ', $customer_name, 2);
+            $wc_order->set_billing_first_name($name_parts[0] ?? '');
+            $wc_order->set_billing_last_name($name_parts[1] ?? '');
+            $wc_order->set_billing_phone($customer_phone);
+            
+            // Add cart items as line items
+            if (!empty($cart_items)) {
+                foreach ($cart_items as $item) {
+                    $item_name = isset($item['name']) ? sanitize_text_field($item['name']) : 'Product';
+                    $item_qty = isset($item['quantity']) ? intval($item['quantity']) : 1;
+                    $item_price = isset($item['price']) ? floatval($item['price']) : 0;
+                    
+                    // Try to find product by name
+                    $product_id = 0;
+                    $products = wc_get_products(array(
+                        'name' => $item_name,
+                        'limit' => 1,
+                    ));
+                    if (!empty($products)) {
+                        $product_id = $products[0]->get_id();
+                    }
+                    
+                    if ($product_id > 0) {
+                        $wc_order->add_product(wc_get_product($product_id), $item_qty);
+                    } else {
+                        // Add as fee/custom line item if product not found
+                        $line_item = new \\WC_Order_Item_Fee();
+                        $line_item->set_name($item_name . ' x' . $item_qty);
+                        $line_item->set_amount($item_price * $item_qty);
+                        $line_item->set_total($item_price * $item_qty);
+                        $wc_order->add_item($line_item);
+                    }
+                }
+            } else {
+                // No cart items - add a generic fee
+                $line_item = new \\WC_Order_Item_Fee();
+                $line_item->set_name('Converted from incomplete order');
+                $line_item->set_amount($total_price);
+                $line_item->set_total($total_price);
+                $wc_order->add_item($line_item);
+            }
+            
+            $wc_order->set_payment_method_title('Manual (Converted)');
+            $wc_order->calculate_totals();
+            $wc_order->add_order_note('🔄 Auto-converted from incomplete order #' . substr($order_id, 0, 8) . ' via WCBD Fraud Guard');
+            $wc_order->save();
+            
+            $wc_order_id = $wc_order->get_id();
+            
+        } catch (\\Exception $e) {
+            wp_send_json_error('WooCommerce order error: ' . $e->getMessage());
+            return;
+        }
+        
+        // Step 2: Also mark as converted in Supabase
         $response = wp_remote_post($this->update_settings_url, array(
             'timeout' => 15,
             'headers' => array('Content-Type' => 'application/json'),
@@ -1291,23 +1370,26 @@ ADMINJSTEMPLATE;
                 'customer_name' => $customer_name,
                 'customer_phone' => $customer_phone,
                 'total_price' => $total_price,
-                'notes' => 'Converted from WordPress admin'
+                'notes' => 'Converted from WordPress - WC Order #' . $wc_order_id
             ))
         ));
         
+        // Even if Supabase call fails, WooCommerce order is created
         if (is_wp_error($response)) {
-            wp_send_json_error($response->get_error_message());
+            // WC order created but Supabase failed - still success
+            wp_send_json_success(array(
+                'message' => 'WooCommerce order created (dashboard sync pending)',
+                'wc_order_id' => $wc_order_id
+            ));
             return;
         }
         
         $body = json_decode(wp_remote_retrieve_body($response), true);
         
-        if (!isset($body['success']) || !$body['success']) {
-            wp_send_json_error($body['error'] ?? 'Conversion failed');
-            return;
-        }
-        
-        wp_send_json_success(array('message' => 'Order converted successfully'));
+        wp_send_json_success(array(
+            'message' => 'Order converted successfully',
+            'wc_order_id' => $wc_order_id
+        ));
     }
 }
 

@@ -12,6 +12,7 @@ interface CheckoutAttemptRequest {
   ip?: string;
   device_id?: string;
   cart_total?: number;
+  cart_items?: { name: string; price: number; quantity: number; product_id?: number }[];
   reason: 'phone_blur' | 'validation_error' | 'page_exit' | 'payment_failed';
 }
 
@@ -27,7 +28,7 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const body: CheckoutAttemptRequest = await req.json();
-    const { api_key, phone, name, ip, device_id, cart_total, reason } = body;
+    const { api_key, phone, name, ip, device_id, cart_total, cart_items, reason } = body;
 
     console.log('[log-checkout-attempt] Request:', { api_key: api_key?.substring(0, 8) + '...', phone, reason });
 
@@ -129,6 +130,7 @@ Deno.serve(async (req) => {
         ip_address: ip || null,
         device_fingerprint: device_id || null,
         cart_total: cart_total || null,
+        cart_items: cart_items || null,
         failure_reason: reason,
         is_suspicious: isSuspicious,
         is_converted: false

@@ -24,6 +24,13 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
+interface CartItem {
+  name: string;
+  price: number;
+  quantity: number;
+  product_id?: number;
+}
+
 interface IncompleteOrder {
   id: string;
   phone_number: string;
@@ -31,6 +38,7 @@ interface IncompleteOrder {
   ip_address: string | null;
   device_fingerprint: string | null;
   cart_total: number | null;
+  cart_items: CartItem[] | null;
   failure_reason: string;
   is_suspicious: boolean;
   is_converted: boolean;
@@ -84,7 +92,23 @@ export function IncompleteOrders({
       const { data, error } = await query;
 
       if (error) throw error;
-      setOrders(data || []);
+      
+      // Map the data to ensure correct types
+      const mappedOrders: IncompleteOrder[] = (data || []).map((item: any) => ({
+        id: item.id,
+        phone_number: item.phone_number,
+        customer_name: item.customer_name,
+        ip_address: item.ip_address,
+        device_fingerprint: item.device_fingerprint,
+        cart_total: item.cart_total,
+        cart_items: Array.isArray(item.cart_items) ? item.cart_items as CartItem[] : null,
+        failure_reason: item.failure_reason,
+        is_suspicious: item.is_suspicious,
+        is_converted: item.is_converted,
+        created_at: item.created_at,
+      }));
+      
+      setOrders(mappedOrders);
     } catch (error: any) {
       console.error('Error fetching incomplete orders:', error);
       toast({
@@ -393,6 +417,8 @@ export function IncompleteOrders({
                   <TableRow className="border-slate-700">
                     <TableHead className="text-slate-400">Phone</TableHead>
                     <TableHead className="text-slate-400">Name</TableHead>
+                    <TableHead className="text-slate-400">Products</TableHead>
+                    <TableHead className="text-slate-400">Cart Total</TableHead>
                     <TableHead className="text-slate-400">Reason</TableHead>
                     <TableHead className="text-slate-400">Risk</TableHead>
                     <TableHead className="text-slate-400">Time</TableHead>
@@ -404,6 +430,26 @@ export function IncompleteOrders({
                     <TableRow key={order.id} className="border-slate-700 hover:bg-slate-700/30">
                       <TableCell className="font-mono text-white">{order.phone_number}</TableCell>
                       <TableCell className="text-slate-300">{order.customer_name || '-'}</TableCell>
+                      <TableCell>
+                        {order.cart_items && order.cart_items.length > 0 ? (
+                          <div className="max-w-[200px]">
+                            {order.cart_items.slice(0, 2).map((item, idx) => (
+                              <div key={idx} className="text-xs bg-slate-700 rounded px-2 py-1 mb-1 truncate">
+                                <span className="text-white">{item.name.substring(0, 25)}{item.name.length > 25 ? '...' : ''}</span>
+                                <span className="text-slate-400 ml-1">×{item.quantity}</span>
+                              </div>
+                            ))}
+                            {order.cart_items.length > 2 && (
+                              <span className="text-xs text-slate-500">+{order.cart_items.length - 2} more</span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-slate-500">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-cyan-400 font-medium">
+                        {order.cart_total ? `৳${order.cart_total.toLocaleString()}` : '-'}
+                      </TableCell>
                       <TableCell>{getReasonBadge(order.failure_reason)}</TableCell>
                       <TableCell>{getRiskBadge(order)}</TableCell>
                       <TableCell className="text-slate-400 text-sm">

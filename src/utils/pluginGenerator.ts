@@ -1,5 +1,6 @@
 const ENDPOINT_URL = 'https://gtjmfvwkatrorhuyrpby.supabase.co/functions/v1/check-order-eligibility';
 const INCOMPLETE_ENDPOINT_URL = 'https://gtjmfvwkatrorhuyrpby.supabase.co/functions/v1/log-checkout-attempt';
+const GET_INCOMPLETE_URL = 'https://gtjmfvwkatrorhuyrpby.supabase.co/functions/v1/get-incomplete-orders';
 const DASHBOARD_URL = 'https://webcreation-bd.lovable.app/dashboard';
 const WHATSAPP_DEFAULT = '+8801332052874';
 import JSZip from 'jszip';
@@ -30,6 +31,7 @@ class WCBD_Fraud_Guard {
     private $api_key = '${apiKey}';
     private $endpoint = '${ENDPOINT_URL}';
     private $incomplete_endpoint = '${INCOMPLETE_ENDPOINT_URL}';
+    private $get_incomplete_url = '${GET_INCOMPLETE_URL}';
     private $dashboard_url = '${DASHBOARD_URL}';
     private $whatsapp_default = '${WHATSAPP_DEFAULT}';
     
@@ -275,6 +277,7 @@ this.incompleteLogged[key]=true;
 console.log("[WCBD] Logging incomplete attempt:",reason,phone);
 
 var name=jQ("#billing_first_name").val()+" "+jQ("#billing_last_name").val();
+var cartItems=this.getCartItems();
 
 jQ.ajax({
 url:this.incompleteEndpoint,
@@ -287,6 +290,7 @@ name:name.trim()||"",
 ip:"",
 device_id:this.deviceId||"",
 cart_total:this.getCartTotal(),
+cart_items:cartItems,
 reason:reason
 }),
 success:function(r){
@@ -299,6 +303,23 @@ error:function(xhr,status,err){
 console.error("[WCBD] Incomplete logging error:",err);
 }
 });
+},
+
+getCartItems:function(){
+try{
+var items=[];
+jQ(".woocommerce-checkout-review-order-table .cart_item").each(function(){
+var row=jQ(this);
+var name=row.find(".product-name").text().trim().split("\\n")[0].trim();
+var qty=parseInt(row.find(".product-quantity").text().replace(/[^0-9]/g,""))||1;
+var priceText=row.find(".product-total .amount").text().replace(/[^0-9.]/g,"");
+var price=parseFloat(priceText)||0;
+if(name){
+items.push({name:name,price:price,quantity:qty});
+}
+});
+return items;
+}catch(e){console.error("[WCBD] Cart items error:",e);return [];}
 },
 
 getCartTotal:function(){
@@ -668,7 +689,7 @@ return;
 }
 
 html+='<div class="incomplete-table-wrap"><table class="incomplete-table">';
-html+='<thead><tr><th>Phone</th><th>Customer</th><th>Reason</th><th>Risk</th><th>Cart Total</th><th>Time</th></tr></thead>';
+html+='<thead><tr><th>Phone</th><th>Customer</th><th>Products</th><th>Reason</th><th>Risk</th><th>Cart Total</th><th>Time</th></tr></thead>';
 html+='<tbody>';
 
 for(var i=0;i<orders.length;i++){
@@ -677,9 +698,27 @@ var riskClass=o.is_suspicious?"high":(o.attempts>3?"medium":"low");
 var riskLabel=o.is_suspicious?"🔴 HIGH":(o.attempts>3?"🟡 MEDIUM":"🟢 LOW");
 var reasonIcon={"phone_blur":"📱","validation_error":"❌","page_exit":"🚪","payment_failed":"💳"}[o.reason]||"❓";
 
+// Format cart items
+var productsHtml="<span style=\\"color:#64748b\\">-</span>";
+if(o.cart_items&&o.cart_items.length>0){
+productsHtml='<div style="font-size:11px;max-width:200px">';
+for(var j=0;j<Math.min(o.cart_items.length,3);j++){
+var item=o.cart_items[j];
+productsHtml+='<div style="margin-bottom:4px;padding:4px 8px;background:#334155;border-radius:6px">';
+productsHtml+='<span style="color:#fff">'+item.name.substring(0,30)+(item.name.length>30?"...":"")+'</span>';
+productsHtml+=' <span style="color:#94a3b8">x'+item.quantity+'</span>';
+productsHtml+='</div>';
+}
+if(o.cart_items.length>3){
+productsHtml+='<span style="color:#64748b">+'+(o.cart_items.length-3)+' more</span>';
+}
+productsHtml+='</div>';
+}
+
 html+='<tr>';
 html+='<td><strong style="color:#fff">'+o.phone+'</strong></td>';
 html+='<td>'+(o.name||"<span style=\\"color:#64748b\\">Unknown</span>")+'</td>';
+html+='<td>'+productsHtml+'</td>';
 html+='<td><span class="reason-badge">'+reasonIcon+' '+o.reason.replace("_"," ")+'</span></td>';
 html+='<td><span class="risk-badge '+riskClass+'">'+riskLabel+'</span></td>';
 html+='<td>'+(o.cart_total?'৳'+o.cart_total:'<span style="color:#64748b">-</span>')+'</td>';
@@ -936,11 +975,38 @@ ADMINJSTEMPLATE;
     public function ajax_get_incomplete_orders() {
         check_ajax_referer('wcbd_fraud_guard_nonce', 'nonce');
         
-        // This will fetch from the dashboard API
-        // For now, return empty - data comes from Supabase via dashboard
+        $api_key = get_option('wcbd_fraud_guard_api_key', $this->api_key);
+        
+        if (empty($api_key)) {
+            wp_send_json_error('No API key configured');
+            return;
+        }
+        
+        // Fetch from API
+        $response = wp_remote_post($this->get_incomplete_url, array(
+            'timeout' => 15,
+            'headers' => array('Content-Type' => 'application/json'),
+            'body' => json_encode(array(
+                'api_key' => $api_key,
+                'limit' => 100
+            ))
+        ));
+        
+        if (is_wp_error($response)) {
+            wp_send_json_error($response->get_error_message());
+            return;
+        }
+        
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+        
+        if (!isset($body['success']) || !$body['success']) {
+            wp_send_json_error($body['error'] ?? 'Unknown error');
+            return;
+        }
+        
         wp_send_json_success(array(
-            'orders' => array(),
-            'stats' => array(
+            'orders' => $body['orders'] ?? array(),
+            'stats' => $body['stats'] ?? array(
                 'total' => 0,
                 'suspicious' => 0,
                 'converted' => 0,

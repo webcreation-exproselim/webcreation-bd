@@ -5,6 +5,7 @@ import { Download, Check, Loader2, Package, CheckCircle2, ArrowRight, ExternalLi
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { downloadPluginFile } from "@/utils/pluginGenerator";
+import { PLUGIN_CONFIG, getVersionString, getDownloadInfoText, getUpdateBannerText } from "@/config/pluginConfig";
 
 interface PluginDownloadProps {
   apiKey: string;
@@ -50,20 +51,22 @@ export function PluginDownload({ apiKey }: PluginDownloadProps) {
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-green-400">🆕 নতুন Version 6.0.0 আপডেট!</span>
+                  <span className="font-semibold text-green-400">{getUpdateBannerText()}</span>
                   <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs">
-                    Incomplete Order Tracking
+                    {PLUGIN_CONFIG.versionHighlight}
                   </Badge>
                 </div>
                 <p className="text-sm text-slate-400 mt-1 font-bengali">
-                  Incomplete Order Tracking, Smart Fraud Detection + Phone/Error/Exit Triggers!
+                  {PLUGIN_CONFIG.whatsNew.map(f => f.title).join(", ")}!
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2 text-xs text-amber-400 bg-amber-500/10 px-3 py-1.5 rounded-full border border-amber-500/20">
-              <RefreshCw className="h-3 w-3" />
-              পুরোনো plugin থাকলে আপডেট করুন
-            </div>
+            {PLUGIN_CONFIG.updateNotice.show && (
+              <div className="flex items-center gap-2 text-xs text-amber-400 bg-amber-500/10 px-3 py-1.5 rounded-full border border-amber-500/20">
+                <RefreshCw className="h-3 w-3" />
+                {PLUGIN_CONFIG.updateNotice.message}
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -78,12 +81,12 @@ export function PluginDownload({ apiKey }: PluginDownloadProps) {
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <CardTitle className="text-xl text-white">WCBD Fraud Guard Plugin</CardTitle>
+                <CardTitle className="text-xl text-white">{PLUGIN_CONFIG.name} Plugin</CardTitle>
                 <Badge className="bg-gradient-to-r from-cyan-500 to-green-500 text-white border-0 text-xs">
-                  v6.0.0
+                  {getVersionString()}
                 </Badge>
                 <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs">
-                  STABLE
+                  {PLUGIN_CONFIG.badgeLabel}
                 </Badge>
               </div>
               <CardDescription>
@@ -97,42 +100,21 @@ export function PluginDownload({ apiKey }: PluginDownloadProps) {
           <div className="p-4 rounded-xl bg-gradient-to-r from-green-500/10 to-cyan-500/10 border border-green-500/20">
             <h4 className="text-sm font-semibold text-green-400 mb-3 flex items-center gap-2">
               <Sparkles className="h-4 w-4" />
-              v6.0 এ নতুন কী আছে?
+              {getVersionString()} এ নতুন কী আছে?
             </h4>
             <div className="grid grid-cols-1 gap-2">
-              <div className="flex items-center gap-2 text-sm text-white font-bengali">
-                <CheckCircle2 className="h-4 w-4 text-green-400 flex-shrink-0" />
-                <span>📱 <strong>Phone Blur Tracking</strong> - ফোন enter করে চলে গেলে log হবে</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-white font-bengali">
-                <CheckCircle2 className="h-4 w-4 text-green-400 flex-shrink-0" />
-                <span>❌ <strong>Validation Error</strong> - WooCommerce error হলে auto track</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-white font-bengali">
-                <CheckCircle2 className="h-4 w-4 text-green-400 flex-shrink-0" />
-                <span>🚪 <strong>Page Exit Detection</strong> - Tab close করলে sendBeacon এ log</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-white font-bengali">
-                <CheckCircle2 className="h-4 w-4 text-green-400 flex-shrink-0" />
-                <span>🔍 <strong>Smart Risk Detection</strong> - 5+ attempts = HIGH risk auto flag</span>
-              </div>
+              {PLUGIN_CONFIG.whatsNew.map((feature, index) => (
+                <div key={index} className="flex items-center gap-2 text-sm text-white font-bengali">
+                  <CheckCircle2 className="h-4 w-4 text-green-400 flex-shrink-0" />
+                  <span>{feature.icon} <strong>{feature.title}</strong> - {feature.description}</span>
+                </div>
+              ))}
             </div>
           </div>
 
           {/* Features List */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {[
-              "WooCommerce চেকআউট ইন্টিগ্রেশন",
-              "সুন্দর পপআপ নোটিফিকেশন",
-              "Device Fingerprinting",
-              "বাংলা/English ভাষা সাপোর্ট",
-              "Admin Settings প্যানেল",
-              "API Key প্রি-কনফিগার্ড",
-              "⏱️ Popup Timer Control",
-              "💬 Custom Block Messages",
-              "📞 WhatsApp/Phone Contact",
-              "🎨 Circle Logo + Branding",
-            ].map((feature, index) => (
+            {PLUGIN_CONFIG.features.map((feature, index) => (
               <div key={index} className="flex items-center gap-2 text-sm text-slate-300">
                 <CheckCircle2 className="h-4 w-4 text-cyan-400 flex-shrink-0" />
                 <span>{feature}</span>
@@ -170,7 +152,7 @@ export function PluginDownload({ apiKey }: PluginDownloadProps) {
               )}
             </Button>
             <span className="text-sm text-slate-400 font-bengali">
-              wcbd-fraud-guard.zip (~20KB) • v6.0.0 (Incomplete Order Tracking)
+              {getDownloadInfoText()}
             </span>
           </div>
         </CardContent>
@@ -272,15 +254,15 @@ export function PluginDownload({ apiKey }: PluginDownloadProps) {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
               <h5 className="font-semibold text-white mb-1">WordPress</h5>
-              <p className="text-sm text-slate-400">Version 5.0+</p>
+              <p className="text-sm text-slate-400">Version {PLUGIN_CONFIG.requirements.wordpress}</p>
             </div>
             <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
               <h5 className="font-semibold text-white mb-1">WooCommerce</h5>
-              <p className="text-sm text-slate-400">Version 4.0+</p>
+              <p className="text-sm text-slate-400">Version {PLUGIN_CONFIG.requirements.woocommerce}</p>
             </div>
             <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
               <h5 className="font-semibold text-white mb-1">PHP</h5>
-              <p className="text-sm text-slate-400">Version 7.4+</p>
+              <p className="text-sm text-slate-400">Version {PLUGIN_CONFIG.requirements.php}</p>
             </div>
           </div>
         </CardContent>

@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { SubscriptionPlans } from "@/components/fraud-protection/SubscriptionPlans";
 import { SubscriptionPurchaseModal } from "@/components/fraud-protection/SubscriptionPurchaseModal";
  import { CooldownEditor, formatCooldownTime } from "./CooldownEditor";
+import { PLUGIN_CONFIG, getVersionString } from "@/config/pluginConfig";
 
 interface FraudGuardQuickStatusProps {
   merchant: {
@@ -44,7 +45,7 @@ export function FraudGuardQuickStatus({
     const apiKey = merchant?.is_active && merchant?.api_key ? merchant.api_key : "YOUR_API_KEY_HERE";
     await downloadPluginFile(apiKey);
     toast({
-      title: "✅ Plugin v4.0.0 ডাউনলোড হয়েছে",
+      title: `✅ Plugin ${getVersionString()} ডাউনলোড হয়েছে`,
       description: merchant?.is_active
         ? "আপনার API Key সহ Plugin ready" 
         : "Fraud Guard tab থেকে Plan কিনে API Key সেট করুন",
@@ -226,7 +227,7 @@ export function FraudGuardQuickStatus({
               className="bg-gradient-to-r from-blue-600 to-purple-600 hover:opacity-90 text-white gap-2 rounded-xl font-bengali shadow-lg"
             >
               <Download className="w-4 h-4" />
-              Plugin v4.0
+              Plugin {getVersionString()}
             </Button>
             <Button
               onClick={onOpenFraudGuard}
@@ -253,7 +254,7 @@ export function FraudGuardQuickStatus({
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-lg md:text-xl font-bold font-bengali">🛡️ WCBD Fraud Guard v4.0</h3>
+                <h3 className="text-lg md:text-xl font-bold font-bengali">🛡️ {PLUGIN_CONFIG.name} {getVersionString()}</h3>
                 <span className="bg-emerald-500/30 text-emerald-100 text-xs font-medium px-2 py-1 rounded-full border border-emerald-400/30">
                   FREE Download
                 </span>

@@ -20,6 +20,7 @@ import {
   Download
 } from "lucide-react";
 import { downloadPluginFile } from "@/utils/pluginGenerator";
+import { PLUGIN_CONFIG, getVersionString } from "@/config/pluginConfig";
 
 import { SetupGuide } from "./SetupGuide";
 import { FraudGuardAnalytics } from "./FraudGuardAnalytics";
@@ -166,7 +167,7 @@ export function FraudGuardSection({ userId }: FraudGuardSectionProps) {
               <Shield className="w-9 h-9 text-white" />
             </div>
             <div className="flex-1">
-              <h2 className="text-xl font-bold font-bengali mb-1">WCBD Fraud Guard v4.0.0</h2>
+              <h2 className="text-xl font-bold font-bengali mb-1">{PLUGIN_CONFIG.name} {getVersionString()}</h2>
               <p className="text-white/80 text-sm font-bengali">
                 আপনার WooCommerce স্টোর সুরক্ষিত করুন
               </p>
@@ -178,7 +179,7 @@ export function FraudGuardSection({ userId }: FraudGuardSectionProps) {
               className="bg-white/20 hover:bg-white/30 border border-white/30 text-white gap-2 rounded-xl"
             >
               <Download className="w-4 h-4" />
-              <span className="font-bengali">Plugin v4.0.0 Download</span>
+              <span className="font-bengali">Plugin {getVersionString()} Download</span>
             </Button>
             {merchant?.is_active && (
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-400/30">

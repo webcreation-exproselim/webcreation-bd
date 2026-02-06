@@ -1,130 +1,195 @@
 
-# Customer Trust Score System - Implementation Plan
+# Incomplete Order Tracking System - Implementation Plan
 
 ## Overview
-একটি **Customer Trust Score** সিস্টেম তৈরি করা হবে যেখানে customer এর phone number দিয়ে courier delivery history চেক করে একটি trust percentage দেওয়া হবে। এটি merchant কে order accept/reject করতে সাহায্য করবে।
+বর্তমান **Courier** feature রাখা থাকবে এবং **Abandoned Carts** এর পাশে একটি নতুন **Incomplete Orders** tab যোগ করা হবে। এই system টি checkout attempts track করবে যেখানে customers order complete করে না - ফোন enter করে চলে যায়, validation error পায়, বা page close করে।
 
-## Trust Score Calculation Logic
-
-```text
-┌─────────────────────────────────────────────────────────────┐
-│                    TRUST SCORE FORMULA                       │
-├─────────────────────────────────────────────────────────────┤
-│  Score = (Delivered Orders / Total Orders) × 100            │
-│                                                              │
-│  ✓ Delivered = Positive (+1)                                 │
-│  ✗ Returned/Cancelled = Negative (counts in total)          │
-│  ⋯ Pending/In Transit = Neutral (excluded from calculation) │
-├─────────────────────────────────────────────────────────────┤
-│  Examples:                                                   │
-│  • 5 Delivered, 0 Returned = 100% Trust                      │
-│  • 3 Delivered, 2 Returned = 60% Trust                       │
-│  • 0 History = "New Customer" (no score)                     │
-└─────────────────────────────────────────────────────────────┘
-```
-
-## Score Display
+## Core Functionality
 
 ```text
-Score Range          Badge Color         Label
-─────────────────────────────────────────────────
-80-100%              🟢 Green            "Trusted Customer"
-50-79%               🟡 Yellow           "Medium Risk"
-0-49%                🔴 Red              "High Risk"
-No History           ⚪ Gray             "New Customer"
+┌────────────────────────────────────────────────────────────────┐
+│                 INCOMPLETE ORDER TRACKING                       │
+├────────────────────────────────────────────────────────────────┤
+│  📱 Phone Blur   → User enters phone & clicks away = Log       │
+│  ❌ Error        → WooCommerce validation error = Log          │
+│  🚪 Page Exit    → User closes tab with data = Log             │
+├────────────────────────────────────────────────────────────────┤
+│  🔍 SMART DETECTION                                             │
+│  Same phone/IP: >5 attempts in 1 hour = SUSPICIOUS FLAG        │
+│  Response: { risk_level: "low/medium/high" }                   │
+└────────────────────────────────────────────────────────────────┘
 ```
+
+## Risk Level System
+
+| Condition | Risk Level | Dashboard Badge |
+|-----------|------------|-----------------|
+| < 3 attempts in 1 hour | LOW | Green |
+| 3-5 attempts in 1 hour | MEDIUM | Yellow |
+| > 5 attempts in 1 hour | HIGH | Red (Suspicious) |
 
 ## Implementation Steps
 
-### Step 1: New Edge Function - `customer-trust-score`
-একটি নতুন edge function তৈরি করা হবে যা:
-- Phone number নিয়ে courier_orders টেবিলে search করবে
-- সব courier (Steadfast/Pathao/RedX) এর combined history বের করবে
-- Trust score calculate করবে
-- Order history summary return করবে
+### Step 1: Database - New Table `incomplete_orders`
 
-### Step 2: Dashboard Component - Customer Lookup
-Dashboard এ নতুন UI:
-- Phone number search box
-- Trust Score display (percentage + badge)
-- Delivery history breakdown
-- Accept/Reject buttons (manual decision)
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary Key |
+| merchant_id | UUID | FK to merchants |
+| phone_number | TEXT | Customer phone |
+| customer_name | TEXT | Optional name |
+| ip_address | TEXT | Visitor IP |
+| device_fingerprint | TEXT | FingerprintJS ID |
+| cart_total | DECIMAL | Cart amount (if available) |
+| failure_reason | TEXT | "phone_blur", "validation_error", "page_exit" |
+| is_suspicious | BOOLEAN | Auto-flagged if >5 attempts |
+| is_converted | BOOLEAN | Converted to real order |
+| created_at | TIMESTAMP | When attempt happened |
 
-### Step 3: WordPress Plugin Update
-Plugin এ নতুন feature:
-- Checkout page এ order place এর আগে score চেক
-- Merchant কে popup দিয়ে score দেখানো
-- Manual decision নেওয়ার option
+RLS Policies:
+- Merchants can view/update/delete own incomplete orders
+- Admins can manage all records
 
-### Step 4: API Response Structure
+### Step 2: New Merchants Table Column
 
-```text
+Add `enable_incomplete_tracking` boolean column to control feature toggle.
+
+### Step 3: Edge Function - `log-checkout-attempt`
+
+**Input:**
+```json
 {
+  "api_key": "merchant-api-key",
   "phone": "01700000000",
-  "trust_score": 75,
-  "status": "medium_risk",
-  "history": {
-    "total_orders": 8,
-    "delivered": 6,
-    "returned": 2,
-    "pending": 0
-  },
-  "last_order_date": "2026-01-15",
-  "couriers": ["steadfast", "pathao"]
+  "name": "Customer Name",
+  "ip": "192.168.1.1",
+  "device_id": "fingerprint-id",
+  "cart_total": 1500,
+  "reason": "phone_blur | validation_error | page_exit"
 }
 ```
 
-## Technical Details
+**Smart Detection Logic:**
+1. Validate API Key → Get merchant_id
+2. Check last 1 hour: Count attempts from same phone/IP/device
+3. If any count > 5 → Mark as SUSPICIOUS
+4. Insert record with is_suspicious flag
+5. Return risk_level to plugin
 
-### Database Query Logic
-```sql
--- Phone number দিয়ে courier_orders থেকে history বের করা
-SELECT 
-  status,
-  COUNT(*) as count,
-  courier_type
-FROM courier_orders
-WHERE recipient_phone LIKE '%01700000000%'
-  AND merchant_id = '<merchant_id>'
-GROUP BY status, courier_type
+**Output:**
+```json
+{
+  "success": true,
+  "risk_level": "low | medium | high",
+  "attempts_count": 3,
+  "is_suspicious": false
+}
 ```
 
-### Files to Create/Modify
+### Step 4: Dashboard Component - `IncompleteOrders.tsx`
+
+**Stats Cards:**
+- Total Attempts (সব attempts)
+- Suspicious (flagged attempts)
+- Converted (real orders এ convert হয়েছে)
+- Today's Count
+
+**Table Features:**
+- Phone, Name, IP, Device columns
+- Failure Reason with colored badges
+- Risk Level badge (Low/Medium/High)
+- Time (relative format)
+- Actions: WhatsApp, Block, Convert to Order, Delete
+
+**Filters:**
+- By reason type
+- By risk level
+- Date range picker
+
+### Step 5: Plugin Update (v6.0)
+
+**New Triggers:**
+
+```text
+TRIGGER 1: Phone Blur Event
+─────────────────────────────
+When: #billing_phone loses focus
+Action: Send to log-checkout-attempt with reason="phone_blur"
+
+TRIGGER 2: WooCommerce Error
+───────────────────────────────
+When: checkout_error event fires
+Action: Send with reason="validation_error"
+
+TRIGGER 3: Page Unload
+────────────────────────
+When: beforeunload event (if phone is filled)
+Action: navigator.sendBeacon() with reason="page_exit"
+```
+
+**Admin Settings:**
+- Enable/Disable Incomplete Tracking toggle
+- Auto-block threshold setting (default: 5)
+- Time window setting (default: 60 minutes)
+
+## Files to Create/Modify
 
 | File | Change Type | Description |
 |------|-------------|-------------|
-| `supabase/functions/customer-trust-score/index.ts` | Create | নতুন edge function |
-| `src/components/fraud-protection/CustomerTrustLookup.tsx` | Create | Dashboard UI component |
-| `src/pages/FraudProtectionPage.tsx` | Modify | নতুন tab যোগ |
-| `src/utils/pluginGenerator.ts` | Modify | Plugin এ trust score check যোগ |
-| `supabase/functions/check-order-eligibility/index.ts` | Modify | Trust score response এ যোগ |
+| `supabase/migrations/` | Create | New `incomplete_orders` table + merchants column |
+| `supabase/functions/log-checkout-attempt/index.ts` | Create | New Edge Function |
+| `src/components/fraud-protection/IncompleteOrders.tsx` | Create | Dashboard UI Component |
+| `src/pages/FraudProtectionPage.tsx` | Modify | Add new "Incomplete" tab (keep Abandoned & Courier) |
+| `src/utils/pluginGenerator.ts` | Modify | Add v6.0 tracking triggers |
+| `supabase/config.toml` | Modify | Add new function registration |
 
-### Plugin Flow
+## Tab Structure (After Implementation)
 
 ```text
-Customer Places Order
-        ↓
-Plugin checks phone number
-        ↓
-API returns trust score
-        ↓
-┌───────────────────────┐
-│  Show Score to        │
-│  Merchant in Popup    │
-│                       │
-│  Score: 45% (High Risk)│
-│  History: 4 orders    │
-│  Returned: 2          │
-│                       │
-│  [Accept] [Reject]    │
-└───────────────────────┘
-        ↓
-Merchant decides manually
+Tabs:
+├── Settings
+├── Blacklist
+├── Logs
+├── Integration
+├── Plugin
+├── Remote
+├── Abandoned (existing - kept)
+├── Incomplete (NEW)
+├── Courier (existing - kept)
+└── Trust Score
 ```
 
+## WordPress Plugin v6.0 JavaScript Flow
+
+```text
+Page Load
+    ↓
+Init FingerprintJS
+    ↓
+Attach Event Listeners:
+    ├── #billing_phone blur → logIncomplete("phone_blur")
+    ├── $(document.body).on('checkout_error') → logIncomplete("validation_error")
+    └── window.beforeunload (if phone filled) → logIncomplete("page_exit")
+    ↓
+On Each Log:
+    ├── Send to API (avoid duplicate logs with localStorage check)
+    ├── Get risk_level response
+    └── If HIGH → Optional: Show warning or silent log
+```
+
+## Security Measures
+
+- Rate limiting: Max 10 logs per minute per IP
+- Phone number normalization before storage
+- Device fingerprint validation
+- RLS policies for data isolation
+- API key validation on each request
+
 ## Summary
-এই সিস্টেমে:
-1. **Edge Function** - Phone number দিয়ে courier history থেকে trust score calculate
-2. **Dashboard UI** - Customer lookup এবং history view
-3. **Plugin Integration** - Checkout এ real-time score দেখানো
-4. **Manual Decision** - Merchant নিজে accept/reject করবে, auto-block নয়
+
+এই implementation এ:
+1. **Courier tab অক্ষত থাকবে** - কোন পরিবর্তন নেই
+2. **নতুন Incomplete Orders tab** - Abandoned এর পাশে যোগ হবে
+3. **Smart fraud detection** - Same phone/IP থেকে বারবার attempt ধরা পড়বে
+4. **Plugin v6.0** - তিনটি নতুন trigger point
+5. **Manual decision** - আপনি dashboard থেকে block/convert করতে পারবেন

@@ -50,13 +50,13 @@ export function PluginDownload({ apiKey }: PluginDownloadProps) {
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-green-400">🆕 নতুন Version 4.0.0 আপডেট!</span>
+                  <span className="font-semibold text-green-400">🆕 নতুন Version 6.0.0 আপডেট!</span>
                   <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs">
-                    Remote + Abandoned Cart
+                    Incomplete Order Tracking
                   </Badge>
                 </div>
                 <p className="text-sm text-slate-400 mt-1 font-bengali">
-                  Remote Settings, Abandoned Cart Tracking, Courier Integration + Performance Optimized!
+                  Incomplete Order Tracking, Smart Fraud Detection + Phone/Error/Exit Triggers!
                 </p>
               </div>
             </div>
@@ -80,7 +80,7 @@ export function PluginDownload({ apiKey }: PluginDownloadProps) {
               <div className="flex items-center gap-2 flex-wrap">
                 <CardTitle className="text-xl text-white">WCBD Fraud Guard Plugin</CardTitle>
                 <Badge className="bg-gradient-to-r from-cyan-500 to-green-500 text-white border-0 text-xs">
-                  v4.0.0
+                  v6.0.0
                 </Badge>
                 <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs">
                   STABLE
@@ -97,24 +97,24 @@ export function PluginDownload({ apiKey }: PluginDownloadProps) {
           <div className="p-4 rounded-xl bg-gradient-to-r from-green-500/10 to-cyan-500/10 border border-green-500/20">
             <h4 className="text-sm font-semibold text-green-400 mb-3 flex items-center gap-2">
               <Sparkles className="h-4 w-4" />
-              v4.0 এ নতুন কী আছে?
+              v6.0 এ নতুন কী আছে?
             </h4>
             <div className="grid grid-cols-1 gap-2">
               <div className="flex items-center gap-2 text-sm text-white font-bengali">
                 <CheckCircle2 className="h-4 w-4 text-green-400 flex-shrink-0" />
-                <span>🌐 <strong>Remote Settings</strong> - Dashboard থেকে সব sites এ settings control করুন</span>
+                <span>📱 <strong>Phone Blur Tracking</strong> - ফোন enter করে চলে গেলে log হবে</span>
               </div>
               <div className="flex items-center gap-2 text-sm text-white font-bengali">
                 <CheckCircle2 className="h-4 w-4 text-green-400 flex-shrink-0" />
-                <span>🛒 <strong>Abandoned Cart</strong> - যারা order না করে চলে যায় তাদের track করুন</span>
+                <span>❌ <strong>Validation Error</strong> - WooCommerce error হলে auto track</span>
               </div>
               <div className="flex items-center gap-2 text-sm text-white font-bengali">
                 <CheckCircle2 className="h-4 w-4 text-green-400 flex-shrink-0" />
-                <span>🚚 <strong>Courier Status</strong> - Steadfast, Pathao, Redox courier tracking</span>
+                <span>🚪 <strong>Page Exit Detection</strong> - Tab close করলে sendBeacon এ log</span>
               </div>
               <div className="flex items-center gap-2 text-sm text-white font-bengali">
                 <CheckCircle2 className="h-4 w-4 text-green-400 flex-shrink-0" />
-                <span>⚡ <strong>Performance</strong> - Async loading, Website slow হবে না</span>
+                <span>🔍 <strong>Smart Risk Detection</strong> - 5+ attempts = HIGH risk auto flag</span>
               </div>
             </div>
           </div>
@@ -170,7 +170,7 @@ export function PluginDownload({ apiKey }: PluginDownloadProps) {
               )}
             </Button>
             <span className="text-sm text-slate-400 font-bengali">
-              wcbd-fraud-guard.zip (~18KB) • v4.0.0 (Remote + Abandoned Cart + Courier)
+              wcbd-fraud-guard.zip (~20KB) • v6.0.0 (Incomplete Order Tracking)
             </span>
           </div>
         </CardContent>

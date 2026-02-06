@@ -52,8 +52,6 @@ class WCBD_Fraud_Guard {
         add_option('wcbd_fraud_guard_msg_blacklist', 'আপনার অর্ডার ব্লক করা হয়েছে। সমস্যা হলে যোগাযোগ করুন।');
         add_option('wcbd_fraud_guard_whatsapp', $this->whatsapp_default);
         add_option('wcbd_fraud_guard_phone', $this->whatsapp_default);
-        add_option('wcbd_fraud_guard_enable_incomplete_tracking', '1');
-        add_option('wcbd_fraud_guard_show_contact', '1');
     }
     
     public function check_woocommerce() {
@@ -78,8 +76,6 @@ class WCBD_Fraud_Guard {
     
     public function inject_popup_styles() {
         if (!is_checkout()) return;
-        $enabled = get_option('wcbd_fraud_guard_enabled', '1');
-        if ($enabled !== '1') return;
         
         echo '<style id="wcbd-fraud-guard-popup-css">
 .wcbd-fraud-popup-overlay{position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;width:100vw!important;height:100vh!important;background:rgba(0,0,0,0.92)!important;backdrop-filter:blur(12px)!important;z-index:2147483647!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:20px!important;box-sizing:border-box!important;margin:0!important;animation:wcbdFadeIn 0.3s ease!important}
@@ -108,9 +104,6 @@ class WCBD_Fraud_Guard {
     public function enqueue_frontend_scripts() {
         if (!is_checkout()) return;
         
-        $enabled = get_option('wcbd_fraud_guard_enabled', '1');
-        if ($enabled !== '1') return;
-        
         wp_enqueue_script('fingerprintjs', 'https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js', array(), '3.0.0', true);
         
         wp_add_inline_script('fingerprintjs', $this->get_checkout_js(), 'after');
@@ -131,7 +124,6 @@ class WCBD_Fraud_Guard {
         $msg_blacklist = esc_js(get_option('wcbd_fraud_guard_msg_blacklist', 'আপনার অর্ডার ব্লক করা হয়েছে। সমস্যা হলে যোগাযোগ করুন।'));
         $whatsapp = esc_js(get_option('wcbd_fraud_guard_whatsapp', ''));
         $phone = esc_js(get_option('wcbd_fraud_guard_phone', ''));
-        $show_contact = get_option('wcbd_fraud_guard_show_contact', '1');
         $endpoint = esc_js($this->endpoint);
         
         $js_template = <<<'JSTEMPLATE'
@@ -147,8 +139,6 @@ msgCooldown:"%%MSG_COOLDOWN%%",
 msgBlacklist:"%%MSG_BLACKLIST%%",
 whatsapp:"%%WHATSAPP%%",
 phone:"%%PHONE%%",
-showContact:%%SHOW_CONTACT%%,
-enableIncompleteTracking:%%ENABLE_INCOMPLETE_TRACKING%%,
 incompleteLogged:{},
 licenseValid:false,
 
@@ -174,10 +164,8 @@ FingerprintJS.load().then(function(fp){fp.get().then(function(r){self.deviceId=r
 // Hook into checkout form
 jQ("form.checkout").on("checkout_place_order",function(){return self.validate(jQ(this));});
 
-// Track incomplete orders only if license valid
-if(self.enableIncompleteTracking){
+// Always track incomplete orders when license is valid
 self.setupIncompleteTracking();
-}
 
 console.log("[WCBD Fraud Guard v${PLUGIN_CONFIG.version}] Ready");
 });
@@ -409,7 +397,7 @@ var titles=this.lang==="bn"?{blacklist:"অর্ডার ব্লক কর�
 var timeDisplay=mins?'<p class="wcbd-fraud-popup-time">⏰ '+this.formatTime(mins)+' '+(this.lang==="bn"?"বাকি":"remaining")+'</p>':"";
 
 var contactHtml="";
-if(this.showContact&&(this.whatsapp||this.phone)){
+if(this.whatsapp||this.phone){
 contactHtml='<div class="wcbd-fraud-popup-contact-box">';
 contactHtml+='<p class="wcbd-fraud-popup-contact-title">'+(this.lang==="bn"?"📞 সমস্যা হলে যোগাযোগ করুন":"📞 Contact Us")+'</p>';
 contactHtml+='<div class="wcbd-fraud-popup-contact">';
@@ -463,12 +451,11 @@ jQ(function(){WCBD_FG.init();});
 })(jQuery);
 JSTEMPLATE;
 
-        $enable_incomplete_tracking = get_option('wcbd_fraud_guard_enable_incomplete_tracking', '1');
         $incomplete_endpoint = esc_js($this->incomplete_endpoint);
         
         $js = str_replace(
-            array('%%ENDPOINT%%', '%%INCOMPLETE_ENDPOINT%%', '%%APIKEY%%', '%%LANG%%', '%%TIMER%%', '%%MSG_COOLDOWN%%', '%%MSG_BLACKLIST%%', '%%WHATSAPP%%', '%%PHONE%%', '%%SHOW_CONTACT%%', '%%ENABLE_INCOMPLETE_TRACKING%%'),
-            array($endpoint, $incomplete_endpoint, esc_js($api_key), $language, $popup_timer, $msg_cooldown, $msg_blacklist, $whatsapp, $phone, ($show_contact === '1' ? 'true' : 'false'), ($enable_incomplete_tracking === '1' ? 'true' : 'false')),
+            array('%%ENDPOINT%%', '%%INCOMPLETE_ENDPOINT%%', '%%APIKEY%%', '%%LANG%%', '%%TIMER%%', '%%MSG_COOLDOWN%%', '%%MSG_BLACKLIST%%', '%%WHATSAPP%%', '%%PHONE%%'),
+            array($endpoint, $incomplete_endpoint, esc_js($api_key), $language, $popup_timer, $msg_cooldown, $msg_blacklist, $whatsapp, $phone),
             $js_template
         );
         
@@ -721,15 +708,12 @@ ADMINJSTEMPLATE;
     
     public function render_settings_page() {
         $api_key = get_option('wcbd_fraud_guard_api_key', $this->api_key);
-        $enabled = get_option('wcbd_fraud_guard_enabled', '1');
         $language = get_option('wcbd_fraud_guard_language', 'bn');
         $popup_timer = get_option('wcbd_fraud_guard_popup_timer', '30');
         $msg_cooldown = get_option('wcbd_fraud_guard_msg_cooldown', 'আপনি সম্প্রতি অর্ডার করেছেন। অনুগ্রহ করে কিছুক্ষণ অপেক্ষা করুন।');
         $msg_blacklist = get_option('wcbd_fraud_guard_msg_blacklist', 'আপনার অর্ডার ব্লক করা হয়েছে। সমস্যা হলে যোগাযোগ করুন।');
         $whatsapp = get_option('wcbd_fraud_guard_whatsapp', '');
         $phone = get_option('wcbd_fraud_guard_phone', '');
-        $show_contact = get_option('wcbd_fraud_guard_show_contact', '1');
-        $enable_incomplete_tracking = get_option('wcbd_fraud_guard_enable_incomplete_tracking', '1');
         
         ?>
         <div class="wrap">
@@ -754,16 +738,9 @@ ADMINJSTEMPLATE;
                     <input type="hidden" name="action" value="wcbd_fraud_guard_save_settings">
                     <?php wp_nonce_field('wcbd_fraud_guard_settings', 'wcbd_fraud_guard_nonce'); ?>
                     
-                    <!-- Main Toggle & API -->
+                    <!-- API Key -->
                     <div class="fraud-card">
-                        <h2>🔌 Connection Settings</h2>
-                        <div class="fraud-form-group">
-                            <label class="fraud-toggle">
-                                <input type="checkbox" name="enabled" value="1" <?php checked($enabled, '1'); ?>>
-                                <span class="fraud-toggle-slider"></span>
-                                <span>Enable Fraud Protection</span>
-                            </label>
-                        </div>
+                        <h2>🔌 API Connection</h2>
                         <div class="fraud-form-group">
                             <label>API Key</label>
                             <div style="display:flex;gap:10px;align-items:center">
@@ -776,18 +753,13 @@ ADMINJSTEMPLATE;
                     </div>
                     
                     <!-- Incomplete Order Tracking - NEW HIGHLIGHT -->
+                    <!-- Incomplete Order Tracking - Always Enabled -->
                     <div class="fraud-card" style="background:linear-gradient(145deg,#7c2d12,#c2410c);border:none;color:#fff">
-                        <h2 style="color:#fff;border-bottom-color:rgba(255,255,255,0.2)">📊 Incomplete Order Tracking</h2>
-                        <div class="fraud-form-group">
-                            <label class="fraud-toggle" style="color:#fff">
-                                <input type="checkbox" name="enable_incomplete_tracking" value="1" <?php checked($enable_incomplete_tracking, '1'); ?>>
-                                <span class="fraud-toggle-slider"></span>
-                                <span style="color:#fff">Enable Incomplete Order Tracking</span>
-                            </label>
-                        </div>
+                        <h2 style="color:#fff;border-bottom-color:rgba(255,255,255,0.2)">📊 Incomplete Order Tracking <span style="background:rgba(16,185,129,0.3);color:#10b981;padding:4px 12px;border-radius:20px;font-size:12px;margin-left:10px">✓ Active</span></h2>
+                        <p style="color:#fed7aa;margin:0 0 15px">License সক্রিয় থাকলে সব feature automatically চালু থাকবে।</p>
                         
                         <!-- Feature Grid -->
-                        <div class="fraud-feature-grid" style="margin-top:20px">
+                        <div class="fraud-feature-grid">
                             <div class="fraud-feature-card" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2)">
                                 <div class="icon" style="background:linear-gradient(135deg,#3b82f6,#1d4ed8)">📱</div>
                                 <h4 style="color:#fff">Phone Blur Detection</h4>
@@ -843,13 +815,7 @@ ADMINJSTEMPLATE;
                     <!-- Contact Options -->
                     <div class="fraud-card">
                         <h2>📞 Contact Options</h2>
-                        <div class="fraud-form-group">
-                            <label class="fraud-toggle">
-                                <input type="checkbox" name="show_contact" value="1" <?php checked($show_contact, '1'); ?>>
-                                <span class="fraud-toggle-slider"></span>
-                                <span>Show contact buttons in popup</span>
-                            </label>
-                        </div>
+                        <p style="color:#64748b;margin:0 0 15px;font-size:13px">Popup এ যোগাযোগের button দেখানো হবে (যদি number দেওয়া থাকে)</p>
                         <div class="fraud-grid fraud-grid-2">
                             <div class="fraud-form-group">
                                 <label>WhatsApp Number</label>
@@ -923,15 +889,12 @@ ADMINJSTEMPLATE;
         }
         
         update_option('wcbd_fraud_guard_api_key', sanitize_text_field($_POST['api_key'] ?? ''));
-        update_option('wcbd_fraud_guard_enabled', isset($_POST['enabled']) ? '1' : '0');
         update_option('wcbd_fraud_guard_language', sanitize_text_field($_POST['language'] ?? 'bn'));
         update_option('wcbd_fraud_guard_popup_timer', sanitize_text_field($_POST['popup_timer'] ?? '30'));
         update_option('wcbd_fraud_guard_msg_cooldown', sanitize_textarea_field($_POST['msg_cooldown'] ?? ''));
         update_option('wcbd_fraud_guard_msg_blacklist', sanitize_textarea_field($_POST['msg_blacklist'] ?? ''));
         update_option('wcbd_fraud_guard_whatsapp', sanitize_text_field($_POST['whatsapp'] ?? ''));
         update_option('wcbd_fraud_guard_phone', sanitize_text_field($_POST['phone'] ?? ''));
-        update_option('wcbd_fraud_guard_show_contact', isset($_POST['show_contact']) ? '1' : '0');
-        update_option('wcbd_fraud_guard_enable_incomplete_tracking', isset($_POST['enable_incomplete_tracking']) ? '1' : '0');
         
         wp_redirect(admin_url('admin.php?page=wcbd-fraud-guard&saved=1'));
         exit;

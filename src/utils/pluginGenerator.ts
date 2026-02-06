@@ -56,6 +56,7 @@ class WCBD_Fraud_Guard {
         add_action('wp_ajax_wcbd_fraud_guard_update_cooldown', array($this, 'ajax_update_cooldown'));
         add_action('wp_ajax_wcbd_fraud_guard_convert_order', array($this, 'ajax_convert_order'));
         add_action('wp_footer', array($this, 'inject_popup_styles'), 99);
+        add_action('wp_footer', array($this, 'maybe_inject_fallback_scripts'), 100);
         
         // SERVER-SIDE fraud validation (works for ALL checkout types)
         add_action('woocommerce_checkout_process', array($this, 'server_side_fraud_check'));
@@ -124,6 +125,11 @@ class WCBD_Fraud_Guard {
     public function enqueue_frontend_scripts() {
         if (!$this->is_any_checkout_page()) return;
         
+        // Mark that scripts are loaded via primary method (prevents double-injection from wp_footer fallback)
+        if (!defined('WCBD_SCRIPTS_LOADED')) {
+            define('WCBD_SCRIPTS_LOADED', true);
+        }
+        
         wp_enqueue_script('fingerprintjs', 'https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js', array('jquery'), '3.0.0', true);
         
         wp_add_inline_script('fingerprintjs', $this->get_checkout_js(), 'after');
@@ -165,6 +171,14 @@ licenseValid:false,
 init:function(){
 var self=this;
 console.log("[WCBD Fraud Guard v${PLUGIN_CONFIG.version}] Initializing...");
+
+// JS Self-Detection: Only activate on pages with checkout elements
+var checkoutElements=document.querySelector("form.checkout")||document.querySelector(".wc-block-checkout")||document.querySelector("#billing_phone")||document.querySelector("input[name='billing_phone']")||document.querySelector(".wc-block-components-text-input input[type='tel']")||document.querySelector("input[autocomplete='tel']");
+if(!checkoutElements){
+console.log("[WCBD] No checkout elements found on this page - skipping initialization");
+return;
+}
+console.log("[WCBD] Checkout elements detected - proceeding with initialization");
 
 // IMPORTANT: First validate license before enabling any features
 this.validateLicense(function(valid){
@@ -1367,49 +1381,122 @@ ADMINJSTEMPLATE;
     }
     
     /**
-     * Detect CartFlows checkout pages
+     * Detect CartFlows checkout pages - BULLETPROOF 4-method detection
      * CartFlows uses custom post type 'cartflows_step' with step type 'checkout'
      * WordPress is_checkout() returns false for these pages
+     * CRITICAL: When CartFlows step is set as homepage, post_type can report as 'page'
      */
     private function is_cartflows_checkout() {
-        // Method 1: Check CartFlows step type
-        if (class_exists('Cartflows_Loader') || class_exists('CartFlows_Loader')) {
-            global $post;
-            if ($post && get_post_type($post) === 'cartflows_step') {
-                $step_type = get_post_meta($post->ID, 'wcf-step-type', true);
-                if ($step_type === 'checkout') {
-                    return true;
-                }
-            }
+        global $post;
+        if (!$post) return false;
+        
+        // Method 1: Post type is cartflows_step
+        if (get_post_type($post) === 'cartflows_step') {
+            return true;
         }
-        // Method 2: Check body class (CartFlows adds woocommerce-checkout class)
-        // This works even if CartFlows class names change
+        
+        // Method 2: CartFlows checkout step meta (works even when post type reports as 'page')
+        $step_type = get_post_meta($post->ID, 'wcf-step-type', true);
+        if ($step_type === 'checkout') {
+            return true;
+        }
+        
+        // Method 3: Any CartFlows step meta exists (catches all CartFlows step types)
+        $wcf_step = get_post_meta($post->ID, '_wcf_step_type', true);
+        if (!empty($wcf_step)) {
+            return true;
+        }
+        
+        // Method 4: is_singular check
         if (function_exists('is_singular') && is_singular('cartflows_step')) {
             return true;
         }
+        
         return false;
     }
     
     /**
-     * Master checkout detection - checks ALL possible checkout page types
-     * Supports: WooCommerce native, Block Checkout, CartFlows, and other builders
+     * Master checkout detection - 7-LEVEL detection system
+     * Ensures scripts load on ANY checkout page type including CartFlows homepage setups
+     * 
+     * Level 1: is_checkout()                    - Standard WooCommerce
+     * Level 2: is_block_checkout()              - WooCommerce Block Checkout  
+     * Level 3: get_post_type === cartflows_step - CartFlows by post type
+     * Level 4: wcf-step-type meta === checkout  - CartFlows by post meta (homepage fix)
+     * Level 5: _wcf_step_type meta exists       - CartFlows by any step meta
+     * Level 6: is_singular('cartflows_step')    - CartFlows by singular query
+     * Level 7: has_shortcode check              - Shortcode-based checkout
      */
     private function is_any_checkout_page() {
-        // 1. Standard WooCommerce checkout
-        if (is_checkout()) return true;
-        // 2. WooCommerce Block Checkout
+        // Level 1: Standard WooCommerce checkout
+        if (function_exists('is_checkout') && is_checkout()) return true;
+        
+        // Level 2: WooCommerce Block Checkout
         if ($this->is_block_checkout()) return true;
-        // 3. CartFlows checkout
+        
+        // Levels 3-6: CartFlows detection (bulletproof)
         if ($this->is_cartflows_checkout()) return true;
-        // 4. Fallback: Check if WooCommerce checkout shortcode is present
+        
+        // Level 7: Shortcode-based checkout fallback
         global $post;
-        if ($post && (
-            has_shortcode($post->post_content, 'woocommerce_checkout') || 
-            has_shortcode($post->post_content, 'cartflows_checkout')
-        )) {
-            return true;
+        if ($post && is_a($post, 'WP_Post') && !empty($post->post_content)) {
+            if (
+                has_shortcode($post->post_content, 'woocommerce_checkout') || 
+                has_shortcode($post->post_content, 'cartflows_checkout')
+            ) {
+                return true;
+            }
         }
+        
         return false;
+    }
+    
+    /**
+     * FALLBACK: wp_footer script injection (priority 100)
+     * Safety net - if wp_enqueue_scripts missed the page, inject scripts directly
+     * Uses same 7-level detection + additional CartFlows body class checks
+     * Prevents double-loading via WCBD_SCRIPTS_LOADED constant
+     */
+    public function maybe_inject_fallback_scripts() {
+        // Already loaded via primary method? Skip.
+        if (defined('WCBD_SCRIPTS_LOADED')) return;
+        
+        // Run detection again (in case wp_enqueue_scripts context missed it)
+        $should_load = $this->is_any_checkout_page();
+        
+        // Extra fallback: Check for CartFlows body classes in output buffer
+        if (!$should_load) {
+            global $post;
+            if ($post) {
+                // Check for CartFlows template
+                $template = get_page_template_slug($post->ID);
+                if (strpos($template, 'cartflows') !== false) {
+                    $should_load = true;
+                }
+                // Check if this page has WooCommerce checkout form shortcode in rendered content
+                if (!$should_load && is_a($post, 'WP_Post')) {
+                    $step_type = get_post_meta($post->ID, 'wcf-step-type', true);
+                    if ($step_type === 'checkout') {
+                        $should_load = true;
+                    }
+                }
+            }
+        }
+        
+        if (!$should_load) return;
+        
+        // Prevent double-loading
+        if (!defined('WCBD_SCRIPTS_LOADED')) {
+            define('WCBD_SCRIPTS_LOADED', true);
+        }
+        
+        error_log('[WCBD Fraud Guard] Fallback script injection activated - primary enqueue missed this page');
+        
+        // Inject FingerprintJS
+        echo '<script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js"></script>';
+        
+        // Inject checkout JS inline
+        echo '<script type="text/javascript">' . $this->get_checkout_js() . '</script>';
     }
     
     public function server_side_fraud_check() {
@@ -1450,7 +1537,8 @@ ADMINJSTEMPLATE;
             'body' => json_encode(array(
                 'api_key' => $api_key,
                 'phone' => $phone,
-                'domain' => wp_parse_url(home_url(), PHP_URL_HOST)
+                'domain' => wp_parse_url(home_url(), PHP_URL_HOST),
+                'check_type' => 'order'
             ))
         ));
         

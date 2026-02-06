@@ -1,5 +1,6 @@
- import { useState } from "react";
- import { Shield, Clock, AlertCircle, CheckCircle, Download, Settings, Sparkles } from "lucide-react";
+  import { useState } from "react";
+  import { motion } from "framer-motion";
+  import { Shield, Clock, AlertCircle, CheckCircle, Download, Settings, Sparkles, ArrowUpCircle, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { downloadPluginFile } from "@/utils/pluginGenerator";
 import { useToast } from "@/hooks/use-toast";
@@ -222,6 +223,33 @@ export function FraudGuardQuickStatus({
            )}
           
           <div className="flex gap-2 flex-wrap">
+            {/* Animated Upgrade CTA for Monthly users */}
+            {merchant.current_plan === 'monthly' && (
+              <motion.div
+                animate={{ scale: [1, 1.05, 1] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+              >
+                <Button
+                  onClick={() => setShowPlanModal(true)}
+                  className="bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 hover:from-amber-600 hover:via-orange-600 hover:to-red-600 text-white gap-2 rounded-xl font-bengali shadow-lg shadow-orange-500/30 relative overflow-hidden"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-[shimmer_2s_infinite] -skew-x-12" />
+                  <Zap className="w-4 h-4 relative z-10" />
+                  <span className="relative z-10">Yearly তে Upgrade করুন</span>
+                  <span className="relative z-10 bg-white/20 text-xs px-1.5 py-0.5 rounded-full">42% OFF</span>
+                </Button>
+              </motion.div>
+            )}
+            {/* Renew CTA for Yearly users */}
+            {merchant.current_plan === 'yearly' && isExpiringSoon && (
+              <Button
+                onClick={() => setShowPlanModal(true)}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:opacity-90 text-white gap-2 rounded-xl font-bengali shadow-lg"
+              >
+                <ArrowUpCircle className="w-4 h-4" />
+                Renew করুন
+              </Button>
+            )}
             <Button
               onClick={handleDownloadPlugin}
               className="bg-gradient-to-r from-blue-600 to-purple-600 hover:opacity-90 text-white gap-2 rounded-xl font-bengali shadow-lg"
@@ -239,6 +267,35 @@ export function FraudGuardQuickStatus({
             </Button>
           </div>
         </div>
+
+        {/* Plan Selection Modal */}
+        {showPlanModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+            <div className="bg-white border border-gray-200 rounded-3xl p-6 max-w-xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold text-gray-900 font-bengali">Plan পরিবর্তন করুন</h2>
+                <button 
+                  onClick={() => setShowPlanModal(false)}
+                  className="text-gray-400 hover:text-gray-600 text-2xl w-10 h-10 rounded-full hover:bg-gray-100 flex items-center justify-center"
+                >
+                  ×
+                </button>
+              </div>
+              <SubscriptionPlans onSelectPlan={handleSelectPlan} />
+            </div>
+          </div>
+        )}
+
+        {/* Payment Modal */}
+        {merchant?.id && (
+          <SubscriptionPurchaseModal
+            isOpen={showPaymentModal}
+            onClose={() => setShowPaymentModal(false)}
+            planType={selectedPlan}
+            merchantId={merchant.id}
+            onSuccess={handlePurchaseSuccess}
+          />
+        )}
       </div>
     );
   }

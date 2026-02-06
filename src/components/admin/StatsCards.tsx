@@ -42,11 +42,11 @@ export function StatsCards({ stats, usersCount }: StatsCardsProps) {
     },
     {
       icon: TrendingUp,
-      label: "মোট আয়",
+      label: "মোট আয় (পরিশোধিত)",
       value: `৳${stats.revenue.toLocaleString()}`,
-      color: "red",
-      trend: "+15%",
-      trendUp: true,
+      color: "emerald",
+      trend: stats.revenue > 0 ? "Invoice থেকে" : "—",
+      trendUp: stats.revenue > 0,
     },
     {
       icon: Users,
@@ -58,10 +58,10 @@ export function StatsCards({ stats, usersCount }: StatsCardsProps) {
     },
     {
       icon: FileText,
-      label: "বাকি আছে",
+      label: "বাকি পেমেন্ট",
       value: `৳${stats.unpaidInvoices.toLocaleString()}`,
-      color: "orange",
-      trend: stats.unpaidInvoices > 0 ? "Pending" : "Clear",
+      color: "red",
+      trend: stats.unpaidInvoices > 0 ? "বাকি আছে" : "Clear ✓",
       trendUp: false,
     },
   ];

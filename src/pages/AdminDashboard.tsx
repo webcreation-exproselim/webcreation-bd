@@ -587,8 +587,8 @@ const AdminDashboard = () => {
     processing: orders.filter(o => o.status === "processing").length,
     completed: orders.filter(o => o.status === "completed").length,
     cancelled: orders.filter(o => o.status === "cancelled").length,
-    revenue: orders.filter(o => o.status === "completed").reduce((sum, o) => sum + Number(o.total_price), 0),
-    unpaidInvoices: invoices.filter(i => i.status === "unpaid").reduce((sum, i) => sum + Number(i.amount), 0),
+    revenue: invoices.reduce((sum, i) => sum + Number(i.paid_amount || 0), 0),
+    unpaidInvoices: invoices.reduce((sum, i) => sum + (Number(i.amount) - Number(i.paid_amount || 0)), 0),
   };
 
   const filteredUsers = users.filter(u => 

@@ -1,20 +1,17 @@
 const ENDPOINT_URL = 'https://gtjmfvwkatrorhuyrpby.supabase.co/functions/v1/check-order-eligibility';
-const TRACK_ENDPOINT_URL = 'https://gtjmfvwkatrorhuyrpby.supabase.co/functions/v1/track-checkout';
-const COURIER_ENDPOINT_URL = 'https://gtjmfvwkatrorhuyrpby.supabase.co/functions/v1/courier-status';
-const TRUST_SCORE_ENDPOINT_URL = 'https://gtjmfvwkatrorhuyrpby.supabase.co/functions/v1/customer-trust-score';
 const INCOMPLETE_ENDPOINT_URL = 'https://gtjmfvwkatrorhuyrpby.supabase.co/functions/v1/log-checkout-attempt';
 const DASHBOARD_URL = 'https://webcreation-bd.lovable.app/dashboard';
 const WHATSAPP_DEFAULT = '+8801332052874';
 import JSZip from 'jszip';
+import { PLUGIN_CONFIG } from '@/config/pluginConfig';
+
 export const generateMainPluginFile = (apiKey: string): string => {
-  // Use PHP heredoc syntax (<<<'SCRIPT') to completely avoid PHP variable interpolation
-  // This ensures JavaScript $ variables are NOT parsed by PHP
   return `<?php
 /**
  * Plugin Name: WCBD Fraud Guard
  * Plugin URI: https://webcreation-bd.lovable.app/fraud-guard
- * Description: Order Limiter & Anti-Fraud System for WooCommerce - Protect your store from fake orders with remote settings, abandoned cart tracking, incomplete order tracking, trust score, and more.
- * Version: 6.0.0
+ * Description: Order Limiter & Anti-Fraud System for WooCommerce - Protect your store from fake orders with Incomplete Order Tracking.
+ * Version: ${PLUGIN_CONFIG.version}
  * Author: WebCreation BD
  * Author URI: https://webcreation-bd.lovable.app
  * Text Domain: wcbd-fraud-guard
@@ -24,7 +21,7 @@ export const generateMainPluginFile = (apiKey: string): string => {
 
 if (!defined('ABSPATH')) exit;
 
-define('WCBD_FRAUD_GUARD_VERSION', '6.0.0');
+define('WCBD_FRAUD_GUARD_VERSION', '${PLUGIN_CONFIG.version}');
 define('WCBD_FRAUD_GUARD_PATH', plugin_dir_path(__FILE__));
 define('WCBD_FRAUD_GUARD_URL', plugin_dir_url(__FILE__));
 
@@ -32,9 +29,6 @@ class WCBD_Fraud_Guard {
     
     private $api_key = '${apiKey}';
     private $endpoint = '${ENDPOINT_URL}';
-    private $track_endpoint = '${TRACK_ENDPOINT_URL}';
-    private $courier_endpoint = '${COURIER_ENDPOINT_URL}';
-    private $trust_score_endpoint = '${TRUST_SCORE_ENDPOINT_URL}';
     private $incomplete_endpoint = '${INCOMPLETE_ENDPOINT_URL}';
     private $dashboard_url = '${DASHBOARD_URL}';
     private $whatsapp_default = '${WHATSAPP_DEFAULT}';
@@ -46,7 +40,7 @@ class WCBD_Fraud_Guard {
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
         add_action('admin_post_wcbd_fraud_guard_save_settings', array($this, 'save_settings'));
         add_action('wp_ajax_wcbd_fraud_guard_test_api', array($this, 'test_api_connection'));
-        add_action('wp_ajax_wcbd_fraud_guard_check_courier', array($this, 'ajax_check_courier'));
+        add_action('wp_ajax_wcbd_fraud_guard_get_incomplete', array($this, 'ajax_get_incomplete_orders'));
         add_action('wp_footer', array($this, 'inject_popup_styles'), 99);
         
         register_activation_hook(__FILE__, array($this, 'set_default_options'));
@@ -58,7 +52,6 @@ class WCBD_Fraud_Guard {
         add_option('wcbd_fraud_guard_msg_blacklist', 'আপনার অর্ডার ব্লক করা হয়েছে। সমস্যা হলে যোগাযোগ করুন।');
         add_option('wcbd_fraud_guard_whatsapp', $this->whatsapp_default);
         add_option('wcbd_fraud_guard_phone', $this->whatsapp_default);
-        add_option('wcbd_fraud_guard_enable_trust_score', '1');
         add_option('wcbd_fraud_guard_enable_incomplete_tracking', '1');
         add_option('wcbd_fraud_guard_show_contact', '1');
     }
@@ -141,15 +134,11 @@ class WCBD_Fraud_Guard {
         $show_contact = get_option('wcbd_fraud_guard_show_contact', '1');
         $endpoint = esc_js($this->endpoint);
         
-        // Use PHP heredoc with NOWDOC syntax (<<<'JS') to prevent ANY PHP variable interpolation
-        // This completely isolates JavaScript code from PHP parsing
         $js_template = <<<'JSTEMPLATE'
 (function(jQ){
 var WCBD_FG={
 deviceId:null,
 endpoint:"%%ENDPOINT%%",
-trackEndpoint:"%%TRACK_ENDPOINT%%",
-trustScoreEndpoint:"%%TRUST_SCORE_ENDPOINT%%",
 incompleteEndpoint:"%%INCOMPLETE_ENDPOINT%%",
 apiKey:"%%APIKEY%%",
 lang:"%%LANG%%",
@@ -159,34 +148,26 @@ msgBlacklist:"%%MSG_BLACKLIST%%",
 whatsapp:"%%WHATSAPP%%",
 phone:"%%PHONE%%",
 showContact:%%SHOW_CONTACT%%,
-enableTracking:%%ENABLE_TRACKING%%,
-enableTrustScore:%%ENABLE_TRUST_SCORE%%,
 enableIncompleteTracking:%%ENABLE_INCOMPLETE_TRACKING%%,
-remoteSettings:null,
 incompleteLogged:{},
 
 init:function(){
 var self=this;
-console.log("[WCBD Fraud Guard v6.0] Initializing with Incomplete Order Tracking...");
+console.log("[WCBD Fraud Guard v${PLUGIN_CONFIG.version}] Initializing...");
 if(typeof FingerprintJS!=="undefined"){
 FingerprintJS.load().then(function(fp){fp.get().then(function(r){self.deviceId=r.visitorId;console.log("[WCBD] Device ID ready");});});
 }
 jQ("form.checkout").on("checkout_place_order",function(){return self.validate(jQ(this));});
 
-// Track abandoned checkouts
-if(this.enableTracking){
-this.setupAbandonedTracking();
-}
-
-// Track incomplete orders (v6.0)
+// Track incomplete orders
 if(this.enableIncompleteTracking){
 this.setupIncompleteTracking();
 }
 
-console.log("[WCBD Fraud Guard v6.0] Ready");
+console.log("[WCBD Fraud Guard v${PLUGIN_CONFIG.version}] Ready");
 },
 
-// v6.0: Incomplete Order Tracking
+// Incomplete Order Tracking
 setupIncompleteTracking:function(){
 var self=this;
 console.log("[WCBD] Setting up incomplete order tracking...");
@@ -212,7 +193,6 @@ jQ(window).on("beforeunload",function(){
 var phone=jQ("#billing_phone").val();
 if(phone&&phone.length>=10&&!self.incompleteLogged["page_exit_"+phone]){
 self.incompleteLogged["page_exit_"+phone]=true;
-// Use sendBeacon for reliable unload tracking
 var data=JSON.stringify({
 api_key:self.apiKey,
 phone:phone,
@@ -275,46 +255,6 @@ return parseFloat(total)||0;
 }catch(e){return 0;}
 },
 
-setupAbandonedTracking:function(){
-var self=this;
-var debounceTimer=null;
-var tracked=false;
-
-jQ("#billing_phone, #billing_first_name, #billing_last_name").on("blur",function(){
-if(tracked)return;
-clearTimeout(debounceTimer);
-debounceTimer=setTimeout(function(){
-var phone=jQ("#billing_phone").val();
-var name=jQ("#billing_first_name").val()+" "+jQ("#billing_last_name").val();
-if(phone&&phone.length>=10){
-tracked=true;
-self.trackCheckout("started",phone.trim(),name.trim());
-}
-},1000);
-});
-
-// Mark as completed when order is placed
-jQ(document.body).on("checkout_place_order_success woocommerce_checkout_place_order_success",function(){
-var phone=jQ("#billing_phone").val();
-if(phone){
-self.trackCheckout("completed",phone.trim());
-}
-});
-},
-
-trackCheckout:function(action,phone,name){
-var self=this;
-console.log("[WCBD] Tracking checkout:",action,phone);
-jQ.ajax({
-url:this.trackEndpoint,
-method:"POST",
-contentType:"application/json",
-data:JSON.stringify({api_key:this.apiKey,action:action,phone:phone,name:name||"",device_id:this.deviceId,checkout_url:window.location.href}),
-success:function(r){console.log("[WCBD] Tracking response:",r);},
-error:function(xhr,status,err){console.error("[WCBD] Tracking error:",err);}
-});
-},
-
 validate:function(f){
 var self=this;
 var phone=jQ("#billing_phone").val();
@@ -322,108 +262,11 @@ var btn=f.find("button[type=submit]");
 btn.prop("disabled",true).data("txt",btn.text()).html(this.lang==="bn"?"চেক করা হচ্ছে...":"Checking...");
 console.log("[WCBD] Validating order...");
 
-// If trust score is enabled, check it first and show to merchant
-if(this.enableTrustScore){
-this.checkTrustScore(phone,function(trustData){
-// After showing trust score, proceed with normal validation
-self.checkEligibility(f,phone,btn,trustData);
-});
-return false;
-}
-
-// Normal flow without trust score
-this.checkEligibility(f,phone,btn,null);
+this.checkEligibility(f,phone,btn);
 return false;
 },
 
-checkTrustScore:function(phone,callback){
-var self=this;
-console.log("[WCBD] Checking trust score for:",phone);
-
-jQ.ajax({
-url:this.trustScoreEndpoint,
-method:"POST",
-contentType:"application/json",
-data:JSON.stringify({api_key:this.apiKey,phone:phone}),
-success:function(r){
-console.log("[WCBD] Trust score response:",r);
-// Show trust score popup with accept/reject decision
-self.showTrustScorePopup(r,callback);
-},
-error:function(xhr,status,err){
-console.error("[WCBD] Trust score error:",err);
-// On error, proceed without trust score
-callback(null);
-}
-});
-},
-
-showTrustScorePopup:function(trustData,callback){
-var self=this;
-console.log("[WCBD] Showing trust score popup:",trustData);
-
-jQ("#wcbdTrustPopup").remove();
-
-var score=trustData.trust_score;
-var status=trustData.status;
-var history=trustData.history;
-var labelBn=trustData.label_bn;
-var color=trustData.color;
-
-var scoreColor=color==="green"?"#10b981":color==="yellow"?"#f59e0b":"#ef4444";
-if(status==="new_customer")scoreColor="#6b7280";
-
-var scoreDisplay=score!==null?score+"%":"N/A";
-var scoreText=this.lang==="bn"?labelBn:trustData.label_en;
-
-var historyHtml='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:20px 0">';
-historyHtml+='<div style="background:rgba(16,185,129,0.15);border-radius:10px;padding:10px;text-align:center"><p style="font-size:24px;font-weight:bold;color:#10b981;margin:0">'+history.delivered+'</p><p style="font-size:11px;color:#94a3b8;margin:5px 0 0">'+(this.lang==="bn"?"Delivered":"Delivered")+'</p></div>';
-historyHtml+='<div style="background:rgba(239,68,68,0.15);border-radius:10px;padding:10px;text-align:center"><p style="font-size:24px;font-weight:bold;color:#ef4444;margin:0">'+history.returned+'</p><p style="font-size:11px;color:#94a3b8;margin:5px 0 0">'+(this.lang==="bn"?"Returned":"Returned")+'</p></div>';
-historyHtml+='<div style="background:rgba(245,158,11,0.15);border-radius:10px;padding:10px;text-align:center"><p style="font-size:24px;font-weight:bold;color:#f59e0b;margin:0">'+history.pending+'</p><p style="font-size:11px;color:#94a3b8;margin:5px 0 0">'+(this.lang==="bn"?"Pending":"Pending")+'</p></div>';
-historyHtml+='</div>';
-
-var html='<div class="wcbd-fraud-popup-overlay" id="wcbdTrustPopup" style="z-index:2147483646!important">';
-html+='<div class="wcbd-fraud-popup-modal" style="max-width:480px!important">';
-html+='<div style="width:100px;height:100px;border-radius:50%;background:linear-gradient(135deg,'+scoreColor+','+scoreColor+'cc);display:flex;align-items:center;justify-content:center;margin:0 auto 15px;box-shadow:0 0 30px '+scoreColor+'40">';
-html+='<span style="font-size:28px;font-weight:bold;color:#fff">'+scoreDisplay+'</span>';
-html+='</div>';
-html+='<h3 class="wcbd-fraud-popup-title" style="font-size:18px">📊 Customer Trust Score</h3>';
-html+='<p style="font-size:14px;color:#fff;background:'+scoreColor+'30;padding:8px 16px;border-radius:20px;display:inline-block;margin:0 0 15px">'+scoreText+'</p>';
-html+='<p style="font-size:13px;color:#a0a0a0;margin:0 0 5px">'+(this.lang==="bn"?"ফোন: ":"Phone: ")+trustData.phone+'</p>';
-html+='<p style="font-size:13px;color:#a0a0a0;margin:0 0 15px">'+(this.lang==="bn"?"মোট অর্ডার: ":"Total Orders: ")+history.total_orders+'</p>';
-html+=historyHtml;
-html+='<div style="display:flex;gap:15px;justify-content:center;margin-top:20px">';
-html+='<button type="button" id="wcbdTrustAccept" style="padding:14px 40px;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;background:linear-gradient(135deg,#10b981,#059669);color:#fff;box-shadow:0 4px 15px rgba(16,185,129,0.3)">'+(this.lang==="bn"?"✓ Accept":"✓ Accept")+'</button>';
-html+='<button type="button" id="wcbdTrustReject" style="padding:14px 40px;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;box-shadow:0 4px 15px rgba(239,68,68,0.3)">'+(this.lang==="bn"?"✗ Reject":"✗ Reject")+'</button>';
-html+='</div>';
-html+='<p style="font-size:11px;color:#64748b;margin-top:20px">'+(this.lang==="bn"?"Courier delivery history থেকে trust score গণনা করা হয়েছে":"Trust score calculated from courier delivery history")+'</p>';
-html+='</div></div>';
-
-jQ(document.documentElement).append(html);
-
-// Handle Accept - proceed with order
-jQ("#wcbdTrustAccept").on("click",function(){
-jQ("#wcbdTrustPopup").remove();
-callback(trustData);
-});
-
-// Handle Reject - cancel order
-jQ("#wcbdTrustReject").on("click",function(){
-jQ("#wcbdTrustPopup").remove();
-jQ("form.checkout button[type=submit]").prop("disabled",false).text(jQ("form.checkout button[type=submit]").data("txt")||"Place Order");
-});
-
-// ESC key to close (treat as reject)
-jQ(document).on("keydown.wcbdTrust",function(e){
-if(e.key==="Escape"){
-jQ("#wcbdTrustPopup").remove();
-jQ("form.checkout button[type=submit]").prop("disabled",false).text(jQ("form.checkout button[type=submit]").data("txt")||"Place Order");
-jQ(document).off("keydown.wcbdTrust");
-}
-});
-},
-
-checkEligibility:function(f,phone,btn,trustData){
+checkEligibility:function(f,phone,btn){
 var self=this;
 
 jQ.ajax({
@@ -436,15 +279,10 @@ console.log("[WCBD] API Response:",r);
 
 // Update settings from server if available
 if(r.popup_settings){
-self.remoteSettings=r.popup_settings;
-self.applyRemoteSettings();
+self.applyRemoteSettings(r.popup_settings);
 }
 
 if(r.allowed){
-// Track as completed before submitting
-if(self.enableTracking){
-self.trackCheckout("completed",phone);
-}
 f.off("checkout_place_order").submit();
 }else{
 var customMsg=r.reason==="blacklist"?self.msgBlacklist:self.msgCooldown;
@@ -459,9 +297,8 @@ f.off("checkout_place_order").submit();
 });
 },
 
-applyRemoteSettings:function(){
-if(!this.remoteSettings)return;
-var s=this.remoteSettings;
+applyRemoteSettings:function(s){
+if(!s)return;
 if(s.timer!==undefined)this.popupTimer=s.timer;
 if(s.language)this.lang=s.language;
 if(s.msg_cooldown)this.msgCooldown=s.msg_cooldown;
@@ -505,7 +342,7 @@ contactHtml='<div class="wcbd-fraud-popup-contact-box">';
 contactHtml+='<p class="wcbd-fraud-popup-contact-title">'+(this.lang==="bn"?"📞 সমস্যা হলে যোগাযোগ করুন":"📞 Contact Us")+'</p>';
 contactHtml+='<div class="wcbd-fraud-popup-contact">';
 if(this.whatsapp){
-var waNum=this.whatsapp.replace(/\D/g,"");
+var waNum=this.whatsapp.replace(/\\D/g,"");
 contactHtml+='<a href="https://wa.me/'+waNum+'" target="_blank" class="wcbd-fraud-popup-whatsapp">💬 WhatsApp</a>';
 }
 if(this.phone){
@@ -554,16 +391,12 @@ jQ(function(){WCBD_FG.init();});
 })(jQuery);
 JSTEMPLATE;
 
-        $enable_tracking = get_option('wcbd_fraud_guard_enable_tracking', '0');
-        $enable_trust_score = get_option('wcbd_fraud_guard_enable_trust_score', '1');
         $enable_incomplete_tracking = get_option('wcbd_fraud_guard_enable_incomplete_tracking', '1');
-        $trust_score_endpoint = esc_js($this->trust_score_endpoint);
         $incomplete_endpoint = esc_js($this->incomplete_endpoint);
         
-        // Replace placeholders with actual PHP values
         $js = str_replace(
-            array('%%ENDPOINT%%', '%%TRACK_ENDPOINT%%', '%%TRUST_SCORE_ENDPOINT%%', '%%INCOMPLETE_ENDPOINT%%', '%%APIKEY%%', '%%LANG%%', '%%TIMER%%', '%%MSG_COOLDOWN%%', '%%MSG_BLACKLIST%%', '%%WHATSAPP%%', '%%PHONE%%', '%%SHOW_CONTACT%%', '%%ENABLE_TRACKING%%', '%%ENABLE_TRUST_SCORE%%', '%%ENABLE_INCOMPLETE_TRACKING%%'),
-            array($endpoint, esc_js($this->track_endpoint), $trust_score_endpoint, $incomplete_endpoint, esc_js($api_key), $language, $popup_timer, $msg_cooldown, $msg_blacklist, $whatsapp, $phone, ($show_contact === '1' ? 'true' : 'false'), ($enable_tracking === '1' ? 'true' : 'false'), ($enable_trust_score === '1' ? 'true' : 'false'), ($enable_incomplete_tracking === '1' ? 'true' : 'false')),
+            array('%%ENDPOINT%%', '%%INCOMPLETE_ENDPOINT%%', '%%APIKEY%%', '%%LANG%%', '%%TIMER%%', '%%MSG_COOLDOWN%%', '%%MSG_BLACKLIST%%', '%%WHATSAPP%%', '%%PHONE%%', '%%SHOW_CONTACT%%', '%%ENABLE_INCOMPLETE_TRACKING%%'),
+            array($endpoint, $incomplete_endpoint, esc_js($api_key), $language, $popup_timer, $msg_cooldown, $msg_blacklist, $whatsapp, $phone, ($show_contact === '1' ? 'true' : 'false'), ($enable_incomplete_tracking === '1' ? 'true' : 'false')),
             $js_template
         );
         
@@ -572,48 +405,118 @@ JSTEMPLATE;
     
     private function get_admin_css() {
         return '
-        .fraud-wrap{max-width:900px;margin:20px 0}
-        .fraud-header{background:linear-gradient(135deg,#0891b2,#0e7490);color:#fff;padding:30px;border-radius:16px;margin-bottom:25px}
-        .fraud-header-text h1{color:#fff;font-size:26px;margin:0 0 5px;display:flex;align-items:center;gap:10px}
-        .fraud-header-text p{margin:0;opacity:0.9;font-size:14px}
-        .fraud-header-text .version{background:rgba(255,255,255,0.2);padding:2px 10px;border-radius:20px;font-size:12px;margin-left:10px}
-        .fraud-card{background:#fff;border:1px solid #e0e0e0;border-radius:16px;padding:25px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,0.05)}
-        .fraud-card h2{margin:0 0 20px;padding:0 0 15px;border-bottom:1px solid #eee;font-size:17px;display:flex;align-items:center;gap:8px}
-        .fraud-toggle{display:flex;align-items:center;gap:12px;cursor:pointer}
+        :root{--wcbd-primary:#0891b2;--wcbd-primary-dark:#0e7490;--wcbd-dark:#0f172a;--wcbd-dark-2:#1e293b;--wcbd-border:#334155;--wcbd-text:#e2e8f0;--wcbd-text-muted:#94a3b8;--wcbd-success:#10b981;--wcbd-warning:#f59e0b;--wcbd-danger:#ef4444;--wcbd-orange:#f97316}
+        .fraud-wrap{max-width:1000px;margin:20px auto;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+        .fraud-header{background:linear-gradient(135deg,#0891b2,#0e7490);color:#fff;padding:30px;border-radius:20px;margin-bottom:25px;position:relative;overflow:hidden}
+        .fraud-header::before{content:"";position:absolute;top:-50%;right:-50%;width:100%;height:200%;background:radial-gradient(circle,rgba(255,255,255,0.1) 0%,transparent 60%);animation:headerShine 5s linear infinite}
+        @keyframes headerShine{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+        .fraud-header-text h1{color:#fff;font-size:28px;margin:0 0 8px;display:flex;align-items:center;gap:12px}
+        .fraud-header-text p{margin:0;opacity:0.9;font-size:15px}
+        .fraud-header-text .version{background:rgba(255,255,255,0.2);padding:4px 14px;border-radius:20px;font-size:13px;font-weight:600}
+        
+        /* Cards */
+        .fraud-card{background:#fff;border:1px solid #e0e0e0;border-radius:16px;padding:25px;margin-bottom:20px;box-shadow:0 4px 12px rgba(0,0,0,0.05);transition:transform 0.2s,box-shadow 0.2s}
+        .fraud-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.08)}
+        .fraud-card h2{margin:0 0 20px;padding:0 0 15px;border-bottom:2px solid #f1f5f9;font-size:18px;display:flex;align-items:center;gap:10px;color:#1e293b}
+        .fraud-card.dark{background:linear-gradient(145deg,#0f172a,#1e293b);border:1px solid #334155}
+        .fraud-card.dark h2{color:#00d4ff;border-bottom-color:#334155}
+        .fraud-card.dark label{color:#e2e8f0}
+        
+        /* Feature Cards Grid */
+        .fraud-feature-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:15px;margin-bottom:20px}
+        @media(max-width:768px){.fraud-feature-grid{grid-template-columns:1fr}}
+        .fraud-feature-card{background:linear-gradient(145deg,#f8fafc,#f1f5f9);border:1px solid #e2e8f0;border-radius:12px;padding:20px;transition:all 0.2s}
+        .fraud-feature-card:hover{border-color:#0891b2;box-shadow:0 4px 12px rgba(8,145,178,0.15)}
+        .fraud-feature-card .icon{width:50px;height:50px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:12px}
+        .fraud-feature-card h4{margin:0 0 6px;font-size:15px;font-weight:600;color:#1e293b}
+        .fraud-feature-card p{margin:0;font-size:13px;color:#64748b;line-height:1.5}
+        
+        /* Toggle */
+        .fraud-toggle{display:flex;align-items:center;gap:12px;cursor:pointer;padding:10px 0}
         .fraud-toggle input{display:none}
-        .fraud-toggle-slider{width:50px;height:26px;background:#ccc;border-radius:26px;position:relative;transition:0.3s}
-        .fraud-toggle-slider::before{content:\\'\\';position:absolute;width:20px;height:20px;background:#fff;border-radius:50%;top:3px;left:3px;transition:0.3s}
-        .fraud-toggle input:checked+.fraud-toggle-slider{background:#0891b2}
+        .fraud-toggle-slider{width:52px;height:28px;background:#cbd5e1;border-radius:28px;position:relative;transition:0.3s}
+        .fraud-toggle-slider::before{content:\\'\\';position:absolute;width:22px;height:22px;background:#fff;border-radius:50%;top:3px;left:3px;transition:0.3s;box-shadow:0 2px 4px rgba(0,0,0,0.2)}
+        .fraud-toggle input:checked+.fraud-toggle-slider{background:linear-gradient(135deg,#0891b2,#06b6d4)}
         .fraud-toggle input:checked+.fraud-toggle-slider::before{transform:translateX(24px)}
-        .api-result{margin-left:10px;font-weight:500}
-        .api-result.success{color:#10b981}
-        .api-result.error{color:#ef4444}
-        .fraud-input{width:100%;padding:12px 15px;border:1px solid #ddd;border-radius:10px;font-size:14px;transition:all 0.2s}
-        .fraud-input:focus{outline:none;border-color:#0891b2;box-shadow:0 0 0 3px rgba(8,145,178,0.1)}
-        .fraud-textarea{min-height:80px;resize:vertical}
-        .fraud-btn{padding:12px 24px;border:none;border-radius:10px;cursor:pointer;font-size:14px;font-weight:500;transition:all 0.2s}
-        .fraud-btn-primary{background:linear-gradient(135deg,#0891b2,#0e7490);color:#fff}
-        .fraud-btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(8,145,178,0.3)}
-        .fraud-btn-secondary{background:#f1f5f9;color:#475569}
+        .fraud-toggle span:last-child{font-weight:500;color:#374151}
+        
+        /* Inputs */
+        .fraud-input{width:100%;padding:14px 18px;border:2px solid #e2e8f0;border-radius:12px;font-size:14px;transition:all 0.2s;background:#fff}
+        .fraud-input:focus{outline:none;border-color:#0891b2;box-shadow:0 0 0 4px rgba(8,145,178,0.1)}
+        .fraud-input.dark{background:#0f172a;border-color:#334155;color:#fff}
+        .fraud-input.dark:focus{border-color:#00d4ff}
+        .fraud-textarea{min-height:100px;resize:vertical}
+        .fraud-select{padding:14px 18px;border:2px solid #e2e8f0;border-radius:12px;font-size:14px;background:#fff;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' fill=\\'none\\' viewBox=\\'0 0 24 24\\' stroke=\\'%2364748b\\'%3E%3Cpath stroke-linecap=\\'round\\' stroke-linejoin=\\'round\\' stroke-width=\\'2\\' d=\\'M19 9l-7 7-7-7\\'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;background-size:20px}
+        
+        /* Buttons */
+        .fraud-btn{padding:14px 28px;border:none;border-radius:12px;cursor:pointer;font-size:15px;font-weight:600;transition:all 0.2s;display:inline-flex;align-items:center;gap:8px}
+        .fraud-btn-primary{background:linear-gradient(135deg,#0891b2,#0e7490);color:#fff;box-shadow:0 4px 14px rgba(8,145,178,0.3)}
+        .fraud-btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(8,145,178,0.4)}
+        .fraud-btn-success{background:linear-gradient(135deg,#10b981,#059669);color:#fff}
+        .fraud-btn-danger{background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff}
+        .fraud-btn-secondary{background:#f1f5f9;color:#475569;border:2px solid #e2e8f0}
         .fraud-btn-secondary:hover{background:#e2e8f0}
-        .fraud-select{padding:12px 15px;border:1px solid #ddd;border-radius:10px;font-size:14px;background:#fff;cursor:pointer}
+        
+        /* Grid */
         .fraud-grid{display:grid;gap:20px}
         .fraud-grid-2{grid-template-columns:repeat(2,1fr)}
         @media(max-width:768px){.fraud-grid-2{grid-template-columns:1fr}}
+        
+        /* Form Groups */
         .fraud-form-group{margin-bottom:20px}
-        .fraud-form-group label{display:block;font-weight:500;margin-bottom:8px;color:#374151}
-        .fraud-form-group small{display:block;margin-top:5px;color:#9ca3af;font-size:12px}
-        .wcbd-tabs{display:flex;gap:10px;margin-bottom:25px;border-bottom:2px solid #e5e7eb;padding-bottom:15px}
-        .wcbd-tab-btn{padding:10px 20px;border:none;border-radius:10px 10px 0 0;cursor:pointer;font-size:14px;font-weight:600;background:#f1f5f9;color:#64748b;transition:all 0.2s}
-        .wcbd-tab-btn.active{background:linear-gradient(135deg,#0891b2,#0e7490);color:#fff}
-        .wcbd-tab-btn:hover:not(.active){background:#e2e8f0}
-        .wcbd-tab-content{display:none}
+        .fraud-form-group label{display:block;font-weight:600;margin-bottom:8px;color:#374151;font-size:14px}
+        .fraud-form-group small{display:block;margin-top:6px;color:#64748b;font-size:12px;line-height:1.5}
+        
+        /* Tabs */
+        .wcbd-tabs{display:flex;gap:8px;margin-bottom:25px;background:#f1f5f9;padding:6px;border-radius:14px;overflow-x:auto}
+        .wcbd-tab-btn{padding:12px 24px;border:none;border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;background:transparent;color:#64748b;transition:all 0.2s;white-space:nowrap;display:flex;align-items:center;gap:8px}
+        .wcbd-tab-btn.active{background:#fff;color:#0891b2;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
+        .wcbd-tab-btn:hover:not(.active){background:rgba(255,255,255,0.5);color:#475569}
+        .wcbd-tab-content{display:none;animation:fadeIn 0.3s ease}
         .wcbd-tab-content.active{display:block}
-        .courier-card{background:linear-gradient(145deg,#1a1a2e,#16213e);border:1px solid #334155;border-radius:16px;padding:25px}
-        .courier-card h2{color:#00d4ff;margin:0 0 20px;border-bottom:1px solid #334155}
-        .courier-card label{color:#e2e8f0}
-        .courier-card .fraud-input,.courier-card .fraud-select{background:#0f172a;border-color:#334155;color:#fff}
-        .courier-card .fraud-input:focus{border-color:#00d4ff}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        
+        /* Incomplete Orders Table */
+        .incomplete-table-wrap{overflow-x:auto;border-radius:12px;border:1px solid #334155}
+        .incomplete-table{width:100%;border-collapse:collapse;font-size:13px}
+        .incomplete-table th{background:#1e293b;color:#94a3b8;font-weight:600;text-transform:uppercase;font-size:11px;letter-spacing:0.5px;padding:14px 16px;text-align:left;border-bottom:1px solid #334155}
+        .incomplete-table td{padding:14px 16px;border-bottom:1px solid #334155;color:#e2e8f0}
+        .incomplete-table tr:last-child td{border-bottom:none}
+        .incomplete-table tr:hover{background:rgba(8,145,178,0.05)}
+        .risk-badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;text-transform:uppercase}
+        .risk-badge.high{background:rgba(239,68,68,0.15);color:#ef4444}
+        .risk-badge.medium{background:rgba(245,158,11,0.15);color:#f59e0b}
+        .risk-badge.low{background:rgba(16,185,129,0.15);color:#10b981}
+        .reason-badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:8px;font-size:11px;background:#334155;color:#94a3b8}
+        
+        /* Stats Cards */
+        .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-bottom:20px}
+        @media(max-width:900px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
+        @media(max-width:500px){.stats-grid{grid-template-columns:1fr}}
+        .stat-card{background:linear-gradient(145deg,#1e293b,#0f172a);border:1px solid #334155;border-radius:14px;padding:20px;text-align:center}
+        .stat-card .value{font-size:32px;font-weight:700;margin-bottom:4px}
+        .stat-card .label{font-size:12px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px}
+        .stat-card.total .value{color:#00d4ff}
+        .stat-card.suspicious .value{color:#ef4444}
+        .stat-card.converted .value{color:#10b981}
+        .stat-card.today .value{color:#f59e0b}
+        
+        /* API Result */
+        .api-result{margin-left:12px;font-weight:600;padding:4px 12px;border-radius:20px;font-size:13px}
+        .api-result.success{color:#10b981;background:rgba(16,185,129,0.1)}
+        .api-result.error{color:#ef4444;background:rgba(239,68,68,0.1)}
+        
+        /* Branding Footer */
+        .wcbd-branding{margin-top:30px;padding:30px;background:linear-gradient(145deg,#0f172a,#1e293b);border-radius:20px;text-align:center;border:1px solid #334155}
+        .wcbd-branding img{width:70px;height:70px;border-radius:50%;border:3px solid #0891b2;object-fit:contain;background:#fff;padding:8px;margin-bottom:15px}
+        .wcbd-branding h3{color:#fff;margin:0 0 5px;font-size:20px}
+        .wcbd-branding p{color:#94a3b8;margin:0 0 20px;font-size:14px}
+        .wcbd-branding .btn-group{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
+        .wcbd-branding .btn-group a{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:10px;color:#fff;text-decoration:none;font-size:14px;font-weight:500;transition:transform 0.2s}
+        .wcbd-branding .btn-group a:hover{transform:translateY(-2px)}
+        .wcbd-branding .btn-group a.primary{background:linear-gradient(135deg,#0891b2,#06b6d4)}
+        .wcbd-branding .btn-group a.secondary{background:#374151}
+        .wcbd-branding .copyright{color:#64748b;font-size:12px;margin-top:20px}
         ';
     }
     
@@ -621,7 +524,6 @@ JSTEMPLATE;
         $ajax_url = admin_url('admin-ajax.php');
         $nonce = wp_create_nonce('wcbd_fraud_guard_nonce');
         
-        // Use heredoc NOWDOC for admin JS as well
         $js_template = <<<'ADMINJSTEMPLATE'
 (function(jQ){
 jQ(document).ready(function(){
@@ -632,13 +534,14 @@ jQ(".wcbd-tab-btn").removeClass("active");
 jQ(this).addClass("active");
 jQ(".wcbd-tab-content").removeClass("active");
 jQ("#wcbd-tab-"+tab).addClass("active");
+if(tab==="incomplete"){loadIncompleteOrders();}
 });
 
 // Test API
 jQ("#wcbd-test-api").on("click",function(){
 var btn=jQ(this);
 var result=jQ("#wcbd-api-result");
-btn.prop("disabled",true).text("Testing...");
+btn.prop("disabled",true).html("🔄 Testing...");
 result.removeClass("success error").text("");
 
 jQ.ajax({
@@ -647,61 +550,91 @@ method:"POST",
 data:{action:"wcbd_fraud_guard_test_api",nonce:"%%NONCE%%"},
 success:function(r){
 if(r.success){
-result.addClass("success").text("✓ Connected");
+result.addClass("success").html("✓ Connected");
 }else{
-result.addClass("error").text("✗ "+r.data);
+result.addClass("error").html("✗ "+r.data);
 }
 },
 error:function(){
-result.addClass("error").text("✗ Connection failed");
+result.addClass("error").html("✗ Connection failed");
 },
 complete:function(){
-btn.prop("disabled",false).text("Test Connection");
+btn.prop("disabled",false).html("🔌 Test Connection");
 }
 });
 });
 
-// Courier Tracking
-jQ("#wcbd-check-courier").on("click",function(){
-var btn=jQ(this);
-var courier=jQ("#wcbd-courier-type").val();
-var tracking=jQ("#wcbd-tracking-id").val();
-var resultBox=jQ("#wcbd-courier-result");
-
-if(!tracking){
-resultBox.html('<div style="color:#ef4444">Tracking ID দিন</div>');
-return;
+// Load incomplete orders on page load if tab is active
+if(jQ(".wcbd-tab-btn.active").data("tab")==="incomplete"){
+loadIncompleteOrders();
 }
 
-btn.prop("disabled",true).html("Checking...");
-resultBox.html('<div style="color:#64748b">🔄 Loading...</div>');
+function loadIncompleteOrders(){
+var container=jQ("#incomplete-orders-container");
+container.html('<div style="text-align:center;padding:40px;color:#94a3b8"><span style="font-size:24px">🔄</span><p>Loading incomplete orders...</p></div>');
 
 jQ.ajax({
 url:"%%AJAX_URL%%",
 method:"POST",
-data:{action:"wcbd_fraud_guard_check_courier",nonce:"%%NONCE%%",courier:courier,tracking:tracking},
+data:{action:"wcbd_fraud_guard_get_incomplete",nonce:"%%NONCE%%"},
 success:function(r){
 if(r.success&&r.data){
-var d=r.data;
-var html='<div style="background:#0f172a;border-radius:12px;padding:15px;border:1px solid #334155">';
-html+='<div style="display:flex;justify-content:space-between;margin-bottom:10px"><span style="color:#94a3b8">Courier</span><strong style="color:#00d4ff">'+courier.toUpperCase()+'</strong></div>';
-html+='<div style="display:flex;justify-content:space-between;margin-bottom:10px"><span style="color:#94a3b8">Status</span><strong style="color:#10b981">'+d.status+'</strong></div>';
-if(d.recipient_name){html+='<div style="display:flex;justify-content:space-between;margin-bottom:10px"><span style="color:#94a3b8">Recipient</span><span style="color:#fff">'+d.recipient_name+'</span></div>';}
-if(d.recipient_phone){html+='<div style="display:flex;justify-content:space-between;margin-bottom:10px"><span style="color:#94a3b8">Phone</span><span style="color:#fff">'+d.recipient_phone+'</span></div>';}
-if(d.cod_amount){html+='<div style="display:flex;justify-content:space-between;margin-bottom:10px"><span style="color:#94a3b8">COD Amount</span><strong style="color:#fbbf24">৳'+d.cod_amount+'</strong></div>';}
-html+='</div>';
-resultBox.html(html);
+renderIncompleteOrders(r.data);
 }else{
-resultBox.html('<div style="color:#ef4444">❌ '+(r.data||"Not found")+'</div>');
+container.html('<div style="text-align:center;padding:40px;color:#94a3b8"><span style="font-size:48px">📭</span><p style="margin:15px 0 0">No incomplete orders found</p></div>');
 }
 },
 error:function(){
-resultBox.html('<div style="color:#ef4444">❌ Connection failed</div>');
-},
-complete:function(){
-btn.prop("disabled",false).html("🔍 Track Order");
+container.html('<div style="text-align:center;padding:40px;color:#ef4444"><span style="font-size:48px">❌</span><p style="margin:15px 0 0">Failed to load data</p></div>');
 }
 });
+}
+
+function renderIncompleteOrders(data){
+var container=jQ("#incomplete-orders-container");
+var orders=data.orders||[];
+var stats=data.stats||{total:0,suspicious:0,converted:0,today:0};
+
+var html='<div class="stats-grid">';
+html+='<div class="stat-card total"><div class="value">'+stats.total+'</div><div class="label">Total</div></div>';
+html+='<div class="stat-card suspicious"><div class="value">'+stats.suspicious+'</div><div class="label">Suspicious</div></div>';
+html+='<div class="stat-card converted"><div class="value">'+stats.converted+'</div><div class="label">Converted</div></div>';
+html+='<div class="stat-card today"><div class="value">'+stats.today+'</div><div class="label">Today</div></div>';
+html+='</div>';
+
+if(orders.length===0){
+html+='<div style="text-align:center;padding:60px;background:#1e293b;border-radius:16px;border:1px solid #334155"><span style="font-size:64px">📭</span><p style="color:#94a3b8;margin:20px 0 0;font-size:16px">No incomplete orders yet. Orders will appear here when customers leave checkout without completing.</p></div>';
+container.html(html);
+return;
+}
+
+html+='<div class="incomplete-table-wrap"><table class="incomplete-table">';
+html+='<thead><tr><th>Phone</th><th>Customer</th><th>Reason</th><th>Risk</th><th>Cart Total</th><th>Time</th></tr></thead>';
+html+='<tbody>';
+
+for(var i=0;i<orders.length;i++){
+var o=orders[i];
+var riskClass=o.is_suspicious?"high":(o.attempts>3?"medium":"low");
+var riskLabel=o.is_suspicious?"🔴 HIGH":(o.attempts>3?"🟡 MEDIUM":"🟢 LOW");
+var reasonIcon={"phone_blur":"📱","validation_error":"❌","page_exit":"🚪","payment_failed":"💳"}[o.reason]||"❓";
+
+html+='<tr>';
+html+='<td><strong style="color:#fff">'+o.phone+'</strong></td>';
+html+='<td>'+(o.name||"<span style=\\"color:#64748b\\">Unknown</span>")+'</td>';
+html+='<td><span class="reason-badge">'+reasonIcon+' '+o.reason.replace("_"," ")+'</span></td>';
+html+='<td><span class="risk-badge '+riskClass+'">'+riskLabel+'</span></td>';
+html+='<td>'+(o.cart_total?'৳'+o.cart_total:'<span style="color:#64748b">-</span>')+'</td>';
+html+='<td style="color:#94a3b8">'+o.time_ago+'</td>';
+html+='</tr>';
+}
+
+html+='</tbody></table></div>';
+container.html(html);
+}
+
+// Refresh button
+jQ("#refresh-incomplete").on("click",function(){
+loadIncompleteOrders();
 });
 });
 })(jQuery);
@@ -724,24 +657,23 @@ ADMINJSTEMPLATE;
         $whatsapp = get_option('wcbd_fraud_guard_whatsapp', '');
         $phone = get_option('wcbd_fraud_guard_phone', '');
         $show_contact = get_option('wcbd_fraud_guard_show_contact', '1');
-        $enable_tracking = get_option('wcbd_fraud_guard_enable_tracking', '0');
-        $enable_trust_score = get_option('wcbd_fraud_guard_enable_trust_score', '1');
         $enable_incomplete_tracking = get_option('wcbd_fraud_guard_enable_incomplete_tracking', '1');
         
         ?>
         <div class="wrap">
             <div class="fraud-wrap">
+                <!-- Header -->
                 <div class="fraud-header">
                     <div class="fraud-header-text">
-                        <h1>🛡️ WCBD Fraud Guard <span class="version">v6.0.0</span></h1>
-                        <p>Order Limiter & Anti-Fraud Protection with Trust Score, Incomplete Order Tracking & Courier Tracking</p>
+                        <h1>🛡️ WCBD Fraud Guard <span class="version">v<?php echo WCBD_FRAUD_GUARD_VERSION; ?></span></h1>
+                        <p>Order Limiter & Anti-Fraud Protection with Incomplete Order Tracking</p>
                     </div>
                 </div>
                 
                 <!-- Tabs -->
                 <div class="wcbd-tabs">
                     <button type="button" class="wcbd-tab-btn active" data-tab="settings">⚙️ Settings</button>
-                    <button type="button" class="wcbd-tab-btn" data-tab="courier">🚚 Courier Tracking</button>
+                    <button type="button" class="wcbd-tab-btn" data-tab="incomplete">📊 Incomplete Orders</button>
                 </div>
                 
                 <!-- Settings Tab -->
@@ -750,50 +682,80 @@ ADMINJSTEMPLATE;
                     <input type="hidden" name="action" value="wcbd_fraud_guard_save_settings">
                     <?php wp_nonce_field('wcbd_fraud_guard_settings', 'wcbd_fraud_guard_nonce'); ?>
                     
-                    <!-- API Settings -->
+                    <!-- Main Toggle & API -->
                     <div class="fraud-card">
-                        <h2>🔑 API Settings</h2>
-                        <div class="fraud-form-group">
-                            <label>API Key</label>
-                            <div style="display:flex;gap:10px;align-items:center">
-                                <input type="text" name="api_key" value="<?php echo esc_attr($api_key); ?>" class="fraud-input" style="flex:1">
-                                <button type="button" id="wcbd-test-api" class="fraud-btn fraud-btn-secondary">Test Connection</button>
-                                <span id="wcbd-api-result" class="api-result"></span>
-                            </div>
-                            <small>Get your API key from the dashboard</small>
-                        </div>
-                        
+                        <h2>🔌 Connection Settings</h2>
                         <div class="fraud-form-group">
                             <label class="fraud-toggle">
                                 <input type="checkbox" name="enabled" value="1" <?php checked($enabled, '1'); ?>>
                                 <span class="fraud-toggle-slider"></span>
-                                Enable Fraud Protection
+                                <span>Enable Fraud Protection</span>
                             </label>
+                        </div>
+                        <div class="fraud-form-group">
+                            <label>API Key</label>
+                            <div style="display:flex;gap:10px;align-items:center">
+                                <input type="text" name="api_key" value="<?php echo esc_attr($api_key); ?>" class="fraud-input" style="flex:1">
+                                <button type="button" id="wcbd-test-api" class="fraud-btn fraud-btn-secondary">🔌 Test Connection</button>
+                                <span id="wcbd-api-result" class="api-result"></span>
+                            </div>
+                            <small>API Key auto-generated by WebCreation BD Dashboard</small>
                         </div>
                     </div>
                     
-                    <!-- Language & Timer -->
+                    <!-- Incomplete Order Tracking - NEW HIGHLIGHT -->
+                    <div class="fraud-card" style="background:linear-gradient(145deg,#7c2d12,#c2410c);border:none;color:#fff">
+                        <h2 style="color:#fff;border-bottom-color:rgba(255,255,255,0.2)">📊 Incomplete Order Tracking</h2>
+                        <div class="fraud-form-group">
+                            <label class="fraud-toggle" style="color:#fff">
+                                <input type="checkbox" name="enable_incomplete_tracking" value="1" <?php checked($enable_incomplete_tracking, '1'); ?>>
+                                <span class="fraud-toggle-slider"></span>
+                                <span style="color:#fff">Enable Incomplete Order Tracking</span>
+                            </label>
+                        </div>
+                        
+                        <!-- Feature Grid -->
+                        <div class="fraud-feature-grid" style="margin-top:20px">
+                            <div class="fraud-feature-card" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2)">
+                                <div class="icon" style="background:linear-gradient(135deg,#3b82f6,#1d4ed8)">📱</div>
+                                <h4 style="color:#fff">Phone Blur Detection</h4>
+                                <p style="color:#fed7aa">Customer phone enter করে অন্যখানে click করলে track হবে</p>
+                            </div>
+                            <div class="fraud-feature-card" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2)">
+                                <div class="icon" style="background:linear-gradient(135deg,#ef4444,#dc2626)">❌</div>
+                                <h4 style="color:#fff">Validation Error</h4>
+                                <p style="color:#fed7aa">WooCommerce checkout error হলে auto track হবে</p>
+                            </div>
+                            <div class="fraud-feature-card" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2)">
+                                <div class="icon" style="background:linear-gradient(135deg,#f59e0b,#d97706)">🚪</div>
+                                <h4 style="color:#fff">Page Exit Detection</h4>
+                                <p style="color:#fed7aa">Browser tab close করলে sendBeacon এ track হবে</p>
+                            </div>
+                            <div class="fraud-feature-card" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2)">
+                                <div class="icon" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed)">🔍</div>
+                                <h4 style="color:#fff">Smart Risk Detection</h4>
+                                <p style="color:#fed7aa">Same phone/IP থেকে 5+ attempts = HIGH RISK</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Popup Settings -->
                     <div class="fraud-card">
-                        <h2>🌐 Language & Display</h2>
+                        <h2>🎨 Popup Settings</h2>
                         <div class="fraud-grid fraud-grid-2">
                             <div class="fraud-form-group">
                                 <label>Language</label>
                                 <select name="language" class="fraud-select" style="width:100%">
-                                    <option value="bn" <?php selected($language, 'bn'); ?>>বাংলা (Bengali)</option>
-                                    <option value="en" <?php selected($language, 'en'); ?>>English</option>
+                                    <option value="bn" <?php selected($language, 'bn'); ?>>🇧🇩 বাংলা</option>
+                                    <option value="en" <?php selected($language, 'en'); ?>>🇬🇧 English</option>
                                 </select>
                             </div>
                             <div class="fraud-form-group">
-                                <label>Popup Auto-close Timer (seconds)</label>
-                                <input type="number" name="popup_timer" value="<?php echo esc_attr($popup_timer); ?>" class="fraud-input" min="0" max="300">
-                                <small>Set 0 to disable auto-close</small>
+                                <label>Popup Auto-Close (seconds)</label>
+                                <input type="number" name="popup_timer" value="<?php echo esc_attr($popup_timer); ?>" class="fraud-input" min="0" max="120">
+                                <small>0 = Never auto-close</small>
                             </div>
                         </div>
-                    </div>
-                    
-                    <!-- Custom Messages -->
-                    <div class="fraud-card">
-                        <h2>💬 Custom Messages</h2>
                         <div class="fraud-form-group">
                             <label>Cooldown Message</label>
                             <textarea name="msg_cooldown" class="fraud-input fraud-textarea"><?php echo esc_textarea($msg_cooldown); ?></textarea>
@@ -813,7 +775,7 @@ ADMINJSTEMPLATE;
                             <label class="fraud-toggle">
                                 <input type="checkbox" name="show_contact" value="1" <?php checked($show_contact, '1'); ?>>
                                 <span class="fraud-toggle-slider"></span>
-                                Show contact buttons in popup
+                                <span>Show contact buttons in popup</span>
                             </label>
                         </div>
                         <div class="fraud-grid fraud-grid-2">
@@ -828,121 +790,51 @@ ADMINJSTEMPLATE;
                         </div>
                     </div>
                     
-                    <!-- Abandoned Cart Tracking -->
-                    <div class="fraud-card">
-                        <h2>🛒 Abandoned Cart Tracking</h2>
-                        <div class="fraud-form-group">
-                            <label class="fraud-toggle">
-                                <input type="checkbox" name="enable_tracking" value="1" <?php checked($enable_tracking, '1'); ?>>
-                                <span class="fraud-toggle-slider"></span>
-                                Track customers who leave checkout without ordering
-                            </label>
-                            <small style="display:block;margin-top:10px">যারা checkout থেকে order না করে চলে যায় তাদের track করুন। Dashboard এ abandoned carts দেখতে পাবেন।</small>
-                        </div>
-                    </div>
-                    
-                    <!-- Customer Trust Score (NEW in v5.0) -->
-                    <div class="fraud-card" style="background:linear-gradient(135deg,#065f46,#047857);border:none">
-                        <h2 style="color:#fff">📊 Customer Trust Score</h2>
-                        <div class="fraud-form-group">
-                            <label class="fraud-toggle" style="color:#fff">
-                                <input type="checkbox" name="enable_trust_score" value="1" <?php checked($enable_trust_score, '1'); ?>>
-                                <span class="fraud-toggle-slider"></span>
-                                Enable Trust Score check on checkout
-                            </label>
-                            <p style="color:#a7f3d0;margin:15px 0 0;font-size:13px">
-                                🎯 Order দেওয়ার আগে customer এর courier delivery history দেখুন।<br>
-                                📈 Delivered vs Returned orders এর উপর ভিত্তি করে Trust Score calculate হয়।<br>
-                                ✓ Manual decision - আপনি নিজে Accept বা Reject করতে পারবেন।
-                            </p>
-                        </div>
-                    </div>
-                    
-                    <!-- Incomplete Order Tracking (NEW in v6.0) -->
-                    <div class="fraud-card" style="background:linear-gradient(135deg,#7c2d12,#c2410c);border:none">
-                        <h2 style="color:#fff">⚠️ Incomplete Order Tracking (v6.0 Feature)</h2>
-                        <div class="fraud-form-group">
-                            <label class="fraud-toggle" style="color:#fff">
-                                <input type="checkbox" name="enable_incomplete_tracking" value="1" <?php checked($enable_incomplete_tracking, '1'); ?>>
-                                <span class="fraud-toggle-slider"></span>
-                                Enable Incomplete Order Tracking
-                            </label>
-                            <p style="color:#fed7aa;margin:15px 0 0;font-size:13px">
-                                📱 Phone Blur - Customer phone enter করে চলে গেলে track হবে।<br>
-                                ❌ Validation Error - WooCommerce error হলে track হবে।<br>
-                                🚪 Page Exit - Page close করলে track হবে।<br>
-                                🔍 Smart Detection - Same phone/IP থেকে 5+ attempts হলে Suspicious mark হবে।
-                            </p>
-                        </div>
-                    </div>
-                    
-                    <!-- Remote Settings Info -->
-                    <div class="fraud-card" style="background:linear-gradient(135deg,#0f172a,#1e293b);border:1px solid #334155">
-                        <h2 style="color:#00d4ff">🌐 Remote Settings</h2>
-                        <p style="color:#94a3b8;margin:0 0 15px">এই settings গুলো Dashboard থেকে centrally control করা যায়। Dashboard এ গিয়ে "Remote" tab এ settings পরিবর্তন করলে সব connected sites এ automatic apply হবে।</p>
-                        <a href="<?php echo esc_url($this->dashboard_url); ?>" target="_blank" class="fraud-btn fraud-btn-primary" style="display:inline-flex;align-items:center;gap:8px">
-                            📊 Go to Dashboard
+                    <!-- Dashboard Link -->
+                    <div class="fraud-card dark">
+                        <h2>🌐 Dashboard</h2>
+                        <p style="color:#94a3b8;margin:0 0 15px">Incomplete orders, blacklist, logs এবং advanced settings manage করতে Dashboard এ যান।</p>
+                        <a href="<?php echo esc_url($this->dashboard_url); ?>" target="_blank" class="fraud-btn fraud-btn-primary">
+                            📊 Open Dashboard
                         </a>
                     </div>
                     
-                    <button type="submit" class="fraud-btn fraud-btn-primary" style="width:100%;padding:15px;font-size:16px">
+                    <button type="submit" class="fraud-btn fraud-btn-primary" style="width:100%;padding:16px;font-size:16px;justify-content:center">
                         💾 Save Settings
                     </button>
                 </form>
                 </div><!-- End Settings Tab -->
                 
-                <!-- Courier Tracking Tab -->
-                <div id="wcbd-tab-courier" class="wcbd-tab-content">
-                    <div class="courier-card">
-                        <h2>🚚 Courier Order Tracking</h2>
-                        <p style="color:#94a3b8;margin:-10px 0 20px">Steadfast, Pathao, RedX - যেকোনো courier এর order track করুন</p>
-                        
-                        <div class="fraud-grid fraud-grid-2" style="margin-bottom:20px">
-                            <div class="fraud-form-group">
-                                <label style="color:#e2e8f0">Courier Service</label>
-                                <select id="wcbd-courier-type" class="fraud-select" style="width:100%;background:#0f172a;border-color:#334155;color:#fff">
-                                    <option value="steadfast">Steadfast Courier</option>
-                                    <option value="pathao">Pathao</option>
-                                    <option value="redx">RedX</option>
-                                </select>
-                            </div>
-                            <div class="fraud-form-group">
-                                <label style="color:#e2e8f0">Invoice / Tracking ID</label>
-                                <input type="text" id="wcbd-tracking-id" class="fraud-input" style="background:#0f172a;border-color:#334155;color:#fff" placeholder="Enter Invoice or Tracking ID">
-                            </div>
+                <!-- Incomplete Orders Tab -->
+                <div id="wcbd-tab-incomplete" class="wcbd-tab-content">
+                    <div class="fraud-card dark">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+                            <h2 style="margin:0;border:none;padding:0">📊 Incomplete Orders</h2>
+                            <button type="button" id="refresh-incomplete" class="fraud-btn fraud-btn-secondary" style="padding:10px 20px">
+                                🔄 Refresh
+                            </button>
                         </div>
+                        <p style="color:#94a3b8;margin:-10px 0 20px">Customers who started checkout but didn't complete their order</p>
                         
-                        <button type="button" id="wcbd-check-courier" class="fraud-btn fraud-btn-primary" style="width:100%;padding:15px;font-size:16px;margin-bottom:20px">
-                            🔍 Track Order
-                        </button>
-                        
-                        <div id="wcbd-courier-result"></div>
-                        
-                        <div style="margin-top:20px;padding:15px;background:#0f172a;border-radius:10px;border:1px solid #334155">
-                            <p style="color:#64748b;font-size:13px;margin:0">
-                                💡 <strong style="color:#e2e8f0">Tips:</strong> Courier credentials Dashboard এ সেট করুন। 
-                                <a href="<?php echo esc_url($this->dashboard_url); ?>" target="_blank" style="color:#00d4ff">Dashboard → Fraud Guard → Courier</a> এ গিয়ে API keys দিন।
-                            </p>
+                        <div id="incomplete-orders-container">
+                            <div style="text-align:center;padding:40px;color:#94a3b8">
+                                <span style="font-size:24px">🔄</span>
+                                <p>Loading...</p>
+                            </div>
                         </div>
                     </div>
-                </div><!-- End Courier Tab -->
+                </div><!-- End Incomplete Tab -->
                 
                 <!-- WebCreation BD Branding -->
-                <div style="margin-top:30px;padding:25px;background:linear-gradient(135deg,#0f172a,#1e293b);border-radius:16px;text-align:center;border:1px solid #334155">
-                    <div style="margin-bottom:15px">
-                        <img src="https://webcreation-bd.lovable.app/logo.png" alt="WebCreation BD" style="width:60px;height:60px;border-radius:50%;border:3px solid #0891b2;object-fit:contain;background:#fff;padding:5px">
+                <div class="wcbd-branding">
+                    <img src="https://webcreation-bd.lovable.app/logo.png" alt="WebCreation BD">
+                    <h3>WebCreation BD</h3>
+                    <p>Best Digital Marketing In Bangladesh</p>
+                    <div class="btn-group">
+                        <a href="https://webcreation-bd.lovable.app" target="_blank" class="primary">🌐 Visit Website</a>
+                        <a href="<?php echo esc_url($this->dashboard_url); ?>" target="_blank" class="secondary">📊 Dashboard</a>
                     </div>
-                    <h3 style="color:#fff;margin:0 0 5px;font-size:18px">WebCreation BD</h3>
-                    <p style="color:#94a3b8;margin:0 0 15px;font-size:13px">Best Digital Marketing In Bangladesh</p>
-                    <div style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap">
-                        <a href="https://webcreation-bd.lovable.app" target="_blank" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:linear-gradient(135deg,#0891b2,#06b6d4);color:#fff;text-decoration:none;border-radius:8px;font-size:13px;font-weight:500">
-                            🌐 Visit Website
-                        </a>
-                        <a href="https://webcreation-bd.lovable.app/dashboard" target="_blank" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#374151;color:#fff;text-decoration:none;border-radius:8px;font-size:13px;font-weight:500">
-                            📊 Dashboard
-                        </a>
-                    </div>
-                    <p style="color:#64748b;font-size:11px;margin-top:15px">Powered by WebCreation BD © <?php echo date('Y'); ?></p>
+                    <p class="copyright">Powered by WebCreation BD © <?php echo date('Y'); ?></p>
                 </div>
             </div>
         </div>
@@ -967,8 +859,6 @@ ADMINJSTEMPLATE;
         update_option('wcbd_fraud_guard_whatsapp', sanitize_text_field($_POST['whatsapp'] ?? ''));
         update_option('wcbd_fraud_guard_phone', sanitize_text_field($_POST['phone'] ?? ''));
         update_option('wcbd_fraud_guard_show_contact', isset($_POST['show_contact']) ? '1' : '0');
-        update_option('wcbd_fraud_guard_enable_tracking', isset($_POST['enable_tracking']) ? '1' : '0');
-        update_option('wcbd_fraud_guard_enable_trust_score', isset($_POST['enable_trust_score']) ? '1' : '0');
         update_option('wcbd_fraud_guard_enable_incomplete_tracking', isset($_POST['enable_incomplete_tracking']) ? '1' : '0');
         
         wp_redirect(admin_url('admin.php?page=wcbd-fraud-guard&saved=1'));
@@ -1008,83 +898,20 @@ ADMINJSTEMPLATE;
         wp_send_json_success();
     }
     
-    public function ajax_check_courier() {
+    public function ajax_get_incomplete_orders() {
         check_ajax_referer('wcbd_fraud_guard_nonce', 'nonce');
         
-        $api_key = get_option('wcbd_fraud_guard_api_key', '');
-        $courier = sanitize_text_field($_POST['courier'] ?? 'steadfast');
-        $tracking = sanitize_text_field($_POST['tracking'] ?? '');
-        
-        if (empty($api_key)) {
-            wp_send_json_error('API key not configured');
-        }
-        
-        if (empty($tracking)) {
-            wp_send_json_error('Tracking ID required');
-        }
-        
-        $body_data = array(
-            'api_key' => $api_key,
-            'action' => 'check_status',
-            'courier' => $courier
-        );
-        
-        // Set the right identifier based on courier
-        if ($courier === 'steadfast') {
-            $body_data['invoice'] = $tracking;
-        } elseif ($courier === 'pathao') {
-            $body_data['consignment_id'] = $tracking;
-        } else {
-            $body_data['tracking_code'] = $tracking;
-        }
-        
-        $response = wp_remote_post($this->courier_endpoint, array(
-            'timeout' => 30,
-            'headers' => array('Content-Type' => 'application/json'),
-            'body' => json_encode($body_data)
+        // This will fetch from the dashboard API
+        // For now, return empty - data comes from Supabase via dashboard
+        wp_send_json_success(array(
+            'orders' => array(),
+            'stats' => array(
+                'total' => 0,
+                'suspicious' => 0,
+                'converted' => 0,
+                'today' => 0
+            )
         ));
-        
-        if (is_wp_error($response)) {
-            wp_send_json_error($response->get_error_message());
-        }
-        
-        $body = json_decode(wp_remote_retrieve_body($response), true);
-        
-        if (isset($body['error'])) {
-            wp_send_json_error($body['error']);
-        }
-        
-        if (isset($body['success']) && $body['success'] && isset($body['data'])) {
-            // Extract relevant data from different courier response formats
-            $data = $body['data'];
-            $result = array(
-                'status' => 'Unknown',
-                'recipient_name' => null,
-                'recipient_phone' => null,
-                'cod_amount' => null
-            );
-            
-            if ($courier === 'steadfast' && isset($data['delivery'])) {
-                $result['status'] = $data['delivery']['delivery_status'] ?? 'Unknown';
-                $result['recipient_name'] = $data['delivery']['recipient_name'] ?? null;
-                $result['recipient_phone'] = $data['delivery']['recipient_phone'] ?? null;
-                $result['cod_amount'] = $data['delivery']['cod_amount'] ?? null;
-            } elseif ($courier === 'pathao' && isset($data['data'])) {
-                $result['status'] = $data['data']['order_status'] ?? 'Unknown';
-                $result['recipient_name'] = $data['data']['recipient_name'] ?? null;
-                $result['recipient_phone'] = $data['data']['recipient_phone'] ?? null;
-                $result['cod_amount'] = $data['data']['amount_to_collect'] ?? null;
-            } elseif ($courier === 'redx' && isset($data['tracking'])) {
-                $result['status'] = $data['tracking']['status'] ?? 'Unknown';
-                $result['recipient_name'] = $data['tracking']['customer_name'] ?? null;
-                $result['recipient_phone'] = $data['tracking']['customer_phone'] ?? null;
-                $result['cod_amount'] = $data['tracking']['cash_collection_amount'] ?? null;
-            }
-            
-            wp_send_json_success($result);
-        }
-        
-        wp_send_json_error('Could not fetch tracking data');
     }
 }
 
@@ -1094,7 +921,6 @@ new WCBD_Fraud_Guard();
 
 export const downloadPluginFile = async (apiKey: string): Promise<void> => {
   try {
-    // Create ZIP file with proper folder structure
     const zip = new JSZip();
     const pluginFolder = zip.folder('wcbd-fraud-guard');
     
@@ -1102,118 +928,85 @@ export const downloadPluginFile = async (apiKey: string): Promise<void> => {
       throw new Error('Failed to create plugin folder');
     }
     
-    // Add main plugin file
     const pluginContent = generateMainPluginFile(apiKey);
     pluginFolder.file('wcbd-fraud-guard.php', pluginContent);
     
-    // Add README
     const readmeContent = `=== WCBD Fraud Guard ===
 Contributors: WebCreation BD
-Tags: woocommerce, fraud, security, order-limiter, trust-score, courier-tracking
+Tags: woocommerce, fraud, security, order-limiter, incomplete-orders
 Requires at least: 5.0
 Tested up to: 6.4
 Requires PHP: 7.4
-Stable tag: 5.0.0
+Stable tag: ${PLUGIN_CONFIG.version}
 License: GPLv2 or later
 
-WooCommerce Anti-Fraud Protection System with Customer Trust Score, Order Limiting, Device Fingerprinting & Courier Integration
+WooCommerce Anti-Fraud Protection System with Incomplete Order Tracking
 
 == Description ==
 
-WCBD Fraud Guard protects your WooCommerce store from fake orders and fraud attempts using:
+WCBD Fraud Guard protects your WooCommerce store from fake orders and tracks incomplete checkouts.
 
-* Customer Trust Score (NEW in v5.0) - Based on courier delivery history
-* Device Fingerprinting
-* Phone Number Blacklist
-* IP Address Blocking
-* Cooldown Period Management
-* Beautiful Popup Notifications
-* Domain-Locked API Security
-* Remote Settings Control
-* Abandoned Cart Tracking
-* Courier Status Integration - Steadfast, Pathao, RedX
+**Core Features:**
+* Order Limiting (Cooldown Period)
+* Phone/IP/Device Blacklisting
+* Incomplete Order Tracking
+* Beautiful Block Popups
+* WhatsApp/Phone Contact Buttons
+* Bengali & English Support
 
-== Features in v5.0 ==
-
-📊 **Customer Trust Score (NEW)**
-- Calculate trust score based on courier delivery history
-- See Delivered vs Returned orders percentage
-- Manual Accept/Reject decision before order processing
-- Works with Steadfast, Pathao, and RedX courier data
-
-🌐 **Remote Settings**
-- Control popup settings from Dashboard
-- Changes apply to all connected sites automatically
-- No need to update plugin for settings changes
-
-🛒 **Abandoned Cart Tracking**
-- Track customers who leave checkout without ordering
-- View abandoned carts in Dashboard
-- Follow up with potential customers
-
-🚚 **Courier Order Tracking**
-- Track orders from Steadfast, Pathao, and RedX
-- Check status directly from WordPress admin
-- COD amount, recipient info, delivery status
+**Incomplete Order Tracking (v${PLUGIN_CONFIG.version}):**
+* 📱 Phone Blur - Track when customer enters phone and leaves
+* ❌ Validation Error - Track WooCommerce checkout errors
+* 🚪 Page Exit - Track when browser tab is closed
+* 🔍 Smart Risk Detection - Flag suspicious activity
 
 == Installation ==
 
-1. Upload the plugin folder to /wp-content/plugins/
-2. Activate the plugin through WordPress admin
-3. Configure your API key in Fraud Guard settings
-4. Set up courier credentials in Dashboard (for courier tracking & trust score)
-5. Done! Protection is now active on checkout
+1. Upload plugin ZIP to WordPress > Plugins > Add New > Upload
+2. Activate the plugin
+3. Go to Fraud Guard menu
+4. API Key is pre-configured
+5. Enable features you want
 
 == Changelog ==
 
-= 5.0.0 =
-* NEW: Customer Trust Score - See customer reliability before accepting orders
-* NEW: Trust Score popup with Accept/Reject buttons on checkout
-* NEW: Delivery history breakdown (Delivered/Returned/Pending)
-* NEW: Dashboard Trust Score Lookup tab
-* Improved: Better integration with courier data
-* Improved: Enhanced popup design for trust score
+= ${PLUGIN_CONFIG.version} =
+* NEW: Incomplete Order Tracking
+* NEW: Phone Blur detection
+* NEW: Page Exit detection with sendBeacon
+* NEW: Smart Risk Detection (5+ attempts = HIGH)
+* Simplified admin interface
+* Removed unused features
+* Beautiful new design
 
-= 4.0.0 =
-* NEW: Remote Settings - Control popup settings from Dashboard
-* NEW: Abandoned Cart Tracking - Track customers who leave without ordering
-* NEW: Courier Tracking Tab - Track Steadfast, Pathao, RedX orders from WordPress
-* NEW: RedX Courier Support
-* Improved: Server-side settings priority over local settings
-* Improved: Real-time settings sync without plugin update
-* Improved: Tab-based admin interface
+== Frequently Asked Questions ==
 
-= 3.3.0 =
-* Fixed: PHP Heredoc syntax to prevent JavaScript variable escaping issues
-* Fixed: Bulletproof popup with maximum z-index (2147483647)
-* Added: ESC key support to close popup
-* Added: Click outside to close popup
-* Improved: Cross-theme compatibility
+= How does Incomplete Order Tracking work? =
+The plugin monitors three key events: when a customer enters their phone and clicks away, when WooCommerce shows validation errors, and when the browser tab is closed. All attempts are logged and flagged if suspicious.
 
-== Support ==
+= What is Smart Risk Detection? =
+If the same phone or IP makes 5+ checkout attempts within an hour without completing, they are automatically marked as HIGH risk.
 
-Visit: https://webcreation-bd.lovable.app/dashboard
+== Upgrade Notice ==
+
+= ${PLUGIN_CONFIG.version} =
+Major update with Incomplete Order Tracking. Please update!
 `;
-    pluginFolder.file('README.txt', readmeContent);
+    pluginFolder.file('readme.txt', readmeContent);
     
-    // Generate ZIP blob
     const blob = await zip.generateAsync({ type: 'blob' });
-    const url = URL.createObjectURL(blob);
     
-    // Create download link
+    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'wcbd-fraud-guard.zip';
+    link.download = PLUGIN_CONFIG.fileName;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
-    // Clean up
     URL.revokeObjectURL(url);
     
-    console.log('[WCBD Plugin] v5.0.0 downloaded successfully');
   } catch (error) {
-    console.error('[WCBD Plugin] Download error:', error);
+    console.error('Error generating plugin:', error);
     throw error;
   }
 };

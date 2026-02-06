@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Shield, Clock, AlertCircle, CheckCircle, ExternalLink, Zap, Sparkles } from "lucide-react";
+import { Shield, Clock, AlertCircle, CheckCircle, ExternalLink, Zap, Sparkles, ArrowUpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SubscriptionPlans } from "./SubscriptionPlans";
 import { SubscriptionPurchaseModal } from "./SubscriptionPurchaseModal";
@@ -133,57 +133,97 @@ export function SubscriptionStatus({ merchant, pendingOrder, onPurchaseSuccess }
     }
 
     return (
-      <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center">
-            <CheckCircle className="w-6 h-6 text-emerald-600" />
+      <>
+        <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center">
+              <CheckCircle className="w-6 h-6 text-emerald-600" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 font-bengali">
+                WCBD Fraud Guard - Active
+              </h3>
+              <p className="text-gray-500 text-sm">
+                Plan: {merchant.current_plan === 'yearly' ? 'Yearly' : 'Monthly'}
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 font-bengali">
-              WCBD Fraud Guard - Active
-            </h3>
-            <p className="text-gray-500 text-sm">
-              Plan: {merchant.current_plan === 'yearly' ? 'Yearly' : 'Monthly'}
-            </p>
+
+          {/* Expiry Warning */}
+          {isExpiringSoon && (
+            <div className="bg-amber-100 border border-amber-200 rounded-xl p-3 mb-4">
+              <p className="text-amber-700 text-sm font-bengali">
+                ⚠️ মেয়াদ শেষ হতে {daysLeft} দিন বাকি
+              </p>
+            </div>
+          )}
+
+          {/* Stats */}
+          <div className="space-y-3 mb-4">
+            <div>
+              <div className="flex justify-between text-sm mb-1">
+                <span className="text-gray-500">API Usage</span>
+                <span className="text-gray-900 font-medium">{merchant.requests_used.toLocaleString()} / {merchant.max_requests.toLocaleString()}</span>
+              </div>
+              <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all"
+                  style={{ width: `${usagePercent}%` }}
+                />
+              </div>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-500">Expires</span>
+              <span className="text-gray-900 font-medium">{expiresAt.toLocaleDateString('bn-BD')}</span>
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            <Link to="/fraud-protection" className="flex-1">
+              <Button variant="outline" className="w-full border-gray-200 text-gray-700 hover:bg-gray-50 font-bengali">
+                সেটিংস দেখুন
+                <ExternalLink className="w-4 h-4 ml-2" />
+              </Button>
+            </Link>
+            <Button 
+              onClick={() => setShowPlanModal(true)}
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bengali gap-2"
+            >
+              <ArrowUpCircle className="w-4 h-4" />
+              {merchant.current_plan === 'monthly' ? 'Upgrade' : 'Renew'}
+            </Button>
           </div>
         </div>
 
-        {/* Expiry Warning */}
-        {isExpiringSoon && (
-          <div className="bg-amber-100 border border-amber-200 rounded-xl p-3 mb-4">
-            <p className="text-amber-700 text-sm font-bengali">
-              ⚠️ মেয়াদ শেষ হতে {daysLeft} দিন বাকি
-            </p>
+        {/* Plan Selection Modal */}
+        {showPlanModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+            <div className="bg-white border border-gray-200 rounded-3xl p-6 max-w-xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold text-gray-900 font-bengali">Plan পরিবর্তন / রিনিউ করুন</h2>
+                <button 
+                  onClick={() => setShowPlanModal(false)}
+                  className="text-gray-400 hover:text-gray-600 text-2xl w-10 h-10 rounded-full hover:bg-gray-100 flex items-center justify-center"
+                >
+                  ×
+                </button>
+              </div>
+              <SubscriptionPlans onSelectPlan={handleSelectPlan} />
+            </div>
           </div>
         )}
 
-        {/* Stats */}
-        <div className="space-y-3 mb-4">
-          <div>
-            <div className="flex justify-between text-sm mb-1">
-              <span className="text-gray-500">API Usage</span>
-              <span className="text-gray-900 font-medium">{merchant.requests_used.toLocaleString()} / {merchant.max_requests.toLocaleString()}</span>
-            </div>
-            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all"
-                style={{ width: `${usagePercent}%` }}
-              />
-            </div>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-500">Expires</span>
-            <span className="text-gray-900 font-medium">{expiresAt.toLocaleDateString('bn-BD')}</span>
-          </div>
-        </div>
-
-        <Link to="/fraud-protection">
-          <Button variant="outline" className="w-full border-gray-200 text-gray-700 hover:bg-gray-50 font-bengali">
-            সেটিংস দেখুন
-            <ExternalLink className="w-4 h-4 ml-2" />
-          </Button>
-        </Link>
-      </div>
+        {/* Payment Modal */}
+        {merchant?.id && (
+          <SubscriptionPurchaseModal
+            isOpen={showPaymentModal}
+            onClose={() => setShowPaymentModal(false)}
+            planType={selectedPlan}
+            merchantId={merchant.id}
+            onSuccess={handlePurchaseSuccess}
+          />
+        )}
+      </>
     );
   }
 

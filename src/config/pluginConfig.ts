@@ -4,7 +4,7 @@
 
 export const PLUGIN_CONFIG = {
   // Current version - UPDATE THIS WHEN RELEASING NEW VERSIONS
-  version: "6.8.0",
+  version: "6.9.0",
   
   // Plugin metadata
   name: "WCBD Fraud Guard",
@@ -16,11 +16,11 @@ export const PLUGIN_CONFIG = {
   badgeLabel: "STABLE",
   
   // Current version highlights (for banners and feature lists)
-  versionHighlight: "API Key Auto-Sync Fix + Robust Validation",
+  versionHighlight: "Universal Popup Fix + Robust Checkout Interception",
   
   // What's new in this version (for feature list)
   whatsNew: [
-    { icon: "🔑", title: "API Key Auto-Sync", description: "Plugin আপডেট করলে API key স্বয়ংক্রিয়ভাবে sync হবে - পুরনো key সমস্যা আর হবে না" },
+    { icon: "🎯", title: "Universal Popup Fix", description: "Classic ও Block সব checkout এ popup ঠিকমতো কাজ করবে - plain notice আর দেখাবে না" },
     { icon: "🛡️", title: "Server-Side + Client-Side", description: "দুই স্তরে সুরক্ষা - JS bypass করলেও PHP তে block" },
     { icon: "⏱️", title: "Cooldown Control", description: "WordPress admin থেকে Cooldown timer নিয়ন্ত্রণ করুন" },
     { icon: "🔄", title: "Order Conversion", description: "Incomplete order কে main order এ convert করুন" },

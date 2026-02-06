@@ -124,7 +124,7 @@ class WCBD_Fraud_Guard {
     public function enqueue_frontend_scripts() {
         if (!is_checkout() && !$this->is_block_checkout()) return;
         
-        wp_enqueue_script('fingerprintjs', 'https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js', array(), '3.0.0', true);
+        wp_enqueue_script('fingerprintjs', 'https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js', array('jquery'), '3.0.0', true);
         
         wp_add_inline_script('fingerprintjs', $this->get_checkout_js(), 'after');
     }
@@ -192,10 +192,15 @@ self.hookBlockCheckout();
 jQ("form.checkout").on("checkout_place_order",function(){return self.validate(jQ(this));});
 }
 
+// UNIVERSAL FALLBACK: Intercept ANY form submit on checkout page
+// This catches cases where neither classic nor block hooks fire
+self.setupUniversalInterceptor();
+
 // Always track incomplete orders when license is valid
 self.setupIncompleteTracking();
 
 console.log("[WCBD Fraud Guard v${PLUGIN_CONFIG.version}] Ready");
+});
 });
 },
 
@@ -221,14 +226,15 @@ hookBlockCheckout:function(){
 var self=this;
 console.log("[WCBD] Setting up Block Checkout interception...");
 
-// Use MutationObserver to wait for the place order button to render
+// Use MutationObserver to continuously watch for the place order button
+// React can re-render the button at any time, so we keep watching
 var observer=new MutationObserver(function(mutations){
 var btn=document.querySelector(".wc-block-components-checkout-place-order-button");
 if(btn&&!btn.dataset.wcbdHooked){
 btn.dataset.wcbdHooked="true";
 console.log("[WCBD] Block checkout button found - attaching interceptor");
 self.attachBlockInterceptor(btn);
-observer.disconnect();
+// Do NOT disconnect - React may re-render the button
 }
 });
 observer.observe(document.body,{childList:true,subtree:true});
@@ -239,8 +245,23 @@ if(btn&&!btn.dataset.wcbdHooked){
 btn.dataset.wcbdHooked="true";
 console.log("[WCBD] Block checkout button found immediately");
 self.attachBlockInterceptor(btn);
-observer.disconnect();
 }
+
+// EXTRA: Use event delegation as additional safety net for block checkout
+jQ(document).on("click",".wc-block-components-checkout-place-order-button, .wc-block-components-button.wp-element-button.wc-block-components-checkout-place-order-button",function(e){
+if(!self.licenseValid)return;
+if(self.blockCheckoutAllowed)return;
+if(self.blockCheckoutValidating)return;
+// If button doesn't have our hook attribute, intercept via delegation
+if(!this.dataset.wcbdHooked){
+this.dataset.wcbdHooked="true";
+e.preventDefault();
+e.stopImmediatePropagation();
+var phone=self.getBlockCheckoutPhone();
+if(!phone||phone.length<5){return;}
+self.doPrecheck(phone,jQ(this));
+}
+});
 },
 
 attachBlockInterceptor:function(btn){
@@ -317,8 +338,9 @@ blockCheckoutValidating:false,
 blockCheckoutAllowed:false,
 
 getBlockCheckoutPhone:function(){
-// Block checkout phone field selectors (try multiple)
+// Universal phone field selectors (try multiple for both classic and block checkout)
 var selectors=[
+"#billing_phone",
 "#phone",
 "#billing-phone",
 "input[id*='phone']",
@@ -371,6 +393,83 @@ showLicenseError:function(){
 console.warn("[WCBD] License inactive. Features disabled. Please check your subscription at the dashboard.");
 },
 
+// UNIVERSAL FALLBACK: Catches form submissions that neither classic nor block hooks capture
+setupUniversalInterceptor:function(){
+var self=this;
+if(!this.licenseValid)return;
+console.log("[WCBD] Setting up universal fallback interceptor...");
+
+// Listen for ALL form submit events on checkout page
+jQ(document).on("submit","form",function(e){
+if(!self.licenseValid)return;
+if(self.universalAllowed){self.universalAllowed=false;return;}
+if(self.blockCheckoutAllowed)return; // Already handled by block interceptor
+if(self.universalValidating)return;
+
+// Only intercept forms that look like checkout forms
+var form=jQ(this);
+if(!form.hasClass("checkout")&&!form.hasClass("wc-block-checkout__form")&&!form.find("[name='billing_phone']").length&&!form.find("input[autocomplete='tel']").length){
+return; // Not a checkout form
+}
+
+var phone=form.find("#billing_phone,input[name='billing_phone']").val()||self.getBlockCheckoutPhone();
+if(!phone||phone.length<5){return;} // No phone, let it through
+
+e.preventDefault();
+e.stopImmediatePropagation();
+self.universalValidating=true;
+
+console.log("[WCBD] Universal interceptor caught form submit, phone:",phone);
+
+self.doPrecheck(phone,form.find("button[type='submit']"),function(allowed){
+self.universalValidating=false;
+if(allowed){
+self.universalAllowed=true;
+form[0].submit();
+}
+});
+});
+},
+universalValidating:false,
+universalAllowed:false,
+
+// Centralized precheck function used by block and universal interceptors
+doPrecheck:function(phone,btnEl,callback){
+var self=this;
+var origText=btnEl.length?btnEl.text():"";
+if(btnEl.length){
+btnEl.prop("disabled",true).text(self.lang==="bn"?"চেক করা হচ্ছে...":"Checking...");
+}
+
+jQ.ajax({
+url:self.endpoint,
+method:"POST",
+contentType:"application/json",
+timeout:12000,
+data:JSON.stringify({api_key:self.apiKey,phone:phone,device_id:self.deviceId,domain:window.location.hostname,check_type:"precheck"}),
+success:function(r){
+console.log("[WCBD] Precheck response:",r);
+if(r.popup_settings){self.applyRemoteSettings(r.popup_settings);}
+
+if(r.allowed){
+if(btnEl.length){btnEl.prop("disabled",false).text(origText);}
+if(callback)callback(true);
+}else{
+if(btnEl.length){btnEl.prop("disabled",false).text(origText);}
+var customMsg=r.reason==="blacklist"?self.msgBlacklist:self.msgCooldown;
+self.popup(r.reason,customMsg,r.minutes_remaining);
+if(callback)callback(false);
+}
+},
+error:function(xhr,status,err){
+console.error("[WCBD] Precheck error:",err);
+if(btnEl.length){btnEl.prop("disabled",false).text(origText);}
+// Fail-open
+if(callback)callback(true);
+}
+});
+},
+
 // Incomplete Order Tracking
 setupIncompleteTracking:function(){
 var self=this;
@@ -378,7 +477,7 @@ if(!this.licenseValid)return; // BLOCK if license invalid
 console.log("[WCBD] Setting up incomplete order tracking...");
 
 // Get phone field (works for both classic and block checkout)
-var phoneSelector=this.isBlockCheckout?"#phone,#billing-phone,input[id*='phone'],input[autocomplete='tel']":"#billing_phone";
+var phoneSelector="#billing_phone,#phone,#billing-phone,input[id*='phone'],input[autocomplete='tel'],input[name='billing_phone']";
 
 // Trigger 1: Phone Blur - When user enters phone and clicks away
 jQ(document).on("blur",phoneSelector,function(){
@@ -404,7 +503,7 @@ if(!self.licenseValid)return;
 var phone=self.isBlockCheckout?self.getBlockCheckoutPhone():jQ("#billing_phone").val();
 if(phone&&phone.length>=10&&!self.incompleteLogged["page_exit_"+phone]){
 self.incompleteLogged["page_exit_"+phone]=true;
-var name=self.isBlockCheckout?(document.querySelector("#first-name,#billing-first-name,input[autocomplete='given-name']")||{}).value||"":"jQ('#billing_first_name').val()||''";
+var name=self.isBlockCheckout?(document.querySelector("#first-name,#billing-first-name,input[autocomplete='given-name']")||{}).value||"":jQ("#billing_first_name").val()||"";
 var data=JSON.stringify({
 api_key:self.apiKey,
 phone:phone,

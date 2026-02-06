@@ -730,7 +730,7 @@ html+='<td>';
 if(o.is_converted){
 html+='<span style="color:#10b981;font-size:12px;font-weight:600">✅ Converted</span>';
 }else{
-html+='<button type="button" class="convert-order-btn fraud-btn fraud-btn-success" style="padding:6px 14px;font-size:12px;border-radius:8px" data-id="'+o.id+'" data-phone="'+o.phone+'" data-name="'+(o.name||"")+'" data-total="'+(o.cart_total||0)+'" data-items=\\''+JSON.stringify(o.cart_items||[])+'\\'>🔄 Convert</button>';
+html+='<button type="button" class="convert-order-btn fraud-btn fraud-btn-success" style="padding:6px 14px;font-size:12px;border-radius:8px" data-id="'+o.id+'" data-phone="'+o.phone+'" data-name="'+((o.name||"").replace(/'/g,"&#39;"))+'" data-total="'+(o.cart_total||0)+'" data-items="'+encodeURIComponent(JSON.stringify(o.cart_items||[]))+'">🔄 Convert</button>';
 }
 html+='</td>';
 html+='</tr>';
@@ -744,7 +744,7 @@ jQ(".convert-order-btn").on("click",function(){
 var btn=jQ(this);
 var orderId=btn.data("id");
 var phone=btn.data("phone");
-var name=btn.data("name")||"";
+var name=(btn.attr("data-name")||"").replace(/&#39;/g,"'");
 var total=btn.data("total")||0;
 
 if(!confirm("📦 Convert to Order?\\n\\nPhone: "+phone+"\\nName: "+(name||"Unknown")+"\\nTotal: ৳"+total+"\\n\\nConfirm conversion?")){return;}

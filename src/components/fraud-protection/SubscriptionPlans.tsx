@@ -14,12 +14,22 @@ export function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansProps) {
       { text: "1,000 API requests", highlight: false },
       { text: "Unlimited blacklist", highlight: false },
       { text: "Real-time logs", highlight: false },
+      { text: "Incomplete Order Tracking", highlight: false },
+      { text: "Cart Products Tracking", highlight: false },
+      { text: "Order Conversion", highlight: false },
+      { text: "Cooldown Control (WP)", highlight: false },
+      { text: "Smart Risk Detection", highlight: false },
       { text: "Standard support", highlight: false },
     ],
     yearly: [
       { text: "15,000 API requests", highlight: true },
       { text: "Unlimited blacklist", highlight: false },
       { text: "Real-time logs", highlight: false },
+      { text: "Incomplete Order Tracking", highlight: false },
+      { text: "Cart Products Tracking", highlight: false },
+      { text: "Order Conversion", highlight: false },
+      { text: "Cooldown Control (WP)", highlight: false },
+      { text: "Smart Risk Detection", highlight: false },
       { text: "Priority support", highlight: true },
       { text: "42% savings", highlight: true },
     ]
@@ -47,7 +57,7 @@ export function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansProps) {
         </div>
         
         {/* Features */}
-        <ul className="space-y-2.5 mb-6">
+        <ul className="space-y-2 mb-6">
           {features.monthly.map((feature, index) => (
             <li key={index} className="flex items-center gap-2.5 text-gray-600 text-sm">
               <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0" />
@@ -100,7 +110,7 @@ export function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansProps) {
         </div>
         
         {/* Features */}
-        <ul className="space-y-2.5 mb-6">
+        <ul className="space-y-2 mb-6">
           {features.yearly.map((feature, index) => (
             <li key={index} className="flex items-center gap-2.5 text-white/90 text-sm">
               <CheckCircle className={`w-4 h-4 flex-shrink-0 ${feature.highlight ? 'text-amber-400' : 'text-emerald-400'}`} />

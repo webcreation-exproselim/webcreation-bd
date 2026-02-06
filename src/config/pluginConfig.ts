@@ -21,9 +21,9 @@ export const PLUGIN_CONFIG = {
   // What's new in this version (for feature list)
   whatsNew: [
     { icon: "⏱️", title: "Cooldown Control", description: "WordPress admin থেকে Cooldown timer নিয়ন্ত্রণ করুন" },
-    { icon: "🔄", title: "Order Conversion", description: "Incomplete order কে main order এ convert করুন" },
+    { icon: "🔄", title: "Order Conversion", description: "Incomplete order কে main order এ convert করুন (WordPress + Dashboard)" },
     { icon: "🛒", title: "Cart Products Tracking", description: "Customer কি product কিনছিল সেটা দেখুন" },
-    { icon: "📱", title: "Mobile Responsive", description: "মোবাইল থেকে সব feature ব্যবহার করুন" },
+    { icon: "📱", title: "Incomplete Order Tracking", description: "Phone blur, checkout error ও page exit detect করুন" },
     { icon: "🔍", title: "Smart Risk Detection", description: "5+ attempts = HIGH risk auto flag" },
   ],
   
@@ -35,10 +35,14 @@ export const PLUGIN_CONFIG = {
     "বাংলা/English ভাষা সাপোর্ট",
     "Admin Settings প্যানেল",
     "API Key প্রি-কনফিগার্ড",
-    "⏱️ Popup Timer Control",
+    "⏱️ Cooldown Control (WordPress)",
     "💬 Custom Block Messages",
     "📞 WhatsApp/Phone Contact",
     "🎨 Circle Logo + Branding",
+    "📊 Incomplete Order Tracking",
+    "🛒 Cart Products Tracking",
+    "🔄 Order Conversion",
+    "🔍 Smart Risk Detection",
   ],
   
   // Requirements

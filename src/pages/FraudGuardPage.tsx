@@ -2,7 +2,8 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
   Shield, CheckCircle, Clock, Phone, Fingerprint, 
-  FileText, Palette, ArrowRight, Zap, Lock
+  FileText, ArrowRight, Zap, Lock, ShoppingCart,
+  RefreshCw, Timer, Smartphone, AlertTriangle, Eye
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
@@ -13,7 +14,7 @@ const features = [
     icon: Shield,
     title: "Fake Order Protection",
     titleBn: "ফেক অর্ডার প্রতিরোধ",
-    description: "Automatically block repeat and fraudulent orders",
+    description: "Automatically block repeat and fraudulent orders with smart detection",
   },
   {
     icon: Fingerprint,
@@ -22,10 +23,10 @@ const features = [
     description: "Track unique devices to prevent multi-account abuse",
   },
   {
-    icon: Clock,
-    title: "Minute-Level Control",
-    titleBn: "মিনিট লেভেল কন্ট্রোল",
-    description: "Set cooldown from 5 minutes to 90 days",
+    icon: Timer,
+    title: "Cooldown Control",
+    titleBn: "কুলডাউন কন্ট্রোল",
+    description: "WordPress থেকে 5 মিনিট থেকে 90 দিন পর্যন্ত কুলডাউন সেট করুন",
   },
   {
     icon: Phone,
@@ -40,11 +41,62 @@ const features = [
     description: "Monitor all order attempts with detailed logs",
   },
   {
-    icon: Palette,
+    icon: Smartphone,
+    title: "Incomplete Order Tracking",
+    titleBn: "ইনকমপ্লিট অর্ডার ট্র্যাকিং",
+    description: "Phone blur, checkout error ও page exit detect করুন real-time এ",
+  },
+  {
+    icon: AlertTriangle,
+    title: "Smart Risk Detection",
+    titleBn: "স্মার্ট রিস্ক ডিটেকশন",
+    description: "5+ attempts থেকে automatic HIGH risk flag হবে",
+  },
+  {
+    icon: ShoppingCart,
+    title: "Cart Products Tracking",
+    titleBn: "কার্ট প্রোডাক্ট ট্র্যাকিং",
+    description: "Customer কি কি product কিনছিল সেটা দেখুন details সহ",
+  },
+  {
+    icon: RefreshCw,
+    title: "Order Conversion",
+    titleBn: "অর্ডার কনভার্শন",
+    description: "Incomplete order কে real order এ convert করুন WordPress/Dashboard থেকে",
+  },
+  {
+    icon: Eye,
     title: "Beautiful Popups",
     titleBn: "সুন্দর পপআপ",
-    description: "Professional Bengali/English popup messages",
+    description: "Professional Bengali/English popup messages with WhatsApp contact",
   },
+];
+
+const monthlyFeatures = [
+  "1,000 API requests",
+  "Unlimited blacklist entries",
+  "Real-time fraud logs",
+  "Incomplete Order Tracking",
+  "Cart Products Tracking",
+  "Order Conversion",
+  "Cooldown Control (WordPress)",
+  "Smart Risk Detection",
+  "Plugin access",
+  "Standard support",
+];
+
+const yearlyFeatures = [
+  "15,000 API requests",
+  "Unlimited blacklist entries",
+  "Real-time fraud logs",
+  "Incomplete Order Tracking",
+  "Cart Products Tracking",
+  "Order Conversion",
+  "Cooldown Control (WordPress)",
+  "Smart Risk Detection",
+  "Plugin access",
+  "Priority support",
+  "42% savings",
 ];
 
 const steps = [
@@ -103,7 +155,7 @@ export default function FraudGuardPage() {
             </p>
             
             <p className="text-lg text-white/50 max-w-2xl mx-auto mb-10">
-              Fake order, repeat order এবং fraudulent customers থেকে আপনার ব্যবসা সুরক্ষিত রাখুন
+              Fake order, incomplete order tracking, order conversion এবং smart risk detection সহ সম্পূর্ণ anti-fraud সলিউশন
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -139,7 +191,7 @@ export default function FraudGuardPage() {
               কেন <span className="text-cyan-400">WCBD Fraud Guard</span>?
             </h2>
             <p className="text-white/60 max-w-2xl mx-auto">
-              বাংলাদেশের WooCommerce স্টোরগুলোর জন্য সেরা anti-fraud সলিউশন
+              বাংলাদেশের WooCommerce স্টোরগুলোর জন্য সেরা anti-fraud সলিউশন — ১০টি powerful features
             </p>
           </motion.div>
           
@@ -177,7 +229,7 @@ export default function FraudGuardPage() {
               সাশ্রয়ী মূল্যে শুরু করুন
             </h2>
             <p className="text-white/60">
-              আপনার প্রয়োজন অনুযায়ী প্ল্যান বেছে নিন
+              সব features সব plan এ — আপনার প্রয়োজন অনুযায়ী প্ল্যান বেছে নিন
             </p>
           </motion.div>
           
@@ -203,22 +255,12 @@ export default function FraudGuardPage() {
                 </div>
                 
                 <ul className="space-y-3 mb-8">
-                  <li className="flex items-center gap-3 text-white/70">
-                    <CheckCircle className="w-5 h-5 text-green-400 shrink-0" />
-                    <span>1,000 API requests</span>
-                  </li>
-                  <li className="flex items-center gap-3 text-white/70">
-                    <CheckCircle className="w-5 h-5 text-green-400 shrink-0" />
-                    <span>Unlimited blacklist entries</span>
-                  </li>
-                  <li className="flex items-center gap-3 text-white/70">
-                    <CheckCircle className="w-5 h-5 text-green-400 shrink-0" />
-                    <span>Real-time fraud logs</span>
-                  </li>
-                  <li className="flex items-center gap-3 text-white/70">
-                    <CheckCircle className="w-5 h-5 text-green-400 shrink-0" />
-                    <span>Plugin access</span>
-                  </li>
+                  {monthlyFeatures.map((feature, idx) => (
+                    <li key={idx} className="flex items-center gap-3 text-white/70">
+                      <CheckCircle className="w-5 h-5 text-green-400 shrink-0" />
+                      <span>{feature}</span>
+                    </li>
+                  ))}
                 </ul>
                 
                 <Link to="/auth">
@@ -256,26 +298,14 @@ export default function FraudGuardPage() {
                 </div>
                 
                 <ul className="space-y-3 mb-8">
-                  <li className="flex items-center gap-3 text-white/70">
-                    <CheckCircle className="w-5 h-5 text-green-400 shrink-0" />
-                    <span>15,000 API requests</span>
-                  </li>
-                  <li className="flex items-center gap-3 text-white/70">
-                    <CheckCircle className="w-5 h-5 text-green-400 shrink-0" />
-                    <span>Unlimited blacklist entries</span>
-                  </li>
-                  <li className="flex items-center gap-3 text-white/70">
-                    <CheckCircle className="w-5 h-5 text-green-400 shrink-0" />
-                    <span>Real-time fraud logs</span>
-                  </li>
-                  <li className="flex items-center gap-3 text-white/70">
-                    <CheckCircle className="w-5 h-5 text-green-400 shrink-0" />
-                    <span>Plugin access</span>
-                  </li>
-                  <li className="flex items-center gap-3 text-white/70">
-                    <CheckCircle className="w-5 h-5 text-green-400 shrink-0" />
-                    <span>Priority support</span>
-                  </li>
+                  {yearlyFeatures.map((feature, idx) => (
+                    <li key={idx} className="flex items-center gap-3 text-white/70">
+                      <CheckCircle className={`w-5 h-5 shrink-0 ${idx === yearlyFeatures.length - 1 ? 'text-amber-400' : 'text-green-400'}`} />
+                      <span className={idx === yearlyFeatures.length - 1 ? 'font-semibold text-amber-300' : ''}>
+                        {feature}
+                      </span>
+                    </li>
+                  ))}
                 </ul>
                 
                 <Link to="/auth">
@@ -343,7 +373,7 @@ export default function FraudGuardPage() {
               আজই আপনার স্টোর সুরক্ষিত করুন
             </h2>
             <p className="text-white/60 mb-8 max-w-lg mx-auto">
-              মাত্র ৳১০০/মাস থেকে শুরু করুন এবং fake order থেকে মুক্তি পান
+              মাত্র ৳১০০/মাস থেকে শুরু করুন — Incomplete Order Tracking, Order Conversion সহ সব features পান
             </p>
             <Link to="/auth">
               <Button size="lg" className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white px-10 py-6 text-lg font-bengali">

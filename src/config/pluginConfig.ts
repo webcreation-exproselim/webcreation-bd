@@ -4,26 +4,26 @@
 
 export const PLUGIN_CONFIG = {
   // Current version - UPDATE THIS WHEN RELEASING NEW VERSIONS
-  version: "6.9.0",
+  version: "7.0.0",
   
   // Plugin metadata
   name: "WCBD Fraud Guard",
   slug: "wcbd-fraud-guard",
   fileName: "wcbd-fraud-guard.zip",
-  fileSize: "~24KB",
+  fileSize: "~25KB",
   
   // Version badge styling
   badgeLabel: "STABLE",
   
   // Current version highlights (for banners and feature lists)
-  versionHighlight: "Universal Popup Fix + Robust Checkout Interception",
+  versionHighlight: "CartFlows Checkout Fix + Universal Page Detection",
   
   // What's new in this version (for feature list)
   whatsNew: [
-    { icon: "🎯", title: "Universal Popup Fix", description: "Classic ও Block সব checkout এ popup ঠিকমতো কাজ করবে - plain notice আর দেখাবে না" },
+    { icon: "🛒", title: "CartFlows Support", description: "CartFlows checkout page এ popup ও tracking সম্পূর্ণ কাজ করবে" },
+    { icon: "🎯", title: "Universal Page Detection", description: "যেকোনো checkout builder (CartFlows, Elementor, Block) detect করবে" },
     { icon: "🛡️", title: "Server-Side + Client-Side", description: "দুই স্তরে সুরক্ষা - JS bypass করলেও PHP তে block" },
     { icon: "⏱️", title: "Cooldown Control", description: "WordPress admin থেকে Cooldown timer নিয়ন্ত্রণ করুন" },
-    { icon: "🔄", title: "Order Conversion", description: "Incomplete order কে main order এ convert করুন" },
     { icon: "📱", title: "Incomplete Order Tracking", description: "Phone blur, checkout error ও page exit detect করুন" },
   ],
   

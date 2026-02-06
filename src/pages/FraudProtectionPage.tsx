@@ -10,10 +10,12 @@ import { IntegrationCode } from "@/components/fraud-protection/IntegrationCode";
 import { PluginDownload } from "@/components/fraud-protection/PluginDownload";
 import { PluginRemoteSettings } from "@/components/fraud-protection/PluginRemoteSettings";
 import { AbandonedCarts } from "@/components/fraud-protection/AbandonedCarts";
+import { IncompleteOrders } from "@/components/fraud-protection/IncompleteOrders";
 import { CourierOrders } from "@/components/fraud-protection/CourierOrders";
 import { CustomerTrustLookup } from "@/components/fraud-protection/CustomerTrustLookup";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Settings, Shield, FileText, Code, Loader2, Download, Globe, ShoppingCart, Truck, UserCheck } from "lucide-react";
+import { ArrowLeft, Settings, Shield, FileText, Code, Loader2, Download, Globe, ShoppingCart, Truck, UserCheck, AlertCircle } from "lucide-react";
+
 export default function FraudProtectionPage() {
   const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -37,6 +39,35 @@ export default function FraudProtectionPage() {
     const { error } = await supabase
       .from('merchants')
       .update({ enable_abandoned_tracking: enabled })
+      .eq('id', merchant.id);
+    
+    if (!error) {
+      refetchMerchant();
+    }
+  };
+
+  const handleToggleIncompleteTracking = async (enabled: boolean) => {
+    if (!merchant?.id) return;
+    
+    const { error } = await supabase
+      .from('merchants')
+      .update({ enable_incomplete_tracking: enabled })
+      .eq('id', merchant.id);
+    
+    if (!error) {
+      refetchMerchant();
+    }
+  };
+
+  const handleUpdateIncompleteSettings = async (threshold: number, timeWindow: number) => {
+    if (!merchant?.id) return;
+    
+    const { error } = await supabase
+      .from('merchants')
+      .update({ 
+        incomplete_auto_block_threshold: threshold,
+        incomplete_time_window_minutes: timeWindow
+      })
       .eq('id', merchant.id);
     
     if (!error) {
@@ -155,6 +186,13 @@ export default function FraudProtectionPage() {
               Abandoned
             </TabsTrigger>
             <TabsTrigger 
+              value="incomplete"
+              className="data-[state=active]:bg-cyan-600 data-[state=active]:text-white"
+            >
+              <AlertCircle className="h-4 w-4 mr-2" />
+              Incomplete
+            </TabsTrigger>
+            <TabsTrigger 
               value="courier"
               className="data-[state=active]:bg-cyan-600 data-[state=active]:text-white"
             >
@@ -226,6 +264,19 @@ export default function FraudProtectionPage() {
                 merchantId={merchant.id}
                 trackingEnabled={merchant.enable_abandoned_tracking}
                 onToggleTracking={handleToggleAbandonedTracking}
+              />
+            )}
+          </TabsContent>
+
+          <TabsContent value="incomplete">
+            {merchant && (
+              <IncompleteOrders 
+                merchantId={merchant.id}
+                trackingEnabled={(merchant as any).enable_incomplete_tracking ?? false}
+                autoBlockThreshold={(merchant as any).incomplete_auto_block_threshold ?? 5}
+                timeWindowMinutes={(merchant as any).incomplete_time_window_minutes ?? 60}
+                onToggleTracking={handleToggleIncompleteTracking}
+                onUpdateSettings={handleUpdateIncompleteSettings}
               />
             )}
           </TabsContent>

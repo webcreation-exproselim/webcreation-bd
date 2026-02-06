@@ -4,7 +4,7 @@
 
 export const PLUGIN_CONFIG = {
   // Current version - UPDATE THIS WHEN RELEASING NEW VERSIONS
-  version: "6.3.0",
+  version: "6.4.0",
   
   // Plugin metadata
   name: "WCBD Fraud Guard",
@@ -16,14 +16,14 @@ export const PLUGIN_CONFIG = {
   badgeLabel: "STABLE",
   
   // Current version highlights (for banners and feature lists)
-  versionHighlight: "WordPress + Dashboard Sync",
+  versionHighlight: "Cooldown Control + Order Conversion",
   
   // What's new in this version (for feature list)
   whatsNew: [
+    { icon: "⏱️", title: "Cooldown Control", description: "WordPress admin থেকে Cooldown timer নিয়ন্ত্রণ করুন" },
+    { icon: "🔄", title: "Order Conversion", description: "Incomplete order কে main order এ convert করুন" },
     { icon: "🛒", title: "Cart Products Tracking", description: "Customer কি product কিনছিল সেটা দেখুন" },
-    { icon: "📊", title: "WordPress Admin View", description: "Plugin এ Incomplete Orders দেখুন" },
-    { icon: "📱", title: "Phone Blur Tracking", description: "ফোন enter করে চলে গেলে log হবে" },
-    { icon: "🚪", title: "Page Exit Detection", description: "Tab close করলে sendBeacon এ log" },
+    { icon: "📱", title: "Mobile Responsive", description: "মোবাইল থেকে সব feature ব্যবহার করুন" },
     { icon: "🔍", title: "Smart Risk Detection", description: "5+ attempts = HIGH risk auto flag" },
   ],
   

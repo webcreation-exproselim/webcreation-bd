@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.log-checkout-attempt]
 verify_jwt = false
+
+[functions.get-incomplete-orders]
+verify_jwt = false

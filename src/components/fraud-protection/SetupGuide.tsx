@@ -5,6 +5,7 @@ import { APIKeySection } from "./APIKeySection";
 import { downloadPluginFile } from "@/utils/pluginGenerator";
 import { useToast } from "@/hooks/use-toast";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { PLUGIN_CONFIG, getVersionString } from "@/config/pluginConfig";
 
 interface SetupGuideProps {
   apiKey: string;
@@ -85,10 +86,10 @@ export function SetupGuide({ apiKey, isActive, merchantId, onPurchaseSuccess }: 
           </div>
           <div className="flex-1">
             <h3 className="text-lg font-bold text-gray-900 font-bengali mb-1">
-              WCBD Fraud Guard Plugin v4.0.0
+              {PLUGIN_CONFIG.name} Plugin {getVersionString()}
             </h3>
             <p className="text-sm text-gray-600 font-bengali mb-4">
-              WordPress/WooCommerce-এর জন্য Anti-Fraud Protection Plugin - Remote Settings, Abandoned Cart, Courier Tracking সহ
+              WordPress/WooCommerce-এর জন্য Anti-Fraud Protection Plugin - {PLUGIN_CONFIG.versionHighlight} সহ
             </p>
             
             <div className="flex flex-wrap gap-3">

@@ -4,7 +4,7 @@
 
 export const PLUGIN_CONFIG = {
   // Current version - UPDATE THIS WHEN RELEASING NEW VERSIONS
-  version: "6.2.0",
+  version: "6.3.0",
   
   // Plugin metadata
   name: "WCBD Fraud Guard",
@@ -16,12 +16,12 @@ export const PLUGIN_CONFIG = {
   badgeLabel: "STABLE",
   
   // Current version highlights (for banners and feature lists)
-  versionHighlight: "Simplified • Always-On Protection",
+  versionHighlight: "WordPress + Dashboard Sync",
   
   // What's new in this version (for feature list)
   whatsNew: [
-    { icon: "🔐", title: "License Protection", description: "License ছাড়া কোন feature কাজ করবে না" },
-    { icon: "✅", title: "No Toggle Needed", description: "সব feature default ON - toggle নেই" },
+    { icon: "🛒", title: "Cart Products Tracking", description: "Customer কি product কিনছিল সেটা দেখুন" },
+    { icon: "📊", title: "WordPress Admin View", description: "Plugin এ Incomplete Orders দেখুন" },
     { icon: "📱", title: "Phone Blur Tracking", description: "ফোন enter করে চলে গেলে log হবে" },
     { icon: "🚪", title: "Page Exit Detection", description: "Tab close করলে sendBeacon এ log" },
     { icon: "🔍", title: "Smart Risk Detection", description: "5+ attempts = HIGH risk auto flag" },

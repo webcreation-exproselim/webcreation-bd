@@ -172,14 +172,159 @@ if(typeof FingerprintJS!=="undefined"){
 FingerprintJS.load().then(function(fp){fp.get().then(function(r){self.deviceId=r.visitorId;console.log("[WCBD] Device ID ready");});});
 }
 
-// Hook into checkout form
+// Detect checkout type and hook accordingly
+self.isBlockCheckout=self.detectBlockCheckout();
+console.log("[WCBD] Checkout type: "+(self.isBlockCheckout?"Block":"Classic"));
+
+if(self.isBlockCheckout){
+self.hookBlockCheckout();
+}else{
+// Classic checkout hook
 jQ("form.checkout").on("checkout_place_order",function(){return self.validate(jQ(this));});
+}
 
 // Always track incomplete orders when license is valid
 self.setupIncompleteTracking();
 
 console.log("[WCBD Fraud Guard v${PLUGIN_CONFIG.version}] Ready");
 });
+},
+
+isBlockCheckout:false,
+
+detectBlockCheckout:function(){
+// Check for Block Checkout elements
+if(document.querySelector(".wc-block-checkout")||document.querySelector(".wp-block-woocommerce-checkout")||document.querySelector("[data-block-name='woocommerce/checkout']")){
+return true;
+}
+// Check if classic form.checkout exists
+if(document.querySelector("form.checkout.woocommerce-checkout")){
+return false;
+}
+// Default: check for block-based button
+if(document.querySelector(".wc-block-components-checkout-place-order-button")){
+return true;
+}
+return false;
+},
+
+hookBlockCheckout:function(){
+var self=this;
+console.log("[WCBD] Setting up Block Checkout interception...");
+
+// Use MutationObserver to wait for the place order button to render
+var observer=new MutationObserver(function(mutations){
+var btn=document.querySelector(".wc-block-components-checkout-place-order-button");
+if(btn&&!btn.dataset.wcbdHooked){
+btn.dataset.wcbdHooked="true";
+console.log("[WCBD] Block checkout button found - attaching interceptor");
+self.attachBlockInterceptor(btn);
+observer.disconnect();
+}
+});
+observer.observe(document.body,{childList:true,subtree:true});
+
+// Also try immediately in case it's already rendered
+var btn=document.querySelector(".wc-block-components-checkout-place-order-button");
+if(btn&&!btn.dataset.wcbdHooked){
+btn.dataset.wcbdHooked="true";
+console.log("[WCBD] Block checkout button found immediately");
+self.attachBlockInterceptor(btn);
+observer.disconnect();
+}
+},
+
+attachBlockInterceptor:function(btn){
+var self=this;
+// Capture click event in the capturing phase (before WooCommerce handles it)
+btn.addEventListener("click",function(e){
+if(self.blockCheckoutValidating){return;}
+if(self.blockCheckoutAllowed){
+self.blockCheckoutAllowed=false;
+console.log("[WCBD] Block checkout allowed - submitting");
+return; // Let the click go through
+}
+
+// Stop the checkout submission
+e.preventDefault();
+e.stopImmediatePropagation();
+
+self.blockCheckoutValidating=true;
+var phone=self.getBlockCheckoutPhone();
+
+if(!phone){
+console.warn("[WCBD] No phone found in block checkout");
+self.blockCheckoutValidating=false;
+self.blockCheckoutAllowed=true;
+btn.click();
+return;
+}
+
+console.log("[WCBD] Block checkout validating phone:",phone);
+
+// Change button text
+var origText=btn.textContent;
+btn.textContent=self.lang==="bn"?"চেক করা হচ্ছে...":"Checking...";
+btn.disabled=true;
+
+jQ.ajax({
+url:self.endpoint,
+method:"POST",
+contentType:"application/json",
+timeout:12000,
+data:JSON.stringify({api_key:self.apiKey,phone:phone,device_id:self.deviceId,domain:window.location.hostname,check_type:"precheck"}),
+success:function(r){
+console.log("[WCBD] Block checkout API response:",r);
+if(r.popup_settings){self.applyRemoteSettings(r.popup_settings);}
+
+if(r.allowed){
+self.blockCheckoutAllowed=true;
+self.blockCheckoutValidating=false;
+btn.textContent=origText;
+btn.disabled=false;
+btn.click(); // Re-trigger the click, this time it will pass through
+}else{
+self.blockCheckoutValidating=false;
+btn.textContent=origText;
+btn.disabled=false;
+var customMsg=r.reason==="blacklist"?self.msgBlacklist:self.msgCooldown;
+self.popup(r.reason,customMsg,r.minutes_remaining);
+}
+},
+error:function(xhr,status,err){
+console.error("[WCBD] Block checkout API error:",err);
+// Fail-open: allow order if API unreachable
+self.blockCheckoutAllowed=true;
+self.blockCheckoutValidating=false;
+btn.textContent=origText;
+btn.disabled=false;
+btn.click();
+}
+});
+},true); // true = capturing phase (fires BEFORE WooCommerce)
+},
+
+blockCheckoutValidating:false,
+blockCheckoutAllowed:false,
+
+getBlockCheckoutPhone:function(){
+// Block checkout phone field selectors (try multiple)
+var selectors=[
+"#phone",
+"#billing-phone",
+"input[id*='phone']",
+".wc-block-components-text-input input[type='tel']",
+"input[autocomplete='tel']",
+"input[name='billing_phone']",
+"input[name='phone']"
+];
+for(var i=0;i<selectors.length;i++){
+var el=document.querySelector(selectors[i]);
+if(el&&el.value&&el.value.length>=5){
+return el.value.trim();
+}
+}
+return "";
 },
 
 // Validate License with API (lightweight - no fraud_log, no quota usage)
@@ -223,8 +368,11 @@ var self=this;
 if(!this.licenseValid)return; // BLOCK if license invalid
 console.log("[WCBD] Setting up incomplete order tracking...");
 
+// Get phone field (works for both classic and block checkout)
+var phoneSelector=this.isBlockCheckout?"#phone,#billing-phone,input[id*='phone'],input[autocomplete='tel']":"#billing_phone";
+
 // Trigger 1: Phone Blur - When user enters phone and clicks away
-jQ("#billing_phone").on("blur",function(){
+jQ(document).on("blur",phoneSelector,function(){
 if(!self.licenseValid)return;
 var phone=jQ(this).val();
 if(phone&&phone.length>=10){
@@ -235,7 +383,7 @@ self.logIncompleteAttempt("phone_blur",phone);
 // Trigger 2: WooCommerce Checkout Error
 jQ(document.body).on("checkout_error",function(){
 if(!self.licenseValid)return;
-var phone=jQ("#billing_phone").val();
+var phone=self.isBlockCheckout?self.getBlockCheckoutPhone():jQ("#billing_phone").val();
 if(phone&&phone.length>=5){
 self.logIncompleteAttempt("validation_error",phone);
 }
@@ -244,13 +392,14 @@ self.logIncompleteAttempt("validation_error",phone);
 // Trigger 3: Page Unload (beforeunload) - If phone is filled
 jQ(window).on("beforeunload",function(){
 if(!self.licenseValid)return;
-var phone=jQ("#billing_phone").val();
+var phone=self.isBlockCheckout?self.getBlockCheckoutPhone():jQ("#billing_phone").val();
 if(phone&&phone.length>=10&&!self.incompleteLogged["page_exit_"+phone]){
 self.incompleteLogged["page_exit_"+phone]=true;
+var name=self.isBlockCheckout?(document.querySelector("#first-name,#billing-first-name,input[autocomplete='given-name']")||{}).value||"":"jQ('#billing_first_name').val()||''";
 var data=JSON.stringify({
 api_key:self.apiKey,
 phone:phone,
-name:jQ("#billing_first_name").val()+" "+jQ("#billing_last_name").val(),
+name:name,
 ip:"",
 device_id:self.deviceId||"",
 cart_total:self.getCartTotal(),
@@ -353,7 +502,7 @@ jQ.ajax({
 url:this.endpoint,
 method:"POST",
 contentType:"application/json",
-data:JSON.stringify({api_key:this.apiKey,phone:phone,device_id:this.deviceId,domain:window.location.hostname}),
+data:JSON.stringify({api_key:this.apiKey,phone:phone,device_id:this.deviceId,domain:window.location.hostname,check_type:"precheck"}),
 success:function(r){
 console.log("[WCBD] API Response:",r);
 

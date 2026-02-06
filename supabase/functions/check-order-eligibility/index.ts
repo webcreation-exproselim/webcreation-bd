@@ -22,7 +22,7 @@ interface CheckRequest {
   ip?: string
   device_id?: string
   domain?: string
-  check_type?: 'license' | 'test' | 'order'
+  check_type?: 'license' | 'test' | 'order' | 'precheck'
 }
 
 // Normalize domain for comparison (remove protocol, www, trailing slashes)
@@ -56,6 +56,7 @@ Deno.serve(async (req) => {
     const { api_key, phone, ip, device_id, domain, check_type } = body
 
     const isLicenseOrTest = check_type === 'license' || check_type === 'test'
+    const isPrecheck = check_type === 'precheck'
 
     console.log('Received check request:', { 
       api_key: api_key?.slice(0, 8) + '...', 
@@ -72,7 +73,7 @@ Deno.serve(async (req) => {
       )
     }
 
-    // For real order checks, require at least one identifier
+    // For real order checks and prechecks, require at least one identifier
     if (!isLicenseOrTest && !phone && !ip && !device_id) {
       return new Response(
         JSON.stringify({ error: 'At least one identifier (phone, ip, or device_id) is required' }),
@@ -213,14 +214,16 @@ Deno.serve(async (req) => {
       const entry = blacklistEntries[0]
       console.log('Blocked by blacklist:', entry)
       
-      // Log the blocked attempt
-      await supabase.from('fraud_logs').insert({
-        merchant_id: merchant.id,
-        phone_number: phone || null,
-        ip_address: ip || null,
-        device_fingerprint: device_id || null,
-        status: 'blocked_blacklist'
-      })
+      // Log the blocked attempt (skip for precheck)
+      if (!isPrecheck) {
+        await supabase.from('fraud_logs').insert({
+          merchant_id: merchant.id,
+          phone_number: phone || null,
+          ip_address: ip || null,
+          device_fingerprint: device_id || null,
+          status: 'blocked_blacklist'
+        })
+      }
 
       return new Response(
         JSON.stringify({
@@ -275,14 +278,16 @@ Deno.serve(async (req) => {
 
       console.log('Blocked by cooldown. Minutes remaining:', minutesRemaining)
       
-      // Log the blocked attempt
-      await supabase.from('fraud_logs').insert({
-        merchant_id: merchant.id,
-        phone_number: phone || null,
-        ip_address: ip || null,
-        device_fingerprint: device_id || null,
-        status: 'blocked_cooldown'
-      })
+      // Log the blocked attempt (skip for precheck)
+      if (!isPrecheck) {
+        await supabase.from('fraud_logs').insert({
+          merchant_id: merchant.id,
+          phone_number: phone || null,
+          ip_address: ip || null,
+          device_fingerprint: device_id || null,
+          status: 'blocked_cooldown'
+        })
+      }
 
       return new Response(
         JSON.stringify({
@@ -292,6 +297,17 @@ Deno.serve(async (req) => {
           minutes_remaining: minutesRemaining > 0 ? minutesRemaining : 1,
           popup_settings: popupSettings
         }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // ============================================
+    // PRECHECK: Return success without logging (JS pre-validation only)
+    // ============================================
+    if (isPrecheck) {
+      console.log('Precheck passed for merchant:', merchant.id)
+      return new Response(
+        JSON.stringify({ allowed: true, check_type: 'precheck', popup_settings: popupSettings }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }

@@ -1,6 +1,7 @@
 const ENDPOINT_URL = 'https://gtjmfvwkatrorhuyrpby.supabase.co/functions/v1/check-order-eligibility';
 const INCOMPLETE_ENDPOINT_URL = 'https://gtjmfvwkatrorhuyrpby.supabase.co/functions/v1/log-checkout-attempt';
 const GET_INCOMPLETE_URL = 'https://gtjmfvwkatrorhuyrpby.supabase.co/functions/v1/get-incomplete-orders';
+const UPDATE_SETTINGS_URL = 'https://gtjmfvwkatrorhuyrpby.supabase.co/functions/v1/update-merchant-settings';
 const DASHBOARD_URL = 'https://webcreation-bd.lovable.app/dashboard';
 const WHATSAPP_DEFAULT = '+8801332052874';
 import JSZip from 'jszip';
@@ -32,6 +33,7 @@ class WCBD_Fraud_Guard {
     private $endpoint = '${ENDPOINT_URL}';
     private $incomplete_endpoint = '${INCOMPLETE_ENDPOINT_URL}';
     private $get_incomplete_url = '${GET_INCOMPLETE_URL}';
+    private $update_settings_url = '${UPDATE_SETTINGS_URL}';
     private $dashboard_url = '${DASHBOARD_URL}';
     private $whatsapp_default = '${WHATSAPP_DEFAULT}';
     
@@ -43,6 +45,8 @@ class WCBD_Fraud_Guard {
         add_action('admin_post_wcbd_fraud_guard_save_settings', array($this, 'save_settings'));
         add_action('wp_ajax_wcbd_fraud_guard_test_api', array($this, 'test_api_connection'));
         add_action('wp_ajax_wcbd_fraud_guard_get_incomplete', array($this, 'ajax_get_incomplete_orders'));
+        add_action('wp_ajax_wcbd_fraud_guard_get_cooldown', array($this, 'ajax_get_cooldown'));
+        add_action('wp_ajax_wcbd_fraud_guard_update_cooldown', array($this, 'ajax_update_cooldown'));
         add_action('wp_footer', array($this, 'inject_popup_styles'), 99);
         
         register_activation_hook(__FILE__, array($this, 'set_default_options'));
@@ -573,6 +577,8 @@ JSTEMPLATE;
         .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-bottom:20px}
         @media(max-width:900px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
         @media(max-width:500px){.stats-grid{grid-template-columns:1fr}}
+        @media(max-width:600px){#cooldown-container div[style*="grid-template-columns:repeat(4"]{grid-template-columns:repeat(3,1fr)!important}}
+        @media(max-width:400px){#cooldown-container div[style*="grid-template-columns:repeat(4"]{grid-template-columns:repeat(2,1fr)!important}}
         .stat-card{background:linear-gradient(145deg,#1e293b,#0f172a);border:1px solid #334155;border-radius:14px;padding:20px;text-align:center}
         .stat-card .value{font-size:32px;font-weight:700;margin-bottom:4px}
         .stat-card .label{font-size:12px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px}
@@ -615,6 +621,7 @@ jQ(this).addClass("active");
 jQ(".wcbd-tab-content").removeClass("active");
 jQ("#wcbd-tab-"+tab).addClass("active");
 if(tab==="incomplete"){loadIncompleteOrders();}
+if(tab==="cooldown"){loadCooldown();}
 });
 
 // Test API
@@ -730,6 +737,121 @@ html+='</tbody></table></div>';
 container.html(html);
 }
 
+// Cooldown Tab Functions
+function formatCooldownTime(mins){
+if(mins<60) return mins+" মিনিট";
+if(mins<1440){var h=Math.floor(mins/60);var m=mins%60;return h+" ঘন্টা"+(m>0?" "+m+" মিনিট":"");}
+var d=Math.floor(mins/1440);var rh=Math.floor((mins%1440)/60);return d+" দিন"+(rh>0?" "+rh+" ঘন্টা":"");
+}
+
+function loadCooldown(){
+var container=jQ("#cooldown-container");
+container.html('<div style="text-align:center;padding:40px;color:#94a3b8"><span style="font-size:24px">🔄</span><p>Loading...</p></div>');
+
+jQ.ajax({
+url:"%%AJAX_URL%%",
+method:"POST",
+data:{action:"wcbd_fraud_guard_get_cooldown",nonce:"%%NONCE%%"},
+success:function(r){
+if(r.success){
+renderCooldown(r.data.cooldown_minutes);
+}else{
+container.html('<div style="text-align:center;padding:40px;color:#ef4444"><span style="font-size:48px">❌</span><p>Failed to load cooldown</p></div>');
+}
+},
+error:function(){
+container.html('<div style="text-align:center;padding:40px;color:#ef4444"><span style="font-size:48px">❌</span><p>Connection error</p></div>');
+}
+});
+}
+
+function renderCooldown(currentMins){
+var container=jQ("#cooldown-container");
+var presets=[
+{label:"5 মিনিট",value:5},
+{label:"15 মিনিট",value:15},
+{label:"30 মিনিট",value:30},
+{label:"1 ঘন্টা",value:60},
+{label:"2 ঘন্টা",value:120},
+{label:"6 ঘন্টা",value:360},
+{label:"12 ঘন্টা",value:720},
+{label:"1 দিন",value:1440},
+{label:"3 দিন",value:4320},
+{label:"7 দিন",value:10080},
+{label:"15 দিন",value:21600},
+{label:"30 দিন",value:43200}
+];
+
+var html='<div style="text-align:center;margin-bottom:30px">';
+html+='<div style="display:inline-flex;align-items:center;gap:16px;background:linear-gradient(135deg,#0891b2,#0e7490);padding:20px 30px;border-radius:16px">';
+html+='<span style="font-size:32px">⏱️</span>';
+html+='<div style="text-align:left"><p style="color:rgba(255,255,255,0.7);font-size:12px;margin:0">বর্তমান Cooldown</p>';
+html+='<p style="color:#fff;font-size:24px;font-weight:700;margin:0" id="cooldown-display">'+formatCooldownTime(currentMins)+'</p></div>';
+html+='</div></div>';
+
+html+='<p style="color:#94a3b8;margin:0 0 20px;font-size:14px;text-align:center">Quick Presets - একটি ক্লিক করুন</p>';
+html+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:25px">';
+for(var i=0;i<presets.length;i++){
+var p=presets[i];
+var isActive=p.value===currentMins?"background:linear-gradient(135deg,#0891b2,#06b6d4);color:#fff;border-color:#0891b2;font-weight:700":"background:#1e293b;color:#94a3b8;border-color:#334155";
+html+='<button type="button" class="cooldown-preset-btn" data-value="'+p.value+'" style="padding:12px 8px;border-radius:10px;border:2px solid;cursor:pointer;font-size:13px;transition:all 0.2s;'+isActive+'">'+p.label+'</button>';
+}
+html+='</div>';
+
+html+='<div style="display:flex;gap:12px;align-items:center;justify-content:center;margin-bottom:20px">';
+html+='<label style="color:#e2e8f0;font-size:14px;white-space:nowrap">Custom মিনিট:</label>';
+html+='<input type="number" id="cooldown-custom-input" value="'+currentMins+'" min="1" max="43200" class="fraud-input dark" style="width:120px;text-align:center">';
+html+='<button type="button" id="cooldown-save-custom" class="fraud-btn fraud-btn-primary" style="padding:10px 24px">💾 Save</button>';
+html+='</div>';
+
+html+='<div id="cooldown-status" style="text-align:center;margin-top:15px"></div>';
+
+container.html(html);
+
+// Preset click handlers
+jQ(".cooldown-preset-btn").on("click",function(){
+var val=parseInt(jQ(this).data("value"));
+saveCooldown(val);
+});
+
+// Custom save
+jQ("#cooldown-save-custom").on("click",function(){
+var val=parseInt(jQ("#cooldown-custom-input").val());
+if(val>=1&&val<=43200){
+saveCooldown(val);
+}else{
+jQ("#cooldown-status").html('<span style="color:#ef4444">❌ 1 থেকে 43200 মিনিটের মধ্যে দিন</span>');
+}
+});
+}
+
+function saveCooldown(minutes){
+var statusEl=jQ("#cooldown-status");
+statusEl.html('<span style="color:#f59e0b">🔄 Saving...</span>');
+
+jQ.ajax({
+url:"%%AJAX_URL%%",
+method:"POST",
+data:{action:"wcbd_fraud_guard_update_cooldown",nonce:"%%NONCE%%",cooldown_minutes:minutes},
+success:function(r){
+if(r.success){
+statusEl.html('<span style="color:#10b981">✅ Cooldown আপডেট হয়েছে: '+formatCooldownTime(minutes)+'</span>');
+jQ("#cooldown-display").text(formatCooldownTime(minutes));
+jQ("#cooldown-custom-input").val(minutes);
+// Update active preset
+jQ(".cooldown-preset-btn").css({"background":"#1e293b","color":"#94a3b8","border-color":"#334155","font-weight":"normal"});
+jQ(".cooldown-preset-btn[data-value='"+minutes+"']").css({"background":"linear-gradient(135deg,#0891b2,#06b6d4)","color":"#fff","border-color":"#0891b2","font-weight":"700"});
+setTimeout(function(){statusEl.html("");},3000);
+}else{
+statusEl.html('<span style="color:#ef4444">❌ '+(r.data||"Update failed")+'</span>');
+}
+},
+error:function(){
+statusEl.html('<span style="color:#ef4444">❌ Connection error</span>');
+}
+});
+}
+
 // Refresh button
 jQ("#refresh-incomplete").on("click",function(){
 loadIncompleteOrders();
@@ -768,6 +890,7 @@ ADMINJSTEMPLATE;
                 <!-- Tabs -->
                 <div class="wcbd-tabs">
                     <button type="button" class="wcbd-tab-btn active" data-tab="settings">⚙️ Settings</button>
+                    <button type="button" class="wcbd-tab-btn" data-tab="cooldown">⏱️ Cooldown</button>
                     <button type="button" class="wcbd-tab-btn" data-tab="incomplete">📊 Incomplete Orders</button>
                 </div>
                 
@@ -881,6 +1004,19 @@ ADMINJSTEMPLATE;
                     </button>
                 </form>
                 </div><!-- End Settings Tab -->
+                
+                <!-- Cooldown Tab -->
+                <div id="wcbd-tab-cooldown" class="wcbd-tab-content">
+                    <div class="fraud-card dark">
+                        <h2 style="margin-bottom:10px;border:none;padding:0">⏱️ Cooldown Timer Control</h2>
+                        <p style="color:#94a3b8;margin:0 0 25px;font-size:14px">অর্ডারের মধ্যে কতক্ষণ অপেক্ষা করতে হবে সেটা এখান থেকে নিয়ন্ত্রণ করুন</p>
+                        
+                        <div id="cooldown-container" style="text-align:center;padding:20px;color:#94a3b8">
+                            <span style="font-size:24px">🔄</span>
+                            <p>Loading cooldown settings...</p>
+                        </div>
+                    </div>
+                </div><!-- End Cooldown Tab -->
                 
                 <!-- Incomplete Orders Tab -->
                 <div id="wcbd-tab-incomplete" class="wcbd-tab-content">
@@ -1012,6 +1148,85 @@ ADMINJSTEMPLATE;
                 'converted' => 0,
                 'today' => 0
             )
+        ));
+    }
+    
+    public function ajax_get_cooldown() {
+        check_ajax_referer('wcbd_fraud_guard_nonce', 'nonce');
+        
+        $api_key = get_option('wcbd_fraud_guard_api_key', $this->api_key);
+        
+        if (empty($api_key)) {
+            wp_send_json_error('No API key configured');
+            return;
+        }
+        
+        $response = wp_remote_post($this->update_settings_url, array(
+            'timeout' => 15,
+            'headers' => array('Content-Type' => 'application/json'),
+            'body' => json_encode(array(
+                'api_key' => $api_key,
+                'action' => 'get_cooldown'
+            ))
+        ));
+        
+        if (is_wp_error($response)) {
+            wp_send_json_error($response->get_error_message());
+            return;
+        }
+        
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+        
+        if (!isset($body['success']) || !$body['success']) {
+            wp_send_json_error($body['error'] ?? 'Unknown error');
+            return;
+        }
+        
+        wp_send_json_success(array(
+            'cooldown_minutes' => $body['cooldown_minutes'] ?? 1440
+        ));
+    }
+    
+    public function ajax_update_cooldown() {
+        check_ajax_referer('wcbd_fraud_guard_nonce', 'nonce');
+        
+        $api_key = get_option('wcbd_fraud_guard_api_key', $this->api_key);
+        $cooldown_minutes = isset($_POST['cooldown_minutes']) ? intval($_POST['cooldown_minutes']) : 0;
+        
+        if (empty($api_key)) {
+            wp_send_json_error('No API key configured');
+            return;
+        }
+        
+        if ($cooldown_minutes < 1 || $cooldown_minutes > 43200) {
+            wp_send_json_error('Invalid cooldown value');
+            return;
+        }
+        
+        $response = wp_remote_post($this->update_settings_url, array(
+            'timeout' => 15,
+            'headers' => array('Content-Type' => 'application/json'),
+            'body' => json_encode(array(
+                'api_key' => $api_key,
+                'action' => 'update_cooldown',
+                'cooldown_minutes' => $cooldown_minutes
+            ))
+        ));
+        
+        if (is_wp_error($response)) {
+            wp_send_json_error($response->get_error_message());
+            return;
+        }
+        
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+        
+        if (!isset($body['success']) || !$body['success']) {
+            wp_send_json_error($body['error'] ?? 'Update failed');
+            return;
+        }
+        
+        wp_send_json_success(array(
+            'cooldown_minutes' => $body['cooldown_minutes'] ?? $cooldown_minutes
         ));
     }
 }

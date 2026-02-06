@@ -4,22 +4,23 @@
 
 export const PLUGIN_CONFIG = {
   // Current version - UPDATE THIS WHEN RELEASING NEW VERSIONS
-  version: "6.0.0",
+  version: "6.1.0",
   
   // Plugin metadata
   name: "WCBD Fraud Guard",
   slug: "wcbd-fraud-guard",
   fileName: "wcbd-fraud-guard.zip",
-  fileSize: "~20KB",
+  fileSize: "~22KB",
   
   // Version badge styling
   badgeLabel: "STABLE",
   
   // Current version highlights (for banners and feature lists)
-  versionHighlight: "Incomplete Order Tracking",
+  versionHighlight: "License Protection + Improved Tracking",
   
   // What's new in this version (for feature list)
   whatsNew: [
+    { icon: "🔐", title: "License Protection", description: "License ছাড়া কোন feature কাজ করবে না" },
     { icon: "📱", title: "Phone Blur Tracking", description: "ফোন enter করে চলে গেলে log হবে" },
     { icon: "❌", title: "Validation Error", description: "WooCommerce error হলে auto track" },
     { icon: "🚪", title: "Page Exit Detection", description: "Tab close করলে sendBeacon এ log" },

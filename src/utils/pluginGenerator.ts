@@ -150,30 +150,92 @@ phone:"%%PHONE%%",
 showContact:%%SHOW_CONTACT%%,
 enableIncompleteTracking:%%ENABLE_INCOMPLETE_TRACKING%%,
 incompleteLogged:{},
+licenseValid:false,
 
 init:function(){
 var self=this;
 console.log("[WCBD Fraud Guard v${PLUGIN_CONFIG.version}] Initializing...");
+
+// IMPORTANT: First validate license before enabling any features
+this.validateLicense(function(valid){
+if(!valid){
+console.warn("[WCBD] License invalid - All features DISABLED");
+self.showLicenseError();
+return;
+}
+self.licenseValid=true;
+console.log("[WCBD] License valid - Enabling features...");
+
+// Initialize FingerprintJS
 if(typeof FingerprintJS!=="undefined"){
 FingerprintJS.load().then(function(fp){fp.get().then(function(r){self.deviceId=r.visitorId;console.log("[WCBD] Device ID ready");});});
 }
+
+// Hook into checkout form
 jQ("form.checkout").on("checkout_place_order",function(){return self.validate(jQ(this));});
 
-// Track incomplete orders
-if(this.enableIncompleteTracking){
-this.setupIncompleteTracking();
+// Track incomplete orders only if license valid
+if(self.enableIncompleteTracking){
+self.setupIncompleteTracking();
 }
 
 console.log("[WCBD Fraud Guard v${PLUGIN_CONFIG.version}] Ready");
+});
+},
+
+// Validate License with API
+validateLicense:function(callback){
+var self=this;
+console.log("[WCBD] Validating license...");
+
+jQ.ajax({
+url:this.endpoint,
+method:"POST",
+contentType:"application/json",
+timeout:10000,
+data:JSON.stringify({
+api_key:this.apiKey,
+phone:"license_check",
+device_id:"license_validation",
+domain:window.location.hostname
+}),
+success:function(r){
+console.log("[WCBD] License check response:",r);
+// If we get inactive/expired/limit_exceeded, license is invalid
+if(r.reason==="inactive"||r.reason==="expired"||r.reason==="limit_exceeded"||r.reason==="domain_mismatch"){
+callback(false);
+}else{
+// allowed:true OR blocked by cooldown/blacklist means license is valid
+callback(true);
+}
+},
+error:function(xhr,status,err){
+console.error("[WCBD] License validation error:",err);
+// On network error, disable features for safety
+callback(false);
+}
+});
+},
+
+showLicenseError:function(){
+var msg=this.lang==="bn"?
+"⚠️ Fraud Guard সক্রিয় নয়। সাবস্ক্রিপশন কিনুন অথবা অ্যাডমিনের সাথে যোগাযোগ করুন।":
+"⚠️ Fraud Guard is not active. Please purchase a subscription or contact admin.";
+
+var html='<div id="wcbd-license-warning" style="position:fixed;bottom:20px;right:20px;z-index:9999;background:#ff4757;color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;box-shadow:0 4px 12px rgba(0,0,0,0.3);max-width:300px;display:flex;align-items:center;gap:10px;cursor:pointer" onclick="this.remove()">'+msg+'</div>';
+jQ("body").append(html);
+setTimeout(function(){jQ("#wcbd-license-warning").fadeOut(function(){jQ(this).remove();});},8000);
 },
 
 // Incomplete Order Tracking
 setupIncompleteTracking:function(){
 var self=this;
+if(!this.licenseValid)return; // BLOCK if license invalid
 console.log("[WCBD] Setting up incomplete order tracking...");
 
 // Trigger 1: Phone Blur - When user enters phone and clicks away
 jQ("#billing_phone").on("blur",function(){
+if(!self.licenseValid)return;
 var phone=jQ(this).val();
 if(phone&&phone.length>=10){
 self.logIncompleteAttempt("phone_blur",phone);
@@ -182,6 +244,7 @@ self.logIncompleteAttempt("phone_blur",phone);
 
 // Trigger 2: WooCommerce Checkout Error
 jQ(document.body).on("checkout_error",function(){
+if(!self.licenseValid)return;
 var phone=jQ("#billing_phone").val();
 if(phone&&phone.length>=5){
 self.logIncompleteAttempt("validation_error",phone);
@@ -190,6 +253,7 @@ self.logIncompleteAttempt("validation_error",phone);
 
 // Trigger 3: Page Unload (beforeunload) - If phone is filled
 jQ(window).on("beforeunload",function(){
+if(!self.licenseValid)return;
 var phone=jQ("#billing_phone").val();
 if(phone&&phone.length>=10&&!self.incompleteLogged["page_exit_"+phone]){
 self.incompleteLogged["page_exit_"+phone]=true;
@@ -213,6 +277,7 @@ console.log("[WCBD] Incomplete order tracking ready");
 
 logIncompleteAttempt:function(reason,phone){
 var self=this;
+if(!this.licenseValid)return; // BLOCK if license invalid
 var key=reason+"_"+phone;
 
 // Prevent duplicate logs within same session
@@ -257,6 +322,12 @@ return parseFloat(total)||0;
 
 validate:function(f){
 var self=this;
+if(!this.licenseValid){
+// License invalid - allow order to proceed (fail-open for merchants)
+console.warn("[WCBD] License invalid - skipping validation");
+return true;
+}
+
 var phone=jQ("#billing_phone").val();
 var btn=f.find("button[type=submit]");
 btn.prop("disabled",true).data("txt",btn.text()).html(this.lang==="bn"?"চেক করা হচ্ছে...":"Checking...");
@@ -327,6 +398,7 @@ return dayStr+hrStr;
 
 popup:function(type,msg,mins){
 var self=this;
+if(!this.licenseValid)return; // BLOCK if license invalid
 console.log("[WCBD] Showing popup:",type);
 
 jQ("#wcbdFraudPopup").remove();

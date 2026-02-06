@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Shield, Clock, AlertCircle, CheckCircle, ExternalLink, Zap, Sparkles, ArrowUpCircle } from "lucide-react";
+import { Shield, Clock, AlertCircle, CheckCircle, ExternalLink, Zap, Sparkles, ArrowUpCircle, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SubscriptionPlans } from "./SubscriptionPlans";
 import { SubscriptionPurchaseModal } from "./SubscriptionPurchaseModal";
@@ -194,6 +194,23 @@ export function SubscriptionStatus({ merchant, pendingOrder, onPurchaseSuccess }
             </Button>
           </div>
         </div>
+
+        {/* Upgrade Nudge - Always Visible */}
+        {merchant.current_plan === 'monthly' && (
+          <div 
+            onClick={() => setShowPlanModal(true)}
+            className="mt-3 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-3 flex items-center gap-3 cursor-pointer hover:shadow-md hover:border-amber-300 transition-all"
+          >
+            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center flex-shrink-0">
+              <Sparkles className="w-4 h-4 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-amber-800 font-bengali">Yearly Plan এ Upgrade করুন!</p>
+              <p className="text-xs text-amber-600">৳৬৯৯/বছর — <span className="font-bold">42% সেভ</span> করুন</p>
+            </div>
+            <ArrowRight className="w-4 h-4 text-amber-500 flex-shrink-0" />
+          </div>
+        )}
 
         {/* Plan Selection Modal */}
         {showPlanModal && (

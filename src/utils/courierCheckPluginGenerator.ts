@@ -139,7 +139,7 @@ class WCBD_Courier_Check {
     }
     
     public function add_order_meta_box() {
-        $screen = class_exists('\\\\Automattic\\\\WooCommerce\\\\Internal\\\\DataStores\\\\Orders\\\\CustomOrdersTableController')
+        $screen = class_exists('\\Automattic\\WooCommerce\\Internal\\DataStores\\Orders\\CustomOrdersTableController')
             ? wc_get_page_screen_id('shop-order')
             : 'shop_order';
             
@@ -154,7 +154,7 @@ class WCBD_Courier_Check {
     }
     
     public function render_order_meta_box($post_or_order) {
-        $order = ($post_or_order instanceof \\\\WP_Post) ? wc_get_order($post_or_order->ID) : $post_or_order;
+        $order = ($post_or_order instanceof \\WP_Post) ? wc_get_order($post_or_order->ID) : $post_or_order;
         if (!$order) return;
         
         $phone = $order->get_billing_phone();

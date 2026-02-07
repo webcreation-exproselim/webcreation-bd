@@ -259,7 +259,16 @@ self.licenseValid=true;
 console.log('[WCBD] License valid - Enabling features...');
 
 if(typeof FingerprintJS!=='undefined'){
-FingerprintJS.load().then(function(fp){fp.get().then(function(r){self.deviceId=r.visitorId;console.log('[WCBD] Device ID ready');});});
+FingerprintJS.load().then(function(fp){fp.get().then(function(r){
+self.deviceId=r.visitorId;
+console.log('[WCBD] Device ID ready:',r.visitorId);
+document.cookie='wcbd_device_id='+r.visitorId+';path=/;max-age=86400;SameSite=Lax';
+var existingHidden=document.querySelector('input[name=wcbd_device_id]');
+if(!existingHidden){
+var forms=document.querySelectorAll('form.checkout,form.wc-block-checkout__form,.wp-block-woocommerce-checkout form');
+forms.forEach(function(f){var h=document.createElement('input');h.type='hidden';h.name='wcbd_device_id';h.value=r.visitorId;f.appendChild(h);});
+}else{existingHidden.value=r.visitorId;}
+});});
 }
 
 self.isBlockCheckout=self.detectBlockCheckout();
@@ -1385,17 +1394,42 @@ ADMINJSTEMPLATE;
         $api_key = $this->api_key;
         if (empty($api_key)) return;
         
-        error_log('[WCBD Fraud Guard] Server-side check for phone: ' . $phone . ' (block: ' . ($is_block ? 'yes' : 'no') . ')');
+        // Get device ID from cookie (set by FingerprintJS on client side)
+        $device_id = isset($_COOKIE['wcbd_device_id']) ? sanitize_text_field($_COOKIE['wcbd_device_id']) : '';
+        // Also try POST hidden field as fallback
+        if (empty($device_id) && isset($_POST['wcbd_device_id'])) {
+            $device_id = sanitize_text_field($_POST['wcbd_device_id']);
+        }
+        
+        // Get client IP address
+        $ip = '';
+        if (!empty($_SERVER['HTTP_CF_CONNECTING_IP'])) {
+            $ip = $_SERVER['HTTP_CF_CONNECTING_IP'];
+        } elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+            $ips = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
+            $ip = trim($ips[0]);
+        } elseif (!empty($_SERVER['HTTP_X_REAL_IP'])) {
+            $ip = $_SERVER['HTTP_X_REAL_IP'];
+        } elseif (!empty($_SERVER['REMOTE_ADDR'])) {
+            $ip = $_SERVER['REMOTE_ADDR'];
+        }
+        $ip = sanitize_text_field($ip);
+        
+        error_log('[WCBD Fraud Guard] Server-side check for phone: ' . $phone . ' device: ' . $device_id . ' ip: ' . $ip . ' (block: ' . ($is_block ? 'yes' : 'no') . ')');
+        
+        $request_data = array(
+            'api_key' => $api_key,
+            'phone' => $phone,
+            'domain' => wp_parse_url(home_url(), PHP_URL_HOST),
+            'check_type' => 'order'
+        );
+        if (!empty($device_id)) $request_data['device_id'] = $device_id;
+        if (!empty($ip)) $request_data['ip'] = $ip;
         
         $response = wp_remote_post($this->endpoint, array(
             'timeout' => 10,
             'headers' => array('Content-Type' => 'application/json'),
-            'body' => json_encode(array(
-                'api_key' => $api_key,
-                'phone' => $phone,
-                'domain' => wp_parse_url(home_url(), PHP_URL_HOST),
-                'check_type' => 'order'
-            ))
+            'body' => json_encode($request_data)
         ));
         
         if (is_wp_error($response)) {

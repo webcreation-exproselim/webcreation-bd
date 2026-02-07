@@ -5,7 +5,8 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend, BarChart, Bar
 } from "recharts";
-import { Shield, Users, Activity, TrendingUp, Loader2 } from "lucide-react";
+import { Shield, Users, Activity, TrendingUp, Loader2, DollarSign, Zap, BarChart3 } from "lucide-react";
+import { motion } from "framer-motion";
 
 interface Merchant {
   id: string;
@@ -26,11 +27,14 @@ interface SubscriptionOrder {
   created_at: string;
 }
 
-const COLORS = {
-  monthly: "#3B82F6",
-  yearly: "#8B5CF6",
-  allowed: "#10B981",
-  blocked: "#EF4444",
+const CHART_COLORS = {
+  cyan: "#06B6D4",
+  pink: "#EC4899",
+  green: "#10B981",
+  red: "#EF4444",
+  purple: "#A855F7",
+  amber: "#F59E0B",
+  blue: "#3B82F6",
 };
 
 export function FraudGuardCharts() {
@@ -68,17 +72,29 @@ export function FraudGuardCharts() {
     const activeMerchants = merchants.filter(m => m.is_active).length;
     const totalApiRequests = merchants.reduce((sum, m) => sum + m.requests_used, 0);
     const totalRevenue = orders.reduce((sum, o) => sum + Number(o.amount), 0);
+    const monthlyRevenue = orders
+      .filter(o => {
+        const d = new Date(o.created_at);
+        const now = new Date();
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      })
+      .reduce((sum, o) => sum + Number(o.amount), 0);
+    const blockedRequests = logs.filter(l => l.status === 'blocked').length;
+    const allowedRequests = logs.filter(l => l.status === 'allowed').length;
+    const blockRate = logs.length > 0 ? ((blockedRequests / logs.length) * 100).toFixed(1) : '0';
 
-    return { totalMerchants, activeMerchants, totalApiRequests, totalRevenue };
-  }, [merchants, orders]);
+    return { totalMerchants, activeMerchants, totalApiRequests, totalRevenue, monthlyRevenue, blockedRequests, allowedRequests, blockRate };
+  }, [merchants, orders, logs]);
 
   // Subscriber Distribution
   const subscriberData = useMemo(() => {
     const monthly = merchants.filter(m => m.is_active && m.current_plan === 'monthly').length;
     const yearly = merchants.filter(m => m.is_active && m.current_plan === 'yearly').length;
+    const inactive = merchants.filter(m => !m.is_active).length;
     return [
-      { name: 'Monthly', value: monthly, color: COLORS.monthly },
-      { name: 'Yearly', value: yearly, color: COLORS.yearly },
+      { name: 'Monthly', value: monthly, color: CHART_COLORS.cyan },
+      { name: 'Yearly', value: yearly, color: CHART_COLORS.purple },
+      { name: 'Inactive', value: inactive, color: '#475569' },
     ].filter(d => d.value > 0);
   }, [merchants]);
 
@@ -98,11 +114,8 @@ export function FraudGuardCharts() {
     logs.forEach(log => {
       const key = new Date(log.created_at).toISOString().split('T')[0];
       if (days[key]) {
-        if (log.status === "allowed") {
-          days[key].allowed++;
-        } else {
-          days[key].blocked++;
-        }
+        if (log.status === "allowed") days[key].allowed++;
+        else days[key].blocked++;
       }
     });
     
@@ -111,202 +124,241 @@ export function FraudGuardCharts() {
 
   // Revenue by Month
   const revenueData = useMemo(() => {
-    const months: { [key: string]: number } = {};
+    const months: { [key: string]: { monthly: number; yearly: number } } = {};
     
     orders.forEach(order => {
-      const month = new Date(order.created_at).toLocaleDateString('en-US', { 
-        month: 'short', 
-        year: '2-digit' 
-      });
-      months[month] = (months[month] || 0) + Number(order.amount);
+      const month = new Date(order.created_at).toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+      if (!months[month]) months[month] = { monthly: 0, yearly: 0 };
+      if (order.plan_type === 'yearly') {
+        months[month].yearly += Number(order.amount);
+      } else {
+        months[month].monthly += Number(order.amount);
+      }
     });
 
-    return Object.entries(months).map(([month, revenue]) => ({ month, revenue }));
+    return Object.entries(months).map(([month, data]) => ({ month, ...data, total: data.monthly + data.yearly }));
   }, [orders]);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+      <div className="flex items-center justify-center py-16">
+        <div className="text-center">
+          <Loader2 className="w-10 h-10 animate-spin text-cyan-400 mx-auto mb-3" />
+          <p className="text-slate-500 text-sm">ডেটা লোড হচ্ছে...</p>
+        </div>
       </div>
     );
   }
 
+  const statCards = [
+    { icon: Users, label: "মোট Merchants", value: stats.totalMerchants, sub: `${stats.activeMerchants} Active`, gradient: "from-cyan-500 to-blue-600", shadow: "shadow-cyan-500/25" },
+    { icon: DollarSign, label: "মোট আয়", value: `৳${stats.totalRevenue.toLocaleString()}`, sub: `এই মাসে ৳${stats.monthlyRevenue.toLocaleString()}`, gradient: "from-emerald-500 to-teal-600", shadow: "shadow-emerald-500/25" },
+    { icon: Activity, label: "মোট API Calls", value: stats.totalApiRequests.toLocaleString(), sub: `${stats.blockRate}% ব্লক হয়েছে`, gradient: "from-purple-500 to-violet-600", shadow: "shadow-purple-500/25" },
+    { icon: Shield, label: "ব্লক করা হয়েছে", value: stats.blockedRequests.toLocaleString(), sub: `${stats.allowedRequests.toLocaleString()} অনুমোদিত`, gradient: "from-red-500 to-pink-600", shadow: "shadow-red-500/25" },
+  ];
+
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (!active || !payload) return null;
+    return (
+      <div className="bg-slate-800 border border-slate-700 rounded-xl p-3 shadow-xl">
+        <p className="text-slate-400 text-xs mb-1">{label}</p>
+        {payload.map((entry: any, i: number) => (
+          <p key={i} className="text-sm font-medium" style={{ color: entry.color }}>
+            {entry.name}: {typeof entry.value === 'number' && entry.name?.includes('Revenue') ? `৳${entry.value.toLocaleString()}` : entry.value}
+          </p>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6">
-      {/* Stats Cards */}
+      {/* Hero Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-200">
-          <CardContent className="p-5">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
-                <Users className="w-6 h-6 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 font-bengali">মোট Merchants</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.totalMerchants}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border-emerald-200">
-          <CardContent className="p-5">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center">
-                <Shield className="w-6 h-6 text-emerald-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 font-bengali">Active</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.activeMerchants}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 border-purple-200">
-          <CardContent className="p-5">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center">
-                <Activity className="w-6 h-6 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 font-bengali">API Requests</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.totalApiRequests.toLocaleString()}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-amber-500/10 to-amber-600/5 border-amber-200">
-          <CardContent className="p-5">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-amber-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 font-bengali">Revenue</p>
-                <p className="text-2xl font-bold text-gray-900">৳{stats.totalRevenue.toLocaleString()}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {statCards.map((card, index) => (
+          <motion.div
+            key={card.label}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.08 }}
+          >
+            <Card className={`relative overflow-hidden border-0 bg-gradient-to-br ${card.gradient} ${card.shadow} shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5`}>
+              <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-8 -mt-8" />
+              <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/5 rounded-full -ml-4 -mb-4" />
+              <CardContent className="p-5 relative">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-white/70 text-xs font-bengali mb-1">{card.label}</p>
+                    <p className="text-2xl font-bold text-white">{card.value}</p>
+                    <p className="text-white/60 text-[11px] mt-1 font-bengali">{card.sub}</p>
+                  </div>
+                  <div className="w-10 h-10 bg-white/15 rounded-xl flex items-center justify-center">
+                    <card.icon className="w-5 h-5 text-white" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ))}
       </div>
+
+      {/* Income Summary Card */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
+        <Card className="border-slate-700/50 bg-slate-800/60 backdrop-blur-sm">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                <TrendingUp className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h3 className="text-white font-bold font-bengali">আয়ের সারাংশ</h3>
+                <p className="text-slate-500 text-xs">Fraud Guard থেকে মোট উপার্জন</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-slate-900/60 rounded-xl p-4 border border-slate-700/50">
+                <p className="text-slate-500 text-xs font-bengali mb-1">সর্বমোট আয়</p>
+                <p className="text-xl font-bold text-emerald-400">৳{stats.totalRevenue.toLocaleString()}</p>
+              </div>
+              <div className="bg-slate-900/60 rounded-xl p-4 border border-slate-700/50">
+                <p className="text-slate-500 text-xs font-bengali mb-1">এই মাসের আয়</p>
+                <p className="text-xl font-bold text-cyan-400">৳{stats.monthlyRevenue.toLocaleString()}</p>
+              </div>
+              <div className="bg-slate-900/60 rounded-xl p-4 border border-slate-700/50">
+                <p className="text-slate-500 text-xs font-bengali mb-1">Monthly Plan</p>
+                <p className="text-xl font-bold text-blue-400">
+                  ৳{orders.filter(o => o.plan_type === 'monthly').reduce((s, o) => s + Number(o.amount), 0).toLocaleString()}
+                </p>
+              </div>
+              <div className="bg-slate-900/60 rounded-xl p-4 border border-slate-700/50">
+                <p className="text-slate-500 text-xs font-bengali mb-1">Yearly Plan</p>
+                <p className="text-xl font-bold text-purple-400">
+                  ৳{orders.filter(o => o.plan_type === 'yearly').reduce((s, o) => s + Number(o.amount), 0).toLocaleString()}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
 
       {/* Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Daily API Requests */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="font-bengali text-lg">দৈনিক API Requests</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={dailyTrend}>
-                  <defs>
-                    <linearGradient id="colorAllowedAdmin" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10B981" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
-                    </linearGradient>
-                    <linearGradient id="colorBlockedAdmin" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#EF4444" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#EF4444" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                  <XAxis dataKey="date" stroke="#9CA3AF" fontSize={10} />
-                  <YAxis stroke="#9CA3AF" fontSize={10} />
-                  <Tooltip />
-                  <Area 
-                    type="monotone" 
-                    dataKey="allowed" 
-                    stroke="#10B981" 
-                    fillOpacity={1} 
-                    fill="url(#colorAllowedAdmin)" 
-                    name="Allowed"
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="blocked" 
-                    stroke="#EF4444" 
-                    fillOpacity={1} 
-                    fill="url(#colorBlockedAdmin)" 
-                    name="Blocked"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+          <Card className="border-slate-700/50 bg-slate-800/60 backdrop-blur-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-white font-bengali text-base flex items-center gap-2">
+                <Zap className="w-4 h-4 text-cyan-400" />
+                দৈনিক API Requests (14 দিন)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={dailyTrend}>
+                    <defs>
+                      <linearGradient id="colorAllowedFG" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={CHART_COLORS.cyan} stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor={CHART_COLORS.cyan} stopOpacity={0}/>
+                      </linearGradient>
+                      <linearGradient id="colorBlockedFG" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={CHART_COLORS.pink} stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor={CHART_COLORS.pink} stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                    <XAxis dataKey="date" stroke="#64748B" fontSize={10} />
+                    <YAxis stroke="#64748B" fontSize={10} />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Area type="monotone" dataKey="allowed" stroke={CHART_COLORS.cyan} fillOpacity={1} fill="url(#colorAllowedFG)" name="Allowed" strokeWidth={2} />
+                    <Area type="monotone" dataKey="blocked" stroke={CHART_COLORS.pink} fillOpacity={1} fill="url(#colorBlockedFG)" name="Blocked" strokeWidth={2} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
 
         {/* Subscriber Distribution */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="font-bengali text-lg">Subscriber Distribution</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64">
-              {subscriberData.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={subscriberData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={90}
-                      paddingAngle={5}
-                      dataKey="value"
-                    >
-                      {subscriberData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-full flex items-center justify-center text-gray-400 font-bengali">
-                  কোনো Active Subscriber নেই
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}>
+          <Card className="border-slate-700/50 bg-slate-800/60 backdrop-blur-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-white font-bengali text-base flex items-center gap-2">
+                <Users className="w-4 h-4 text-purple-400" />
+                সাবস্ক্রাইবার বিতরণ
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-64">
+                {subscriberData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={subscriberData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={55}
+                        outerRadius={85}
+                        paddingAngle={5}
+                        dataKey="value"
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      >
+                        {subscriberData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip content={<CustomTooltip />} />
+                      <Legend wrapperStyle={{ color: '#94A3B8', fontSize: '12px' }} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-full flex items-center justify-center">
+                    <div className="text-center">
+                      <Users className="w-10 h-10 text-slate-700 mx-auto mb-2" />
+                      <p className="text-slate-500 font-bengali text-sm">কোনো Active Subscriber নেই</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
 
         {/* Revenue Chart */}
-        <Card className="lg:col-span-2">
-          <CardHeader className="pb-2">
-            <CardTitle className="font-bengali text-lg">Subscription Revenue</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64">
-              {revenueData.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={revenueData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                    <XAxis dataKey="month" stroke="#9CA3AF" fontSize={12} />
-                    <YAxis stroke="#9CA3AF" fontSize={12} />
-                    <Tooltip 
-                      formatter={(value: number) => [`৳${value.toLocaleString()}`, 'Revenue']}
-                    />
-                    <Bar 
-                      dataKey="revenue" 
-                      fill="#8B5CF6" 
-                      radius={[4, 4, 0, 0]}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-full flex items-center justify-center text-gray-400 font-bengali">
-                  কোনো Revenue Data নেই
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="lg:col-span-2">
+          <Card className="border-slate-700/50 bg-slate-800/60 backdrop-blur-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-white font-bengali text-base flex items-center gap-2">
+                <BarChart3 className="w-4 h-4 text-emerald-400" />
+                মাসিক Subscription আয় (Monthly vs Yearly)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-72">
+                {revenueData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={revenueData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                      <XAxis dataKey="month" stroke="#64748B" fontSize={12} />
+                      <YAxis stroke="#64748B" fontSize={12} tickFormatter={(v) => `৳${v}`} />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Legend wrapperStyle={{ color: '#94A3B8', fontSize: '12px' }} />
+                      <Bar dataKey="monthly" fill={CHART_COLORS.cyan} radius={[4, 4, 0, 0]} name="Monthly Revenue" />
+                      <Bar dataKey="yearly" fill={CHART_COLORS.purple} radius={[4, 4, 0, 0]} name="Yearly Revenue" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-full flex items-center justify-center">
+                    <div className="text-center">
+                      <BarChart3 className="w-10 h-10 text-slate-700 mx-auto mb-2" />
+                      <p className="text-slate-500 font-bengali text-sm">কোনো Revenue Data নেই</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
     </div>
   );

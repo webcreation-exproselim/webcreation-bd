@@ -1510,8 +1510,7 @@ ADMINJSTEMPLATE;
                 'converted' => 0,
                 'today' => 0,
                 'potentialRevenue' => 0
-            ),
-            'chartData' => $body['chartData'] ?? array()
+            )
         ));
     }
     

@@ -61,11 +61,20 @@ export function CourierCheckEmbedCode({ apiKey }: CourierCheckEmbedCodeProps) {
       overlay.find('.wcbd-cc-close').on('click', function() { overlay.remove(); });
       overlay.on('click', function(ev) { if (ev.target === overlay[0]) overlay.remove(); });
 
+      // Clean phone: strip +880/880 prefix
+      var cleanPhone = phone.replace(/[^0-9]/g, '');
+      if (cleanPhone.indexOf('880') === 0 && cleanPhone.length === 13) {
+        cleanPhone = '0' + cleanPhone.substring(3);
+      }
+      if (cleanPhone.indexOf('1') === 0 && cleanPhone.length === 10) {
+        cleanPhone = '0' + cleanPhone;
+      }
+
       $.ajax({
         url: WCBD_CC_ENDPOINT,
         method: 'POST',
         contentType: 'application/json',
-        data: JSON.stringify({ phone: phone, api_key: WCBD_CC_API_KEY }),
+        data: JSON.stringify({ phone: cleanPhone, api_key: WCBD_CC_API_KEY }),
         success: function(res) {
           if (res.success && res.data) {
             var d = res.data;

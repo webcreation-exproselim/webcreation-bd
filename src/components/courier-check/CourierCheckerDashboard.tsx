@@ -46,7 +46,14 @@ export function CourierCheckerDashboard({ apiKey }: CourierCheckerDashboardProps
   const { toast } = useToast();
 
   const handleSearch = async () => {
-    const cleanPhone = phone.replace(/[^0-9]/g, '');
+    let cleanPhone = phone.replace(/[^0-9]/g, '');
+    // Strip +880/880 country code prefix
+    if (cleanPhone.startsWith('880') && cleanPhone.length === 13) {
+      cleanPhone = '0' + cleanPhone.substring(3);
+    }
+    if (cleanPhone.startsWith('1') && cleanPhone.length === 10) {
+      cleanPhone = '0' + cleanPhone;
+    }
     if (!/^01[0-9]{9}$/.test(cleanPhone)) {
       toast({
         title: "ভুল নম্বর",

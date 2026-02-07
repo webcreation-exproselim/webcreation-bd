@@ -170,6 +170,15 @@ class WCBD_Courier_Check {
             wp_send_json(array('success' => false, 'error' => 'Phone number is required'));
         }
         
+        // Clean phone: strip +880 / 880 prefix
+        $phone = preg_replace('/[^0-9]/', '', $phone);
+        if (substr($phone, 0, 3) === '880' && strlen($phone) === 13) {
+            $phone = '0' . substr($phone, 3);
+        }
+        if (substr($phone, 0, 1) === '1' && strlen($phone) === 10) {
+            $phone = '0' . $phone;
+        }
+        
         $response = wp_remote_post($this->endpoint, array(
             'timeout' => 30,
             'body' => json_encode(array(

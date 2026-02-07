@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Package,
@@ -10,9 +10,11 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  Settings,
+  Bell,
+  HelpCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import logo from "@/assets/logo.png";
 
 type TabType = "orders" | "invoices" | "chat" | "fraudguard" | "profile";
 
@@ -34,11 +36,11 @@ interface DashboardSidebarProps {
 }
 
 const menuItems = [
-  { id: "orders" as TabType, label: "অর্ডার সমূহ", icon: Package, color: "from-cyan-400 to-blue-500" },
-  { id: "invoices" as TabType, label: "ইনভয়েস", icon: FileText, color: "from-amber-400 to-orange-500" },
-  { id: "chat" as TabType, label: "মেসেজ", icon: MessageCircle, color: "from-emerald-400 to-teal-500" },
-  { id: "fraudguard" as TabType, label: "Fraud Guard", icon: Shield, color: "from-purple-400 to-violet-500" },
-  { id: "profile" as TabType, label: "প্রোফাইল", icon: User, color: "from-pink-400 to-rose-500" },
+  { id: "orders" as TabType, label: "অর্ডার সমূহ", icon: Package, color: "text-blue-600", bg: "bg-blue-100" },
+  { id: "invoices" as TabType, label: "ইনভয়েস", icon: FileText, color: "text-amber-600", bg: "bg-amber-100" },
+  { id: "chat" as TabType, label: "মেসেজ", icon: MessageCircle, color: "text-green-600", bg: "bg-green-100" },
+  { id: "fraudguard" as TabType, label: "Fraud Guard", icon: Shield, color: "text-purple-600", bg: "bg-purple-100" },
+  { id: "profile" as TabType, label: "প্রোফাইল", icon: User, color: "text-slate-600", bg: "bg-slate-100" },
 ];
 
 export function DashboardSidebar({
@@ -55,23 +57,21 @@ export function DashboardSidebar({
   return (
     <aside
       className={cn(
-        "hidden lg:flex flex-col h-screen bg-slate-900/95 backdrop-blur-xl border-r border-slate-700/50 transition-all duration-300 sticky top-0 relative",
+        "hidden lg:flex flex-col h-screen bg-white border-r border-gray-100 transition-all duration-300 sticky top-0",
         collapsed ? "w-20" : "w-64"
       )}
     >
       {/* Header */}
-      <div className="p-4 border-b border-slate-700/50">
+      <div className="p-4 border-b border-gray-100">
         <Link to="/" className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 p-0.5 flex-shrink-0 shadow-lg shadow-cyan-500/20">
-            <div className="w-full h-full rounded-[10px] bg-slate-900 flex items-center justify-center overflow-hidden">
-              <img src={logo} alt="Logo" className="w-7 h-7 object-contain" />
-            </div>
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/20 flex-shrink-0">
+            <span className="text-white font-bold text-lg">W</span>
           </div>
           {!collapsed && (
             <motion.span
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="font-bengali text-sm font-bold text-white"
+              className="font-bengali text-lg font-bold text-gray-900"
             >
               Web Creation BD
             </motion.span>
@@ -80,9 +80,9 @@ export function DashboardSidebar({
       </div>
 
       {/* User Info */}
-      <div className={cn("p-4 border-b border-slate-700/50", collapsed ? "px-3" : "")}>
+      <div className={cn("p-4 border-b border-gray-100", collapsed ? "px-3" : "")}>
         <div className={cn("flex items-center gap-3", collapsed ? "justify-center" : "")}>
-          <div className="w-11 h-11 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center overflow-hidden flex-shrink-0 ring-2 ring-cyan-500/30 shadow-lg shadow-cyan-500/20">
+          <div className="w-11 h-11 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center overflow-hidden flex-shrink-0 ring-2 ring-blue-100">
             {profile?.avatar_url ? (
               <img
                 src={profile.avatar_url}
@@ -95,10 +95,10 @@ export function DashboardSidebar({
           </div>
           {!collapsed && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="min-w-0 flex-1">
-              <p className="font-bengali text-sm font-semibold text-white truncate">
+              <p className="font-bengali text-sm font-semibold text-gray-900 truncate">
                 {profile?.full_name || "গ্রাহক"}
               </p>
-              <p className="text-xs text-cyan-400/60 truncate">
+              <p className="text-xs text-gray-500 truncate">
                 {userEmail?.split("@")[0]}
               </p>
             </motion.div>
@@ -107,78 +107,71 @@ export function DashboardSidebar({
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-3 overflow-y-auto scrollbar-hide">
+      <nav className="flex-1 p-3 overflow-y-auto">
         <div className="space-y-1">
-          {menuItems.map((item, index) => {
+          {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
             const isFraudGuard = item.id === "fraudguard";
 
             return (
-              <motion.button
+              <button
                 key={item.id}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.04 }}
                 onClick={() => setActiveTab(item.id)}
                 className={cn(
-                  "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bengali transition-all duration-200 group relative",
+                  "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group relative",
                   collapsed ? "justify-center" : "",
                   isActive
-                    ? "text-white"
-                    : "text-slate-400 hover:text-white hover:bg-slate-800/60"
+                    ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/25"
+                    : "hover:bg-gray-100 text-gray-600"
                 )}
               >
-                {/* Active background glow */}
-                {isActive && (
-                  <motion.div
-                    layoutId="clientActiveTab"
-                    className={`absolute inset-0 rounded-xl bg-gradient-to-r ${item.color} opacity-15`}
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                  />
-                )}
-                {isActive && (
-                  <div className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-r-full bg-gradient-to-b ${item.color}`} />
-                )}
-
                 <div
                   className={cn(
-                    "w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 transition-all relative",
-                    isActive
-                      ? `bg-gradient-to-br ${item.color} shadow-lg`
-                      : "bg-slate-800/50 group-hover:bg-slate-700/50"
+                    "w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 transition-all",
+                    isActive ? "bg-white/20" : item.bg
                   )}
                 >
-                  <Icon className={cn("w-4.5 h-4.5", isActive ? "text-white" : "text-slate-400 group-hover:text-white")} />
+                  <Icon className={cn("w-5 h-5", isActive ? "text-white" : item.color)} />
+                  {/* Fraud Guard indicator */}
                   {isFraudGuard && (hasActiveSubscription || hasPendingOrder) && (
                     <span
                       className={cn(
-                        "absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-slate-900",
+                        "absolute top-1 right-1 w-2.5 h-2.5 rounded-full border-2 border-white",
                         hasActiveSubscription ? "bg-emerald-500" : "bg-amber-500"
                       )}
                     />
                   )}
                 </div>
                 {!collapsed && (
-                  <span className="truncate relative z-10 font-medium">{item.label}</span>
+                  <motion.span
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className={cn(
+                      "font-bengali text-sm font-medium flex-1 text-left",
+                      isActive ? "text-white" : "text-gray-700"
+                    )}
+                  >
+                    {item.label}
+                  </motion.span>
                 )}
                 {collapsed && (
-                  <div className="absolute left-full ml-3 px-3 py-1.5 bg-slate-800 text-white text-sm font-medium rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 whitespace-nowrap z-50 pointer-events-none shadow-lg font-bengali border border-slate-700/50">
+                  <div className="absolute left-full ml-3 px-3 py-1.5 bg-gray-900 text-white text-sm font-medium rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 whitespace-nowrap z-50 pointer-events-none shadow-lg font-bengali">
                     {item.label}
                   </div>
                 )}
-              </motion.button>
+              </button>
             );
           })}
         </div>
 
         {/* Quick Links */}
         {!collapsed && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-6 pt-4 border-t border-slate-700/50">
-            <p className="px-3 text-xs text-slate-500 font-bengali mb-2">দ্রুত লিংক</p>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-6 pt-4 border-t border-gray-100">
+            <p className="px-3 text-xs text-gray-400 font-bengali mb-2">দ্রুত লিংক</p>
             <Link
               to="/"
-              className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-800/60 text-slate-400 hover:text-white transition-colors"
+              className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-100 text-gray-600 transition-colors"
             >
               <Home className="w-4 h-4" />
               <span className="font-bengali text-sm">হোম পেজ</span>
@@ -188,20 +181,21 @@ export function DashboardSidebar({
       </nav>
 
       {/* Footer */}
-      <div className="p-3 border-t border-slate-700/50">
+      <div className="p-3 border-t border-gray-100">
         {/* Collapse Toggle */}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="absolute -right-3 top-20 w-6 h-6 bg-slate-800 border border-slate-600 rounded-full flex items-center justify-center text-slate-400 hover:text-white hover:bg-cyan-600 hover:border-cyan-500 transition-all z-10 shadow-lg"
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl hover:bg-gray-100 text-gray-500 mb-2 transition-colors"
         >
-          {collapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronLeft className="w-3 h-3" />}
+          {collapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+          {!collapsed && <span className="text-sm font-bengali">সাইডবার ছোট করুন</span>}
         </button>
 
         {/* Logout */}
         <button
           onClick={onLogout}
           className={cn(
-            "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-red-500/10 text-red-400 transition-colors",
+            "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-red-50 text-red-500 transition-colors",
             collapsed ? "justify-center" : ""
           )}
         >

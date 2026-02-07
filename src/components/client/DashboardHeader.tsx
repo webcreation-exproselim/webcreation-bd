@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { LogOut, User, Home, Menu, X } from "lucide-react";
-import logo from "@/assets/logo.png";
+import { LogOut, User, Home, Menu, X, Package, FileText, MessageCircle, Shield } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface Profile {
   full_name?: string | null;
@@ -24,17 +24,15 @@ export function DashboardHeader({
   onLogout,
 }: DashboardHeaderProps) {
   return (
-    <header className="bg-slate-900/95 backdrop-blur-xl border-b border-slate-700/50 sticky top-0 z-50">
+    <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
       <div className="px-4">
         <div className="flex items-center justify-between h-14">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 p-0.5 shadow-lg shadow-cyan-500/20">
-              <div className="w-full h-full rounded-[10px] bg-slate-900 flex items-center justify-center overflow-hidden">
-                <img src={logo} alt="Logo" className="w-6 h-6 object-contain" />
-              </div>
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+              <span className="text-white font-bold text-lg">W</span>
             </div>
-            <span className="font-bengali text-base font-bold text-white">
+            <span className="font-bengali text-base font-bold text-gray-900">
               WCBD
             </span>
           </Link>
@@ -42,11 +40,11 @@ export function DashboardHeader({
           {/* Right Side */}
           <div className="flex items-center gap-2">
             {/* User Avatar */}
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center overflow-hidden ring-2 ring-cyan-500/30">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center overflow-hidden ring-2 ring-blue-100">
               {profile?.avatar_url ? (
-                <img
-                  src={profile.avatar_url}
-                  alt="Avatar"
+                <img 
+                  src={profile.avatar_url} 
+                  alt="Avatar" 
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -57,9 +55,9 @@ export function DashboardHeader({
             {/* Menu Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-xl hover:bg-slate-800/60 transition-colors"
+              className="p-2 rounded-xl hover:bg-gray-100 transition-colors"
             >
-              {mobileMenuOpen ? <X className="w-5 h-5 text-slate-300" /> : <Menu className="w-5 h-5 text-slate-300" />}
+              {mobileMenuOpen ? <X className="w-5 h-5 text-gray-600" /> : <Menu className="w-5 h-5 text-gray-600" />}
             </button>
           </div>
         </div>
@@ -75,13 +73,13 @@ export function DashboardHeader({
             >
               <div className="pt-2 space-y-1">
                 {/* User Info */}
-                <div className="px-3 py-3 rounded-xl bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 mb-3">
+                <div className="px-3 py-3 rounded-xl bg-gradient-to-r from-blue-50 to-purple-50 mb-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center overflow-hidden">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center overflow-hidden">
                       {profile?.avatar_url ? (
-                        <img
-                          src={profile.avatar_url}
-                          alt="Avatar"
+                        <img 
+                          src={profile.avatar_url} 
+                          alt="Avatar" 
                           className="w-full h-full object-cover"
                         />
                       ) : (
@@ -89,10 +87,10 @@ export function DashboardHeader({
                       )}
                     </div>
                     <div>
-                      <p className="font-bengali text-sm font-semibold text-white">
+                      <p className="font-bengali text-sm font-semibold text-gray-900">
                         {profile?.full_name || "গ্রাহক"}
                       </p>
-                      <p className="text-xs text-slate-400">
+                      <p className="text-xs text-gray-500">
                         {userEmail?.split("@")[0]}
                       </p>
                     </div>
@@ -100,12 +98,12 @@ export function DashboardHeader({
                 </div>
 
                 {/* Menu Items */}
-                <Link
-                  to="/"
+                <Link 
+                  to="/" 
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-800/60 text-slate-300 font-bengali transition-colors"
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-100 text-gray-700 font-bengali transition-colors"
                 >
-                  <Home className="w-5 h-5 text-slate-500" />
+                  <Home className="w-5 h-5 text-gray-500" />
                   হোম পেজ
                 </Link>
 
@@ -114,7 +112,7 @@ export function DashboardHeader({
                     onLogout();
                     setMobileMenuOpen(false);
                   }}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-red-500/10 text-red-400 font-bengali transition-colors"
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-red-50 text-red-500 font-bengali transition-colors"
                 >
                   <LogOut className="w-5 h-5" />
                   লগআউট

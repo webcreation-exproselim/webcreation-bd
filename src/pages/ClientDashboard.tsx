@@ -334,17 +334,17 @@ export default function ClientDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-10 h-10 animate-spin text-cyan-400 mx-auto" />
-          <p className="text-slate-400 mt-4 font-bengali">লোড হচ্ছে...</p>
+          <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto" />
+          <p className="text-gray-500 mt-4 font-bengali">লোড হচ্ছে...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 flex">
+    <div className="min-h-screen bg-gray-50 flex">
       {/* Desktop Sidebar */}
       <DashboardSidebar
         activeTab={activeTab}
@@ -432,8 +432,8 @@ export default function ClientDashboard() {
             {activeTab === "orders" && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-bold text-white font-bengali">সাম্প্রতিক অর্ডার</h2>
-                  <Link to="/#services" className="text-sm text-cyan-400 hover:underline font-bengali">
+                  <h2 className="text-lg font-bold text-gray-900 font-bengali">সাম্প্রতিক অর্ডার</h2>
+                  <Link to="/#services" className="text-sm text-blue-600 hover:underline font-bengali">
                     নতুন অর্ডার →
                   </Link>
                 </div>

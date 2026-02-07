@@ -82,14 +82,12 @@ export function UserManagement() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      // Fetch from admin_user_view
+      // Fetch users via secure RPC function (security definer)
       const { data: usersData, error: usersError } = await supabase
-        .from('admin_user_view')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .rpc('get_admin_users');
 
       if (usersError) throw usersError;
-      setUsers(usersData || []);
+      setUsers((usersData || []) as UserProfile[]);
 
       // Fetch all user roles
       const { data: rolesData, error: rolesError } = await supabase

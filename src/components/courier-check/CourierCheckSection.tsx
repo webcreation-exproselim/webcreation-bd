@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, Loader2, Download, AlertCircle, Zap, Calendar, Crown } from "lucide-react";
+import { Search, Loader2, Download, AlertCircle, Zap, Calendar, Crown, Copy, Check, Key, Package, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCourierCheckData } from "@/hooks/useCourierCheckData";
 import { CourierCheckPlans } from "./CourierCheckPlans";
@@ -7,7 +7,7 @@ import { CourierCheckPurchaseModal } from "./CourierCheckPurchaseModal";
 import { CourierCheckerDashboard } from "./CourierCheckerDashboard";
 import { COURIER_CHECK_PLUGIN_CONFIG, getCourierCheckVersionString } from "@/config/courierCheckPluginConfig";
 import { downloadCourierCheckPlugin } from "@/utils/courierCheckPluginGenerator";
-import { motion } from "framer-motion";
+import { useToast } from "@/hooks/use-toast";
 
 interface CourierCheckSectionProps {
   userId: string;
@@ -16,6 +16,8 @@ interface CourierCheckSectionProps {
 export function CourierCheckSection({ userId }: CourierCheckSectionProps) {
   const { subscription, pendingOrder, loading, refetch } = useCourierCheckData(userId);
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const { toast } = useToast();
 
   if (loading) {
     return (
@@ -29,6 +31,15 @@ export function CourierCheckSection({ userId }: CourierCheckSectionProps) {
   }
 
   const usagePercent = subscription ? Math.round((subscription.requests_used / Math.max(subscription.max_requests, 1)) * 100) : 0;
+  const isActive = subscription?.is_active;
+
+  const handleCopyApiKey = () => {
+    if (!subscription?.api_key) return;
+    navigator.clipboard.writeText(subscription.api_key);
+    setCopied(true);
+    toast({ title: "✅ Copied!", description: "API Key কপি হয়েছে" });
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
     <div className="space-y-6">
@@ -49,26 +60,29 @@ export function CourierCheckSection({ userId }: CourierCheckSectionProps) {
             </div>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
-            {subscription?.is_active && (
-              <>
-                <Button
-                  onClick={() => downloadCourierCheckPlugin(subscription.api_key)}
-                  className="bg-white/20 hover:bg-white/30 border border-white/30 text-white gap-2 rounded-xl"
-                >
-                  <Download className="w-4 h-4" />
-                  <span className="font-bengali">Plugin Download</span>
-                </Button>
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-400/30">
-                  <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="text-sm font-medium text-emerald-200">Active</span>
-                </div>
-              </>
+            <Button
+              onClick={() => downloadCourierCheckPlugin(subscription?.api_key || '')}
+              className="bg-white/20 hover:bg-white/30 border border-white/30 text-white gap-2 rounded-xl"
+            >
+              <Download className="w-4 h-4" />
+              <span className="font-bengali">Plugin Download</span>
+            </Button>
+            {isActive ? (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-400/30">
+                <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-sm font-medium text-emerald-200">Active</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-500/20 border border-red-400/30">
+                <div className="w-2 h-2 rounded-full bg-red-400" />
+                <span className="text-sm font-medium text-red-200">Inactive</span>
+              </div>
             )}
           </div>
         </div>
 
         {/* Status Info */}
-        {subscription?.is_active ? (
+        {isActive ? (
           <div className="grid grid-cols-3 gap-3 mt-6">
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
               <div className="flex items-center gap-2 mb-1">
@@ -121,8 +135,90 @@ export function CourierCheckSection({ userId }: CourierCheckSectionProps) {
         )}
       </div>
 
+      {/* API Key Section - Always Visible */}
+      {subscription && (
+        <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-cyan-100 flex items-center justify-center">
+              <Key className="w-5 h-5 text-cyan-600" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-gray-900 font-bengali">API Key</h3>
+              <p className="text-sm text-gray-500 font-bengali">Plugin এ এই API Key ব্যবহার হবে</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 font-mono text-sm text-gray-700 truncate">
+              {subscription.api_key}
+            </div>
+            <Button
+              onClick={handleCopyApiKey}
+              variant="outline"
+              size="sm"
+              className="border-gray-200 hover:bg-gray-50 rounded-xl px-4 h-[46px]"
+            >
+              {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4 text-gray-500" />}
+            </Button>
+          </div>
+          {!isActive && (
+            <p className="text-xs text-amber-600 mt-3 font-bengali flex items-center gap-1.5">
+              <AlertCircle className="w-3.5 h-3.5" />
+              Plan সক্রিয় না থাকলে API কাজ করবে না
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Plugin Download Section - Always Visible */}
+      {subscription && (
+        <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+              <Package className="w-5 h-5 text-blue-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-bold text-gray-900 font-bengali">Plugin Download</h3>
+              <p className="text-sm text-gray-500 font-bengali">WooCommerce Plugin ডাউনলোড করুন</p>
+            </div>
+            <span className="text-xs font-medium bg-cyan-100 text-cyan-700 px-2.5 py-1 rounded-full">
+              {getCourierCheckVersionString()}
+            </span>
+          </div>
+
+          {/* Features */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-5">
+            {COURIER_CHECK_PLUGIN_CONFIG.features.map((feature, i) => (
+              <div key={i} className="text-sm text-gray-600 font-bengali">
+                {feature}
+              </div>
+            ))}
+          </div>
+
+          {/* Requirements */}
+          <div className="flex flex-wrap gap-2 mb-5">
+            <span className="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full">
+              WordPress {COURIER_CHECK_PLUGIN_CONFIG.requirements.wordpress}
+            </span>
+            <span className="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full">
+              WooCommerce {COURIER_CHECK_PLUGIN_CONFIG.requirements.woocommerce}
+            </span>
+            <span className="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full">
+              PHP {COURIER_CHECK_PLUGIN_CONFIG.requirements.php}
+            </span>
+          </div>
+
+          <Button
+            onClick={() => downloadCourierCheckPlugin(subscription.api_key)}
+            className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white gap-2 rounded-xl h-12 font-bengali"
+          >
+            <Download className="w-5 h-5" />
+            Plugin ZIP ডাউনলোড করুন ({COURIER_CHECK_PLUGIN_CONFIG.fileSize})
+          </Button>
+        </div>
+      )}
+
       {/* Pending Order Alert */}
-      {pendingOrder && !subscription?.is_active && (
+      {pendingOrder && !isActive && (
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
@@ -138,18 +234,38 @@ export function CourierCheckSection({ userId }: CourierCheckSectionProps) {
         </div>
       )}
 
-      {/* Content based on subscription status */}
-      {subscription?.is_active ? (
-        <CourierCheckerDashboard apiKey={subscription.api_key} />
+      {/* Courier Check Dashboard - Only when active */}
+      {isActive ? (
+        <CourierCheckerDashboard apiKey={subscription!.api_key} />
       ) : (
-        !pendingOrder && (
-          <div className="bg-white rounded-2xl border border-gray-200 p-6">
-            <h3 className="text-lg font-bold text-gray-900 font-bengali mb-4">
-              🚀 Courier Check Plan নিন
-            </h3>
-            <CourierCheckPlans onSelectPlan={() => setShowPurchaseModal(true)} />
+        <div className="relative">
+          {/* Locked Overlay for Search */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-sm">
+            <div className="flex flex-col items-center justify-center text-center gap-4 py-6">
+              <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center">
+                <Lock className="w-8 h-8 text-gray-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 font-bengali mb-1">
+                  Courier Check Search লক করা আছে
+                </h3>
+                <p className="text-sm text-gray-500 font-bengali max-w-md">
+                  ফোন নম্বর দিয়ে কাস্টমারের Courier Delivery History চেক করতে Plan সক্রিয় করুন
+                </p>
+              </div>
+            </div>
           </div>
-        )
+        </div>
+      )}
+
+      {/* Plan Purchase Section - when inactive and no pending order */}
+      {!isActive && !pendingOrder && (
+        <div className="bg-white rounded-2xl border border-gray-200 p-6">
+          <h3 className="text-lg font-bold text-gray-900 font-bengali mb-4">
+            🚀 Courier Check Plan নিন
+          </h3>
+          <CourierCheckPlans onSelectPlan={() => setShowPurchaseModal(true)} />
+        </div>
       )}
 
       {/* Purchase Modal */}

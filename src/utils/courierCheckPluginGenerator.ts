@@ -167,7 +167,7 @@ class WCBD_Courier_Check {
         
         $phone = sanitize_text_field($_POST['phone']);
         if (empty($phone)) {
-            wp_send_json_error('Phone number is required');
+            wp_send_json(array('success' => false, 'error' => 'Phone number is required'));
         }
         
         $response = wp_remote_post($this->endpoint, array(
@@ -180,7 +180,7 @@ class WCBD_Courier_Check {
         ));
         
         if (is_wp_error($response)) {
-            wp_send_json_error('Connection failed: ' . $response->get_error_message());
+            wp_send_json(array('success' => false, 'error' => 'Connection failed: ' . $response->get_error_message()));
         }
         
         $body = json_decode(wp_remote_retrieve_body($response), true);
@@ -214,54 +214,57 @@ class WCBD_Courier_Check {
     }
     
     private function get_admin_js() {
-        $nonce = wp_create_nonce('wcbd_cc_nonce');
-        $ajax_url = admin_url('admin-ajax.php');
+        $config = json_encode(array(
+            'ajaxUrl' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('wcbd_cc_nonce'),
+        ));
         
-        return "
-jQuery(document).ready(function(\$){
-    \$(document).on('click','.wcbd-cc-btn',function(e){
+        $js = 'var wcbdCc=' . $config . ';';
+        $js .= <<<'JSBLOCK'
+jQuery(document).ready(function($){
+    $(document).on('click','.wcbd-cc-btn',function(e){
         e.preventDefault();
-        var phone=\$(this).data('phone');
+        var phone=$(this).data('phone');
         if(!phone)return;
         
-        var overlay=\$('<div class=\"wcbd-cc-modal-overlay\"><div class=\"wcbd-cc-modal\" style=\"position:relative\"><button class=\"wcbd-cc-close\">&times;</button><div class=\"wcbd-cc-loading\"><div class=\"spinner\"></div><p style=\"margin-top:12px;color:#666\">Checking courier history...</p></div></div></div>');
-        \$('body').append(overlay);
+        var overlay=$('<div class="wcbd-cc-modal-overlay"><div class="wcbd-cc-modal" style="position:relative"><button class="wcbd-cc-close">&times;</button><div class="wcbd-cc-loading"><div class="spinner"></div><p style="margin-top:12px;color:#666">Checking courier history...</p></div></div></div>');
+        $('body').append(overlay);
         
         overlay.find('.wcbd-cc-close').on('click',function(){overlay.remove();});
         overlay.on('click',function(ev){if(ev.target===overlay[0])overlay.remove();});
         
-        \$.ajax({
-            url:'{$ajax_url}',
+        $.ajax({
+            url:wcbdCc.ajaxUrl,
             method:'POST',
-            data:{action:'wcbd_courier_check',phone:phone,nonce:'{$nonce}'},
+            data:{action:'wcbd_courier_check',phone:phone,nonce:wcbdCc.nonce},
             success:function(res){
                 if(res.success&&res.data){
                     var d=res.data;
                     var rateColor=d.success_rate>=80?'#10b981':d.success_rate>=50?'#f59e0b':'#ef4444';
                     var html='<h3>📊 Courier Check: '+d.phone+'</h3>';
-                    html+='<div class=\"wcbd-cc-rate\"><div class=\"wcbd-cc-rate-circle\" style=\"background:'+rateColor+'\">'+d.success_rate+'%</div><p style=\"margin-top:8px;color:#666;font-size:13px\">Success Rate</p></div>';
-                    html+='<div class=\"wcbd-cc-risk '+d.risk_label+'\">'+getRiskLabel(d.risk_label)+'</div>';
-                    html+='<div class=\"wcbd-cc-stats\">';
-                    html+='<div class=\"wcbd-cc-stat\"><p class=\"wcbd-cc-stat-value\">'+d.total_orders+'</p><p class=\"wcbd-cc-stat-label\">Total Orders</p></div>';
-                    html+='<div class=\"wcbd-cc-stat\"><p class=\"wcbd-cc-stat-value\" style=\"color:#10b981\">'+d.total_delivered+'</p><p class=\"wcbd-cc-stat-label\">Delivered</p></div>';
-                    html+='<div class=\"wcbd-cc-stat\"><p class=\"wcbd-cc-stat-value\" style=\"color:#ef4444\">'+d.total_returned+'</p><p class=\"wcbd-cc-stat-label\">Returned</p></div>';
+                    html+='<div class="wcbd-cc-rate"><div class="wcbd-cc-rate-circle" style="background:'+rateColor+'">'+d.success_rate+'%</div><p style="margin-top:8px;color:#666;font-size:13px">Success Rate</p></div>';
+                    html+='<div class="wcbd-cc-risk '+d.risk_label+'">'+getRiskLabel(d.risk_label)+'</div>';
+                    html+='<div class="wcbd-cc-stats">';
+                    html+='<div class="wcbd-cc-stat"><p class="wcbd-cc-stat-value">'+d.total_orders+'</p><p class="wcbd-cc-stat-label">Total Orders</p></div>';
+                    html+='<div class="wcbd-cc-stat"><p class="wcbd-cc-stat-value" style="color:#10b981">'+d.total_delivered+'</p><p class="wcbd-cc-stat-label">Delivered</p></div>';
+                    html+='<div class="wcbd-cc-stat"><p class="wcbd-cc-stat-value" style="color:#ef4444">'+d.total_returned+'</p><p class="wcbd-cc-stat-label">Returned</p></div>';
                     html+='</div>';
                     if(d.couriers&&d.couriers.length>0){
-                        html+='<table class=\"wcbd-cc-table\"><thead><tr><th>Courier</th><th>Orders</th><th>Delivered</th><th>Returned</th><th>Rate</th></tr></thead><tbody>';
+                        html+='<table class="wcbd-cc-table"><thead><tr><th>Courier</th><th>Orders</th><th>Delivered</th><th>Returned</th><th>Rate</th></tr></thead><tbody>';
                         d.couriers.forEach(function(c){
                             var rColor=c.rate>=80?'#10b981':c.rate>=50?'#f59e0b':'#ef4444';
-                            html+='<tr><td><strong>'+c.name+'</strong></td><td>'+c.orders+'</td><td style=\"color:#10b981\">'+c.delivered+'</td><td style=\"color:#ef4444\">'+c.returned+'</td><td><span style=\"background:'+rColor+'22;color:'+rColor+';padding:2px 8px;border-radius:8px;font-weight:700;font-size:12px\">'+c.rate+'%</span></td></tr>';
+                            html+='<tr><td><strong>'+c.name+'</strong></td><td>'+c.orders+'</td><td style="color:#10b981">'+c.delivered+'</td><td style="color:#ef4444">'+c.returned+'</td><td><span style="background:'+rColor+'22;color:'+rColor+';padding:2px 8px;border-radius:8px;font-weight:700;font-size:12px">'+c.rate+'%</span></td></tr>';
                         });
                         html+='</tbody></table>';
                     }
-                    overlay.find('.wcbd-cc-modal').html('<button class=\"wcbd-cc-close\">&times;</button>'+html);
+                    overlay.find('.wcbd-cc-modal').html('<button class="wcbd-cc-close">&times;</button>'+html);
                     overlay.find('.wcbd-cc-close').on('click',function(){overlay.remove();});
                 }else{
-                    overlay.find('.wcbd-cc-loading').html('<p style=\"color:#ef4444\">'+(res.error||'No data found')+'</p>');
+                    overlay.find('.wcbd-cc-loading').html('<p style="color:#ef4444">'+(res.error||'No data found')+'</p>');
                 }
             },
             error:function(){
-                overlay.find('.wcbd-cc-loading').html('<p style=\"color:#ef4444\">Connection failed. Please try again.</p>');
+                overlay.find('.wcbd-cc-loading').html('<p style="color:#ef4444">Connection failed. Please try again.</p>');
             }
         });
     });
@@ -271,7 +274,8 @@ jQuery(document).ready(function(\$){
         return labels[label]||label;
     }
 });
-        ";
+JSBLOCK;
+        return $js;
     }
 }
 

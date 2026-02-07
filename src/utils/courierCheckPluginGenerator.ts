@@ -110,7 +110,10 @@ class WCBD_Courier_Check {
         
         $phone = $order->get_billing_phone();
         if ($phone) {
-            echo '<button class="button wcbd-cc-btn" data-phone="' . esc_attr($phone) . '" title="Check Courier History">📊 Check</button>';
+            echo '<button class="wcbd-cc-btn" data-phone="' . esc_attr($phone) . '" title="Check Courier History">
+                <span class="wcbd-cc-btn-icon">📊</span>
+                <span class="wcbd-cc-btn-text">Check</span>
+            </button>';
         } else {
             echo '<span class="wcbd-cc-no-phone">—</span>';
         }
@@ -126,14 +129,17 @@ class WCBD_Courier_Check {
         
         $phone = $order->get_billing_phone();
         if ($phone) {
-            echo '<button class="button wcbd-cc-btn" data-phone="' . esc_attr($phone) . '" title="Check Courier History">📊 Check</button>';
+            echo '<button class="wcbd-cc-btn" data-phone="' . esc_attr($phone) . '" title="Check Courier History">
+                <span class="wcbd-cc-btn-icon">📊</span>
+                <span class="wcbd-cc-btn-text">Check</span>
+            </button>';
         } else {
             echo '<span class="wcbd-cc-no-phone">—</span>';
         }
     }
     
     public function add_order_meta_box() {
-        $screen = class_exists('\\Automattic\\WooCommerce\\Internal\\DataStores\\Orders\\CustomOrdersTableController')
+        $screen = class_exists('\\\\Automattic\\\\WooCommerce\\\\Internal\\\\DataStores\\\\Orders\\\\CustomOrdersTableController')
             ? wc_get_page_screen_id('shop-order')
             : 'shop_order';
             
@@ -148,7 +154,7 @@ class WCBD_Courier_Check {
     }
     
     public function render_order_meta_box($post_or_order) {
-        $order = ($post_or_order instanceof \\WP_Post) ? wc_get_order($post_or_order->ID) : $post_or_order;
+        $order = ($post_or_order instanceof \\\\WP_Post) ? wc_get_order($post_or_order->ID) : $post_or_order;
         if (!$order) return;
         
         $phone = $order->get_billing_phone();
@@ -158,7 +164,7 @@ class WCBD_Courier_Check {
         }
         
         echo '<div id="wcbd-cc-metabox-result" style="min-height:60px">';
-        echo '<button class="button button-primary wcbd-cc-btn" data-phone="' . esc_attr($phone) . '" style="width:100%">📊 Check Courier History</button>';
+        echo '<button class="wcbd-cc-btn wcbd-cc-btn-full" data-phone="' . esc_attr($phone) . '">📊 Check Courier History</button>';
         echo '</div>';
     }
     
@@ -197,33 +203,104 @@ class WCBD_Courier_Check {
     }
     
     private function get_admin_css() {
-        return '
-.wcbd-cc-modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:100000;display:flex;align-items:center;justify-content:center;padding:20px}
-.wcbd-cc-modal{background:#fff;border-radius:16px;max-width:600px;width:100%;max-height:80vh;overflow-y:auto;padding:30px;box-shadow:0 25px 60px rgba(0,0,0,0.3)}
-.wcbd-cc-modal h3{margin:0 0 20px;font-size:20px;display:flex;align-items:center;gap:8px}
-.wcbd-cc-close{position:absolute;top:15px;right:20px;font-size:24px;cursor:pointer;color:#666;background:none;border:none}
-.wcbd-cc-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
-.wcbd-cc-stat{background:#f8f9fa;border-radius:12px;padding:16px;text-align:center}
-.wcbd-cc-stat-value{font-size:28px;font-weight:800;margin:0}
-.wcbd-cc-stat-label{font-size:12px;color:#666;margin-top:4px}
-.wcbd-cc-rate{text-align:center;margin-bottom:20px}
-.wcbd-cc-rate-circle{width:120px;height:120px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:32px;font-weight:800;color:#fff}
-.wcbd-cc-risk{padding:12px 20px;border-radius:12px;text-align:center;font-weight:700;font-size:16px;margin-bottom:20px}
+        return <<<'CSSBLOCK'
+/* WCBD Courier Check Button */
+.wcbd-cc-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border:none;border-radius:10px;background:linear-gradient(135deg,#0891b2,#2563eb);color:#fff;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s ease;box-shadow:0 2px 8px rgba(8,145,178,0.3)}
+.wcbd-cc-btn:hover{background:linear-gradient(135deg,#0e7490,#1d4ed8);box-shadow:0 4px 14px rgba(8,145,178,0.4);transform:translateY(-1px)}
+.wcbd-cc-btn:active{transform:translateY(0)}
+.wcbd-cc-btn-icon{font-size:15px}
+.wcbd-cc-btn-text{letter-spacing:0.3px}
+.wcbd-cc-btn-full{width:100%;justify-content:center;padding:10px 16px;font-size:14px}
+
+/* Modal Overlay */
+.wcbd-cc-modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);z-index:100000;display:flex;align-items:center;justify-content:center;padding:16px}
+
+/* Modal Container */
+.wcbd-cc-modal{background:#fff;border-radius:20px;max-width:520px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 25px 60px rgba(0,0,0,0.25);position:relative;animation:wcbd-cc-fadeIn 0.3s ease}
+@keyframes wcbd-cc-fadeIn{from{opacity:0;transform:scale(0.95) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+
+/* Modal Header */
+.wcbd-cc-header{background:linear-gradient(135deg,#0891b2,#2563eb);padding:20px 24px;border-radius:20px 20px 0 0;display:flex;align-items:center;justify-content:space-between}
+.wcbd-cc-header h3{margin:0;font-size:18px;color:#fff;font-weight:700;display:flex;align-items:center;gap:8px}
+.wcbd-cc-header .wcbd-cc-phone-badge{background:rgba(255,255,255,0.2);padding:4px 12px;border-radius:20px;font-size:13px;color:#fff;font-weight:500}
+
+/* Close Button */
+.wcbd-cc-close{position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.2);border:none;color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.2s}
+.wcbd-cc-close:hover{background:rgba(255,255,255,0.35)}
+
+/* Modal Body */
+.wcbd-cc-body{padding:20px 24px 24px}
+
+/* Risk Badge */
+.wcbd-cc-risk{padding:10px 16px;border-radius:12px;text-align:center;font-weight:700;font-size:15px;margin-bottom:16px;display:flex;align-items:center;justify-content:center;gap:8px}
 .wcbd-cc-risk.trusted{background:#d1fae5;color:#065f46}
 .wcbd-cc-risk.moderate{background:#fef3c7;color:#92400e}
 .wcbd-cc-risk.risky{background:#fee2e2;color:#991b1b}
 .wcbd-cc-risk.new_customer{background:#dbeafe;color:#1e40af}
-.wcbd-cc-table{width:100%;border-collapse:collapse;border-radius:12px;overflow:hidden}
-.wcbd-cc-table th{background:#f1f5f9;padding:10px 12px;text-align:left;font-size:12px;text-transform:uppercase;color:#64748b}
-.wcbd-cc-table td{padding:10px 12px;border-bottom:1px solid #f1f5f9}
-.wcbd-cc-loading{text-align:center;padding:40px}
-.wcbd-cc-loading .spinner{display:inline-block;width:40px;height:40px;border:4px solid #e5e7eb;border-top-color:#3b82f6;border-radius:50%;animation:wcbd-cc-spin 1s linear infinite}
-.wcbd-cc-branding{margin-top:20px;padding-top:16px;border-top:1px solid #e5e7eb;text-align:center}
+
+/* Stats Grid */
+.wcbd-cc-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+.wcbd-cc-stat{background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:14px 10px;text-align:center}
+.wcbd-cc-stat-value{font-size:26px;font-weight:800;margin:0;line-height:1.2}
+.wcbd-cc-stat-label{font-size:11px;color:#64748b;margin-top:4px;font-weight:500}
+.wcbd-cc-stat-value.delivered{color:#10b981}
+.wcbd-cc-stat-value.returned{color:#ef4444}
+.wcbd-cc-stat-value.total{color:#0891b2}
+
+/* Courier Table */
+.wcbd-cc-table-wrap{border-radius:14px;overflow:hidden;border:1px solid #e2e8f0;margin-bottom:16px}
+.wcbd-cc-table{width:100%;border-collapse:collapse}
+.wcbd-cc-table thead tr{background:linear-gradient(135deg,#2563eb,#4f46e5)}
+.wcbd-cc-table th{padding:10px 14px;text-align:center;font-size:12px;font-weight:700;color:#fff;letter-spacing:0.5px}
+.wcbd-cc-table th:first-child{text-align:left}
+.wcbd-cc-table td{padding:12px 14px;text-align:center;border-bottom:1px solid #f1f5f9;font-size:13px}
+.wcbd-cc-table td:first-child{text-align:left}
+.wcbd-cc-table tbody tr:hover{background:#f8fafc}
+.wcbd-cc-table tbody tr:last-child td{border-bottom:none}
+.wcbd-cc-table tfoot tr{background:linear-gradient(135deg,#2563eb,#4f46e5)}
+.wcbd-cc-table tfoot td{padding:10px 14px;text-align:center;font-size:13px;font-weight:700;color:#fff}
+.wcbd-cc-table tfoot td:first-child{text-align:left}
+
+/* Courier Logo */
+.wcbd-cc-courier-logo{height:28px;max-width:100px;object-fit:contain}
+.wcbd-cc-courier-name{font-weight:600;color:#1e293b}
+.wcbd-cc-delivered{color:#10b981;font-weight:700}
+.wcbd-cc-orders{color:#475569;font-weight:600}
+
+/* Branding */
+.wcbd-cc-branding{margin-top:16px;padding-top:14px;border-top:1px solid #e5e7eb;text-align:center}
 .wcbd-cc-branding a{color:#0891b2;text-decoration:none;font-weight:600;font-size:12px}
 .wcbd-cc-branding a:hover{text-decoration:underline}
 .wcbd-cc-branding-text{font-size:11px;color:#94a3b8}
+
+/* Loading State */
+.wcbd-cc-loading{text-align:center;padding:50px 20px}
+.wcbd-cc-loading .spinner{display:inline-block;width:44px;height:44px;border:4px solid #e5e7eb;border-top-color:#0891b2;border-radius:50%;animation:wcbd-cc-spin 0.8s linear infinite}
+.wcbd-cc-loading p{margin-top:14px;color:#64748b;font-size:14px}
 @keyframes wcbd-cc-spin{to{transform:rotate(360deg)}}
-        ';
+
+/* Refresh Button */
+.wcbd-cc-refresh-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border:none;border-radius:10px;background:linear-gradient(135deg,#2563eb,#4f46e5);color:#fff;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;margin-bottom:16px}
+.wcbd-cc-refresh-btn:hover{box-shadow:0 4px 12px rgba(37,99,235,0.3);transform:translateY(-1px)}
+
+/* Mobile Responsive */
+@media (max-width:600px){
+    .wcbd-cc-modal-overlay{padding:8px;align-items:flex-end}
+    .wcbd-cc-modal{max-width:100%;max-height:92vh;border-radius:20px 20px 0 0;animation:wcbd-cc-slideUp 0.3s ease}
+    @keyframes wcbd-cc-slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+    .wcbd-cc-header{padding:16px 18px;border-radius:20px 20px 0 0}
+    .wcbd-cc-header h3{font-size:16px}
+    .wcbd-cc-body{padding:16px 18px 20px}
+    .wcbd-cc-stats{grid-template-columns:repeat(3,1fr);gap:8px}
+    .wcbd-cc-stat{padding:10px 6px}
+    .wcbd-cc-stat-value{font-size:20px}
+    .wcbd-cc-stat-label{font-size:10px}
+    .wcbd-cc-risk{font-size:13px;padding:8px 12px}
+    .wcbd-cc-table th,.wcbd-cc-table td,.wcbd-cc-table tfoot td{padding:8px 10px;font-size:12px}
+    .wcbd-cc-courier-logo{height:22px;max-width:80px}
+    .wcbd-cc-close{top:12px;right:12px;width:28px;height:28px;font-size:16px}
+}
+CSSBLOCK;
     }
     
     private function get_admin_js() {
@@ -235,12 +312,47 @@ class WCBD_Courier_Check {
         $js = 'var wcbdCc=' . $config . ';';
         $js .= <<<'JSBLOCK'
 jQuery(document).ready(function($){
+    // Courier logo URLs (CDN hosted)
+    var courierLogos = {
+        'pathao': 'https://pathao.com/wp-content/themes/flavor/flavor-developer/developer/flavor/assets/images/Pathao-logo.png',
+        'steadfast': 'https://steadfast.com.bd/images/logo.svg',
+        'carrybee': 'https://carrybee.com.bd/wp-content/uploads/2024/01/Carrybee-Logo-04.png',
+        'redx': 'https://redx.com.bd/svg/ic_redx_logo.svg',
+        'red x': 'https://redx.com.bd/svg/ic_redx_logo.svg',
+        'carry bee': 'https://carrybee.com.bd/wp-content/uploads/2024/01/Carrybee-Logo-04.png'
+    };
+    
+    var allowedCouriers = ['pathao','steadfast','carrybee','carry bee','redx','red x'];
+    
+    function getCourierLogo(name) {
+        var lower = name.toLowerCase();
+        for (var key in courierLogos) {
+            if (lower.indexOf(key) !== -1) return courierLogos[key];
+        }
+        return null;
+    }
+    
+    function isAllowedCourier(name) {
+        var lower = name.toLowerCase();
+        for (var i = 0; i < allowedCouriers.length; i++) {
+            if (lower.indexOf(allowedCouriers[i]) !== -1) return true;
+        }
+        return false;
+    }
+
     $(document).on('click','.wcbd-cc-btn',function(e){
         e.preventDefault();
         var phone=$(this).data('phone');
         if(!phone)return;
         
-        var overlay=$('<div class="wcbd-cc-modal-overlay"><div class="wcbd-cc-modal" style="position:relative"><button class="wcbd-cc-close">&times;</button><div class="wcbd-cc-loading"><div class="spinner"></div><p style="margin-top:12px;color:#666">Checking courier history...</p></div></div></div>');
+        // Create modal with new design
+        var modalHtml = '<div class="wcbd-cc-modal-overlay">';
+        modalHtml += '<div class="wcbd-cc-modal">';
+        modalHtml += '<button class="wcbd-cc-close">&times;</button>';
+        modalHtml += '<div class="wcbd-cc-loading"><div class="spinner"></div><p>Checking courier history...</p></div>';
+        modalHtml += '</div></div>';
+        
+        var overlay = $(modalHtml);
         $('body').append(overlay);
         
         overlay.find('.wcbd-cc-close').on('click',function(){overlay.remove();});
@@ -253,40 +365,96 @@ jQuery(document).ready(function($){
             success:function(res){
                 if(res.success&&res.data){
                     var d=res.data;
-                    var rateColor=d.success_rate>=80?'#10b981':d.success_rate>=50?'#f59e0b':'#ef4444';
-                    var html='<h3>📊 Courier Check: '+d.phone+'</h3>';
-                    html+='<div class="wcbd-cc-rate"><div class="wcbd-cc-rate-circle" style="background:'+rateColor+'">'+d.success_rate+'%</div><p style="margin-top:8px;color:#666;font-size:13px">Success Rate</p></div>';
-                    html+='<div class="wcbd-cc-risk '+d.risk_label+'">'+getRiskLabel(d.risk_label)+'</div>';
-                    html+='<div class="wcbd-cc-stats">';
-                    html+='<div class="wcbd-cc-stat"><p class="wcbd-cc-stat-value">'+d.total_orders+'</p><p class="wcbd-cc-stat-label">Total Orders</p></div>';
-                    html+='<div class="wcbd-cc-stat"><p class="wcbd-cc-stat-value" style="color:#10b981">'+d.total_delivered+'</p><p class="wcbd-cc-stat-label">Delivered</p></div>';
-                    html+='<div class="wcbd-cc-stat"><p class="wcbd-cc-stat-value" style="color:#ef4444">'+d.total_returned+'</p><p class="wcbd-cc-stat-label">Returned</p></div>';
-                    html+='</div>';
-                    if(d.couriers&&d.couriers.length>0){
-                        html+='<table class="wcbd-cc-table"><thead><tr><th>Courier</th><th>Orders</th><th>Delivered</th><th>Returned</th><th>Rate</th></tr></thead><tbody>';
-                        d.couriers.forEach(function(c){
-                            var rColor=c.rate>=80?'#10b981':c.rate>=50?'#f59e0b':'#ef4444';
-                            html+='<tr><td><strong>'+c.name+'</strong></td><td>'+c.orders+'</td><td style="color:#10b981">'+c.delivered+'</td><td style="color:#ef4444">'+c.returned+'</td><td><span style="background:'+rColor+'22;color:'+rColor+';padding:2px 8px;border-radius:8px;font-weight:700;font-size:12px">'+c.rate+'%</span></td></tr>';
-                        });
-                        html+='</tbody></table>';
+                    
+                    // Filter to allowed couriers only
+                    var filteredCouriers = [];
+                    if (d.couriers && d.couriers.length > 0) {
+                        for (var i = 0; i < d.couriers.length; i++) {
+                            if (isAllowedCourier(d.couriers[i].name)) {
+                                filteredCouriers.push(d.couriers[i]);
+                            }
+                        }
                     }
-                    html+='<div class="wcbd-cc-branding"><p class="wcbd-cc-branding-text">Powered by <a href="https://webcreation-bd.lovable.app" target="_blank">WebCreation BD</a></p></div>';
-                    overlay.find('.wcbd-cc-modal').html('<button class="wcbd-cc-close">&times;</button>'+html);
+                    
+                    // Recalculate totals from filtered couriers
+                    var totalOrders = 0, totalDelivered = 0, totalReturned = 0;
+                    for (var j = 0; j < filteredCouriers.length; j++) {
+                        totalOrders += filteredCouriers[j].orders || 0;
+                        totalDelivered += filteredCouriers[j].delivered || 0;
+                        totalReturned += filteredCouriers[j].returned || 0;
+                    }
+                    var successRate = totalOrders > 0 ? Math.round((totalDelivered / totalOrders) * 100) : 0;
+                    
+                    // Determine risk
+                    var riskClass = 'new_customer';
+                    var riskLabel = '🆕 New Customer';
+                    if (totalOrders > 0) {
+                        if (successRate >= 80) { riskClass = 'trusted'; riskLabel = '✅ Trusted Customer'; }
+                        else if (successRate >= 50) { riskClass = 'moderate'; riskLabel = '⚠️ Moderate Risk'; }
+                        else { riskClass = 'risky'; riskLabel = '🚫 High Risk'; }
+                    }
+                    
+                    // Build modal content
+                    var html = '';
+                    
+                    // Header
+                    html += '<div class="wcbd-cc-header">';
+                    html += '<h3>📊 Courier Check</h3>';
+                    html += '<span class="wcbd-cc-phone-badge">' + d.phone + '</span>';
+                    html += '</div>';
+                    
+                    html += '<div class="wcbd-cc-body">';
+                    
+                    // Risk badge
+                    html += '<div class="wcbd-cc-risk ' + riskClass + '">' + riskLabel + ' — ' + successRate + '%</div>';
+                    
+                    // Stats cards
+                    html += '<div class="wcbd-cc-stats">';
+                    html += '<div class="wcbd-cc-stat"><p class="wcbd-cc-stat-value total">' + totalOrders + '</p><p class="wcbd-cc-stat-label">মোট অর্ডার</p></div>';
+                    html += '<div class="wcbd-cc-stat"><p class="wcbd-cc-stat-value delivered">' + totalDelivered + '</p><p class="wcbd-cc-stat-label">মোট ডেলিভারি</p></div>';
+                    html += '<div class="wcbd-cc-stat"><p class="wcbd-cc-stat-value returned">' + totalReturned + '</p><p class="wcbd-cc-stat-label">মোট বাতিল</p></div>';
+                    html += '</div>';
+                    
+                    // Courier table
+                    if (filteredCouriers.length > 0) {
+                        html += '<div class="wcbd-cc-table-wrap">';
+                        html += '<table class="wcbd-cc-table"><thead><tr><th>কুরিয়ার</th><th>মোট</th><th>সফল</th></tr></thead><tbody>';
+                        
+                        for (var k = 0; k < filteredCouriers.length; k++) {
+                            var c = filteredCouriers[k];
+                            var logo = getCourierLogo(c.name);
+                            var courierCell = logo
+                                ? '<img src="' + logo + '" alt="' + c.name + '" class="wcbd-cc-courier-logo" onerror="this.style.display=\\'none\\';this.nextSibling.style.display=\\'inline\\'"><span class="wcbd-cc-courier-name" style="display:none">' + c.name + '</span>'
+                                : '<span class="wcbd-cc-courier-name">' + c.name + '</span>';
+                            
+                            html += '<tr>';
+                            html += '<td>' + courierCell + '</td>';
+                            html += '<td class="wcbd-cc-orders">' + c.orders + '</td>';
+                            html += '<td class="wcbd-cc-delivered">' + c.delivered + '</td>';
+                            html += '</tr>';
+                        }
+                        
+                        html += '</tbody>';
+                        html += '<tfoot><tr><td>মোট</td><td>' + totalOrders + '</td><td>' + totalDelivered + '</td></tr></tfoot>';
+                        html += '</table></div>';
+                    }
+                    
+                    // Branding
+                    html += '<div class="wcbd-cc-branding"><p class="wcbd-cc-branding-text">Powered by <a href="https://webcreation-bd.lovable.app" target="_blank">WebCreation BD</a></p></div>';
+                    
+                    html += '</div>'; // end body
+                    
+                    overlay.find('.wcbd-cc-modal').html('<button class="wcbd-cc-close">&times;</button>' + html);
                     overlay.find('.wcbd-cc-close').on('click',function(){overlay.remove();});
                 }else{
-                    overlay.find('.wcbd-cc-loading').html('<p style="color:#ef4444">'+(res.error||'No data found')+'</p>');
+                    overlay.find('.wcbd-cc-loading').html('<p style="color:#ef4444;font-size:14px">'+(res.error||'No data found')+'</p>');
                 }
             },
             error:function(){
-                overlay.find('.wcbd-cc-loading').html('<p style="color:#ef4444">Connection failed. Please try again.</p>');
+                overlay.find('.wcbd-cc-loading').html('<p style="color:#ef4444;font-size:14px">Connection failed. Please try again.</p>');
             }
         });
     });
-    
-    function getRiskLabel(label){
-        var labels={trusted:'✅ Trusted Customer',moderate:'⚠️ Moderate Risk',risky:'🚫 High Risk',new_customer:'🆕 New Customer'};
-        return labels[label]||label;
-    }
 });
 JSBLOCK;
         return $js;

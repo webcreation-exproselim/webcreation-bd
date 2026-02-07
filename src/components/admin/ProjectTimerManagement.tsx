@@ -241,17 +241,17 @@ export function ProjectTimerManagement({ orders, invoices }: ProjectTimerManagem
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-white font-bengali flex items-center gap-2">
-            <Timer className="w-6 h-6 text-cyan-400" />
+          <h2 className="text-xl font-bold text-gray-900 font-bengali flex items-center gap-2">
+            <Timer className="w-6 h-6 text-blue-600" />
             প্রজেক্ট টাইমার
           </h2>
-          <p className="text-sm text-slate-400 font-bengali mt-1">
+          <p className="text-sm text-gray-500 font-bengali mt-1">
             {activeCount} সক্রিয় • {overdueCount} ওভারডিউ • {projects.length} মোট
           </p>
         </div>
         <Button
           onClick={() => { setEditingProject(null); setIsModalOpen(true); }}
-          className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-bengali shadow-lg shadow-cyan-500/20"
+          className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bengali shadow-lg shadow-blue-500/20"
         >
           <Plus className="w-4 h-4 mr-2" />
           নতুন প্রজেক্ট
@@ -271,8 +271,8 @@ export function ProjectTimerManagement({ orders, invoices }: ProjectTimerManagem
             onClick={() => setStatusFilter(f.key)}
             className={`px-4 py-2 rounded-xl text-sm font-bengali whitespace-nowrap transition-all ${
               statusFilter === f.key
-                ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30"
-                : "bg-slate-800/60 text-slate-400 border border-slate-700/50 hover:bg-slate-800"
+                ? "bg-blue-50 text-blue-600 border border-blue-200"
+                : "bg-gray-50 text-gray-500 border border-gray-200 hover:bg-gray-100"
             }`}
           >
             {f.label}
@@ -283,16 +283,16 @@ export function ProjectTimerManagement({ orders, invoices }: ProjectTimerManagem
       {/* Project Cards */}
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <div className="w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
         </div>
       ) : filteredProjects.length === 0 ? (
-        <div className="bg-slate-800/40 rounded-2xl border border-slate-700/50 p-16 text-center">
-          <Timer className="w-16 h-16 text-slate-700 mx-auto mb-4" />
-          <p className="text-slate-500 font-bengali">কোনো প্রজেক্ট নেই</p>
+        <div className="bg-white rounded-2xl border border-gray-100 p-16 text-center shadow-sm">
+          <Timer className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+          <p className="text-gray-400 font-bengali">কোনো প্রজেক্ট নেই</p>
           <Button
             onClick={() => { setEditingProject(null); setIsModalOpen(true); }}
             variant="outline"
-            className="mt-4 border-slate-600 text-slate-300 hover:bg-slate-700 font-bengali"
+            className="mt-4 border-gray-200 text-gray-600 hover:bg-gray-50 font-bengali"
           >
             <Plus className="w-4 h-4 mr-2" />
             প্রথম প্রজেক্ট তৈরি করুন
@@ -327,15 +327,15 @@ export function ProjectTimerManagement({ orders, invoices }: ProjectTimerManagem
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
-        <AlertDialogContent className="bg-slate-900 border-slate-700">
+        <AlertDialogContent className="bg-white border-gray-200">
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-bengali text-white">প্রজেক্ট ডিলিট করবেন?</AlertDialogTitle>
-            <AlertDialogDescription className="font-bengali text-slate-400">
+            <AlertDialogTitle className="font-bengali text-gray-900">প্রজেক্ট ডিলিট করবেন?</AlertDialogTitle>
+            <AlertDialogDescription className="font-bengali text-gray-500">
               এই প্রজেক্ট এবং এর টাইমার স্থায়ীভাবে ডিলিট হয়ে যাবে।
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="font-bengali bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700">বাতিল</AlertDialogCancel>
+            <AlertDialogCancel className="font-bengali bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100">বাতিল</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => deleteConfirm && handleDelete(deleteConfirm)}
               className="bg-red-600 hover:bg-red-700 font-bengali"

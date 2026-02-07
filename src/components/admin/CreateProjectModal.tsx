@@ -113,30 +113,30 @@ export function CreateProjectModal({ open, onOpenChange, onSave, orders, invoice
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md bg-slate-900 border-slate-700">
+      <DialogContent className="max-w-md bg-white border-gray-200">
         <DialogHeader>
-          <DialogTitle className="font-bengali text-xl text-white">
+          <DialogTitle className="font-bengali text-xl text-gray-900">
             {editingProject ? "প্রজেক্ট এডিট করুন" : "নতুন প্রজেক্ট তৈরি করুন"}
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 mt-4">
           <div>
-            <Label className="font-bengali text-slate-300">প্রজেক্টের নাম *</Label>
+            <Label className="font-bengali text-gray-700">প্রজেক্টের নাম *</Label>
             <Input
               value={form.title}
               onChange={(e) => setForm(prev => ({ ...prev, title: e.target.value }))}
-              className="mt-1 bg-slate-800 border-slate-700 text-white font-bengali"
+              className="mt-1 bg-gray-50 border-gray-200 text-gray-900 font-bengali focus:border-blue-500"
               placeholder="যেমন: E-commerce ওয়েবসাইট"
             />
           </div>
 
           <div>
-            <Label className="font-bengali text-slate-300">বিবরণ</Label>
+            <Label className="font-bengali text-gray-700">বিবরণ</Label>
             <Textarea
               value={form.description}
               onChange={(e) => setForm(prev => ({ ...prev, description: e.target.value }))}
-              className="mt-1 bg-slate-800 border-slate-700 text-white font-bengali"
+              className="mt-1 bg-gray-50 border-gray-200 text-gray-900 font-bengali focus:border-blue-500"
               placeholder="প্রজেক্ট সম্পর্কে বিস্তারিত"
               rows={2}
             />
@@ -144,46 +144,46 @@ export function CreateProjectModal({ open, onOpenChange, onSave, orders, invoice
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="font-bengali text-slate-300">ক্লায়েন্টের নাম *</Label>
+              <Label className="font-bengali text-gray-700">ক্লায়েন্টের নাম *</Label>
               <Input
                 value={form.client_name}
                 onChange={(e) => setForm(prev => ({ ...prev, client_name: e.target.value }))}
-                className="mt-1 bg-slate-800 border-slate-700 text-white font-bengali"
+                className="mt-1 bg-gray-50 border-gray-200 text-gray-900 font-bengali focus:border-blue-500"
                 placeholder="নাম"
               />
             </div>
             <div>
-              <Label className="font-bengali text-slate-300">ফোন নম্বর</Label>
+              <Label className="font-bengali text-gray-700">ফোন নম্বর</Label>
               <Input
                 value={form.client_phone}
                 onChange={(e) => setForm(prev => ({ ...prev, client_phone: e.target.value }))}
-                className="mt-1 bg-slate-800 border-slate-700 text-white"
+                className="mt-1 bg-gray-50 border-gray-200 text-gray-900 font-bengali focus:border-blue-500"
                 placeholder="01XXXXXXXXX"
               />
             </div>
           </div>
 
           <div>
-            <Label className="font-bengali text-slate-300">সময়কাল (দিন) *</Label>
+            <Label className="font-bengali text-gray-700">সময়কাল (দিন) *</Label>
             <Input
               type="number"
               value={form.duration_days}
               onChange={(e) => setForm(prev => ({ ...prev, duration_days: parseInt(e.target.value) || 1 }))}
-              className="mt-1 bg-slate-800 border-slate-700 text-white"
+              className="mt-1 bg-gray-50 border-gray-200 text-gray-900 focus:border-blue-500"
               min={1}
             />
           </div>
 
           <div>
-            <Label className="font-bengali text-slate-300">অর্ডার লিংক (ঐচ্ছিক)</Label>
+            <Label className="font-bengali text-gray-700">অর্ডার লিংক (ঐচ্ছিক)</Label>
             <Select value={form.order_id || "none"} onValueChange={(v) => handleOrderSelect(v === "none" ? "" : v)}>
-              <SelectTrigger className="mt-1 bg-slate-800 border-slate-700 text-white">
+              <SelectTrigger className="mt-1 bg-gray-50 border-gray-200 text-gray-900">
                 <SelectValue placeholder="অর্ডার সিলেক্ট করুন" />
               </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-slate-700">
-                <SelectItem value="none" className="text-slate-400 font-bengali">কোনো অর্ডার নেই</SelectItem>
+              <SelectContent className="bg-white border-gray-200">
+                <SelectItem value="none" className="text-gray-400 font-bengali">কোনো অর্ডার নেই</SelectItem>
                 {orders.map((order) => (
-                  <SelectItem key={order.id} value={order.id} className="text-white font-bengali">
+                  <SelectItem key={order.id} value={order.id} className="text-gray-900 font-bengali">
                     {order.customer_name} - #{order.id.slice(0, 8)}
                   </SelectItem>
                 ))}
@@ -192,15 +192,15 @@ export function CreateProjectModal({ open, onOpenChange, onSave, orders, invoice
           </div>
 
           <div>
-            <Label className="font-bengali text-slate-300">ইনভয়েস লিংক (ঐচ্ছিক)</Label>
+            <Label className="font-bengali text-gray-700">ইনভয়েস লিংক (ঐচ্ছিক)</Label>
             <Select value={form.invoice_id || "none"} onValueChange={(v) => setForm(prev => ({ ...prev, invoice_id: v === "none" ? "" : v }))}>
-              <SelectTrigger className="mt-1 bg-slate-800 border-slate-700 text-white">
+              <SelectTrigger className="mt-1 bg-gray-50 border-gray-200 text-gray-900">
                 <SelectValue placeholder="ইনভয়েস সিলেক্ট করুন" />
               </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-slate-700">
-                <SelectItem value="none" className="text-slate-400 font-bengali">কোনো ইনভয়েস নেই</SelectItem>
+              <SelectContent className="bg-white border-gray-200">
+                <SelectItem value="none" className="text-gray-400 font-bengali">কোনো ইনভয়েস নেই</SelectItem>
                 {invoices.map((inv) => (
-                  <SelectItem key={inv.id} value={inv.id} className="text-white">
+                  <SelectItem key={inv.id} value={inv.id} className="text-gray-900">
                     {inv.invoice_number}
                   </SelectItem>
                 ))}
@@ -210,7 +210,7 @@ export function CreateProjectModal({ open, onOpenChange, onSave, orders, invoice
 
           <Button
             onClick={handleSubmit}
-            className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-bengali"
+            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bengali"
             disabled={!form.title || !form.client_name || !form.duration_days}
           >
             {editingProject ? "আপডেট করুন" : "প্রজেক্ট তৈরি করুন"}

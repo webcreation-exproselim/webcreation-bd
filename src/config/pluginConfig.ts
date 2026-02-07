@@ -4,7 +4,7 @@
 
 export const PLUGIN_CONFIG = {
   // Current version - UPDATE THIS WHEN RELEASING NEW VERSIONS
-  version: "9.0.2",
+  version: "9.0.3",
   
   // Plugin metadata
   name: "WCBD Fraud Guard",
@@ -16,16 +16,16 @@ export const PLUGIN_CONFIG = {
   badgeLabel: "STABLE",
   
   // Current version highlights (for banners and feature lists)
-  versionHighlight: "Incomplete Order System Rebuild",
+  versionHighlight: "Device + IP Tracking Fix",
   
   // What's new in this version (for feature list)
   whatsNew: [
+    { icon: "🔒", title: "Device + IP Blocking", description: "একই device থেকে ভিন্ন নম্বরেও order block হবে - device fingerprint + IP সার্ভার-সাইডে track" },
+    { icon: "🍪", title: "Cookie-Based Device Sync", description: "FingerprintJS device ID cookie তে সংরক্ষিত - server-side PHP ও পাঠায়" },
+    { icon: "🌐", title: "IP Address Tracking", description: "সার্ভার-সাইড PHP check এ customer IP address অটোমেটিক capture হয়" },
     { icon: "📝", title: "AJAX Field Tracking", description: "Name, Phone, Address ফিল্ড টাইপ করার সাথে সাথে ক্যাপচার হয় - 2s debounce" },
     { icon: "✅", title: "Auto-Cleanup", description: "Thank You পেজে গেলে incomplete record স্বয়ংক্রিয়ভাবে মুছে যায়" },
     { icon: "📊", title: "Chart.js Analytics", description: "WordPress Admin এ Bar Chart দিয়ে daily incomplete order trend দেখুন" },
-    { icon: "🇧🇩", title: "BD Phone Validation", description: "শুধু 01 দিয়ে শুরু হওয়া ১১ ডিজিটের নম্বর ক্যাপচার হবে" },
-    { icon: "🗑️", title: "Auto-Retention", description: "WP-Cron দিয়ে পুরোনো records স্বয়ংক্রিয়ভাবে ডিলিট - configurable 7/15/30 দিন" },
-    { icon: "🔄", title: "Convert to Order", description: "একটি ক্লিকে WooCommerce অর্ডার তৈরি করুন - pending-payment status" },
   ],
   
   // All features list

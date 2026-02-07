@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { CheckCircle, XCircle, Clock, Eye, Loader2, RefreshCw } from "lucide-react";
+import { CheckCircle, XCircle, Clock, Eye, Loader2, RefreshCw, UserPlus } from "lucide-react";
+import { AssignCourierCheckPlanModal } from "./AssignCourierCheckPlanModal";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -28,6 +29,7 @@ export function CourierCheckSubscriptionManagement() {
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState<string | null>(null);
   const [selectedScreenshot, setSelectedScreenshot] = useState<string | null>(null);
+  const [assignModalOpen, setAssignModalOpen] = useState(false);
   const { toast } = useToast();
 
   const fetchOrders = async () => {
@@ -156,10 +158,16 @@ export function CourierCheckSubscriptionManagement() {
           </h2>
           <p className="text-sm text-gray-500 font-bengali">Courier Check অর্ডার ম্যানেজ করুন</p>
         </div>
-        <Button onClick={fetchOrders} variant="outline" size="sm" className="border-gray-200 text-gray-700 hover:bg-gray-100">
-          <RefreshCw className="w-4 h-4 mr-2" />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button onClick={() => setAssignModalOpen(true)} size="sm" className="bg-cyan-600 hover:bg-cyan-700 text-white font-bengali">
+            <UserPlus className="w-4 h-4 mr-2" />
+            Plan Assign করুন
+          </Button>
+          <Button onClick={fetchOrders} variant="outline" size="sm" className="border-gray-200 text-gray-700 hover:bg-gray-100">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Pending Orders */}
@@ -291,6 +299,13 @@ export function CourierCheckSubscriptionManagement() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Assign Plan Modal */}
+      <AssignCourierCheckPlanModal
+        open={assignModalOpen}
+        onOpenChange={setAssignModalOpen}
+        onSuccess={fetchOrders}
+      />
     </div>
   );
 }

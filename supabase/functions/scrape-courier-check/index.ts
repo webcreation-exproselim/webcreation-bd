@@ -225,46 +225,13 @@ Deno.serve(async (req) => {
 });
 
 function parseElitemartHTML(html: string, phone: string) {
-  // Extract success rate from #deliveryProgress data-percentage
-  let successRate = 0;
-  const progressMatch = html.match(/id=["']deliveryProgress["'][^>]*data-percentage=["'](\d+)%?["']/i) 
-    || html.match(/data-percentage=["'](\d+)%?["'][^>]*id=["']deliveryProgress["']/i);
-  if (progressMatch) {
-    successRate = parseInt(progressMatch[1], 10);
-  }
-
-  // Extract total orders, delivered, returned from the grid stats
+  // Extract total orders, delivered, returned from courier table data
   let totalOrders = 0;
   let totalDelivered = 0;
   let totalReturned = 0;
 
-  // Look for the stats grid - pattern: text-info for total, text-success for delivered, text-danger for returned
-  const infoMatch = html.match(/text-info[^>]*>(\d+)</i);
-  const successMatch = html.match(/text-success[^>]*>(\d+)</i);
-  const dangerMatch = html.match(/text-danger[^>]*>(\d+)</i);
-
-  if (infoMatch) totalOrders = parseInt(infoMatch[1], 10);
-  if (successMatch) totalDelivered = parseInt(successMatch[1], 10);
-  if (dangerMatch) totalReturned = parseInt(dangerMatch[1], 10);
-
-  // Fallback: search for bold numbers in grid
-  if (totalOrders === 0) {
-    const gridSection = html.match(/<div[^>]*class=["'][^"']*grid[^"']*grid-cols-3[^"']*["'][^>]*>([\s\S]*?)<\/div>\s*<\/div>\s*<\/div>\s*<\/div>/i);
-    if (gridSection) {
-      const boldNumbers = gridSection[1].match(/<p[^>]*class=["'][^"']*font-bold[^"']*["'][^>]*>(\d+)<\/p>/g);
-      if (boldNumbers && boldNumbers.length >= 3) {
-        const nums = boldNumbers.map(b => {
-          const m = b.match(/>(\d+)</);
-          return m ? parseInt(m[1], 10) : 0;
-        });
-        totalOrders = nums[0];
-        totalDelivered = nums[1];
-        totalReturned = nums[2];
-      }
-    }
-  }
-
-  // Extract courier breakdown from .courier_table tbody tr
+  // Extract courier breakdown from .courier_table tbody tr FIRST
+  // so we can calculate totals from courier data (most reliable)
   const couriers: { name: string; orders: number; delivered: number; returned: number; rate: number }[] = [];
   
   const tableMatch = html.match(/<table[^>]*class=["'][^"']*courier_table[^"']*["'][^>]*>([\s\S]*?)<\/table>/i);
@@ -280,16 +247,52 @@ function parseElitemartHTML(html: string, phone: string) {
               const text = c.replace(/<[^>]*>/g, '').trim();
               return text;
             });
+            const courierOrders = parseInt(cellValues[1], 10) || 0;
+            const courierDelivered = parseInt(cellValues[2], 10) || 0;
+            const courierReturned = parseInt(cellValues[3], 10) || 0;
+            const courierRate = parseFloat(cellValues[4]) || 0;
+            
             couriers.push({
               name: cellValues[0],
-              orders: parseInt(cellValues[1], 10) || 0,
-              delivered: parseInt(cellValues[2], 10) || 0,
-              returned: parseInt(cellValues[3], 10) || 0,
-              rate: parseFloat(cellValues[4]) || 0,
+              orders: courierOrders,
+              delivered: courierDelivered,
+              returned: courierReturned,
+              rate: courierRate,
             });
+            
+            totalOrders += courierOrders;
+            totalDelivered += courierDelivered;
+            totalReturned += courierReturned;
           }
         }
       }
+    }
+  }
+
+  // Fallback: try grid stats if courier table gave 0
+  if (totalOrders === 0) {
+    // Look for bold numbers in the stats grid (text-info, text-success, text-danger)
+    const allInfoMatches = [...html.matchAll(/text-info[^>]*>(\d+)</gi)];
+    const allSuccessMatches = [...html.matchAll(/text-success[^>]*>(\d+)</gi)];
+    const allDangerMatches = [...html.matchAll(/text-danger[^>]*>(\d+)</gi)];
+    
+    if (allInfoMatches.length > 0) totalOrders = parseInt(allInfoMatches[0][1], 10);
+    if (allSuccessMatches.length > 0) totalDelivered = parseInt(allSuccessMatches[0][1], 10);
+    if (allDangerMatches.length > 0) totalReturned = parseInt(allDangerMatches[0][1], 10);
+  }
+
+  // Calculate success rate from actual data
+  let successRate = 0;
+  if (totalOrders > 0) {
+    successRate = Math.round((totalDelivered / totalOrders) * 100);
+  }
+  
+  // Also try to extract from HTML as backup
+  if (successRate === 0 && totalOrders > 0) {
+    const progressMatch = html.match(/data-percentage=["'](\d+)%?["']/i);
+    if (progressMatch) {
+      const parsed = parseInt(progressMatch[1], 10);
+      if (parsed > 0) successRate = parsed;
     }
   }
 
@@ -305,14 +308,14 @@ function parseElitemartHTML(html: string, phone: string) {
       riskLabel = 'trusted';
     } else if (riskText.includes('moderate') || riskText.includes('মাঝারি') || riskText.includes('warning')) {
       riskLabel = 'moderate';
-    } else if (riskText.includes('risky') || riskText.includes('ঝুঁকি') || riskText.includes('risk') || riskText.includes('suspicious')) {
+    } else if (riskText.includes('risky') || riskText.includes('ঝুঁকি') || riskText.includes('risk') || riskText.includes('suspicious') || riskText.includes('নিম্ন')) {
       riskLabel = 'risky';
     } else if (riskText.includes('new') || riskText.includes('নতুন')) {
       riskLabel = 'new_customer';
     }
   }
 
-  // Also determine risk from success rate if label not found
+  // Determine risk from success rate if label not found from HTML
   if (riskLabel === 'new_customer' && totalOrders > 0) {
     if (successRate >= 80) riskLabel = 'trusted';
     else if (successRate >= 50) riskLabel = 'moderate';

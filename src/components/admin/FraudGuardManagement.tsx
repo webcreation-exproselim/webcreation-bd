@@ -34,7 +34,7 @@ export function FraudGuardManagement() {
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all duration-200 ${
                 isActive
                   ? `bg-gradient-to-r ${tab.color} text-white shadow-lg shadow-cyan-500/10`
-                  : "bg-slate-800/60 text-slate-400 hover:text-white hover:bg-slate-700/60 border border-slate-700/50"
+                  : "bg-white text-gray-600 hover:text-gray-900 hover:bg-gray-100 border border-gray-200"
               }`}
             >
               <Icon className="w-4 h-4" />

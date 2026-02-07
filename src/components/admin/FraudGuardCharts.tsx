@@ -160,8 +160,8 @@ export function FraudGuardCharts() {
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload) return null;
     return (
-      <div className="bg-slate-800 border border-slate-700 rounded-xl p-3 shadow-xl">
-        <p className="text-slate-400 text-xs mb-1">{label}</p>
+      <div className="bg-white border border-gray-200 rounded-xl p-3 shadow-lg">
+        <p className="text-gray-500 text-xs mb-1">{label}</p>
         {payload.map((entry: any, i: number) => (
           <p key={i} className="text-sm font-medium" style={{ color: entry.color }}>
             {entry.name}: {typeof entry.value === 'number' && entry.name?.includes('Revenue') ? `৳${entry.value.toLocaleString()}` : entry.value}
@@ -204,35 +204,35 @@ export function FraudGuardCharts() {
 
       {/* Income Summary Card */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
-        <Card className="border-slate-700/50 bg-slate-800/60 backdrop-blur-sm">
+        <Card className="border-gray-100 bg-white shadow-sm">
           <CardContent className="p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
                 <TrendingUp className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h3 className="text-white font-bold font-bengali">আয়ের সারাংশ</h3>
-                <p className="text-slate-500 text-xs">Fraud Guard থেকে মোট উপার্জন</p>
+                <h3 className="text-gray-900 font-bold font-bengali">আয়ের সারাংশ</h3>
+                <p className="text-gray-500 text-xs">Fraud Guard থেকে মোট উপার্জন</p>
               </div>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-slate-900/60 rounded-xl p-4 border border-slate-700/50">
-                <p className="text-slate-500 text-xs font-bengali mb-1">সর্বমোট আয়</p>
-                <p className="text-xl font-bold text-emerald-400">৳{stats.totalRevenue.toLocaleString()}</p>
+              <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                <p className="text-gray-500 text-xs font-bengali mb-1">সর্বমোট আয়</p>
+                <p className="text-xl font-bold text-emerald-600">৳{stats.totalRevenue.toLocaleString()}</p>
               </div>
-              <div className="bg-slate-900/60 rounded-xl p-4 border border-slate-700/50">
-                <p className="text-slate-500 text-xs font-bengali mb-1">এই মাসের আয়</p>
-                <p className="text-xl font-bold text-cyan-400">৳{stats.monthlyRevenue.toLocaleString()}</p>
+              <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                <p className="text-gray-500 text-xs font-bengali mb-1">এই মাসের আয়</p>
+                <p className="text-xl font-bold text-cyan-600">৳{stats.monthlyRevenue.toLocaleString()}</p>
               </div>
-              <div className="bg-slate-900/60 rounded-xl p-4 border border-slate-700/50">
-                <p className="text-slate-500 text-xs font-bengali mb-1">Monthly Plan</p>
-                <p className="text-xl font-bold text-blue-400">
+              <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                <p className="text-gray-500 text-xs font-bengali mb-1">Monthly Plan</p>
+                <p className="text-xl font-bold text-blue-600">
                   ৳{orders.filter(o => o.plan_type === 'monthly').reduce((s, o) => s + Number(o.amount), 0).toLocaleString()}
                 </p>
               </div>
-              <div className="bg-slate-900/60 rounded-xl p-4 border border-slate-700/50">
-                <p className="text-slate-500 text-xs font-bengali mb-1">Yearly Plan</p>
-                <p className="text-xl font-bold text-purple-400">
+              <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                <p className="text-gray-500 text-xs font-bengali mb-1">Yearly Plan</p>
+                <p className="text-xl font-bold text-purple-600">
                   ৳{orders.filter(o => o.plan_type === 'yearly').reduce((s, o) => s + Number(o.amount), 0).toLocaleString()}
                 </p>
               </div>
@@ -245,10 +245,10 @@ export function FraudGuardCharts() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Daily API Requests */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-          <Card className="border-slate-700/50 bg-slate-800/60 backdrop-blur-sm">
+          <Card className="border-gray-100 bg-white shadow-sm">
             <CardHeader className="pb-2">
-              <CardTitle className="text-white font-bengali text-base flex items-center gap-2">
-                <Zap className="w-4 h-4 text-cyan-400" />
+              <CardTitle className="text-gray-900 font-bengali text-base flex items-center gap-2">
+                <Zap className="w-4 h-4 text-cyan-500" />
                 দৈনিক API Requests (14 দিন)
               </CardTitle>
             </CardHeader>
@@ -266,9 +266,9 @@ export function FraudGuardCharts() {
                         <stop offset="95%" stopColor={CHART_COLORS.pink} stopOpacity={0}/>
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                    <XAxis dataKey="date" stroke="#64748B" fontSize={10} />
-                    <YAxis stroke="#64748B" fontSize={10} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                    <XAxis dataKey="date" stroke="#9CA3AF" fontSize={10} />
+                    <YAxis stroke="#9CA3AF" fontSize={10} />
                     <Tooltip content={<CustomTooltip />} />
                     <Area type="monotone" dataKey="allowed" stroke={CHART_COLORS.cyan} fillOpacity={1} fill="url(#colorAllowedFG)" name="Allowed" strokeWidth={2} />
                     <Area type="monotone" dataKey="blocked" stroke={CHART_COLORS.pink} fillOpacity={1} fill="url(#colorBlockedFG)" name="Blocked" strokeWidth={2} />
@@ -281,10 +281,10 @@ export function FraudGuardCharts() {
 
         {/* Subscriber Distribution */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}>
-          <Card className="border-slate-700/50 bg-slate-800/60 backdrop-blur-sm">
+          <Card className="border-gray-100 bg-white shadow-sm">
             <CardHeader className="pb-2">
-              <CardTitle className="text-white font-bengali text-base flex items-center gap-2">
-                <Users className="w-4 h-4 text-purple-400" />
+              <CardTitle className="text-gray-900 font-bengali text-base flex items-center gap-2">
+                <Users className="w-4 h-4 text-purple-500" />
                 সাবস্ক্রাইবার বিতরণ
               </CardTitle>
             </CardHeader>
@@ -308,14 +308,14 @@ export function FraudGuardCharts() {
                         ))}
                       </Pie>
                       <Tooltip content={<CustomTooltip />} />
-                      <Legend wrapperStyle={{ color: '#94A3B8', fontSize: '12px' }} />
+                      <Legend wrapperStyle={{ color: '#6B7280', fontSize: '12px' }} />
                     </PieChart>
                   </ResponsiveContainer>
                 ) : (
                   <div className="h-full flex items-center justify-center">
                     <div className="text-center">
-                      <Users className="w-10 h-10 text-slate-700 mx-auto mb-2" />
-                      <p className="text-slate-500 font-bengali text-sm">কোনো Active Subscriber নেই</p>
+                      <Users className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+                      <p className="text-gray-500 font-bengali text-sm">কোনো Active Subscriber নেই</p>
                     </div>
                   </div>
                 )}
@@ -326,10 +326,10 @@ export function FraudGuardCharts() {
 
         {/* Revenue Chart */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="lg:col-span-2">
-          <Card className="border-slate-700/50 bg-slate-800/60 backdrop-blur-sm">
+          <Card className="border-gray-100 bg-white shadow-sm">
             <CardHeader className="pb-2">
-              <CardTitle className="text-white font-bengali text-base flex items-center gap-2">
-                <BarChart3 className="w-4 h-4 text-emerald-400" />
+              <CardTitle className="text-gray-900 font-bengali text-base flex items-center gap-2">
+                <BarChart3 className="w-4 h-4 text-emerald-500" />
                 মাসিক Subscription আয় (Monthly vs Yearly)
               </CardTitle>
             </CardHeader>
@@ -338,11 +338,11 @@ export function FraudGuardCharts() {
                 {revenueData.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={revenueData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                      <XAxis dataKey="month" stroke="#64748B" fontSize={12} />
-                      <YAxis stroke="#64748B" fontSize={12} tickFormatter={(v) => `৳${v}`} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                      <XAxis dataKey="month" stroke="#9CA3AF" fontSize={12} />
+                      <YAxis stroke="#9CA3AF" fontSize={12} tickFormatter={(v) => `৳${v}`} />
                       <Tooltip content={<CustomTooltip />} />
-                      <Legend wrapperStyle={{ color: '#94A3B8', fontSize: '12px' }} />
+                      <Legend wrapperStyle={{ color: '#6B7280', fontSize: '12px' }} />
                       <Bar dataKey="monthly" fill={CHART_COLORS.cyan} radius={[4, 4, 0, 0]} name="Monthly Revenue" />
                       <Bar dataKey="yearly" fill={CHART_COLORS.purple} radius={[4, 4, 0, 0]} name="Yearly Revenue" />
                     </BarChart>
@@ -350,8 +350,8 @@ export function FraudGuardCharts() {
                 ) : (
                   <div className="h-full flex items-center justify-center">
                     <div className="text-center">
-                      <BarChart3 className="w-10 h-10 text-slate-700 mx-auto mb-2" />
-                      <p className="text-slate-500 font-bengali text-sm">কোনো Revenue Data নেই</p>
+                      <BarChart3 className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+                      <p className="text-gray-500 font-bengali text-sm">কোনো Revenue Data নেই</p>
                     </div>
                   </div>
                 )}

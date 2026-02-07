@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -11,10 +11,9 @@ import { ConvertToOrderModal } from "./ConvertToOrderModal";
 import { 
   RefreshCw, Trash2, Phone, CheckCircle, 
   ShoppingCart, MessageCircle, ArrowRightCircle,
-  TrendingUp, DollarSign, Calendar, BarChart3
+  TrendingUp, DollarSign, Calendar, AlertTriangle
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 interface CartItem {
   name: string;
@@ -48,8 +47,8 @@ export function IncompleteOrders({ merchantId }: IncompleteOrdersProps) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>("all");
-  const [chartRange, setChartRange] = useState<"7" | "30">("7");
   const [convertOrder, setConvertOrder] = useState<IncompleteOrder | null>(null);
+  const [cleaning, setCleaning] = useState(false);
 
   const fetchOrders = async () => {
     try {
@@ -120,30 +119,25 @@ export function IncompleteOrders({ merchantId }: IncompleteOrdersProps) {
     setOrders(orders.map(o => o.id === id ? { ...o, is_converted: true } : o));
   };
 
-  // Stats
-  const totalOrders = orders.filter(o => !o.is_converted).length;
-  const convertedCount = orders.filter(o => o.is_converted).length;
-  const potentialRevenue = orders.filter(o => !o.is_converted).reduce((sum, o) => sum + (Number(o.cart_total) || 0), 0);
-  const todayCount = orders.filter(o => {
-    return new Date(o.created_at).toDateString() === new Date().toDateString() && !o.is_converted;
-  }).length;
-
-  // Chart data
-  const chartData = useMemo(() => {
-    const now = new Date();
-    const days = parseInt(chartRange);
-    const data: { date: string; count: number; label: string }[] = [];
-    
-    for (let i = days - 1; i >= 0; i--) {
-      const d = new Date(now);
-      d.setDate(d.getDate() - i);
-      const dateStr = d.toISOString().split('T')[0];
-      const label = `${d.getDate()}/${d.getMonth() + 1}`;
-      const count = orders.filter(o => o.created_at.startsWith(dateStr) && !o.is_converted).length;
-      data.push({ date: dateStr, count, label });
+  const handleCleanupAll = async () => {
+    if (!confirm('সব incomplete (non-converted) records মুছে ফেলতে চান? এই action undo করা যাবে না।')) return;
+    setCleaning(true);
+    try {
+      const { error } = await supabase
+        .from('incomplete_orders')
+        .delete()
+        .eq('merchant_id', merchantId)
+        .eq('is_converted', false);
+      if (error) throw error;
+      setOrders(orders.filter(o => o.is_converted));
+      toast({ title: "✅ Cleanup Complete", description: "সব incomplete records মুছে ফেলা হয়েছে" });
+    } catch (error: any) {
+      console.error('Cleanup error:', error);
+      toast({ title: "Error", description: "Cleanup failed: " + error.message, variant: "destructive" });
+    } finally {
+      setCleaning(false);
     }
-    return data;
-  }, [orders, chartRange]);
+  };
 
   const getStatusBadge = (order: IncompleteOrder) => {
     if (order.is_converted) return <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs">✅ Converted</Badge>;
@@ -211,6 +205,14 @@ export function IncompleteOrders({ merchantId }: IncompleteOrdersProps) {
     </Card>
   );
 
+  // Stats
+  const totalOrders = orders.filter(o => !o.is_converted).length;
+  const convertedCount = orders.filter(o => o.is_converted).length;
+  const potentialRevenue = orders.filter(o => !o.is_converted).reduce((sum, o) => sum + (Number(o.cart_total) || 0), 0);
+  const todayCount = orders.filter(o => {
+    return new Date(o.created_at).toDateString() === new Date().toDateString() && !o.is_converted;
+  }).length;
+
   return (
     <div className="space-y-4 sm:space-y-6">
       {convertOrder && (
@@ -254,57 +256,6 @@ export function IncompleteOrders({ merchantId }: IncompleteOrdersProps) {
         </Card>
       </div>
 
-      {/* Chart */}
-      <Card className="bg-slate-800/50 border-slate-700">
-        <CardHeader className="p-4 sm:p-6">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-white flex items-center gap-2 text-base">
-              <BarChart3 className="h-5 w-5 text-cyan-400" />
-              Daily Trends
-            </CardTitle>
-            <div className="flex gap-1">
-              <Button
-                size="sm"
-                variant={chartRange === "7" ? "default" : "ghost"}
-                className={chartRange === "7" ? "bg-cyan-600 h-7 text-xs" : "text-slate-400 h-7 text-xs"}
-                onClick={() => setChartRange("7")}
-              >
-                7 Days
-              </Button>
-              <Button
-                size="sm"
-                variant={chartRange === "30" ? "default" : "ghost"}
-                className={chartRange === "30" ? "bg-cyan-600 h-7 text-xs" : "text-slate-400 h-7 text-xs"}
-                onClick={() => setChartRange("30")}
-              >
-                30 Days
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="p-4 sm:p-6 pt-0">
-          <div className="h-48 sm:h-56">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                <XAxis 
-                  dataKey="label" 
-                  stroke="#64748b" 
-                  fontSize={11}
-                  interval={chartRange === "30" ? 4 : 0}
-                />
-                <YAxis stroke="#64748b" fontSize={11} allowDecimals={false} />
-                <Tooltip
-                  contentStyle={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff' }}
-                  labelStyle={{ color: '#94a3b8' }}
-                />
-                <Bar dataKey="count" fill="#06b6d4" radius={[4, 4, 0, 0]} name="Incomplete Orders" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Orders List */}
       <Card className="bg-slate-800/50 border-slate-700">
         <CardHeader className="p-4 sm:p-6">
@@ -326,6 +277,18 @@ export function IncompleteOrders({ merchantId }: IncompleteOrdersProps) {
               <Button variant="outline" size="sm" onClick={handleRefresh} disabled={refreshing} className="border-slate-600 w-full sm:w-auto">
                 <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} /> Refresh
               </Button>
+              {totalOrders > 0 && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleCleanupAll} 
+                  disabled={cleaning}
+                  className="border-red-600/50 text-red-400 hover:bg-red-500/10 hover:text-red-300 w-full sm:w-auto"
+                >
+                  <AlertTriangle className={`h-4 w-4 mr-2 ${cleaning ? 'animate-spin' : ''}`} />
+                  {cleaning ? 'Cleaning...' : `Clean All (${totalOrders})`}
+                </Button>
+              )}
             </div>
           </div>
         </CardHeader>

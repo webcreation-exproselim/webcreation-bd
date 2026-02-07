@@ -10,13 +10,11 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
-  Settings,
-  Bell,
-  HelpCircle,
+  Search,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type TabType = "orders" | "invoices" | "chat" | "fraudguard" | "profile";
+type TabType = "orders" | "invoices" | "chat" | "fraudguard" | "couriercheck" | "profile";
 
 interface Profile {
   full_name?: string | null;
@@ -40,6 +38,7 @@ const menuItems = [
   { id: "invoices" as TabType, label: "ইনভয়েস", icon: FileText, color: "text-amber-600", bg: "bg-amber-100" },
   { id: "chat" as TabType, label: "মেসেজ", icon: MessageCircle, color: "text-green-600", bg: "bg-green-100" },
   { id: "fraudguard" as TabType, label: "Fraud Guard", icon: Shield, color: "text-purple-600", bg: "bg-purple-100" },
+  { id: "couriercheck" as TabType, label: "Courier Check", icon: Search, color: "text-cyan-600", bg: "bg-cyan-100" },
   { id: "profile" as TabType, label: "প্রোফাইল", icon: User, color: "text-slate-600", bg: "bg-slate-100" },
 ];
 

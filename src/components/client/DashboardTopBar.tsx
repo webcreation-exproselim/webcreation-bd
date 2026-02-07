@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 import { NotificationBell } from "./NotificationBell";
 import { Notification } from "@/hooks/useNotifications";
 
-type TabType = "orders" | "invoices" | "chat" | "fraudguard" | "profile";
+type TabType = "orders" | "invoices" | "chat" | "fraudguard" | "couriercheck" | "profile";
 
 interface Profile {
   full_name?: string | null;
@@ -40,6 +40,7 @@ const tabTitles: Record<TabType, { title: string; icon: React.ElementType }> = {
   invoices: { title: "ইনভয়েস", icon: FileText },
   chat: { title: "মেসেজ", icon: MessageCircle },
   fraudguard: { title: "Fraud Guard", icon: Shield },
+  couriercheck: { title: "Courier Check", icon: Shield },
   profile: { title: "প্রোফাইল", icon: User },
 };
 

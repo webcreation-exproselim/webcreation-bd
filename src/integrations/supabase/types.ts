@@ -102,6 +102,92 @@ export type Database = {
           },
         ]
       }
+      courier_check_orders: {
+        Row: {
+          amount: number
+          approved_at: string | null
+          created_at: string
+          id: string
+          payment_method: string
+          payment_screenshot_url: string | null
+          sender_number: string
+          status: string
+          subscription_id: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          approved_at?: string | null
+          created_at?: string
+          id?: string
+          payment_method: string
+          payment_screenshot_url?: string | null
+          sender_number: string
+          status?: string
+          subscription_id: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          approved_at?: string | null
+          created_at?: string
+          id?: string
+          payment_method?: string
+          payment_screenshot_url?: string | null
+          sender_number?: string
+          status?: string
+          subscription_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "courier_check_orders_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "courier_check_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      courier_check_subscriptions: {
+        Row: {
+          api_key: string
+          created_at: string
+          id: string
+          is_active: boolean
+          max_requests: number
+          plan_expires_at: string | null
+          requests_used: number
+          updated_at: string
+          user_id: string
+          website_url: string | null
+        }
+        Insert: {
+          api_key?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          max_requests?: number
+          plan_expires_at?: string | null
+          requests_used?: number
+          updated_at?: string
+          user_id: string
+          website_url?: string | null
+        }
+        Update: {
+          api_key?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          max_requests?: number
+          plan_expires_at?: string | null
+          requests_used?: number
+          updated_at?: string
+          user_id?: string
+          website_url?: string | null
+        }
+        Relationships: []
+      }
       courier_orders: {
         Row: {
           cod_amount: number | null

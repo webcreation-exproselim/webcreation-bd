@@ -326,11 +326,11 @@ export function UserManagement() {
 
   const getRoleBadgeStyle = (role: AppRole) => {
     switch (role) {
-      case 'admin': return 'bg-red-500/20 text-red-400 border-red-500/30';
-      case 'manager': return 'bg-purple-500/20 text-purple-400 border-purple-500/30';
-      case 'staff': return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
-      case 'client': return 'bg-slate-700/50 text-slate-400 border-slate-600/50';
-      default: return 'bg-slate-700/50 text-slate-400 border-slate-600/50';
+      case 'admin': return 'bg-red-100 text-red-700 border-red-200';
+      case 'manager': return 'bg-purple-100 text-purple-700 border-purple-200';
+      case 'staff': return 'bg-blue-100 text-blue-700 border-blue-200';
+      case 'client': return 'bg-gray-100 text-gray-600 border-gray-200';
+      default: return 'bg-gray-100 text-gray-600 border-gray-200';
     }
   };
 
@@ -348,16 +348,16 @@ export function UserManagement() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <Card className="border-slate-700/50 bg-slate-800/50 backdrop-blur-sm">
+      <Card className="border-gray-100 bg-white shadow-sm">
         <CardHeader className="pb-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <CardTitle className="text-white flex items-center gap-2">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+            <CardTitle className="text-gray-900 flex items-center gap-2">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
                 <Users className="w-5 h-5 text-white" />
               </div>
               <div>
                 <span className="text-lg">User Management</span>
-                <p className="text-xs text-slate-500 font-normal">{users.length} জন ইউজার</p>
+                <p className="text-xs text-gray-500 font-normal">{users.length} জন ইউজার</p>
               </div>
             </CardTitle>
             <div className="flex items-center gap-2">
@@ -365,43 +365,43 @@ export function UserManagement() {
                 onClick={fetchUsers}
                 variant="outline"
                 size="sm"
-                className="border-slate-600 hover:bg-slate-700 text-slate-300"
+                className="border-gray-200 hover:bg-gray-100 text-gray-600"
               >
                 <RefreshCw className="w-4 h-4" />
               </Button>
               <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
                 <DialogTrigger asChild>
-                  <Button className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 shadow-lg shadow-cyan-600/20">
+                  <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg shadow-blue-600/20">
                     <UserPlus className="w-4 h-4 mr-2" />
                     Add User
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="bg-slate-900 border-slate-700 text-white">
+                <DialogContent className="bg-white border-gray-200">
                   <DialogHeader>
-                    <DialogTitle>Create New User</DialogTitle>
+                    <DialogTitle className="text-gray-900">Create New User</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4 mt-4">
                     <div>
-                      <Label>Email *</Label>
-                      <Input type="email" value={newUserEmail} onChange={(e) => setNewUserEmail(e.target.value)} placeholder="user@example.com" className="bg-slate-800 border-slate-600" />
+                      <Label className="text-gray-700">Email *</Label>
+                      <Input type="email" value={newUserEmail} onChange={(e) => setNewUserEmail(e.target.value)} placeholder="user@example.com" className="bg-gray-50 border-gray-200" />
                     </div>
                     <div>
-                      <Label>Password *</Label>
-                      <Input type="password" value={newUserPassword} onChange={(e) => setNewUserPassword(e.target.value)} placeholder="Min 6 characters" className="bg-slate-800 border-slate-600" />
+                      <Label className="text-gray-700">Password *</Label>
+                      <Input type="password" value={newUserPassword} onChange={(e) => setNewUserPassword(e.target.value)} placeholder="Min 6 characters" className="bg-gray-50 border-gray-200" />
                     </div>
                     <div>
-                      <Label>Full Name</Label>
-                      <Input value={newUserName} onChange={(e) => setNewUserName(e.target.value)} placeholder="John Doe" className="bg-slate-800 border-slate-600" />
+                      <Label className="text-gray-700">Full Name</Label>
+                      <Input value={newUserName} onChange={(e) => setNewUserName(e.target.value)} placeholder="John Doe" className="bg-gray-50 border-gray-200" />
                     </div>
                     <div>
-                      <Label>Phone</Label>
-                      <Input value={newUserPhone} onChange={(e) => setNewUserPhone(e.target.value)} placeholder="01XXXXXXXXX" className="bg-slate-800 border-slate-600" />
+                      <Label className="text-gray-700">Phone</Label>
+                      <Input value={newUserPhone} onChange={(e) => setNewUserPhone(e.target.value)} placeholder="01XXXXXXXXX" className="bg-gray-50 border-gray-200" />
                     </div>
                     <div>
-                      <Label>Role</Label>
+                      <Label className="text-gray-700">Role</Label>
                       <Select value={newUserRole} onValueChange={(v) => setNewUserRole(v as AppRole)}>
-                        <SelectTrigger className="bg-slate-800 border-slate-600"><SelectValue /></SelectTrigger>
-                        <SelectContent className="bg-slate-800 border-slate-600">
+                        <SelectTrigger className="bg-gray-50 border-gray-200"><SelectValue /></SelectTrigger>
+                        <SelectContent>
                           <SelectItem value="client">Client</SelectItem>
                           <SelectItem value="staff">Staff</SelectItem>
                           <SelectItem value="manager">Manager</SelectItem>
@@ -409,7 +409,7 @@ export function UserManagement() {
                         </SelectContent>
                       </Select>
                     </div>
-                    <Button onClick={handleCreateUser} disabled={creating} className="w-full bg-gradient-to-r from-cyan-600 to-blue-600">
+                    <Button onClick={handleCreateUser} disabled={creating} className="w-full bg-gradient-to-r from-blue-600 to-purple-600">
                       {creating ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Creating...</> : 'Create User'}
                     </Button>
                   </div>
@@ -421,8 +421,8 @@ export function UserManagement() {
         <CardContent>
           {/* Search */}
           <div className="relative mb-4">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name, email, or phone..." className="pl-10 bg-slate-800 border-slate-600" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name, email, or phone..." className="pl-10 bg-gray-50 border-gray-200" />
           </div>
 
           {/* Stats */}
@@ -452,19 +452,19 @@ export function UserManagement() {
           {/* Users Table */}
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-cyan-400" />
+              <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
             </div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-slate-700">
-                    <TableHead className="text-slate-400">User</TableHead>
-                    <TableHead className="text-slate-400">Contact</TableHead>
-                    <TableHead className="text-slate-400">Roles</TableHead>
-                    <TableHead className="text-slate-400">Status</TableHead>
-                    <TableHead className="text-slate-400">Joined</TableHead>
-                    <TableHead className="text-slate-400 text-right">Actions</TableHead>
+                  <TableRow className="border-gray-100">
+                    <TableHead className="text-gray-500">User</TableHead>
+                    <TableHead className="text-gray-500">Contact</TableHead>
+                    <TableHead className="text-gray-500">Roles</TableHead>
+                    <TableHead className="text-gray-500">Status</TableHead>
+                    <TableHead className="text-gray-500">Joined</TableHead>
+                    <TableHead className="text-gray-500 text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -476,7 +476,7 @@ export function UserManagement() {
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: index * 0.02 }}
-                        className={`border-slate-700 hover:bg-slate-700/30 transition-colors ${isBlocked ? 'opacity-60' : ''}`}
+                        className={`border-gray-100 hover:bg-gray-50/50 transition-colors ${isBlocked ? 'opacity-60' : ''}`}
                       >
                         <TableCell>
                           <div className="flex items-center gap-3">
@@ -485,28 +485,28 @@ export function UserManagement() {
                                 ? 'bg-gradient-to-br from-red-600 to-red-800' 
                                 : 'bg-gradient-to-br from-cyan-500 to-blue-600'
                             }`}>
-                              {isBlocked && <Ban className="w-4 h-4 absolute -top-1 -right-1 text-red-400 bg-slate-900 rounded-full p-0.5" />}
+                              {isBlocked && <Ban className="w-4 h-4 absolute -top-1 -right-1 text-red-500 bg-white rounded-full p-0.5" />}
                               {user.full_name?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || '?'}
                             </div>
                             <div>
-                              <p className={`font-medium ${isBlocked ? 'text-red-400 line-through' : 'text-white'}`}>
+                              <p className={`font-medium ${isBlocked ? 'text-red-500 line-through' : 'text-gray-900'}`}>
                                 {user.full_name || 'No Name'}
                               </p>
-                              <p className="text-xs text-slate-500">{user.user_id.slice(0, 8)}...</p>
+                              <p className="text-xs text-gray-400">{user.user_id.slice(0, 8)}...</p>
                             </div>
                           </div>
                         </TableCell>
                         <TableCell>
                           <div className="space-y-1">
                             {user.email && (
-                              <div className="flex items-center gap-1 text-sm text-slate-300">
-                                <Mail className="w-3 h-3 text-slate-500" />
+                              <div className="flex items-center gap-1 text-sm text-gray-700">
+                                <Mail className="w-3 h-3 text-gray-400" />
                                 <span className="truncate max-w-[150px]">{user.email}</span>
                               </div>
                             )}
                             {user.phone && (
-                              <div className="flex items-center gap-1 text-sm text-slate-300">
-                                <Phone className="w-3 h-3 text-slate-500" />
+                              <div className="flex items-center gap-1 text-sm text-gray-700">
+                                <Phone className="w-3 h-3 text-gray-400" />
                                 {user.phone}
                               </div>
                             )}
@@ -529,18 +529,18 @@ export function UserManagement() {
                         </TableCell>
                         <TableCell>
                           {isBlocked ? (
-                            <Badge className="bg-red-500/20 text-red-400 border border-red-500/30 text-xs">
+                            <Badge className="bg-red-100 text-red-700 border border-red-200 text-xs">
                               <Ban className="w-3 h-3 mr-1" />
                               Blocked
                             </Badge>
                           ) : (
-                            <Badge className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs">
+                            <Badge className="bg-emerald-100 text-emerald-700 border border-emerald-200 text-xs">
                               <ShieldCheck className="w-3 h-3 mr-1" />
                               Active
                             </Badge>
                           )}
                         </TableCell>
-                        <TableCell className="text-slate-400 text-sm">
+                        <TableCell className="text-gray-500 text-sm">
                           {new Date(user.created_at).toLocaleDateString('en-GB')}
                         </TableCell>
                         <TableCell>
@@ -548,7 +548,7 @@ export function UserManagement() {
                             <Button
                               size="sm"
                               variant="outline"
-                              className="border-slate-600 hover:bg-slate-700 text-slate-300 h-8 px-2"
+                              className="border-gray-200 hover:bg-gray-100 text-gray-600 h-8 px-2"
                               onClick={() => { setSelectedUser(user); setShowRoleModal(true); }}
                               title="Add Role"
                             >
@@ -558,8 +558,8 @@ export function UserManagement() {
                               size="sm"
                               variant="outline"
                               className={`h-8 px-2 ${isBlocked 
-                                ? 'border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10' 
-                                : 'border-amber-500/30 text-amber-400 hover:bg-amber-500/10'
+                                ? 'border-emerald-200 text-emerald-600 hover:bg-emerald-50' 
+                                : 'border-amber-200 text-amber-600 hover:bg-amber-50'
                               }`}
                               onClick={() => handleBlockToggle(user.user_id, isBlocked)}
                               disabled={blockingUser === user.user_id}
@@ -576,7 +576,7 @@ export function UserManagement() {
                             <Button
                               size="sm"
                               variant="outline"
-                              className="border-red-500/30 text-red-400 hover:bg-red-500/10 h-8 px-2"
+                              className="border-red-200 text-red-500 hover:bg-red-50 h-8 px-2"
                               onClick={() => setDeleteConfirm(user)}
                               title="Delete User"
                             >
@@ -591,8 +591,8 @@ export function UserManagement() {
               </Table>
 
               {filteredUsers.length === 0 && (
-                <div className="text-center py-12 text-slate-400">
-                  <UserX className="w-12 h-12 mx-auto mb-3 text-slate-600" />
+                <div className="text-center py-12 text-gray-400">
+                  <UserX className="w-12 h-12 mx-auto mb-3 text-gray-300" />
                   No users found
                 </div>
               )}
@@ -603,18 +603,18 @@ export function UserManagement() {
 
       {/* Role Assignment Modal */}
       <Dialog open={showRoleModal} onOpenChange={setShowRoleModal}>
-        <DialogContent className="bg-slate-900 border-slate-700 text-white">
+        <DialogContent className="bg-white border-gray-200">
           <DialogHeader>
-            <DialogTitle>Assign Role</DialogTitle>
+            <DialogTitle className="text-gray-900">Assign Role</DialogTitle>
           </DialogHeader>
           {selectedUser && (
             <div className="space-y-4 mt-4">
-              <div className="p-4 bg-slate-800 rounded-lg">
-                <p className="font-medium">{selectedUser.full_name || 'No Name'}</p>
-                <p className="text-sm text-slate-400">{selectedUser.email}</p>
+              <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
+                <p className="font-medium text-gray-900">{selectedUser.full_name || 'No Name'}</p>
+                <p className="text-sm text-gray-500">{selectedUser.email}</p>
               </div>
               <div>
-                <Label>Current Roles</Label>
+                <Label className="text-gray-700">Current Roles</Label>
                 <div className="flex flex-wrap gap-2 mt-2">
                   {(userRoles[selectedUser.user_id] || ['client']).map((role) => (
                     <Badge key={role} className={getRoleBadgeStyle(role)}>{role}</Badge>
@@ -622,17 +622,17 @@ export function UserManagement() {
                 </div>
               </div>
               <div>
-                <Label>Add New Role</Label>
+                <Label className="text-gray-700">Add New Role</Label>
                 <Select value={newRole} onValueChange={(v) => setNewRole(v as AppRole)}>
-                  <SelectTrigger className="bg-slate-800 border-slate-600 mt-2"><SelectValue /></SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-600">
+                  <SelectTrigger className="bg-gray-50 border-gray-200 mt-2"><SelectValue /></SelectTrigger>
+                  <SelectContent>
                     <SelectItem value="staff">Staff</SelectItem>
                     <SelectItem value="manager">Manager</SelectItem>
                     <SelectItem value="admin">Admin</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <Button onClick={handleAddRole} disabled={assigning} className="w-full bg-gradient-to-r from-cyan-600 to-blue-600">
+              <Button onClick={handleAddRole} disabled={assigning} className="w-full bg-gradient-to-r from-blue-600 to-purple-600">
                 {assigning ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Assigning...</> : 'Assign Role'}
               </Button>
             </div>
@@ -642,18 +642,18 @@ export function UserManagement() {
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
-        <AlertDialogContent className="bg-slate-900 border-slate-700 text-white">
+        <AlertDialogContent className="bg-white border-gray-200">
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-bengali flex items-center gap-2">
-              <Trash2 className="w-5 h-5 text-red-400" />
+            <AlertDialogTitle className="font-bengali flex items-center gap-2 text-gray-900">
+              <Trash2 className="w-5 h-5 text-red-500" />
               ইউজার ডিলিট করবেন?
             </AlertDialogTitle>
-            <AlertDialogDescription className="font-bengali text-slate-400">
-              <span className="text-white font-medium">{deleteConfirm?.full_name || deleteConfirm?.email}</span> এর প্রোফাইল এবং সমস্ত রোল স্থায়ীভাবে ডিলিট হয়ে যাবে। এই কাজটি পূর্বাবস্থায় ফেরানো যাবে না।
+            <AlertDialogDescription className="font-bengali text-gray-500">
+              <span className="text-gray-900 font-medium">{deleteConfirm?.full_name || deleteConfirm?.email}</span> এর প্রোফাইল এবং সমস্ত রোল স্থায়ীভাবে ডিলিট হয়ে যাবে। এই কাজটি পূর্বাবস্থায় ফেরানো যাবে না।
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="font-bengali border-slate-600 text-slate-300 hover:bg-slate-800">বাতিল</AlertDialogCancel>
+            <AlertDialogCancel className="font-bengali">বাতিল</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteUser}
               disabled={deleting}

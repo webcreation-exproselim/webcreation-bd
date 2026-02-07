@@ -167,10 +167,10 @@ export function FraudSubscriptionManagement() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-gray-800 font-bengali">
+        <h2 className="text-xl font-bold text-gray-900 font-bengali">
           Fraud Guard Subscriptions
         </h2>
-        <Button onClick={fetchOrders} variant="outline" size="sm">
+        <Button onClick={fetchOrders} variant="outline" size="sm" className="border-gray-200 text-gray-700 hover:bg-gray-100">
           <RefreshCw className="w-4 h-4 mr-2" />
           Refresh
         </Button>
@@ -279,11 +279,11 @@ export function FraudSubscriptionManagement() {
               </thead>
               <tbody>
                 {processedOrders.map((order) => (
-                  <tr key={order.id} className="border-b last:border-0">
-                    <td className="p-3 capitalize">{order.plan_type}</td>
-                    <td className="p-3">৳{order.amount}</td>
-                    <td className="p-3 capitalize">{order.payment_method}</td>
-                    <td className="p-3 font-mono text-xs">{order.transaction_id}</td>
+                  <tr key={order.id} className="border-b last:border-0 hover:bg-gray-50/50">
+                    <td className="p-3 capitalize text-gray-900">{order.plan_type}</td>
+                    <td className="p-3 text-gray-900 font-medium">৳{order.amount}</td>
+                    <td className="p-3 capitalize text-gray-700">{order.payment_method}</td>
+                    <td className="p-3 font-mono text-xs text-gray-600">{order.transaction_id}</td>
                     <td className="p-3">{getStatusBadge(order.status)}</td>
                     <td className="p-3 text-gray-500">
                       {new Date(order.created_at).toLocaleDateString()}

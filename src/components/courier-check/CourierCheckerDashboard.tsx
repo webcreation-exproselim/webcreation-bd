@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
-import { RadialBarChart, RadialBar, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import { RadialBarChart, RadialBar, ResponsiveContainer } from "recharts";
 
 interface CourierData {
   name: string;
@@ -37,7 +37,7 @@ const RISK_COLORS: Record<string, { bg: string; text: string; label: string }> =
   new_customer: { bg: "bg-blue-100", text: "text-blue-700", label: "🆕 নতুন কাস্টমার" },
 };
 
-const BAR_COLORS = ["#3b82f6", "#8b5cf6", "#06b6d4", "#f59e0b", "#ef4444", "#10b981"];
+
 
 export function CourierCheckerDashboard({ apiKey }: CourierCheckerDashboardProps) {
   const [phone, setPhone] = useState("");
@@ -177,35 +177,6 @@ export function CourierCheckerDashboard({ apiKey }: CourierCheckerDashboardProps
                     — {result.risk_message}
                   </span>
                 )}
-              </div>
-            </div>
-          )}
-
-          {/* Courier Breakdown Chart */}
-          {result.couriers.length > 0 && (
-            <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
-              <h4 className="text-lg font-bold text-gray-900 font-bengali mb-4 flex items-center gap-2">
-                <Truck className="w-5 h-5 text-cyan-600" />
-                কুরিয়ার-ভিত্তিক ব্রেকডাউন
-              </h4>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={result.couriers} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                    <YAxis tick={{ fontSize: 12 }} />
-                    <Tooltip
-                      contentStyle={{ borderRadius: '12px', border: '1px solid #e5e7eb' }}
-                      formatter={(value: number, name: string) => [value, name === 'delivered' ? 'ডেলিভারি' : name === 'returned' ? 'বাতিল' : name]}
-                    />
-                    <Bar dataKey="delivered" name="ডেলিভারি" radius={[4, 4, 0, 0]}>
-                      {result.couriers.map((_, i) => (
-                        <Cell key={i} fill={BAR_COLORS[i % BAR_COLORS.length]} />
-                      ))}
-                    </Bar>
-                    <Bar dataKey="returned" name="বাতিল" fill="#fca5a5" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
               </div>
             </div>
           )}

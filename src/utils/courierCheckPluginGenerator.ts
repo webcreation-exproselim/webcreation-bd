@@ -209,6 +209,10 @@ class WCBD_Courier_Check {
 .wcbd-cc-table td{padding:10px 12px;border-bottom:1px solid #f1f5f9}
 .wcbd-cc-loading{text-align:center;padding:40px}
 .wcbd-cc-loading .spinner{display:inline-block;width:40px;height:40px;border:4px solid #e5e7eb;border-top-color:#3b82f6;border-radius:50%;animation:wcbd-cc-spin 1s linear infinite}
+.wcbd-cc-branding{margin-top:20px;padding-top:16px;border-top:1px solid #e5e7eb;text-align:center}
+.wcbd-cc-branding a{color:#0891b2;text-decoration:none;font-weight:600;font-size:12px}
+.wcbd-cc-branding a:hover{text-decoration:underline}
+.wcbd-cc-branding-text{font-size:11px;color:#94a3b8}
 @keyframes wcbd-cc-spin{to{transform:rotate(360deg)}}
         ';
     }
@@ -257,6 +261,7 @@ jQuery(document).ready(function($){
                         });
                         html+='</tbody></table>';
                     }
+                    html+='<div class="wcbd-cc-branding"><p class="wcbd-cc-branding-text">Powered by <a href="https://webcreation-bd.lovable.app" target="_blank">WebCreation BD</a></p></div>';
                     overlay.find('.wcbd-cc-modal').html('<button class="wcbd-cc-close">&times;</button>'+html);
                     overlay.find('.wcbd-cc-close').on('click',function(){overlay.remove();});
                 }else{

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Shield, Users, FileText, BarChart3 } from "lucide-react";
+import { motion } from "framer-motion";
 import { FraudGuardCharts } from "./FraudGuardCharts";
 import { MerchantManagement } from "./MerchantManagement";
 import { FraudLogsAdmin } from "./FraudLogsAdmin";
@@ -11,10 +12,10 @@ export function FraudGuardManagement() {
   const [activeTab, setActiveTab] = useState<FraudGuardTab>("overview");
 
   const tabs = [
-    { id: "overview" as FraudGuardTab, label: "Overview", icon: BarChart3 },
-    { id: "merchants" as FraudGuardTab, label: "Merchants", icon: Users },
-    { id: "logs" as FraudGuardTab, label: "API Logs", icon: FileText },
-    { id: "subscriptions" as FraudGuardTab, label: "Subscriptions", icon: Shield },
+    { id: "overview" as FraudGuardTab, label: "Overview", icon: BarChart3, color: "from-cyan-500 to-blue-500" },
+    { id: "merchants" as FraudGuardTab, label: "Merchants", icon: Users, color: "from-purple-500 to-violet-500" },
+    { id: "logs" as FraudGuardTab, label: "API Logs", icon: FileText, color: "from-amber-500 to-orange-500" },
+    { id: "subscriptions" as FraudGuardTab, label: "Subscriptions", icon: Shield, color: "from-emerald-500 to-teal-500" },
   ];
 
   return (
@@ -25,27 +26,36 @@ export function FraudGuardManagement() {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
           return (
-            <button
+            <motion.button
               key={tab.id}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all duration-200 ${
                 isActive
-                  ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg"
-                  : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-100"
+                  ? `bg-gradient-to-r ${tab.color} text-white shadow-lg shadow-cyan-500/10`
+                  : "bg-slate-800/60 text-slate-400 hover:text-white hover:bg-slate-700/60 border border-slate-700/50"
               }`}
             >
               <Icon className="w-4 h-4" />
               {tab.label}
-            </button>
+            </motion.button>
           );
         })}
       </div>
 
       {/* Tab Content */}
-      {activeTab === "overview" && <FraudGuardCharts />}
-      {activeTab === "merchants" && <MerchantManagement />}
-      {activeTab === "logs" && <FraudLogsAdmin />}
-      {activeTab === "subscriptions" && <FraudSubscriptionManagement />}
+      <motion.div
+        key={activeTab}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2 }}
+      >
+        {activeTab === "overview" && <FraudGuardCharts />}
+        {activeTab === "merchants" && <MerchantManagement />}
+        {activeTab === "logs" && <FraudLogsAdmin />}
+        {activeTab === "subscriptions" && <FraudSubscriptionManagement />}
+      </motion.div>
     </div>
   );
 }

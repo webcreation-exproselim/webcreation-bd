@@ -126,7 +126,20 @@ export default function ClientDashboard() {
         .eq("user_id", userId)
         .single();
       
-      if (profileData) setProfile(profileData);
+      if (profileData) {
+        setProfile(profileData);
+        // Check if user is blocked
+        if (profileData.is_blocked) {
+          await supabase.auth.signOut();
+          toast({
+            title: "অ্যাক্সেস বন্ধ",
+            description: "আপনার অ্যাকাউন্ট ব্লক করা হয়েছে। সাহায্যের জন্য যোগাযোগ করুন।",
+            variant: "destructive",
+          });
+          navigate("/auth");
+          return;
+        }
+      }
 
       const { data: ordersData } = await supabase
         .from("orders")

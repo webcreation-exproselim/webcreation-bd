@@ -10,18 +10,18 @@ import logo from "@/assets/logo.png";
 
 export type TabType = "overview" | "orders" | "projects" | "users" | "portfolio" | "invoices" | "messages" | "payments" | "reviews" | "content" | "fraudguard";
 
-const navItems: { id: TabType; label: string; icon: typeof LayoutDashboard; color: string }[] = [
-  { id: "overview", label: "ড্যাশবোর্ড", icon: LayoutDashboard, color: "from-cyan-400 to-blue-500" },
-  { id: "orders", label: "অর্ডার", icon: Package, color: "from-orange-400 to-red-500" },
-  { id: "projects", label: "প্রজেক্ট টাইমার", icon: Timer, color: "from-emerald-400 to-teal-500" },
-  { id: "users", label: "ইউজার", icon: Users, color: "from-blue-400 to-indigo-500" },
-  { id: "fraudguard", label: "Fraud Guard", icon: Shield, color: "from-purple-400 to-violet-500" },
-  { id: "portfolio", label: "পোর্টফোলিও", icon: FileImage, color: "from-pink-400 to-rose-500" },
-  { id: "invoices", label: "ইনভয়েস", icon: FileText, color: "from-amber-400 to-orange-500" },
-  { id: "messages", label: "মেসেজ", icon: MessageCircle, color: "from-green-400 to-emerald-500" },
-  { id: "payments", label: "পেমেন্ট", icon: CreditCard, color: "from-cyan-400 to-teal-500" },
-  { id: "reviews", label: "রিভিউ", icon: Star, color: "from-yellow-400 to-amber-500" },
-  { id: "content", label: "CMS", icon: PenTool, color: "from-violet-400 to-purple-500" },
+const navItems: { id: TabType; label: string; icon: typeof LayoutDashboard; color: string; iconBg: string; iconColor: string }[] = [
+  { id: "overview", label: "ড্যাশবোর্ড", icon: LayoutDashboard, color: "from-blue-600 to-purple-600", iconBg: "bg-blue-100", iconColor: "text-blue-600" },
+  { id: "orders", label: "অর্ডার", icon: Package, color: "from-orange-500 to-red-500", iconBg: "bg-orange-100", iconColor: "text-orange-600" },
+  { id: "projects", label: "প্রজেক্ট টাইমার", icon: Timer, color: "from-emerald-500 to-teal-500", iconBg: "bg-emerald-100", iconColor: "text-emerald-600" },
+  { id: "users", label: "ইউজার", icon: Users, color: "from-blue-500 to-indigo-500", iconBg: "bg-indigo-100", iconColor: "text-indigo-600" },
+  { id: "fraudguard", label: "Fraud Guard", icon: Shield, color: "from-purple-500 to-violet-500", iconBg: "bg-purple-100", iconColor: "text-purple-600" },
+  { id: "portfolio", label: "পোর্টফোলিও", icon: FileImage, color: "from-pink-500 to-rose-500", iconBg: "bg-pink-100", iconColor: "text-pink-600" },
+  { id: "invoices", label: "ইনভয়েস", icon: FileText, color: "from-amber-500 to-orange-500", iconBg: "bg-amber-100", iconColor: "text-amber-600" },
+  { id: "messages", label: "মেসেজ", icon: MessageCircle, color: "from-green-500 to-emerald-500", iconBg: "bg-green-100", iconColor: "text-green-600" },
+  { id: "payments", label: "পেমেন্ট", icon: CreditCard, color: "from-cyan-500 to-teal-500", iconBg: "bg-cyan-100", iconColor: "text-cyan-600" },
+  { id: "reviews", label: "রিভিউ", icon: Star, color: "from-yellow-500 to-amber-500", iconBg: "bg-yellow-100", iconColor: "text-yellow-600" },
+  { id: "content", label: "CMS", icon: PenTool, color: "from-violet-500 to-purple-500", iconBg: "bg-violet-100", iconColor: "text-violet-600" },
 ];
 
 interface AdminSidebarProps {
@@ -35,21 +35,21 @@ export function AdminSidebar({ activeTab, onTabChange }: AdminSidebarProps) {
   return (
     <aside
       className={cn(
-        "bg-slate-900/90 backdrop-blur-xl border-r border-slate-700/50 flex flex-col transition-all duration-300 relative shrink-0",
+        "bg-white/95 backdrop-blur-xl border-r border-gray-100 flex flex-col transition-all duration-300 relative shrink-0 shadow-sm",
         collapsed ? "w-[72px]" : "w-[240px]"
       )}
     >
       {/* Logo */}
-      <div className="p-4 flex items-center gap-3 border-b border-slate-700/50">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 p-0.5 shrink-0 shadow-lg shadow-cyan-500/20">
-          <div className="w-full h-full rounded-[10px] bg-slate-900 flex items-center justify-center overflow-hidden">
+      <div className="p-4 flex items-center gap-3 border-b border-gray-100">
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 p-0.5 shrink-0 shadow-lg shadow-blue-500/20">
+          <div className="w-full h-full rounded-[10px] bg-white flex items-center justify-center overflow-hidden">
             <img src={logo} alt="Logo" className="w-7 h-7 object-contain" />
           </div>
         </div>
         {!collapsed && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="min-w-0">
-            <p className="text-sm font-bold text-white truncate">Web Creation BD</p>
-            <p className="text-[10px] text-cyan-400/60">Admin Panel</p>
+            <p className="text-sm font-bold text-gray-900 truncate">Web Creation BD</p>
+            <p className="text-[10px] text-blue-500/60">Admin Panel</p>
           </motion.div>
         )}
       </div>
@@ -70,29 +70,26 @@ export function AdminSidebar({ activeTab, onTabChange }: AdminSidebarProps) {
                 "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bengali transition-all duration-200 group relative",
                 isActive
                   ? "text-white"
-                  : "text-slate-400 hover:text-white hover:bg-slate-800/60"
+                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
               )}
               title={collapsed ? item.label : undefined}
             >
-              {/* Active background glow */}
+              {/* Active background */}
               {isActive && (
                 <motion.div 
                   layoutId="activeTab"
-                  className={`absolute inset-0 rounded-xl bg-gradient-to-r ${item.color} opacity-15`}
+                  className={`absolute inset-0 rounded-xl bg-gradient-to-r ${item.color} shadow-lg`}
                   transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 />
-              )}
-              {isActive && (
-                <div className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-r-full bg-gradient-to-b ${item.color}`} />
               )}
               
               <div className={cn(
                 "w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-all",
                 isActive 
-                  ? `bg-gradient-to-br ${item.color} shadow-lg` 
-                  : "bg-slate-800/50 group-hover:bg-slate-700/50"
+                  ? "bg-white/20" 
+                  : `${item.iconBg}`
               )}>
-                <Icon className={cn("w-4 h-4", isActive ? "text-white" : "text-slate-400 group-hover:text-white")} />
+                <Icon className={cn("w-4 h-4", isActive ? "text-white" : item.iconColor)} />
               </div>
               {!collapsed && (
                 <span className="truncate relative z-10">{item.label}</span>
@@ -105,7 +102,7 @@ export function AdminSidebar({ activeTab, onTabChange }: AdminSidebarProps) {
       {/* Collapse Toggle */}
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className="absolute -right-3 top-20 w-6 h-6 bg-slate-800 border border-slate-600 rounded-full flex items-center justify-center text-slate-400 hover:text-white hover:bg-cyan-600 hover:border-cyan-500 transition-all z-10 shadow-lg"
+        className="absolute -right-3 top-20 w-6 h-6 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-400 hover:text-blue-600 hover:border-blue-400 transition-all z-10 shadow-md"
       >
         {collapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronLeft className="w-3 h-3" />}
       </button>

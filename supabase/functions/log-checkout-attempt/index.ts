@@ -108,7 +108,7 @@ Deno.serve(async (req) => {
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       } else {
-        // Insert new record
+        // Insert new record - handle unique constraint violation gracefully
         const { data: newRecord, error: insertError } = await supabase
           .from('incomplete_orders')
           .insert({
@@ -128,6 +128,37 @@ Deno.serve(async (req) => {
           .single();
 
         if (insertError) {
+          // If unique constraint violation, try to update instead (race condition)
+          if (insertError.code === '23505') {
+            console.log('[log-checkout-attempt] Race condition detected, updating instead');
+            const { data: raceExisting } = await supabase
+              .from('incomplete_orders')
+              .select('id')
+              .eq('merchant_id', merchant.id)
+              .eq('phone_number', normalizedPhone)
+              .eq('is_converted', false)
+              .limit(1);
+
+            if (raceExisting && raceExisting.length > 0) {
+              const raceUpdateData: Record<string, unknown> = {
+                customer_name: name || null,
+                address: address || null,
+              };
+              if (cart_total) raceUpdateData.cart_total = cart_total;
+              if (cart_items) raceUpdateData.cart_items = cart_items;
+
+              await supabase
+                .from('incomplete_orders')
+                .update(raceUpdateData)
+                .eq('id', raceExisting[0].id);
+
+              return new Response(
+                JSON.stringify({ success: true, action: 'updated', id: raceExisting[0].id }),
+                { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+              );
+            }
+          }
+
           console.error('[log-checkout-attempt] Insert error:', insertError);
           return new Response(
             JSON.stringify({ success: false, error: 'Failed to create record' }),

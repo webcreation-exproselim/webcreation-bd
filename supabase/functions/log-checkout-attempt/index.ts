@@ -5,19 +5,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface CheckoutAttemptRequest {
-  api_key: string;
-  phone: string;
-  name?: string;
-  ip?: string;
-  device_id?: string;
-  cart_total?: number;
-  cart_items?: { name: string; price: number; quantity: number; product_id?: number }[];
-  reason: 'phone_blur' | 'validation_error' | 'page_exit' | 'payment_failed';
-}
-
 Deno.serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -27,18 +15,14 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const body: CheckoutAttemptRequest = await req.json();
-    const { api_key, phone, name, ip, device_id, cart_total, cart_items, reason } = body;
+    const body = await req.json();
+    const { api_key, action = 'update', phone, name, address, ip, device_id, cart_total, cart_items, retention_days } = body;
 
-    console.log('[log-checkout-attempt] Request:', { api_key: api_key?.substring(0, 8) + '...', phone, reason });
+    console.log('[log-checkout-attempt] Request:', { api_key: api_key?.substring(0, 8) + '...', action, phone });
 
-    // Validate required fields
-    if (!api_key || !phone || !reason) {
+    if (!api_key) {
       return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'Missing required fields: api_key, phone, reason' 
-        }),
+        JSON.stringify({ success: false, error: 'Missing API key' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -46,7 +30,7 @@ Deno.serve(async (req) => {
     // Validate API key and get merchant
     const { data: merchant, error: merchantError } = await supabase
       .from('merchants')
-      .select('id, is_active, incomplete_auto_block_threshold, incomplete_time_window_minutes')
+      .select('id, is_active')
       .eq('api_key', api_key)
       .single();
 
@@ -58,105 +42,173 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check if merchant subscription is active
     if (!merchant.is_active) {
-      console.log('[log-checkout-attempt] Merchant subscription inactive');
       return new Response(
         JSON.stringify({ success: false, error: 'Subscription inactive' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Normalize phone number (remove spaces, +880, etc.)
-    const normalizedPhone = phone.replace(/[\s\-\+]/g, '').replace(/^880/, '0').replace(/^0088/, '0');
+    // === ACTION: UPDATE (upsert incomplete order) ===
+    if (action === 'update') {
+      if (!phone) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'Missing phone number' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
 
-    // Get thresholds from merchant settings or use defaults
-    const blockThreshold = merchant.incomplete_auto_block_threshold || 5;
-    const timeWindowMinutes = merchant.incomplete_time_window_minutes || 60;
-    const oneHourAgo = new Date(Date.now() - timeWindowMinutes * 60 * 1000).toISOString();
+      // Validate BD phone format server-side
+      const normalizedPhone = phone.replace(/[\s\-\+]/g, '').replace(/^880/, '0').replace(/^0088/, '0');
+      if (!/^01[0-9]{9}$/.test(normalizedPhone)) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'Invalid BD phone format' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
 
-    // Count recent attempts from same phone, IP, and device
-    const [phoneAttempts, ipAttempts, deviceAttempts] = await Promise.all([
-      // Phone attempts
-      supabase
+      // Check if record already exists for this phone + merchant (upsert logic)
+      const { data: existing } = await supabase
         .from('incomplete_orders')
-        .select('id', { count: 'exact', head: true })
+        .select('id')
         .eq('merchant_id', merchant.id)
         .eq('phone_number', normalizedPhone)
-        .gte('created_at', oneHourAgo),
-      
-      // IP attempts (only if IP provided)
-      ip ? supabase
-        .from('incomplete_orders')
-        .select('id', { count: 'exact', head: true })
-        .eq('merchant_id', merchant.id)
-        .eq('ip_address', ip)
-        .gte('created_at', oneHourAgo) : Promise.resolve({ count: 0 }),
-      
-      // Device attempts (only if device_id provided)
-      device_id ? supabase
-        .from('incomplete_orders')
-        .select('id', { count: 'exact', head: true })
-        .eq('merchant_id', merchant.id)
-        .eq('device_fingerprint', device_id)
-        .gte('created_at', oneHourAgo) : Promise.resolve({ count: 0 })
-    ]);
+        .eq('is_converted', false)
+        .order('created_at', { ascending: false })
+        .limit(1);
 
-    const phoneCount = phoneAttempts.count || 0;
-    const ipCount = (ipAttempts as any).count || 0;
-    const deviceCount = (deviceAttempts as any).count || 0;
-    const maxAttempts = Math.max(phoneCount, ipCount, deviceCount);
+      if (existing && existing.length > 0) {
+        // Update existing record with latest data
+        const updateData: Record<string, unknown> = {
+          customer_name: name || null,
+          address: address || null,
+          failure_reason: 'checkout_tracking',
+        };
+        if (cart_total) updateData.cart_total = cart_total;
+        if (cart_items) updateData.cart_items = cart_items;
+        if (ip) updateData.ip_address = ip;
+        if (device_id) updateData.device_fingerprint = device_id;
 
-    console.log('[log-checkout-attempt] Attempt counts:', { phoneCount, ipCount, deviceCount, maxAttempts });
+        const { error: updateError } = await supabase
+          .from('incomplete_orders')
+          .update(updateData)
+          .eq('id', existing[0].id);
 
-    // Determine risk level based on attempt counts
-    let riskLevel: 'low' | 'medium' | 'high' = 'low';
-    let isSuspicious = false;
+        if (updateError) {
+          console.error('[log-checkout-attempt] Update error:', updateError);
+          return new Response(
+            JSON.stringify({ success: false, error: 'Failed to update record' }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
 
-    if (maxAttempts >= blockThreshold) {
-      riskLevel = 'high';
-      isSuspicious = true;
-    } else if (maxAttempts >= Math.floor(blockThreshold * 0.6)) {
-      riskLevel = 'medium';
+        console.log('[log-checkout-attempt] Updated existing record:', existing[0].id);
+        return new Response(
+          JSON.stringify({ success: true, action: 'updated', id: existing[0].id }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      } else {
+        // Insert new record
+        const { data: newRecord, error: insertError } = await supabase
+          .from('incomplete_orders')
+          .insert({
+            merchant_id: merchant.id,
+            phone_number: normalizedPhone,
+            customer_name: name || null,
+            address: address || null,
+            ip_address: ip || null,
+            device_fingerprint: device_id || null,
+            cart_total: cart_total || null,
+            cart_items: cart_items || null,
+            failure_reason: 'checkout_tracking',
+            is_suspicious: false,
+            is_converted: false,
+          })
+          .select('id')
+          .single();
+
+        if (insertError) {
+          console.error('[log-checkout-attempt] Insert error:', insertError);
+          return new Response(
+            JSON.stringify({ success: false, error: 'Failed to create record' }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        console.log('[log-checkout-attempt] Created new record:', newRecord?.id);
+        return new Response(
+          JSON.stringify({ success: true, action: 'created', id: newRecord?.id }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
     }
 
-    // Insert the incomplete order record
-    const { error: insertError } = await supabase
-      .from('incomplete_orders')
-      .insert({
-        merchant_id: merchant.id,
-        phone_number: normalizedPhone,
-        customer_name: name || null,
-        ip_address: ip || null,
-        device_fingerprint: device_id || null,
-        cart_total: cart_total || null,
-        cart_items: cart_items || null,
-        failure_reason: reason,
-        is_suspicious: isSuspicious,
-        is_converted: false
-      });
+    // === ACTION: COMPLETED (auto-cleanup on Thank You page) ===
+    if (action === 'completed') {
+      if (!phone) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'Missing phone number' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
 
-    if (insertError) {
-      console.error('[log-checkout-attempt] Insert error:', insertError);
+      const normalizedPhone = phone.replace(/[\s\-\+]/g, '').replace(/^880/, '0').replace(/^0088/, '0');
+
+      // Delete the incomplete record for this phone + merchant
+      const { data: deleted, error: deleteError } = await supabase
+        .from('incomplete_orders')
+        .delete()
+        .eq('merchant_id', merchant.id)
+        .eq('phone_number', normalizedPhone)
+        .eq('is_converted', false)
+        .select('id');
+
+      if (deleteError) {
+        console.error('[log-checkout-attempt] Delete error:', deleteError);
+        return new Response(
+          JSON.stringify({ success: false, error: 'Failed to cleanup record' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log('[log-checkout-attempt] Cleaned up records:', deleted?.length || 0);
       return new Response(
-        JSON.stringify({ success: false, error: 'Failed to log attempt' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ success: true, action: 'completed', cleaned: deleted?.length || 0 }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('[log-checkout-attempt] Success:', { riskLevel, isSuspicious, attempts: maxAttempts + 1 });
+    // === ACTION: CLEANUP (retention policy - delete old records) ===
+    if (action === 'cleanup') {
+      const days = retention_days || 30;
+      const cutoffDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+
+      const { data: deleted, error: cleanupError } = await supabase
+        .from('incomplete_orders')
+        .delete()
+        .eq('merchant_id', merchant.id)
+        .eq('is_converted', false)
+        .lt('created_at', cutoffDate)
+        .select('id');
+
+      if (cleanupError) {
+        console.error('[log-checkout-attempt] Cleanup error:', cleanupError);
+        return new Response(
+          JSON.stringify({ success: false, error: 'Failed to cleanup old records' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log('[log-checkout-attempt] Cleanup removed records:', deleted?.length || 0);
+      return new Response(
+        JSON.stringify({ success: true, action: 'cleanup', removed: deleted?.length || 0, retention_days: days }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        risk_level: riskLevel,
-        attempts_count: maxAttempts + 1,
-        is_suspicious: isSuspicious,
-        message: isSuspicious 
-          ? 'Multiple failed attempts detected - marked as suspicious'
-          : 'Attempt logged successfully'
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ success: false, error: 'Invalid action. Use: update, completed, cleanup' }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {

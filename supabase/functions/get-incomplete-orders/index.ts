@@ -5,22 +5,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface IncompleteOrder {
-  id: string;
-  phone_number: string;
-  customer_name: string | null;
-  ip_address: string | null;
-  device_fingerprint: string | null;
-  cart_total: number | null;
-  cart_items: any[] | null;
-  failure_reason: string;
-  is_suspicious: boolean;
-  is_converted: boolean;
-  created_at: string;
-}
-
 Deno.serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -35,7 +20,6 @@ Deno.serve(async (req) => {
 
     console.log('[get-incomplete-orders] Request:', { api_key: api_key?.substring(0, 8) + '...', limit });
 
-    // Validate required fields
     if (!api_key) {
       return new Response(
         JSON.stringify({ success: false, error: 'Missing API key' }),
@@ -43,7 +27,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Validate API key and get merchant
     const { data: merchant, error: merchantError } = await supabase
       .from('merchants')
       .select('id, is_active')
@@ -58,9 +41,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check if merchant subscription is active
     if (!merchant.is_active) {
-      console.log('[get-incomplete-orders] Merchant subscription inactive');
       return new Response(
         JSON.stringify({ success: false, error: 'Subscription inactive' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -83,18 +64,37 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Calculate stats
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
     
-    const total = orders?.length || 0;
-    const suspicious = orders?.filter(o => o.is_suspicious).length || 0;
-    const converted = orders?.filter(o => o.is_converted).length || 0;
-    const today = orders?.filter(o => o.created_at >= todayStart).length || 0;
+    const allOrders = orders || [];
+    const total = allOrders.length;
+    const converted = allOrders.filter((o: any) => o.is_converted).length;
+    const today = allOrders.filter((o: any) => o.created_at >= todayStart).length;
+    const potentialRevenue = allOrders
+      .filter((o: any) => !o.is_converted)
+      .reduce((sum: number, o: any) => sum + (Number(o.cart_total) || 0), 0);
+
+    // Generate daily aggregation for charts (last 30 days)
+    const dailyData: Record<string, number> = {};
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().split('T')[0];
+      dailyData[key] = 0;
+    }
+
+    allOrders.forEach((o: any) => {
+      const dateKey = o.created_at.split('T')[0];
+      if (dailyData[dateKey] !== undefined) {
+        dailyData[dateKey]++;
+      }
+    });
+
+    const chartData = Object.entries(dailyData).map(([date, count]) => ({ date, count }));
 
     // Format orders for response
-    const formattedOrders = (orders || []).map((order: IncompleteOrder) => {
-      // Calculate time ago
+    const formattedOrders = allOrders.map((order: any) => {
       const createdAt = new Date(order.created_at);
       const diffMs = now.getTime() - createdAt.getTime();
       const diffMins = Math.floor(diffMs / 60000);
@@ -102,45 +102,35 @@ Deno.serve(async (req) => {
       const diffDays = Math.floor(diffHours / 24);
       
       let timeAgo = '';
-      if (diffDays > 0) {
-        timeAgo = `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-      } else if (diffHours > 0) {
-        timeAgo = `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-      } else if (diffMins > 0) {
-        timeAgo = `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
-      } else {
-        timeAgo = 'Just now';
-      }
+      if (diffDays > 0) timeAgo = `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+      else if (diffHours > 0) timeAgo = `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+      else if (diffMins > 0) timeAgo = `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
+      else timeAgo = 'Just now';
 
       return {
         id: order.id,
         phone: order.phone_number,
         name: order.customer_name || '',
+        address: order.address || '',
         ip: order.ip_address || '',
         device_id: order.device_fingerprint || '',
         cart_total: order.cart_total || 0,
         cart_items: order.cart_items || [],
         reason: order.failure_reason,
-        is_suspicious: order.is_suspicious,
         is_converted: order.is_converted,
-        attempts: 1, // Could be calculated from counts
         time_ago: timeAgo,
-        created_at: order.created_at
+        created_at: order.created_at,
       };
     });
 
-    console.log('[get-incomplete-orders] Success:', { total, suspicious, converted, today });
+    console.log('[get-incomplete-orders] Success:', { total, converted, today, potentialRevenue });
 
     return new Response(
       JSON.stringify({
         success: true,
         orders: formattedOrders,
-        stats: {
-          total,
-          suspicious,
-          converted,
-          today
-        }
+        stats: { total, converted, today, potentialRevenue },
+        chartData,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

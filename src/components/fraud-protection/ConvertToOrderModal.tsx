@@ -22,6 +22,7 @@ interface ConvertToOrderModalProps {
     id: string;
     phone_number: string;
     customer_name: string | null;
+    address: string | null;
     cart_total: number | null;
     cart_items: CartItem[] | null;
   };
@@ -33,6 +34,7 @@ export function ConvertToOrderModal({ open, onClose, order, onConverted }: Conve
   const [loading, setLoading] = useState(false);
   const [customerName, setCustomerName] = useState(order.customer_name || "");
   const [customerPhone, setCustomerPhone] = useState(order.phone_number || "");
+  const [customerAddress, setCustomerAddress] = useState((order as any).address || "");
   const [customerEmail, setCustomerEmail] = useState("");
   const [notes, setNotes] = useState("");
   const [totalPrice, setTotalPrice] = useState(order.cart_total || 0);
@@ -45,14 +47,12 @@ export function ConvertToOrderModal({ open, onClose, order, onConverted }: Conve
 
     setLoading(true);
     try {
-      // Build services array from cart items
       const services = (order.cart_items || []).map(item => ({
         name: item.name,
         price: item.price,
         quantity: item.quantity,
       }));
 
-      // Create a real order
       const { error: orderError } = await supabase
         .from('orders')
         .insert({
@@ -64,12 +64,11 @@ export function ConvertToOrderModal({ open, onClose, order, onConverted }: Conve
           total_price: totalPrice,
           total_savings: 0,
           status: 'pending',
-          notes: notes.trim() || `Converted from incomplete order #${order.id.substring(0, 8)}`,
+          notes: notes.trim() || `Converted from incomplete order | Address: ${customerAddress || 'N/A'}`,
         });
 
       if (orderError) throw orderError;
 
-      // Mark incomplete order as converted
       const { error: updateError } = await supabase
         .from('incomplete_orders')
         .update({ is_converted: true })
@@ -78,7 +77,7 @@ export function ConvertToOrderModal({ open, onClose, order, onConverted }: Conve
       if (updateError) throw updateError;
 
       onConverted(order.id);
-      toast({ title: "✅ Order Created", description: "Incomplete order converted to a real order successfully" });
+      toast({ title: "✅ Order Created", description: "Incomplete order converted successfully" });
       onClose();
     } catch (error: any) {
       console.error('Convert error:', error);
@@ -101,7 +100,6 @@ export function ConvertToOrderModal({ open, onClose, order, onConverted }: Conve
           </DialogDescription>
         </DialogHeader>
 
-        {/* Cart Items Preview */}
         {order.cart_items && order.cart_items.length > 0 && (
           <div className="space-y-2">
             <Label className="text-slate-400 text-sm">Products</Label>
@@ -125,62 +123,44 @@ export function ConvertToOrderModal({ open, onClose, order, onConverted }: Conve
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label className="text-slate-400 text-sm">Customer Name *</Label>
-              <Input
-                value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-                className="bg-slate-900 border-slate-600 text-white mt-1"
-                placeholder="Customer name"
-              />
+              <Input value={customerName} onChange={(e) => setCustomerName(e.target.value)}
+                className="bg-slate-900 border-slate-600 text-white mt-1" placeholder="Customer name" />
             </div>
             <div>
               <Label className="text-slate-400 text-sm">Phone *</Label>
-              <Input
-                value={customerPhone}
-                onChange={(e) => setCustomerPhone(e.target.value)}
-                className="bg-slate-900 border-slate-600 text-white mt-1"
-                placeholder="01XXXXXXXXX"
-              />
+              <Input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)}
+                className="bg-slate-900 border-slate-600 text-white mt-1" placeholder="01XXXXXXXXX" />
             </div>
+          </div>
+
+          <div>
+            <Label className="text-slate-400 text-sm">Address</Label>
+            <Input value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)}
+              className="bg-slate-900 border-slate-600 text-white mt-1" placeholder="Customer address" />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label className="text-slate-400 text-sm">Email (optional)</Label>
-              <Input
-                value={customerEmail}
-                onChange={(e) => setCustomerEmail(e.target.value)}
-                className="bg-slate-900 border-slate-600 text-white mt-1"
-                placeholder="email@example.com"
-                type="email"
-              />
+              <Input value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)}
+                className="bg-slate-900 border-slate-600 text-white mt-1" placeholder="email@example.com" type="email" />
             </div>
             <div>
               <Label className="text-slate-400 text-sm">Total Price (৳)</Label>
-              <Input
-                value={totalPrice}
-                onChange={(e) => setTotalPrice(parseFloat(e.target.value) || 0)}
-                className="bg-slate-900 border-slate-600 text-white mt-1"
-                type="number"
-                min={0}
-              />
+              <Input value={totalPrice} onChange={(e) => setTotalPrice(parseFloat(e.target.value) || 0)}
+                className="bg-slate-900 border-slate-600 text-white mt-1" type="number" min={0} />
             </div>
           </div>
 
           <div>
             <Label className="text-slate-400 text-sm">Notes (optional)</Label>
-            <Textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              className="bg-slate-900 border-slate-600 text-white mt-1 min-h-[60px]"
-              placeholder="Additional notes..."
-            />
+            <Textarea value={notes} onChange={(e) => setNotes(e.target.value)}
+              className="bg-slate-900 border-slate-600 text-white mt-1 min-h-[60px]" placeholder="Additional notes..." />
           </div>
         </div>
 
         <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2">
-          <Button variant="outline" onClick={onClose} className="border-slate-600 flex-1" disabled={loading}>
-            Cancel
-          </Button>
+          <Button variant="outline" onClick={onClose} className="border-slate-600 flex-1" disabled={loading}>Cancel</Button>
           <Button onClick={handleConvert} disabled={loading} className="bg-cyan-600 hover:bg-cyan-700 flex-1">
             {loading ? (
               <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Converting...</>

@@ -46,34 +46,7 @@ export default function FraudProtectionPage() {
     }
   };
 
-  const handleToggleIncompleteTracking = async (enabled: boolean) => {
-    if (!merchant?.id) return;
-    
-    const { error } = await supabase
-      .from('merchants')
-      .update({ enable_incomplete_tracking: enabled })
-      .eq('id', merchant.id);
-    
-    if (!error) {
-      refetchMerchant();
-    }
-  };
-
-  const handleUpdateIncompleteSettings = async (threshold: number, timeWindow: number) => {
-    if (!merchant?.id) return;
-    
-    const { error } = await supabase
-      .from('merchants')
-      .update({ 
-        incomplete_auto_block_threshold: threshold,
-        incomplete_time_window_minutes: timeWindow
-      })
-      .eq('id', merchant.id);
-    
-    if (!error) {
-      refetchMerchant();
-    }
-  };
+  // Removed old incomplete tracking settings - now simplified
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -270,14 +243,7 @@ export default function FraudProtectionPage() {
 
           <TabsContent value="incomplete">
             {merchant && (
-              <IncompleteOrders 
-                merchantId={merchant.id}
-                trackingEnabled={(merchant as any).enable_incomplete_tracking ?? false}
-                autoBlockThreshold={(merchant as any).incomplete_auto_block_threshold ?? 5}
-                timeWindowMinutes={(merchant as any).incomplete_time_window_minutes ?? 60}
-                onToggleTracking={handleToggleIncompleteTracking}
-                onUpdateSettings={handleUpdateIncompleteSettings}
-              />
+              <IncompleteOrders merchantId={merchant.id} />
             )}
           </TabsContent>
 

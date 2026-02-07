@@ -79,20 +79,115 @@ Deno.serve(async (req) => {
 
     console.log('[scrape-courier-check] Scraping elitemart for phone:', cleanPhone);
 
-    // Scrape elitemart.com.bd/fraud-check
-    const scrapeResponse = await fetch('https://elitemart.com.bd/fraud-check', {
-      method: 'POST',
+    // Step 1: GET the page to obtain CSRF token and session cookies
+    const pageUrl = 'https://elitemart.com.bd/fraud-check';
+    
+    const getResponse = await fetch(pageUrl, {
+      method: 'GET',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
         'Accept-Language': 'en-US,en;q=0.5',
       },
-      body: `phone=${cleanPhone}`,
     });
 
+    if (!getResponse.ok) {
+      console.error('[scrape-courier-check] GET page failed with status:', getResponse.status);
+      return new Response(
+        JSON.stringify({ success: false, error: 'Failed to access courier check service' }),
+        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const pageHtml = await getResponse.text();
+    
+    // Extract CSRF token from meta tag or hidden input
+    let csrfToken = '';
+    
+    // Try meta tag: <meta name="csrf-token" content="...">
+    const metaMatch = pageHtml.match(/<meta\s+name=["']csrf-token["']\s+content=["']([^"']+)["']/i);
+    if (metaMatch) {
+      csrfToken = metaMatch[1];
+      console.log('[scrape-courier-check] CSRF token found in meta tag');
+    }
+    
+    // Try hidden input: <input type="hidden" name="_token" value="...">
+    if (!csrfToken) {
+      const inputMatch = pageHtml.match(/<input[^>]*name=["']_token["'][^>]*value=["']([^"']+)["']/i);
+      if (inputMatch) {
+        csrfToken = inputMatch[1];
+        console.log('[scrape-courier-check] CSRF token found in hidden input');
+      }
+    }
+    
+    // Also try reverse order: value before name
+    if (!csrfToken) {
+      const inputMatch2 = pageHtml.match(/<input[^>]*value=["']([^"']+)["'][^>]*name=["']_token["']/i);
+      if (inputMatch2) {
+        csrfToken = inputMatch2[1];
+        console.log('[scrape-courier-check] CSRF token found in hidden input (reverse)');
+      }
+    }
+
+    if (!csrfToken) {
+      console.error('[scrape-courier-check] Could not find CSRF token in page HTML');
+      console.log('[scrape-courier-check] Page HTML snippet (first 2000 chars):', pageHtml.substring(0, 2000));
+    }
+
+    // Extract cookies from GET response
+    const setCookieHeaders = getResponse.headers.getSetCookie ? getResponse.headers.getSetCookie() : [];
+    let cookieString = '';
+    
+    // Fallback: try to get set-cookie header directly
+    if (setCookieHeaders.length === 0) {
+      const rawCookie = getResponse.headers.get('set-cookie');
+      if (rawCookie) {
+        // Parse multiple cookies from single header
+        const cookieParts = rawCookie.split(/,(?=\s*[a-zA-Z_]+=)/);
+        cookieString = cookieParts.map(c => c.split(';')[0].trim()).join('; ');
+      }
+    } else {
+      cookieString = setCookieHeaders.map(c => c.split(';')[0]).join('; ');
+    }
+
+    console.log('[scrape-courier-check] Cookies obtained:', cookieString ? 'yes' : 'no');
+    console.log('[scrape-courier-check] CSRF token:', csrfToken ? 'found' : 'not found');
+
+    // Step 2: POST with CSRF token and cookies
+    const postHeaders: Record<string, string> = {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+      'Accept-Language': 'en-US,en;q=0.5',
+      'Referer': pageUrl,
+      'Origin': 'https://elitemart.com.bd',
+    };
+
+    if (cookieString) {
+      postHeaders['Cookie'] = cookieString;
+    }
+
+    // Build POST body with CSRF token
+    let postBody = `phone=${cleanPhone}`;
+    if (csrfToken) {
+      postBody = `_token=${encodeURIComponent(csrfToken)}&phone=${cleanPhone}`;
+    }
+
+    console.log('[scrape-courier-check] Sending POST with body:', postBody.substring(0, 100));
+
+    const scrapeResponse = await fetch(pageUrl, {
+      method: 'POST',
+      headers: postHeaders,
+      body: postBody,
+      redirect: 'follow',
+    });
+
+    console.log('[scrape-courier-check] POST response status:', scrapeResponse.status);
+
     if (!scrapeResponse.ok) {
+      const errorBody = await scrapeResponse.text();
       console.error('[scrape-courier-check] Scrape failed with status:', scrapeResponse.status);
+      console.error('[scrape-courier-check] Error body snippet:', errorBody.substring(0, 500));
       return new Response(
         JSON.stringify({ success: false, error: 'Failed to fetch courier data. Please try again.' }),
         { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -132,43 +227,40 @@ Deno.serve(async (req) => {
 function parseElitemartHTML(html: string, phone: string) {
   // Extract success rate from #deliveryProgress data-percentage
   let successRate = 0;
-  const progressMatch = html.match(/id=["']deliveryProgress["'][^>]*data-percentage=["'](\d+)["']/i) 
-    || html.match(/data-percentage=["'](\d+)["'][^>]*id=["']deliveryProgress["']/i);
+  const progressMatch = html.match(/id=["']deliveryProgress["'][^>]*data-percentage=["'](\d+)%?["']/i) 
+    || html.match(/data-percentage=["'](\d+)%?["'][^>]*id=["']deliveryProgress["']/i);
   if (progressMatch) {
     successRate = parseInt(progressMatch[1], 10);
   }
 
-  // Extract stats from .grid section - look for bold text with numbers
+  // Extract total orders, delivered, returned from the grid stats
   let totalOrders = 0;
   let totalDelivered = 0;
   let totalReturned = 0;
 
-  // Try to extract stats from grid section
-  const gridSection = html.match(/<div[^>]*class=["'][^"']*grid[^"']*["'][^>]*>([\s\S]*?)<\/div>\s*<\/div>\s*<\/div>/i);
-  if (gridSection) {
-    const boldNumbers = gridSection[1].match(/<[^>]*class=["'][^"']*font-bold[^"']*["'][^>]*>(\d+)<\/[^>]*>/g);
-    if (boldNumbers && boldNumbers.length >= 3) {
-      const nums = boldNumbers.map(b => {
-        const m = b.match(/>(\d+)</);
-        return m ? parseInt(m[1], 10) : 0;
-      });
-      totalOrders = nums[0];
-      totalDelivered = nums[1];
-      totalReturned = nums[2];
-    }
-  }
+  // Look for the stats grid - pattern: text-info for total, text-success for delivered, text-danger for returned
+  const infoMatch = html.match(/text-info[^>]*>(\d+)</i);
+  const successMatch = html.match(/text-success[^>]*>(\d+)</i);
+  const dangerMatch = html.match(/text-danger[^>]*>(\d+)</i);
 
-  // Fallback: search for any bold numbers in specific patterns
+  if (infoMatch) totalOrders = parseInt(infoMatch[1], 10);
+  if (successMatch) totalDelivered = parseInt(successMatch[1], 10);
+  if (dangerMatch) totalReturned = parseInt(dangerMatch[1], 10);
+
+  // Fallback: search for bold numbers in grid
   if (totalOrders === 0) {
-    const allBoldNumbers = html.match(/<[^>]*font-bold[^>]*>\s*(\d+)\s*<\/[^>]*>/gi);
-    if (allBoldNumbers && allBoldNumbers.length >= 3) {
-      const nums = allBoldNumbers.map(b => {
-        const m = b.match(/>(\d+)</);
-        return m ? parseInt(m[1], 10) : 0;
-      });
-      totalOrders = nums[0];
-      totalDelivered = nums[1];
-      totalReturned = nums[2];
+    const gridSection = html.match(/<div[^>]*class=["'][^"']*grid[^"']*grid-cols-3[^"']*["'][^>]*>([\s\S]*?)<\/div>\s*<\/div>\s*<\/div>\s*<\/div>/i);
+    if (gridSection) {
+      const boldNumbers = gridSection[1].match(/<p[^>]*class=["'][^"']*font-bold[^"']*["'][^>]*>(\d+)<\/p>/g);
+      if (boldNumbers && boldNumbers.length >= 3) {
+        const nums = boldNumbers.map(b => {
+          const m = b.match(/>(\d+)</);
+          return m ? parseInt(m[1], 10) : 0;
+        });
+        totalOrders = nums[0];
+        totalDelivered = nums[1];
+        totalReturned = nums[2];
+      }
     }
   }
 
@@ -204,7 +296,7 @@ function parseElitemartHTML(html: string, phone: string) {
   // Extract risk label from #risk-container
   let riskLabel = 'new_customer';
   let riskMessage = '';
-  const riskMatch = html.match(/id=["']risk-container["'][^>]*>([\s\S]*?)<\/div>/i);
+  const riskMatch = html.match(/id=["']risk-container["'][^>]*>([\s\S]*?)<\/div>\s*<\/div>/i);
   if (riskMatch) {
     const riskText = riskMatch[1].replace(/<[^>]*>/g, '').trim().toLowerCase();
     riskMessage = riskMatch[1].replace(/<[^>]*>/g, '').trim();
@@ -220,7 +312,7 @@ function parseElitemartHTML(html: string, phone: string) {
     }
   }
 
-  // Also try to determine risk from success rate if label not found
+  // Also determine risk from success rate if label not found
   if (riskLabel === 'new_customer' && totalOrders > 0) {
     if (successRate >= 80) riskLabel = 'trusted';
     else if (successRate >= 50) riskLabel = 'moderate';

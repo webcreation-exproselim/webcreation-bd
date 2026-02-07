@@ -758,6 +758,7 @@ LOADERJS;
         .stat-card.today .value{color:#a855f7}
         
         .chart-container{background:linear-gradient(145deg,#1e293b,#0f172a);border:1px solid #334155;border-radius:16px;padding:20px;margin-bottom:20px}
+        .chart-canvas-wrap{position:relative;height:250px;width:100%}
         .chart-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}
         .chart-header h3{color:#fff;font-size:16px;margin:0;display:flex;align-items:center;gap:8px}
         .chart-toggle{display:flex;gap:4px;background:#0f172a;padding:3px;border-radius:8px}
@@ -877,7 +878,7 @@ html+='</div>';
 html+='<div class="chart-container">';
 html+='<div class="chart-header"><h3>📊 Daily Trends</h3>';
 html+='<div class="chart-toggle"><button class="chart-range-btn active" data-days="7">7 Days</button><button class="chart-range-btn" data-days="30">30 Days</button></div></div>';
-html+='<canvas id="incompleteChart" height="200"></canvas></div>';
+html+='<div class="chart-canvas-wrap"><canvas id="incompleteChart"></canvas></div></div>';
 
 html+='<div class="retention-card">';
 html+='<label>🗑️ Auto-delete records older than:</label>';
@@ -1012,11 +1013,11 @@ var sliced=chartData.slice(-days);
 var labels=sliced.map(function(d){var parts=d.date.split('-');return parts[2]+'/'+parts[1];});
 var values=sliced.map(function(d){return d.count;});
 if(incompleteChartInstance){incompleteChartInstance.destroy();}
-incompleteChartInstance=new Chart(canvas,{
-type:'bar',
-data:{labels:labels,datasets:[{label:'Incomplete Orders',data:values,backgroundColor:'rgba(8,145,178,0.6)',borderColor:'#0891b2',borderWidth:1,borderRadius:4}]},
-options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true,ticks:{stepSize:1,color:'#94a3b8'},grid:{color:'#334155'}},x:{ticks:{color:'#94a3b8'},grid:{display:false}}},plugins:{legend:{display:false}}}
-});
+  incompleteChartInstance=new Chart(canvas,{
+  type:'bar',
+  data:{labels:labels,datasets:[{label:'Incomplete Orders',data:values,backgroundColor:'rgba(8,145,178,0.7)',borderColor:'#0891b2',borderWidth:1,borderRadius:6,maxBarThickness:40}]},
+  options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true,ticks:{stepSize:1,color:'#94a3b8',font:{size:12}},grid:{color:'rgba(51,65,85,0.5)'}},x:{ticks:{color:'#94a3b8',font:{size:12}},grid:{display:false}}},plugins:{legend:{display:false},tooltip:{backgroundColor:'#1e293b',titleColor:'#fff',bodyColor:'#94a3b8',borderColor:'#334155',borderWidth:1,cornerRadius:8,padding:10}}}
+  });
 }
 
 function bindChartToggle(chartData){

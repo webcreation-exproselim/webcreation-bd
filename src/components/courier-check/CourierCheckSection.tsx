@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Search, Loader2, Download, AlertCircle, Zap, Calendar, Crown, Copy, Check, Key, Package, Lock } from "lucide-react";
+import { Search, Loader2, Download, AlertCircle, Zap, Calendar, Crown, Copy, Check, Key, Package, Lock, Code } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCourierCheckData } from "@/hooks/useCourierCheckData";
 import { CourierCheckPlans } from "./CourierCheckPlans";
 import { CourierCheckPurchaseModal } from "./CourierCheckPurchaseModal";
 import { CourierCheckerDashboard } from "./CourierCheckerDashboard";
+import { CourierCheckEmbedCode } from "./CourierCheckEmbedCode";
 import { COURIER_CHECK_PLUGIN_CONFIG, getCourierCheckVersionString } from "@/config/courierCheckPluginConfig";
 import { downloadCourierCheckPlugin } from "@/utils/courierCheckPluginGenerator";
 import { useToast } from "@/hooks/use-toast";
@@ -215,6 +216,11 @@ export function CourierCheckSection({ userId }: CourierCheckSectionProps) {
             Plugin ZIP ডাউনলোড করুন ({COURIER_CHECK_PLUGIN_CONFIG.fileSize})
           </Button>
         </div>
+      )}
+
+      {/* Embed Code Section - Always Visible */}
+      {subscription && (
+        <CourierCheckEmbedCode apiKey={subscription.api_key} />
       )}
 
       {/* Pending Order Alert */}

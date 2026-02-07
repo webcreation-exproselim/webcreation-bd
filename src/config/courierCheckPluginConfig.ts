@@ -1,11 +1,11 @@
 export const COURIER_CHECK_PLUGIN_CONFIG = {
-  version: "1.1.0",
+  version: "1.2.0",
   name: "WCBD Courier Check",
   slug: "wcbd-courier-check",
   fileName: "wcbd-courier-check.zip",
-  fileSize: "~12KB",
+  fileSize: "~14KB",
   badgeLabel: "UPDATE",
-  versionHighlight: "CSRF Fix + Improved Stability",
+  versionHighlight: "Branding + Embed Code Support",
   features: [
     "📊 Courier Delivery History Check",
     "🔍 Phone Number Based Lookup",
@@ -16,6 +16,7 @@ export const COURIER_CHECK_PLUGIN_CONFIG = {
     "💼 Single Order View Analytics",
     "🔒 Domain-locked License",
     "🇧🇩 Bangladesh Courier Support",
+    "🏢 WebCreation BD Branding",
   ],
   requirements: {
     wordpress: "5.0+",

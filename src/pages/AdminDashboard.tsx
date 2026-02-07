@@ -52,6 +52,7 @@ import { ContentManagement } from "@/components/admin/ContentManagement";
 import { FraudGuardManagement } from "@/components/admin/FraudGuardManagement";
 import { UserManagement } from "@/components/admin/UserManagement";
 import { ProjectTimerManagement } from "@/components/admin/ProjectTimerManagement";
+import { CourierCheckSubscriptionManagement } from "@/components/admin/CourierCheckSubscriptionManagement";
 
 interface OrderService {
   id: string;
@@ -607,6 +608,7 @@ const AdminDashboard = () => {
     { id: "orders" as TabType, label: "অর্ডার", icon: Package },
     { id: "users" as TabType, label: "ইউজার", icon: Users },
     { id: "fraudguard" as TabType, label: "Fraud Guard", icon: Shield },
+    { id: "couriercheck" as TabType, label: "Courier Check", icon: Search },
     { id: "portfolio" as TabType, label: "পোর্টফোলিও", icon: FileImage },
     { id: "invoices" as TabType, label: "ইনভয়েস", icon: FileText },
     { id: "messages" as TabType, label: "মেসেজ", icon: MessageCircle },
@@ -654,6 +656,10 @@ const AdminDashboard = () => {
 
           {activeTab === "fraudguard" && (
             <FraudGuardManagement />
+          )}
+
+          {activeTab === "couriercheck" && (
+            <CourierCheckSubscriptionManagement />
           )}
 
           {activeTab === "orders" && (

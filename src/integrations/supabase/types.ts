@@ -243,6 +243,7 @@ export type Database = {
       }
       incomplete_orders: {
         Row: {
+          address: string | null
           cart_items: Json | null
           cart_total: number | null
           created_at: string
@@ -257,6 +258,7 @@ export type Database = {
           phone_number: string
         }
         Insert: {
+          address?: string | null
           cart_items?: Json | null
           cart_total?: number | null
           created_at?: string
@@ -271,6 +273,7 @@ export type Database = {
           phone_number: string
         }
         Update: {
+          address?: string | null
           cart_items?: Json | null
           cart_total?: number | null
           created_at?: string

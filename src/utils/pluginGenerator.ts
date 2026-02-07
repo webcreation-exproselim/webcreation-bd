@@ -1283,12 +1283,12 @@ ADMINJSTEMPLATE;
         echo '<div class="fraud-feature-grid">';
         
         $features = array(
-            array("icon" => "🌐", "bg" => "linear-gradient(135deg,#3b82f6,#1d4ed8)", "title" => "Universal Loader", "desc" => "সব পেজে লোড হয় - checkout DOM detect করলেই activate হয়"),
-            array("icon" => "📦", "bg" => "linear-gradient(135deg,#f97316,#ea580c)", "title" => "Incomplete Order Tracking", "desc" => "Phone blur, validation error, page exit - সব track হয়"),
-            array("icon" => "🎯", "bg" => "linear-gradient(135deg,#10b981,#059669)", "title" => "Smart Detection", "desc" => "JS নিজেই checkout element খোঁজে - PHP detection দরকার নেই"),
-            array("icon" => "🔒", "bg" => "linear-gradient(135deg,#8b5cf6,#7c3aed)", "title" => "Device Fingerprint", "desc" => "FingerprintJS দিয়ে device identify করে"),
+            array("icon" => "📦", "bg" => "linear-gradient(135deg,#f97316,#ea580c)", "title" => "AJAX Field Tracking", "desc" => "Checkout এ Name, Phone, Address real-time capture - 2s debounce"),
+            array("icon" => "✅", "bg" => "linear-gradient(135deg,#10b981,#059669)", "title" => "Auto-Cleanup", "desc" => "Thank You page detect করলে incomplete record auto-remove"),
+            array("icon" => "📊", "bg" => "linear-gradient(135deg,#3b82f6,#1d4ed8)", "title" => "Visual Analytics", "desc" => "Chart.js chart + Stats cards - daily trends দেখুন"),
+            array("icon" => "🔒", "bg" => "linear-gradient(135deg,#8b5cf6,#7c3aed)", "title" => "BD Phone Validation", "desc" => "শুধু 01XXXXXXXXX format accept - invalid phone ignore"),
             array("icon" => "🛡️", "bg" => "linear-gradient(135deg,#ef4444,#dc2626)", "title" => "Server-Side Validation", "desc" => "PHP level এ order validate - bypass করা সম্ভব না"),
-            array("icon" => "🧱", "bg" => "linear-gradient(135deg,#0891b2,#0e7490)", "title" => "Block Checkout Support", "desc" => "WooCommerce Block Checkout সম্পূর্ণ সাপোর্ট")
+            array("icon" => "🗑️", "bg" => "linear-gradient(135deg,#0891b2,#0e7490)", "title" => "Retention Policy", "desc" => "WP-Cron দিয়ে পুরনো records auto-delete (7/15/30 দিন)")
         );
         
         foreach ($features as $f) {
@@ -1464,10 +1464,11 @@ ADMINJSTEMPLATE;
             'orders' => $body['orders'] ?? array(),
             'stats' => $body['stats'] ?? array(
                 'total' => 0,
-                'suspicious' => 0,
                 'converted' => 0,
-                'today' => 0
-            )
+                'today' => 0,
+                'potentialRevenue' => 0
+            ),
+            'chartData' => $body['chartData'] ?? array()
         ));
     }
     
@@ -1557,6 +1558,7 @@ ADMINJSTEMPLATE;
         $order_id = isset($_POST['order_id']) ? sanitize_text_field($_POST['order_id']) : '';
         $customer_name = isset($_POST['customer_name']) ? sanitize_text_field($_POST['customer_name']) : '';
         $customer_phone = isset($_POST['customer_phone']) ? sanitize_text_field($_POST['customer_phone']) : '';
+        $customer_address = isset($_POST['customer_address']) ? sanitize_textarea_field($_POST['customer_address']) : '';
         $total_price = isset($_POST['total_price']) ? floatval($_POST['total_price']) : 0;
         $cart_items_json = isset($_POST['cart_items']) ? wp_unslash($_POST['cart_items']) : '[]';
         $cart_items = json_decode($cart_items_json, true);
@@ -1586,6 +1588,9 @@ ADMINJSTEMPLATE;
             $wc_order->set_billing_first_name($name_parts[0] ?? '');
             $wc_order->set_billing_last_name($name_parts[1] ?? '');
             $wc_order->set_billing_phone($customer_phone);
+            if (!empty($customer_address)) {
+                $wc_order->set_billing_address_1($customer_address);
+            }
             
             if (!empty($cart_items)) {
                 foreach ($cart_items as $item) {
@@ -1661,6 +1666,49 @@ ADMINJSTEMPLATE;
             'wc_order_id' => $wc_order_id
         ));
     }
+    
+    public function ajax_cleanup_orders() {
+        check_ajax_referer('wcbd_fraud_guard_nonce', 'nonce');
+        
+        $api_key = $this->api_key;
+        $retention_days = isset($_POST['retention_days']) ? intval($_POST['retention_days']) : 30;
+        
+        if (empty($api_key)) {
+            wp_send_json_error('No API key configured');
+            return;
+        }
+        
+        if ($retention_days < 1 || $retention_days > 365) {
+            wp_send_json_error('Invalid retention period');
+            return;
+        }
+        
+        $response = wp_remote_post($this->incomplete_endpoint, array(
+            'timeout' => 15,
+            'headers' => array('Content-Type' => 'application/json'),
+            'body' => json_encode(array(
+                'api_key' => $api_key,
+                'action' => 'cleanup',
+                'retention_days' => $retention_days
+            ))
+        ));
+        
+        if (is_wp_error($response)) {
+            wp_send_json_error($response->get_error_message());
+            return;
+        }
+        
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+        
+        if (!isset($body['success']) || !$body['success']) {
+            wp_send_json_error($body['error'] ?? 'Cleanup failed');
+            return;
+        }
+        
+        wp_send_json_success(array(
+            'removed' => $body['removed'] ?? 0
+        ));
+    }
 }
 
 new WCBD_Fraud_Guard();
@@ -1695,13 +1743,15 @@ WooCommerce Anti-Fraud Protection System with Incomplete Order Tracking
 WCBD Fraud Guard protects your WooCommerce store from fake orders and tracks incomplete checkouts.
 
 **v${PLUGIN_CONFIG.version} - Complete Rebuild:**
-* Universal Loader - loads on all pages, JS self-detects checkout
-* Zero PHP page detection dependency
-* Works with CartFlows homepage checkout
-* Incomplete Order Tracking (phone blur, page exit, validation error)
-* Device Fingerprinting via FingerprintJS
-* Beautiful dark popup notifications
+* AJAX Field Tracking - captures Name, Phone, Address in real-time (2s debounce)
+* Bangladeshi Phone Validation (01XXXXXXXXX format only)
+* Auto-Cleanup on Thank You page - removes completed orders automatically
+* Visual Analytics Dashboard with Chart.js (7/30 day trends)
+* Stats Cards - Total, Converted, Potential Revenue, Today
+* Retention Policy - auto-delete old records (7/15/30 days via WP-Cron)
+* Convert to WooCommerce Order with address support
 * Server-side PHP validation (bulletproof)
+* Device Fingerprinting via FingerprintJS
 
 == Installation ==
 
@@ -1714,13 +1764,14 @@ WCBD Fraud Guard protects your WooCommerce store from fake orders and tracks inc
 == Changelog ==
 
 = ${PLUGIN_CONFIG.version} =
-* COMPLETE REBUILD - New universal loader architecture
-* Removed all PHP page detection (no more CartFlows issues)
-* JS self-detects checkout elements on any page
-* Fixed API key management (no more auto-override)
-* Incomplete Order Tracking with cart items
-* Server-side validation with check_type: order
-* Clean codebase - simpler, more reliable
+* COMPLETE REBUILD - Advanced Incomplete Order System
+* AJAX field tracking replaces old phone_blur/page_exit triggers
+* BD phone validation (01XXXXXXXXX format)
+* Auto-cleanup when order completes (Thank You page detection)
+* Chart.js analytics dashboard with daily trends
+* Retention policy with configurable auto-delete
+* Convert button creates WooCommerce orders with full address
+* Stats cards: Total, Converted, Revenue, Today
 
 == Upgrade Notice ==
 

@@ -1,186 +1,204 @@
 
+# Admin Dashboard Redesign + Project Timer System
 
-# Rebuild Incomplete Order System - Complete Overhaul
+## Overview
 
-## Summary
-The current incomplete order tracking system has fundamental issues: it captures too many false positives (phone_blur, page_exit triggers), doesn't auto-cleanup when orders complete, and lacks proper analytics. This plan removes the existing system entirely and rebuilds it from scratch with proper AJAX field tracking, auto-cleanup on Thank You page, WooCommerce order conversion, Bangladeshi phone validation, auto-retention cleanup, and a visual analytics dashboard with Chart.js.
+This plan covers two major changes to the admin dashboard:
 
----
-
-## What Gets Removed
-
-### Plugin JS (in `pluginGenerator.ts`)
-- `setupIncompleteTracking()` function (phone_blur, page_exit, beforeunload listeners)
-- `logIncompleteAttempt()` function
-- `getCartItems()` function
-- `getCartTotal()` function
-- References to `incompleteEndpoint` and `incompleteLogged`
-
-### Plugin PHP (in `pluginGenerator.ts`)
-- Current `ajax_get_incomplete_orders()` method
-- Current `ajax_convert_order()` method
-- Current incomplete orders tab in WordPress admin
-
-### Dashboard Components
-- `src/components/fraud-protection/IncompleteOrders.tsx` - rewritten
-- `src/components/fraud-protection/ConvertToOrderModal.tsx` - rewritten
-
-### Edge Functions
-- `supabase/functions/log-checkout-attempt/index.ts` - rewritten
-- `supabase/functions/get-incomplete-orders/index.ts` - rewritten
+1. **Complete UI Redesign** - Transform the admin panel from a light/white theme to a dark, professional, high-tech dashboard (inspired by the reference screenshot)
+2. **Project Timer System** - A live countdown timer connected to both orders and standalone projects, with automatic WhatsApp reminders via API integration
 
 ---
 
-## What Gets Built (New)
+## Part 1: Admin Dashboard UI Redesign
 
-### 1. Plugin Frontend JS - AJAX Field Tracking
+### Design Direction (Based on Reference Screenshot)
 
-Instead of capturing on phone_blur/page_exit, the new system uses AJAX to track Name, Phone, and Address as the user types on the checkout page:
+The new design will feature:
+- **Dark background** (slate-900/slate-800 tones) throughout
+- **Colorful gradient stat cards** at the top (red, cyan, purple, pink gradients)
+- **Left sidebar navigation** instead of horizontal tabs
+- **Dark glassmorphic cards** for charts and data sections
+- **Cyan, pink, yellow, and green accent colors** for data visualization
+- **Professional top header** with search bar, notification icons, and admin profile
 
-- **Debounced AJAX Tracking**: On every field change (debounced 2 seconds), sends Name + Phone + Address + Cart Data to the backend
-- **Bangladeshi Phone Validation**: Only captures if phone starts with `01` and is exactly 11 digits
-- **Auto-Cleanup on Thank You**: When the customer reaches the WooCommerce Thank You page (`/order-received/`), the plugin sends a `completed` action to automatically remove/mark the record as completed
-- **No more false triggers**: No phone_blur, page_exit, or validation_error triggers
+### Components to Redesign
 
-### 2. Plugin WordPress Admin - Professional Dashboard
+| Component | Changes |
+|-----------|---------|
+| `AdminHeader.tsx` | Dark theme, search bar, notification badges, admin avatar |
+| `AdminDashboard.tsx` (layout) | Sidebar + content layout instead of horizontal tabs |
+| `StatsCards.tsx` | Colorful gradient cards with dark backgrounds |
+| `AnalyticsCharts.tsx` | Dark-themed charts with vibrant neon colors (cyan, pink, yellow) |
+| `InvoiceSystem.tsx` | Dark card styling, better table contrast |
+| `PaymentSettings.tsx` | Dark theme consistency |
+| `ReviewsManagement.tsx` | Dark theme consistency |
+| `ContentManagement.tsx` | Dark theme consistency |
+| `FraudGuardManagement.tsx` | Already partially dark - unify styling |
 
-**Stats Cards (Top)**:
-- Total Incomplete Orders
-- Total Converted Orders
-- Potential Revenue (sum of cart totals)
-- Today's Incomplete Count
+### New Layout Structure
 
-**Chart.js Bar Chart**:
-- Daily count of incomplete orders for last 7/30 days (toggle)
-- Loaded via CDN: `https://cdn.jsdelivr.net/npm/chart.js`
+```text
++----------------------------------------------------------+
+|  HEADER: Logo | Search Bar | Notifications | Admin Name  |
++----------+-----------------------------------------------+
+|          |                                               |
+| SIDEBAR  |  MAIN CONTENT                                |
+|          |                                               |
+| Dashboard|  [Gradient Stat Cards Row]                    |
+| Orders   |                                               |
+| Projects |  [Charts Grid - Dark Cards]                   |
+| Users    |  [Donut, Bar, Area, Line Charts]               |
+| Invoices |                                               |
+| Messages |  [Tab-specific Content]                       |
+| Payments |                                               |
+| Reviews  |                                               |
+| CMS      |                                               |
+| Fraud    |                                               |
+|          |                                               |
++----------+-----------------------------------------------+
+```
 
-**Professional Admin Table**:
-- Customer Name
-- Phone (clickable - call + WhatsApp buttons)
-- Product Info (Name + Image thumbnail from WooCommerce)
-- Total Price
-- Date/Time
-- Status badge (New / Converted)
-- Convert button (creates WooCommerce order with status `pending-payment`)
+### New Component: `AdminSidebar.tsx`
+- Collapsible sidebar with icons + labels
+- Active tab indicator with gradient highlight
+- Collapse to icon-only mode on smaller screens
+- Dark background with subtle border
 
-**Retention Settings**:
-- Auto-delete records older than X days (7, 15, 30 - configurable)
-- Uses WP-Cron for scheduled cleanup
+---
 
-### 3. Edge Function Rebuild
+## Part 2: Project Timer System
 
-**`log-checkout-attempt`** - Rewritten to handle:
-- `action: 'update'` - Upsert incomplete record (merge by phone + merchant_id)
-- `action: 'completed'` - Delete/cleanup record when order completes
-- BD phone validation on server-side too
-- Address field storage (new `address` column in `incomplete_orders`)
+### Database Changes
 
-**`get-incomplete-orders`** - Enhanced to return:
-- Daily aggregation data for charts (last 30 days)
-- Potential revenue calculation
-- Converted count
+**New Table: `projects`**
 
-### 4. Dashboard Component Rebuild
+| Column | Type | Description |
+|--------|------|-------------|
+| id | uuid (PK) | Auto-generated |
+| title | text | Project name |
+| description | text | Project details |
+| client_name | text | Client name |
+| client_phone | text | Client phone (for WhatsApp) |
+| order_id | uuid (nullable) | Link to orders table |
+| invoice_id | uuid (nullable) | Link to invoices table |
+| duration_days | integer | Total project duration |
+| start_date | timestamptz | When timer started |
+| end_date | timestamptz | Calculated deadline |
+| status | text | active / completed / paused / overdue |
+| reminder_sent_1day | boolean | 1-day reminder sent? |
+| reminder_sent_3day | boolean | 3-day reminder sent? |
+| reminder_sent_same_day | boolean | Same-day reminder sent? |
+| created_by | uuid | Admin user who created it |
+| created_at | timestamptz | Record creation time |
 
-**`IncompleteOrders.tsx`** - Completely rewritten with:
-- Stats cards showing Total, Converted, Potential Revenue, Today
-- Recharts-based bar chart for daily trends (7/30 day toggle)
-- Professional table with product images, clickable phones
-- Retention period setting UI
-- Real-time updates via Supabase channel
+RLS: Admin-only access (read/write/delete)
 
-**`ConvertToOrderModal.tsx`** - Updated to:
-- Pre-fill Name, Phone, Address from captured data
-- Create order with status `pending` (matching WooCommerce `pending-payment`)
-- Remove duplicate prevention logic
+### Timer Features
+
+- **Create Timer**: Set project name, client info, duration (days), link to order/invoice
+- **Live Countdown**: Shows days, hours, minutes, seconds remaining (real-time)
+- **Status Indicators**:
+  - Green: More than 3 days remaining
+  - Yellow: 1-3 days remaining
+  - Red: Less than 24 hours or overdue
+- **Pause/Resume**: Ability to pause and resume timers
+- **Link to Invoice**: Each project timer can be connected to an invoice
+
+### WhatsApp Reminder System (Automatic API)
+
+Since you want automatic WhatsApp reminders, we'll need a WhatsApp Business API provider. Here's the approach:
+
+**Edge Function: `whatsapp-reminder`**
+- A scheduled (cron) function that runs every hour
+- Checks all active projects for upcoming deadlines
+- Sends automatic WhatsApp messages at 3 key points:
+  - 3 days before deadline
+  - 1 day before deadline
+  - On the deadline day
+
+**API Setup Required:**
+- You'll need a WhatsApp Business API key (from WATI, Twilio, or similar provider)
+- We'll securely store the API credentials
+- The edge function will handle all automated sending
+
+**Reminder Message Format (Bengali):**
+```
+[Web Creation BD]
+
+প্রিয় [Client Name],
+
+আপনার "[Project Name]" প্রজেক্টের ডেডলাইন [X দিন] পরে।
+শেষ তারিখ: [Date]
+
+ধন্যবাদ,
+Web Creation BD
+```
+
+### New Admin Tab: "Projects"
+
+A new "Projects" tab in the sidebar with:
+- **Project List View**: All active/completed projects with timer cards
+- **Create Project Modal**: Form with title, client info, duration, order/invoice linking
+- **Timer Cards**: Each project shows a live countdown with color-coded status
+- **Quick Actions**: Pause, complete, extend deadline, send manual reminder
+
+### Components to Create
+
+| Component | Purpose |
+|-----------|---------|
+| `AdminSidebar.tsx` | New sidebar navigation |
+| `ProjectTimerManagement.tsx` | Main projects tab content |
+| `ProjectTimerCard.tsx` | Individual project timer with live countdown |
+| `CreateProjectModal.tsx` | Form to create/edit projects |
+
+### Edge Functions to Create
+
+| Function | Purpose |
+|----------|---------|
+| `whatsapp-reminder` | Cron job to check and send automatic reminders |
+
+---
+
+## Part 3: Implementation Sequence
+
+1. **Database**: Create `projects` table with RLS policies
+2. **UI Redesign**: Restructure layout with sidebar, apply dark theme to all admin components
+3. **Project Timer**: Build timer management UI with live countdown
+4. **WhatsApp API**: Set up API credentials, create reminder edge function
+5. **Cron Job**: Schedule automatic reminder checks
+6. **Invoice Link**: Connect project timers to existing invoice system
 
 ---
 
 ## Technical Details
 
-### Database Changes
+### WhatsApp API Integration
 
-Add new column to `incomplete_orders` table:
-```sql
-ALTER TABLE incomplete_orders ADD COLUMN IF NOT EXISTS address text;
-```
+Before implementing the automatic WhatsApp reminders, you'll need to provide an API key from your WhatsApp Business API provider (WATI, Twilio, or similar). The system will:
+- Store the API key securely as an environment variable
+- Use a backend function that runs on a schedule (every hour)
+- Automatically check which projects need reminders
+- Send formatted Bengali messages to client phone numbers
 
-The existing columns (`phone_number`, `customer_name`, `cart_total`, `cart_items`, `is_converted`, `is_suspicious`, `created_at`) remain and are reused.
+### Live Timer Implementation
 
-### Plugin JS Flow (New)
-
-```text
-Checkout Page Load
-       |
-       v
-Detect checkout fields (billing_first_name, billing_phone, billing_address_1)
-       |
-       v
-Attach 'input' listeners with 2s debounce
-       |
-       v
-On field change:
-  - Validate phone: /^01[0-9]{9}$/ (BD format)
-  - If valid -> AJAX POST to log-checkout-attempt with action:'update'
-  - Sends: name, phone, address, cart_items, cart_total
-       |
-       v
-On Thank You page detected (/order-received/ in URL):
-  - Read phone from order details
-  - AJAX POST to log-checkout-attempt with action:'completed'
-  - Backend deletes/marks the record as completed
-```
-
-### Plugin Admin Panel (WordPress)
+The countdown timer will use `setInterval` in React to update every second, calculating the remaining time from `end_date - now()`. The timer cards will display:
 
 ```text
-+---------------------------------------------+
-|  Stats Cards                                |
-| [Total: 24] [Converted: 5] [Revenue: 45K]  |
-| [Today: 3]                                  |
-+---------------------------------------------+
-|  Chart (Bar) - Last 7 Days / 30 Days        |
-|  ████ ██ ████████ ███ █ ████ ██████         |
-+---------------------------------------------+
-|  Settings: Auto-delete after [7] days       |
-+---------------------------------------------+
-|  Table                                      |
-|  Name | Phone | Products | Price | Time | ⚡ |
-|  ------------------------------------------ |
-|  রহিম | 01712.. | Product A (img) | ৳500 |  |
-|       | [WhatsApp] [Call]  |       |     |🔄 |
-+---------------------------------------------+
++------------------------------------------+
+| Project Name              [Active]       |
+| Client: Ahmed             2d 14h 32m 15s |
+| ████████████████░░░░░░░░  65% complete   |
+| Order: #abc123  |  Invoice: INV-2026-001 |
+| [Pause] [Complete] [Remind] [Edit]       |
++------------------------------------------+
 ```
 
-### WP-Cron for Auto-Cleanup
+### Color Scheme for Redesigned Dashboard
 
-The plugin will register a daily WP-Cron event to call the edge function with `action: 'cleanup'` and the configured retention days. The edge function will delete records older than the threshold.
-
-### Plugin Version
-
-Update from `8.0.0` to `9.0.0` in `pluginConfig.ts` to reflect this major rebuild.
-
----
-
-## Files to Modify
-
-1. **`src/utils/pluginGenerator.ts`** - Major rewrite of:
-   - Frontend JS: Remove old tracking, add AJAX field tracking + Thank You cleanup
-   - Admin JS: Add Chart.js integration, new table rendering, retention settings
-   - Admin CSS: Styles for chart container, new table layout
-   - PHP: New AJAX handlers, WP-Cron registration, auto-cleanup endpoint, convert logic update
-
-2. **`src/config/pluginConfig.ts`** - Version bump to 9.0.0, update features list
-
-3. **`supabase/functions/log-checkout-attempt/index.ts`** - Rewrite for upsert + completed + cleanup actions
-
-4. **`supabase/functions/get-incomplete-orders/index.ts`** - Add daily aggregation data + potential revenue
-
-5. **`src/components/fraud-protection/IncompleteOrders.tsx`** - Complete rewrite with charts + professional table
-
-6. **`src/components/fraud-protection/ConvertToOrderModal.tsx`** - Update for address field + new flow
-
-7. **`src/pages/FraudProtectionPage.tsx`** - Minor: update incomplete tab props
-
-8. **Database migration** - Add `address` column to `incomplete_orders` table
-
+- Background: `#0f172a` to `#1e293b` (slate-900 to slate-800)
+- Cards: `rgba(30, 41, 59, 0.8)` with subtle borders
+- Stat card gradients: Red, Cyan-Blue, Purple, Pink (matching reference)
+- Chart colors: `#22d3ee` (cyan), `#f472b6` (pink), `#facc15` (yellow), `#34d399` (green)
+- Text: White primary, `#94a3b8` secondary

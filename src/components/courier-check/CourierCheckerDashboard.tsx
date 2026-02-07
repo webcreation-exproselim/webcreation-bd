@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { Search, Loader2, TrendingUp, Package, CheckCircle, XCircle, Truck } from "lucide-react";
+import { Search, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
-import { RadialBarChart, RadialBar, ResponsiveContainer } from "recharts";
 
 interface CourierData {
   name: string;
@@ -30,14 +29,12 @@ interface CourierCheckerDashboardProps {
   apiKey: string;
 }
 
-const RISK_COLORS: Record<string, { bg: string; text: string; label: string }> = {
-  trusted: { bg: "bg-emerald-100", text: "text-emerald-700", label: "✅ বিশ্বস্ত" },
-  moderate: { bg: "bg-amber-100", text: "text-amber-700", label: "⚠️ মাঝারি ঝুঁকি" },
-  risky: { bg: "bg-red-100", text: "text-red-700", label: "🚫 উচ্চ ঝুঁকি" },
-  new_customer: { bg: "bg-blue-100", text: "text-blue-700", label: "🆕 নতুন কাস্টমার" },
+const RISK_STYLES: Record<string, { bg: string; text: string; label: string }> = {
+  trusted: { bg: "bg-emerald-500", text: "text-white", label: "✅ বিশ্বস্ত কাস্টমার" },
+  moderate: { bg: "bg-amber-500", text: "text-white", label: "⚠️ মাঝারি ঝুঁকি" },
+  risky: { bg: "bg-red-500", text: "text-white", label: "🚫 উচ্চ ঝুঁকি" },
+  new_customer: { bg: "bg-blue-500", text: "text-white", label: "🆕 নতুন কাস্টমার" },
 };
-
-
 
 export function CourierCheckerDashboard({ apiKey }: CourierCheckerDashboardProps) {
   const [phone, setPhone] = useState("");
@@ -45,9 +42,9 @@ export function CourierCheckerDashboard({ apiKey }: CourierCheckerDashboardProps
   const [result, setResult] = useState<CheckResult | null>(null);
   const { toast } = useToast();
 
-  const handleSearch = async () => {
-    let cleanPhone = phone.replace(/[^0-9]/g, '');
-    // Strip +880/880 country code prefix
+  const handleSearch = async (searchPhone?: string) => {
+    const target = searchPhone || phone;
+    let cleanPhone = target.replace(/[^0-9]/g, '');
     if (cleanPhone.startsWith('880') && cleanPhone.length === 13) {
       cleanPhone = '0' + cleanPhone.substring(3);
     }
@@ -94,9 +91,7 @@ export function CourierCheckerDashboard({ apiKey }: CourierCheckerDashboardProps
     }
   };
 
-  const riskInfo = result ? RISK_COLORS[result.risk_label] || RISK_COLORS.new_customer : null;
-
-  const radialData = result ? [{ name: "Success", value: result.success_rate, fill: result.success_rate >= 80 ? "#10b981" : result.success_rate >= 50 ? "#f59e0b" : "#ef4444" }] : [];
+  const riskInfo = result ? RISK_STYLES[result.risk_label] || RISK_STYLES.new_customer : null;
 
   return (
     <div className="space-y-6">
@@ -115,7 +110,7 @@ export function CourierCheckerDashboard({ apiKey }: CourierCheckerDashboardProps
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
           />
           <Button
-            onClick={handleSearch}
+            onClick={() => handleSearch()}
             disabled={loading}
             className="h-12 px-6 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white font-bengali"
           >
@@ -129,111 +124,79 @@ export function CourierCheckerDashboard({ apiKey }: CourierCheckerDashboardProps
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="space-y-6"
+          className="space-y-4"
         >
-          {/* Top Stats */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Success Rate - Radial */}
-            <div className="col-span-2 lg:col-span-1 bg-white rounded-2xl border border-gray-200 p-5 shadow-sm flex flex-col items-center">
-              <p className="text-sm text-gray-500 font-bengali mb-2">Success Rate</p>
-              <div className="w-32 h-32">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RadialBarChart cx="50%" cy="50%" innerRadius="60%" outerRadius="90%" data={radialData} startAngle={90} endAngle={-270}>
-                    <RadialBar dataKey="value" cornerRadius={10} background={{ fill: '#f3f4f6' }} />
-                  </RadialBarChart>
-                </ResponsiveContainer>
-              </div>
-              <p className="text-3xl font-extrabold text-gray-900 -mt-2">{result.success_rate}%</p>
+          {/* Risk Label Badge */}
+          {riskInfo && (
+            <div className={`${riskInfo.bg} rounded-xl px-5 py-3 flex items-center justify-between`}>
+              <span className={`text-lg font-bold ${riskInfo.text} font-bengali`}>
+                {riskInfo.label}
+              </span>
+              <span className={`text-sm ${riskInfo.text} font-bengali opacity-90`}>
+                Success Rate: {result.success_rate}%
+              </span>
+            </div>
+          )}
+
+          {/* Courier Details Card */}
+          <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+            {/* Header */}
+            <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+              <h4 className="text-base font-bold text-gray-900 font-bengali">Courier Details</h4>
+              <Button
+                onClick={() => handleSearch(result.phone)}
+                disabled={loading}
+                size="sm"
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg font-bengali text-xs h-9 px-4"
+              >
+                {loading ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <RefreshCw className="w-3.5 h-3.5 mr-1.5" />}
+                রিফ্রেশ কুরিয়ার ডেটা
+              </Button>
             </div>
 
-            {/* Stats Cards */}
-            <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
-              <div className="flex items-center gap-2 mb-2">
-                <Package className="w-4 h-4 text-blue-600" />
-                <p className="text-sm text-gray-500 font-bengali">মোট অর্ডার</p>
-              </div>
-              <p className="text-3xl font-extrabold text-gray-900">{result.total_orders}</p>
-            </div>
-
-            <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
-              <div className="flex items-center gap-2 mb-2">
-                <CheckCircle className="w-4 h-4 text-emerald-600" />
-                <p className="text-sm text-gray-500 font-bengali">ডেলিভারি</p>
-              </div>
-              <p className="text-3xl font-extrabold text-emerald-600">{result.total_delivered}</p>
-            </div>
-
-            <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
-              <div className="flex items-center gap-2 mb-2">
-                <XCircle className="w-4 h-4 text-red-500" />
-                <p className="text-sm text-gray-500 font-bengali">বাতিল</p>
-              </div>
-              <p className="text-3xl font-extrabold text-red-500">{result.total_returned}</p>
+            {/* Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-gradient-to-r from-blue-600 to-indigo-600">
+                    <th className="px-5 py-3 text-left text-sm font-bold text-white font-bengali">কুরিয়ার</th>
+                    <th className="px-5 py-3 text-center text-sm font-bold text-white font-bengali">মোট</th>
+                    <th className="px-5 py-3 text-center text-sm font-bold text-white font-bengali">সফল</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {result.couriers.map((c, i) => (
+                    <tr key={i} className="hover:bg-gray-50/50 transition-colors">
+                      <td className="px-5 py-4">
+                        <span className="font-semibold text-gray-900 text-sm">{c.name}</span>
+                      </td>
+                      <td className="px-5 py-4 text-center">
+                        <span className="font-bold text-gray-700 text-sm">{c.orders}</span>
+                      </td>
+                      <td className="px-5 py-4 text-center">
+                        <span className={`font-bold text-sm ${c.delivered > 0 ? 'text-emerald-600' : 'text-gray-400'}`}>
+                          {c.delivered}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                {/* Total Row */}
+                <tfoot>
+                  <tr className="bg-gradient-to-r from-blue-600 to-indigo-600">
+                    <td className="px-5 py-3 text-left text-sm font-bold text-white font-bengali">মোট</td>
+                    <td className="px-5 py-3 text-center text-sm font-bold text-white">{result.total_orders}</td>
+                    <td className="px-5 py-3 text-center text-sm font-bold text-white">{result.total_delivered}</td>
+                  </tr>
+                </tfoot>
+              </table>
             </div>
           </div>
 
-          {/* Trust Label */}
-          {riskInfo && (
-            <div className={`${riskInfo.bg} rounded-2xl p-5 border`}>
-              <div className="flex items-center gap-3">
-                <span className={`text-2xl font-bold ${riskInfo.text} font-bengali`}>
-                  {riskInfo.label}
-                </span>
-                {result.risk_message && (
-                  <span className={`text-sm ${riskInfo.text} font-bengali`}>
-                    — {result.risk_message}
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Courier Table */}
-          {result.couriers.length > 0 && (
-            <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
-              <div className="p-5 border-b border-gray-100">
-                <h4 className="text-lg font-bold text-gray-900 font-bengali">বিস্তারিত টেবিল</h4>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">কুরিয়ার</th>
-                      <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">অর্ডার</th>
-                      <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">ডেলিভারি</th>
-                      <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">বাতিল</th>
-                      <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Success %</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50">
-                    {result.couriers.map((c, i) => (
-                      <tr key={i} className="hover:bg-gray-50/50">
-                        <td className="px-4 py-3 font-medium text-gray-900">{c.name}</td>
-                        <td className="px-4 py-3 text-center text-gray-700">{c.orders}</td>
-                        <td className="px-4 py-3 text-center text-emerald-600 font-medium">{c.delivered}</td>
-                        <td className="px-4 py-3 text-center text-red-500 font-medium">{c.returned}</td>
-                        <td className="px-4 py-3 text-center">
-                          <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                            c.rate >= 80 ? 'bg-emerald-100 text-emerald-700' :
-                            c.rate >= 50 ? 'bg-amber-100 text-amber-700' :
-                            'bg-red-100 text-red-700'
-                          }`}>
-                            {c.rate}%
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
           {/* No data message */}
           {result.total_orders === 0 && (
-            <div className="bg-blue-50 border border-blue-200 rounded-2xl p-8 text-center">
-              <Package className="w-12 h-12 text-blue-400 mx-auto mb-3" />
-              <h4 className="text-lg font-bold text-blue-800 font-bengali mb-1">কোনো রেকর্ড পাওয়া যায়নি</h4>
+            <div className="bg-blue-50 border border-blue-200 rounded-2xl p-6 text-center">
+              <h4 className="text-base font-bold text-blue-800 font-bengali mb-1">কোনো রেকর্ড পাওয়া যায়নি</h4>
               <p className="text-sm text-blue-600 font-bengali">এই ফোন নম্বরে কোনো courier delivery history নেই।</p>
             </div>
           )}

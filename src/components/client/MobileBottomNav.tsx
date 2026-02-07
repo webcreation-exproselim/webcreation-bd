@@ -1,7 +1,7 @@
-import { Package, FileText, MessageCircle, Shield, User, LayoutDashboard } from "lucide-react";
+import { Package, FileText, MessageCircle, Shield, User, Search } from "lucide-react";
 import { motion } from "framer-motion";
 
-type TabType = "orders" | "invoices" | "chat" | "fraudguard" | "profile";
+type TabType = "orders" | "invoices" | "chat" | "fraudguard" | "couriercheck" | "profile";
 
 interface MobileBottomNavProps {
   activeTab: TabType;
@@ -15,6 +15,7 @@ const tabs = [
   { id: "invoices" as TabType, label: "বিল", icon: FileText },
   { id: "chat" as TabType, label: "চ্যাট", icon: MessageCircle },
   { id: "fraudguard" as TabType, label: "Guard", icon: Shield },
+  { id: "couriercheck" as TabType, label: "Courier", icon: Search },
   { id: "profile" as TabType, label: "আমি", icon: User },
 ];
 

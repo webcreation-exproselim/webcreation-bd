@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { User as SupabaseUser, Session } from "@supabase/supabase-js";
 import { FraudGuardSection } from "@/components/fraud-protection/FraudGuardSection";
+import { CourierCheckSection } from "@/components/courier-check/CourierCheckSection";
 import { ProfileSection } from "@/components/client/ProfileSection";
 import { FraudGuardQuickStatus } from "@/components/client/FraudGuardQuickStatus";
 import { useMerchantData } from "@/hooks/useMerchantData";
@@ -61,7 +62,7 @@ interface Message {
   created_at: string;
 }
 
-type TabType = "orders" | "invoices" | "chat" | "fraudguard" | "profile";
+type TabType = "orders" | "invoices" | "chat" | "fraudguard" | "couriercheck" | "profile";
 
 export default function ClientDashboard() {
   const [user, setUser] = useState<SupabaseUser | null>(null);
@@ -464,6 +465,12 @@ export default function ClientDashboard() {
             {activeTab === "fraudguard" && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                 {user && <FraudGuardSection userId={user.id} />}
+              </motion.div>
+            )}
+
+            {activeTab === "couriercheck" && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                {user && <CourierCheckSection userId={user.id} />}
               </motion.div>
             )}
 

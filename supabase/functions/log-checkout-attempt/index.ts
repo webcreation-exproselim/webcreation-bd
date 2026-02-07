@@ -237,8 +237,32 @@ Deno.serve(async (req) => {
       );
     }
 
+    // === ACTION: CLEAN_ALL (delete all non-converted records) ===
+    if (action === 'clean_all') {
+      const { data: deleted, error: cleanAllError } = await supabase
+        .from('incomplete_orders')
+        .delete()
+        .eq('merchant_id', merchant.id)
+        .eq('is_converted', false)
+        .select('id');
+
+      if (cleanAllError) {
+        console.error('[log-checkout-attempt] Clean all error:', cleanAllError);
+        return new Response(
+          JSON.stringify({ success: false, error: 'Failed to clean all records' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log('[log-checkout-attempt] Clean all removed records:', deleted?.length || 0);
+      return new Response(
+        JSON.stringify({ success: true, action: 'clean_all', removed: deleted?.length || 0 }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     return new Response(
-      JSON.stringify({ success: false, error: 'Invalid action. Use: update, completed, cleanup' }),
+      JSON.stringify({ success: false, error: 'Invalid action. Use: update, completed, cleanup, clean_all' }),
       { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 

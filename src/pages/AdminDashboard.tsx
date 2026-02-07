@@ -643,7 +643,7 @@ const AdminDashboard = () => {
             <>
               <StatsCards stats={stats} usersCount={users.length} />
               <ProjectTimerManagement orders={orders} invoices={invoices} />
-              <AnalyticsCharts orders={orders} usersCount={users.length} />
+              <AnalyticsCharts orders={orders} usersCount={users.length} invoices={invoices} />
             </>
           )}
 

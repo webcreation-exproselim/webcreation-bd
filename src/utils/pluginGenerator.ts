@@ -51,6 +51,7 @@ class WCBD_Fraud_Guard {
         add_action('wp_ajax_wcbd_fraud_guard_update_cooldown', array($this, 'ajax_update_cooldown'));
         add_action('wp_ajax_wcbd_fraud_guard_convert_order', array($this, 'ajax_convert_order'));
         add_action('wp_ajax_wcbd_fraud_guard_cleanup', array($this, 'ajax_cleanup_orders'));
+        add_action('wp_ajax_wcbd_fraud_guard_clean_all', array($this, 'ajax_clean_all_orders'));
         add_action('wp_footer', array($this, 'inject_popup_styles'), 99);
         
         // SERVER-SIDE fraud validation (works for ALL checkout types)
@@ -806,14 +807,7 @@ LOADERJS;
         .stat-card.revenue .value{color:#f59e0b}
         .stat-card.today .value{color:#a855f7}
         
-        .chart-container{background:linear-gradient(145deg,#1e293b,#0f172a);border:1px solid #334155;border-radius:16px;padding:20px;margin-bottom:20px}
-        .chart-canvas-wrap{position:relative;height:250px;width:100%}
-        .chart-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}
-        .chart-header h3{color:#fff;font-size:16px;margin:0;display:flex;align-items:center;gap:8px}
-        .chart-toggle{display:flex;gap:4px;background:#0f172a;padding:3px;border-radius:8px}
-        .chart-toggle button{padding:6px 14px;border:none;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600;transition:all 0.2s}
-        .chart-toggle button.active{background:#0891b2;color:#fff}
-        .chart-toggle button:not(.active){background:transparent;color:#94a3b8}
+        
         
         .retention-card{background:linear-gradient(145deg,#1e293b,#0f172a);border:1px solid #334155;border-radius:16px;padding:20px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
         .retention-card label{color:#e2e8f0;font-weight:600;font-size:14px;display:flex;align-items:center;gap:8px}
@@ -915,7 +909,7 @@ function renderIncompleteOrders(data){
 var container=jQ("#incomplete-orders-container");
 var orders=data.orders||[];
 var stats=data.stats||{total:0,converted:0,today:0,potentialRevenue:0};
-var chartData=data.chartData||[];
+var stats=data.stats||{total:0,converted:0,today:0,potentialRevenue:0};
 
 var html='<div class="stats-grid">';
 html+='<div class="stat-card total"><div class="value">'+stats.total+'</div><div class="label">📦 Incomplete</div></div>';
@@ -924,23 +918,19 @@ html+='<div class="stat-card revenue"><div class="value">৳'+(stats.potentialRe
 html+='<div class="stat-card today"><div class="value">'+stats.today+'</div><div class="label">📅 Today</div></div>';
 html+='</div>';
 
-html+='<div class="chart-container">';
-html+='<div class="chart-header"><h3>📊 Daily Trends</h3>';
-html+='<div class="chart-toggle"><button class="chart-range-btn active" data-days="7">7 Days</button><button class="chart-range-btn" data-days="30">30 Days</button></div></div>';
-html+='<div class="chart-canvas-wrap"><canvas id="incompleteChart"></canvas></div></div>';
 
 html+='<div class="retention-card">';
 html+='<label>🗑️ Auto-delete records older than:</label>';
-html+='<div style="display:flex;gap:8px;align-items:center">';
+html+='<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">';
 html+='<select id="retention-days"><option value="7">7 দিন</option><option value="15">15 দিন</option><option value="30" selected>30 দিন</option></select>';
 html+='<button type="button" id="run-cleanup" class="fraud-btn fraud-btn-primary" style="padding:8px 18px;font-size:13px">🧹 Cleanup Now</button>';
+html+='<button type="button" id="run-clean-all" class="fraud-btn fraud-btn-danger" style="padding:8px 18px;font-size:13px">🗑️ Clean All</button>';
 html+='<span id="cleanup-status" style="font-size:12px"></span>';
 html+='</div></div>';
 
 if(orders.length===0){
 html+='<div style="text-align:center;padding:60px;background:#1e293b;border-radius:16px;border:1px solid #334155"><span style="font-size:64px">📭</span><p style="color:#94a3b8;margin:20px 0 0;font-size:16px">No incomplete orders yet. Orders will appear here when customers leave checkout.</p></div>';
 container.html(html);
-initChart(chartData);
 return;
 }
 
@@ -988,7 +978,6 @@ html+='</tr>';
 
 html+='</tbody></table></div>';
 container.html(html);
-initChart(chartData);
 
 jQ("#run-cleanup").on("click",function(){
 var days=parseInt(jQ("#retention-days").val());
@@ -997,6 +986,21 @@ statusEl.html('<span style="color:#f59e0b">🔄 Cleaning...</span>');
 jQ.ajax({
 url:"%%AJAX_URL%%",method:"POST",
 data:{action:"wcbd_fraud_guard_cleanup",nonce:"%%NONCE%%",retention_days:days},
+success:function(r){
+if(r.success){statusEl.html('<span style="color:#10b981">✅ '+(r.data.removed||0)+' records removed</span>');setTimeout(function(){loadIncompleteOrders();},1500);}
+else{statusEl.html('<span style="color:#ef4444">❌ '+(r.data||'Error')+'</span>');}
+},
+error:function(){statusEl.html('<span style="color:#ef4444">❌ Connection error</span>');}
+});
+});
+
+jQ("#run-clean-all").on("click",function(){
+if(!confirm("⚠️ সব incomplete (non-converted) records মুছে ফেলতে চান?\\nএই action undo করা যাবে না।")){return;}
+var statusEl=jQ("#cleanup-status");
+statusEl.html('<span style="color:#f59e0b">🔄 Cleaning all...</span>');
+jQ.ajax({
+url:"%%AJAX_URL%%",method:"POST",
+data:{action:"wcbd_fraud_guard_clean_all",nonce:"%%NONCE%%"},
 success:function(r){
 if(r.success){statusEl.html('<span style="color:#10b981">✅ '+(r.data.removed||0)+' records removed</span>');setTimeout(function(){loadIncompleteOrders();},1500);}
 else{statusEl.html('<span style="color:#ef4444">❌ '+(r.data||'Error')+'</span>');}
@@ -1042,41 +1046,6 @@ btn.prop("disabled",false).html("🔄 Convert");
 });
 }
 
-function initChart(chartData){
-if(typeof Chart==='undefined'){
-var s=document.createElement('script');
-s.src='https://cdn.jsdelivr.net/npm/chart.js';
-s.onload=function(){drawChart(chartData,7);bindChartToggle(chartData);};
-document.head.appendChild(s);
-}else{
-drawChart(chartData,7);
-bindChartToggle(chartData);
-}
-}
-
-var incompleteChartInstance=null;
-function drawChart(chartData,days){
-var canvas=document.getElementById('incompleteChart');
-if(!canvas)return;
-var sliced=chartData.slice(-days);
-var labels=sliced.map(function(d){var parts=d.date.split('-');return parts[2]+'/'+parts[1];});
-var values=sliced.map(function(d){return d.count;});
-if(incompleteChartInstance){incompleteChartInstance.destroy();}
-  incompleteChartInstance=new Chart(canvas,{
-  type:'bar',
-  data:{labels:labels,datasets:[{label:'Incomplete Orders',data:values,backgroundColor:'rgba(8,145,178,0.7)',borderColor:'#0891b2',borderWidth:1,borderRadius:6,maxBarThickness:40}]},
-  options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true,ticks:{stepSize:1,color:'#94a3b8',font:{size:12}},grid:{color:'rgba(51,65,85,0.5)'}},x:{ticks:{color:'#94a3b8',font:{size:12}},grid:{display:false}}},plugins:{legend:{display:false},tooltip:{backgroundColor:'#1e293b',titleColor:'#fff',bodyColor:'#94a3b8',borderColor:'#334155',borderWidth:1,cornerRadius:8,padding:10}}}
-  });
-}
-
-function bindChartToggle(chartData){
-jQ(".chart-range-btn").on("click",function(){
-jQ(".chart-range-btn").removeClass("active");
-jQ(this).addClass("active");
-var days=parseInt(jQ(this).data("days"));
-drawChart(chartData,days);
-});
-}
 
 function formatCooldownTime(mins){
 if(mins<60) return mins+" মিনিট";
@@ -1335,7 +1304,7 @@ ADMINJSTEMPLATE;
         $features = array(
             array("icon" => "📦", "bg" => "linear-gradient(135deg,#f97316,#ea580c)", "title" => "AJAX Field Tracking", "desc" => "Checkout এ Name, Phone, Address real-time capture - 2s debounce"),
             array("icon" => "✅", "bg" => "linear-gradient(135deg,#10b981,#059669)", "title" => "Auto-Cleanup", "desc" => "Thank You page detect করলে incomplete record auto-remove"),
-            array("icon" => "📊", "bg" => "linear-gradient(135deg,#3b82f6,#1d4ed8)", "title" => "Visual Analytics", "desc" => "Chart.js chart + Stats cards - daily trends দেখুন"),
+            array("icon" => "🗑️", "bg" => "linear-gradient(135deg,#3b82f6,#1d4ed8)", "title" => "Manual Clean All", "desc" => "সব incomplete records এক ক্লিকে মুছে ফেলুন - Stats cards সহ"),
             array("icon" => "🔒", "bg" => "linear-gradient(135deg,#8b5cf6,#7c3aed)", "title" => "BD Phone Validation", "desc" => "শুধু 01XXXXXXXXX format accept - invalid phone ignore"),
             array("icon" => "🛡️", "bg" => "linear-gradient(135deg,#ef4444,#dc2626)", "title" => "Server-Side Validation", "desc" => "PHP level এ order validate - bypass করা সম্ভব না"),
             array("icon" => "🗑️", "bg" => "linear-gradient(135deg,#0891b2,#0e7490)", "title" => "Retention Policy", "desc" => "WP-Cron দিয়ে পুরনো records auto-delete (7/15/30 দিন)")
@@ -1784,6 +1753,42 @@ ADMINJSTEMPLATE;
             'removed' => $body['removed'] ?? 0
         ));
     }
+    
+    public function ajax_clean_all_orders() {
+        check_ajax_referer('wcbd_fraud_guard_nonce', 'nonce');
+        
+        $api_key = $this->api_key;
+        
+        if (empty($api_key)) {
+            wp_send_json_error('No API key configured');
+            return;
+        }
+        
+        $response = wp_remote_post($this->incomplete_endpoint, array(
+            'timeout' => 15,
+            'headers' => array('Content-Type' => 'application/json'),
+            'body' => json_encode(array(
+                'api_key' => $api_key,
+                'action' => 'clean_all'
+            ))
+        ));
+        
+        if (is_wp_error($response)) {
+            wp_send_json_error($response->get_error_message());
+            return;
+        }
+        
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+        
+        if (!isset($body['success']) || !$body['success']) {
+            wp_send_json_error($body['error'] ?? 'Clean all failed');
+            return;
+        }
+        
+        wp_send_json_success(array(
+            'removed' => $body['removed'] ?? 0
+        ));
+    }
 }
 
 new WCBD_Fraud_Guard();
@@ -1821,7 +1826,7 @@ WCBD Fraud Guard protects your WooCommerce store from fake orders and tracks inc
 * AJAX Field Tracking - captures Name, Phone, Address in real-time (2s debounce)
 * Bangladeshi Phone Validation (01XXXXXXXXX format only)
 * Auto-Cleanup on Thank You page - removes completed orders automatically
-* Visual Analytics Dashboard with Chart.js (7/30 day trends)
+* Manual Clean All button - delete all incomplete records at once
 * Stats Cards - Total, Converted, Potential Revenue, Today
 * Retention Policy - auto-delete old records (7/15/30 days via WP-Cron)
 * Convert to WooCommerce Order with address support
@@ -1843,7 +1848,7 @@ WCBD Fraud Guard protects your WooCommerce store from fake orders and tracks inc
 * AJAX field tracking replaces old phone_blur/page_exit triggers
 * BD phone validation (01XXXXXXXXX format)
 * Auto-cleanup when order completes (Thank You page detection)
-* Chart.js analytics dashboard with daily trends
+* Manual Clean All button for bulk cleanup
 * Retention policy with configurable auto-delete
 * Convert button creates WooCommerce orders with full address
 * Stats cards: Total, Converted, Revenue, Today

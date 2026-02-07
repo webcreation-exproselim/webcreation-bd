@@ -25,7 +25,7 @@ export const PLUGIN_CONFIG = {
     { icon: "🌐", title: "IP Address Tracking", description: "সার্ভার-সাইড PHP check এ customer IP address অটোমেটিক capture হয়" },
     { icon: "📝", title: "AJAX Field Tracking", description: "Name, Phone, Address ফিল্ড টাইপ করার সাথে সাথে ক্যাপচার হয় - 2s debounce" },
     { icon: "✅", title: "Auto-Cleanup", description: "Thank You পেজে গেলে incomplete record স্বয়ংক্রিয়ভাবে মুছে যায়" },
-    { icon: "📊", title: "Chart.js Analytics", description: "WordPress Admin এ Bar Chart দিয়ে daily incomplete order trend দেখুন" },
+    { icon: "🗑️", title: "Manual Clean All", description: "WordPress Admin থেকে সব incomplete records এক ক্লিকে মুছে ফেলুন" },
   ],
   
   // All features list
@@ -45,7 +45,7 @@ export const PLUGIN_CONFIG = {
     "📝 AJAX Field Tracking (Debounced)",
     "✅ Auto-Cleanup on Thank You",
     "🇧🇩 BD Phone Validation",
-    "📊 Chart.js Analytics Dashboard",
+    "🗑️ Manual Clean All Button",
     "🗑️ Auto-Retention Cleanup (WP-Cron)",
     "🔄 One-Click Order Conversion",
     "🔍 Smart Risk Detection",

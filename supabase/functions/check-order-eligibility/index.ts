@@ -73,19 +73,13 @@ Deno.serve(async (req) => {
       )
     }
 
-    // For real order checks, require at least one identifier (precheck can work without)
-    if (!isLicenseOrTest && !isPrecheck && !phone && !ip && !device_id) {
+    // For real order checks, require at least one identifier
+    const hasIdentifier = !!(phone || ip || device_id)
+    if (!isLicenseOrTest && !isPrecheck && !hasIdentifier) {
       return new Response(
         JSON.stringify({ error: 'At least one identifier (phone, ip, or device_id) is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
-    }
-
-    // For precheck without any identifier, skip blacklist/cooldown checks
-    // and just validate merchant status
-    if (isPrecheck && !phone && !ip && !device_id) {
-      // Already passed merchant validation, domain check, active check, expiry check above
-      // Just need to validate merchant - which we already did
     }
 
     // Step 1: Validate API Key and get merchant data
@@ -193,6 +187,17 @@ Deno.serve(async (req) => {
           check_type: check_type,
           popup_settings: popupSettings 
         }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // ============================================
+    // PRECHECK WITHOUT IDENTIFIERS: Just validate merchant status (already done above)
+    // ============================================
+    if (isPrecheck && !hasIdentifier) {
+      console.log('Precheck passed (no identifiers) for merchant:', merchant.id)
+      return new Response(
+        JSON.stringify({ allowed: true, check_type: 'precheck', popup_settings: popupSettings }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }

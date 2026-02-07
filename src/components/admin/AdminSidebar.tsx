@@ -2,13 +2,13 @@ import { useState } from "react";
 import {
   LayoutDashboard, Package, Timer, Users, Shield, FileImage,
   FileText, MessageCircle, CreditCard, Star, PenTool,
-  ChevronLeft, ChevronRight,
+  ChevronLeft, ChevronRight, Search,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import logo from "@/assets/logo.png";
 
-export type TabType = "overview" | "orders" | "projects" | "users" | "portfolio" | "invoices" | "messages" | "payments" | "reviews" | "content" | "fraudguard";
+export type TabType = "overview" | "orders" | "projects" | "users" | "portfolio" | "invoices" | "messages" | "payments" | "reviews" | "content" | "fraudguard" | "couriercheck";
 
 const navItems: { id: TabType; label: string; icon: typeof LayoutDashboard; color: string; iconBg: string; iconColor: string }[] = [
   { id: "overview", label: "ড্যাশবোর্ড", icon: LayoutDashboard, color: "from-blue-600 to-purple-600", iconBg: "bg-blue-100", iconColor: "text-blue-600" },
@@ -16,6 +16,7 @@ const navItems: { id: TabType; label: string; icon: typeof LayoutDashboard; colo
   { id: "projects", label: "প্রজেক্ট টাইমার", icon: Timer, color: "from-emerald-500 to-teal-500", iconBg: "bg-emerald-100", iconColor: "text-emerald-600" },
   { id: "users", label: "ইউজার", icon: Users, color: "from-blue-500 to-indigo-500", iconBg: "bg-indigo-100", iconColor: "text-indigo-600" },
   { id: "fraudguard", label: "Fraud Guard", icon: Shield, color: "from-purple-500 to-violet-500", iconBg: "bg-purple-100", iconColor: "text-purple-600" },
+  { id: "couriercheck", label: "Courier Check", icon: Search, color: "from-cyan-500 to-blue-500", iconBg: "bg-cyan-100", iconColor: "text-cyan-600" },
   { id: "portfolio", label: "পোর্টফোলিও", icon: FileImage, color: "from-pink-500 to-rose-500", iconBg: "bg-pink-100", iconColor: "text-pink-600" },
   { id: "invoices", label: "ইনভয়েস", icon: FileText, color: "from-amber-500 to-orange-500", iconBg: "bg-amber-100", iconColor: "text-amber-600" },
   { id: "messages", label: "মেসেজ", icon: MessageCircle, color: "from-green-500 to-emerald-500", iconBg: "bg-green-100", iconColor: "text-green-600" },

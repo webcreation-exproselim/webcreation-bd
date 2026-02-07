@@ -143,8 +143,8 @@ export function FraudGuardCharts() {
     return (
       <div className="flex items-center justify-center py-16">
         <div className="text-center">
-          <Loader2 className="w-10 h-10 animate-spin text-cyan-400 mx-auto mb-3" />
-          <p className="text-slate-500 text-sm">ডেটা লোড হচ্ছে...</p>
+          <Loader2 className="w-10 h-10 animate-spin text-cyan-500 mx-auto mb-3" />
+          <p className="text-gray-500 text-sm font-bengali">ডেটা লোড হচ্ছে...</p>
         </div>
       </div>
     );

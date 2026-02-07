@@ -1,4 +1,4 @@
-import { Package, Clock, CheckCircle, TrendingUp, Users, FileText, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { Package, Clock, CheckCircle, TrendingUp, Users, FileText } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface StatsCardsProps {
@@ -20,87 +20,71 @@ export function StatsCards({ stats, usersCount }: StatsCardsProps) {
       icon: Package,
       label: "মোট অর্ডার",
       value: stats.total,
-      color: "blue",
-      trend: "+12%",
-      trendUp: true,
+      gradient: "from-red-500 to-orange-500",
+      shadowColor: "shadow-red-500/20",
+      iconBg: "bg-red-400/20",
     },
     {
       icon: Clock,
       label: "অপেক্ষমান",
       value: stats.pending,
-      color: "amber",
-      trend: stats.pending > 0 ? "Active" : "—",
-      trendUp: false,
+      gradient: "from-cyan-500 to-blue-500",
+      shadowColor: "shadow-cyan-500/20",
+      iconBg: "bg-cyan-400/20",
     },
     {
       icon: CheckCircle,
       label: "সম্পন্ন",
       value: stats.completed,
-      color: "emerald",
-      trend: "+8%",
-      trendUp: true,
+      gradient: "from-emerald-500 to-teal-500",
+      shadowColor: "shadow-emerald-500/20",
+      iconBg: "bg-emerald-400/20",
     },
     {
       icon: TrendingUp,
-      label: "মোট আয় (পরিশোধিত)",
+      label: "মোট আয়",
       value: `৳${stats.revenue.toLocaleString()}`,
-      color: "emerald",
-      trend: stats.revenue > 0 ? "Invoice থেকে" : "—",
-      trendUp: stats.revenue > 0,
+      gradient: "from-violet-500 to-purple-500",
+      shadowColor: "shadow-violet-500/20",
+      iconBg: "bg-violet-400/20",
     },
     {
       icon: Users,
       label: "মোট ক্লায়েন্ট",
       value: usersCount,
-      color: "violet",
-      trend: "+5%",
-      trendUp: true,
+      gradient: "from-pink-500 to-rose-500",
+      shadowColor: "shadow-pink-500/20",
+      iconBg: "bg-pink-400/20",
     },
     {
       icon: FileText,
       label: "বাকি পেমেন্ট",
       value: `৳${stats.unpaidInvoices.toLocaleString()}`,
-      color: "red",
-      trend: stats.unpaidInvoices > 0 ? "বাকি আছে" : "Clear ✓",
-      trendUp: false,
+      gradient: "from-amber-500 to-yellow-500",
+      shadowColor: "shadow-amber-500/20",
+      iconBg: "bg-amber-400/20",
     },
   ];
 
-  const colorClasses: Record<string, { bg: string; icon: string; border: string }> = {
-    blue: { bg: "bg-blue-50", icon: "text-blue-600", border: "border-blue-100" },
-    amber: { bg: "bg-amber-50", icon: "text-amber-600", border: "border-amber-100" },
-    emerald: { bg: "bg-emerald-50", icon: "text-emerald-600", border: "border-emerald-100" },
-    red: { bg: "bg-red-50", icon: "text-red-600", border: "border-red-100" },
-    violet: { bg: "bg-violet-50", icon: "text-violet-600", border: "border-violet-100" },
-    orange: { bg: "bg-orange-50", icon: "text-orange-600", border: "border-orange-100" },
-  };
-
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-      {cards.map((card, index) => {
-        const colors = colorClasses[card.color];
-        return (
-          <motion.div
-            key={card.label}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.05 }}
-            className={`bg-white rounded-2xl p-5 border ${colors.border} hover:shadow-lg hover:shadow-gray-100/50 transition-all duration-300`}
-          >
-            <div className={`w-10 h-10 ${colors.bg} rounded-xl flex items-center justify-center mb-3`}>
-              <card.icon className={`w-5 h-5 ${colors.icon}`} />
-            </div>
-            <p className="text-2xl font-bold text-gray-900 mb-1">{card.value}</p>
-            <div className="flex items-center justify-between">
-              <p className="text-xs text-gray-500 font-bengali">{card.label}</p>
-              <span className={`text-xs flex items-center gap-0.5 ${card.trendUp ? 'text-emerald-600' : 'text-gray-400'}`}>
-                {card.trendUp ? <ArrowUpRight className="w-3 h-3" /> : null}
-                {card.trend}
-              </span>
-            </div>
-          </motion.div>
-        );
-      })}
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      {cards.map((card, index) => (
+        <motion.div
+          key={card.label}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: index * 0.05 }}
+          className={`relative overflow-hidden rounded-2xl p-4 bg-gradient-to-br ${card.gradient} ${card.shadowColor} shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5`}
+        >
+          <div className="absolute top-0 right-0 w-20 h-20 rounded-full bg-white/10 -mr-6 -mt-6" />
+          <div className="absolute bottom-0 left-0 w-14 h-14 rounded-full bg-white/5 -ml-4 -mb-4" />
+          <div className={`w-9 h-9 ${card.iconBg} rounded-xl flex items-center justify-center mb-3`}>
+            <card.icon className="w-4 h-4 text-white" />
+          </div>
+          <p className="text-xl font-bold text-white mb-0.5">{card.value}</p>
+          <p className="text-[11px] text-white/70 font-bengali">{card.label}</p>
+        </motion.div>
+      ))}
     </div>
   );
 }

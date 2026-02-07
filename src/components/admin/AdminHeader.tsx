@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
-import { Home, RefreshCw, LogOut, Bell } from "lucide-react";
+import { Home, RefreshCw, LogOut, Bell, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import logo from "@/assets/logo.png";
 
 interface AdminHeaderProps {
@@ -10,12 +11,13 @@ interface AdminHeaderProps {
 
 export function AdminHeader({ onRefresh, onLogout }: AdminHeaderProps) {
   return (
-    <header className="bg-white border-b border-gray-100 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-4">
+    <header className="bg-slate-900/95 backdrop-blur-xl border-b border-slate-700/50 sticky top-0 z-50">
+      <div className="px-6 py-3 flex items-center justify-between gap-4">
+        {/* Left: Logo */}
+        <div className="flex items-center gap-3 shrink-0">
           <div className="relative">
-            <div className="absolute -inset-1 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 rounded-full opacity-70" />
-            <div className="relative w-12 h-12 rounded-full bg-white p-1 shadow-lg ring-2 ring-white overflow-hidden">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 rounded-full opacity-60 blur-sm" />
+            <div className="relative w-10 h-10 rounded-full bg-slate-900 p-0.5 ring-1 ring-slate-700 overflow-hidden">
               <img 
                 src={logo} 
                 alt="Web Creation BD" 
@@ -24,27 +26,40 @@ export function AdminHeader({ onRefresh, onLogout }: AdminHeaderProps) {
               />
             </div>
           </div>
-          <div>
-            <h1 className="font-bengali font-bold text-gray-900 text-lg">অ্যাডমিন ড্যাশবোর্ড</h1>
-            <p className="text-xs text-gray-400">Web Creation BD</p>
+          <div className="hidden sm:block">
+            <h1 className="font-bengali font-bold text-white text-sm">অ্যাডমিন ড্যাশবোর্ড</h1>
+            <p className="text-[10px] text-slate-500">Web Creation BD</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="text-gray-400 hover:text-gray-600 hover:bg-gray-50">
-            <Bell className="w-5 h-5" />
+
+        {/* Center: Search */}
+        <div className="flex-1 max-w-md hidden md:block">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+            <Input
+              placeholder="সার্চ করুন..."
+              className="pl-10 bg-slate-800/60 border-slate-700/50 text-white placeholder:text-slate-500 rounded-xl h-9 text-sm font-bengali focus:border-cyan-500/50 focus:ring-cyan-500/20"
+            />
+          </div>
+        </div>
+
+        {/* Right: Actions */}
+        <div className="flex items-center gap-1.5">
+          <Button variant="ghost" size="icon" className="text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl h-9 w-9">
+            <Bell className="w-4 h-4" />
           </Button>
           <Link to="/">
-            <Button variant="ghost" size="icon" className="text-gray-400 hover:text-gray-600 hover:bg-gray-50">
-              <Home className="w-5 h-5" />
+            <Button variant="ghost" size="icon" className="text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl h-9 w-9">
+              <Home className="w-4 h-4" />
             </Button>
           </Link>
-          <Button onClick={onRefresh} variant="ghost" size="icon" className="text-gray-400 hover:text-gray-600 hover:bg-gray-50">
-            <RefreshCw className="w-5 h-5" />
+          <Button onClick={onRefresh} variant="ghost" size="icon" className="text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl h-9 w-9">
+            <RefreshCw className="w-4 h-4" />
           </Button>
-          <div className="w-px h-6 bg-gray-200 mx-1" />
-          <Button onClick={onLogout} variant="ghost" size="sm" className="text-gray-500 hover:text-blue-600 hover:bg-blue-50 font-bengali">
-            <LogOut className="w-4 h-4 mr-2" />
-            লগআউট
+          <div className="w-px h-6 bg-slate-700/50 mx-1" />
+          <Button onClick={onLogout} variant="ghost" size="sm" className="text-slate-400 hover:text-red-400 hover:bg-red-500/10 font-bengali rounded-xl h-9 text-xs">
+            <LogOut className="w-4 h-4 mr-1.5" />
+            <span className="hidden sm:inline">লগআউট</span>
           </Button>
         </div>
       </div>

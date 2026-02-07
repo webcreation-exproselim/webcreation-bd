@@ -5,7 +5,7 @@ import {
   Package, Phone, User, CreditCard, ExternalLink,
   Users, FileImage, FileText, Trash2,
   Plus, Upload, X, Edit2, Loader2, Search, MessageCircle, Send,
-  LayoutDashboard, UserPlus, Star, PenTool, Shield
+  LayoutDashboard, UserPlus, Star, PenTool, Shield, Timer
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,6 +42,7 @@ import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 // Components
 import { AdminHeader } from "@/components/admin/AdminHeader";
+import { AdminSidebar, type TabType } from "@/components/admin/AdminSidebar";
 import { StatsCards } from "@/components/admin/StatsCards";
 import { AnalyticsCharts } from "@/components/admin/AnalyticsCharts";
 import { InvoiceSystem } from "@/components/admin/InvoiceSystem";
@@ -50,6 +51,7 @@ import { ReviewsManagement } from "@/components/admin/ReviewsManagement";
 import { ContentManagement } from "@/components/admin/ContentManagement";
 import { FraudGuardManagement } from "@/components/admin/FraudGuardManagement";
 import { UserManagement } from "@/components/admin/UserManagement";
+import { ProjectTimerManagement } from "@/components/admin/ProjectTimerManagement";
 
 interface OrderService {
   id: string;
@@ -118,10 +120,10 @@ interface Message {
 }
 
 const statusColors: Record<string, string> = {
-  pending: "bg-amber-50 text-amber-700 border-amber-200",
-  processing: "bg-blue-50 text-blue-700 border-blue-200",
-  completed: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  cancelled: "bg-red-50 text-red-700 border-red-200",
+  pending: "bg-amber-500/15 text-amber-400 border-amber-500/30",
+  processing: "bg-blue-500/15 text-blue-400 border-blue-500/30",
+  completed: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
+  cancelled: "bg-red-500/15 text-red-400 border-red-500/30",
 };
 
 const statusLabels: Record<string, string> = {
@@ -146,14 +148,12 @@ const categoryLabels: Record<string, string> = {
   "motion-graphics": "মোশন গ্রাফিক্স",
   "landing-page": "ল্যান্ডিং পেজ",
 };
-
-type TabType = "overview" | "orders" | "users" | "portfolio" | "invoices" | "messages" | "payments" | "reviews" | "content" | "fraudguard";
-
 const AdminDashboard = () => {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabType>("overview");
+  // Note: TabType is now imported from AdminSidebar
   
   // Orders
   const [orders, setOrders] = useState<Order[]>([]);
@@ -615,10 +615,10 @@ const AdminDashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-10 h-10 animate-spin text-red-500 mx-auto mb-4" />
-          <p className="text-gray-500 font-bengali">লোড হচ্ছে...</p>
+          <Loader2 className="w-10 h-10 animate-spin text-cyan-400 mx-auto mb-4" />
+          <p className="text-slate-500 font-bengali">লোড হচ্ছে...</p>
         </div>
       </div>
     );
@@ -629,45 +629,29 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-950 flex flex-col">
       <AdminHeader onRefresh={fetchAllData} onLogout={handleLogout} />
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Navigation Tabs */}
-        <div className="flex gap-2 overflow-x-auto pb-4 mb-6 scrollbar-hide">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-bengali whitespace-nowrap transition-all duration-200 ${
-                  isActive
-                    ? "bg-red-600 text-white shadow-lg shadow-red-600/20"
-                    : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-100"
-                }`}
-              >
-                <Icon className="w-4 h-4" />
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
+      <div className="flex flex-1 overflow-hidden">
+        <AdminSidebar activeTab={activeTab} onTabChange={setActiveTab} />
+        
+        <main className="flex-1 overflow-y-auto p-6 space-y-6">
+          {/* Stats Cards - Only on overview */}
+          {activeTab === "overview" && (
+            <>
+              <StatsCards stats={stats} usersCount={users.length} />
+              <AnalyticsCharts orders={orders} usersCount={users.length} />
+            </>
+          )}
 
-        {/* Stats Cards - Always visible */}
-        <div className="mb-8">
-          <StatsCards stats={stats} usersCount={users.length} />
-        </div>
+          {/* Projects Tab */}
+          {activeTab === "projects" && (
+            <ProjectTimerManagement orders={orders} invoices={invoices} />
+          )}
 
-        {/* Tab Content */}
-        {activeTab === "overview" && (
-          <AnalyticsCharts orders={orders} usersCount={users.length} />
-        )}
-
-        {activeTab === "fraudguard" && (
-          <FraudGuardManagement />
-        )}
+          {activeTab === "fraudguard" && (
+            <FraudGuardManagement />
+          )}
 
         {activeTab === "orders" && (
           <div className="space-y-4">
@@ -678,8 +662,8 @@ const AdminDashboard = () => {
                   onClick={() => setOrderFilter(f)}
                   className={`px-4 py-2 rounded-xl text-sm font-bengali whitespace-nowrap transition-all ${
                     orderFilter === f
-                      ? "bg-gray-900 text-white"
-                      : "bg-white text-gray-600 border border-gray-100 hover:border-gray-200"
+                      ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30"
+                      : "bg-slate-800/60 text-slate-400 border border-slate-700/50 hover:bg-slate-800"
                   }`}
                 >
                   {f === "all" ? "সব" : statusLabels[f]}
@@ -688,9 +672,9 @@ const AdminDashboard = () => {
             </div>
 
             {filteredOrders.length === 0 ? (
-              <div className="bg-white rounded-2xl border border-gray-100 p-16 text-center">
-                <Package className="w-16 h-16 text-gray-200 mx-auto mb-4" />
-                <p className="text-gray-500 font-bengali">কোনো অর্ডার নেই</p>
+              <div className="bg-slate-800/40 rounded-2xl border border-slate-700/50 p-16 text-center">
+                <Package className="w-16 h-16 text-slate-700 mx-auto mb-4" />
+                <p className="text-slate-500 font-bengali">কোনো অর্ডার নেই</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -700,7 +684,7 @@ const AdminDashboard = () => {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.03 }}
-                    className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-lg hover:shadow-gray-100/50 transition-all duration-300 cursor-pointer"
+                    className="bg-slate-800/60 backdrop-blur-sm rounded-2xl border border-slate-700/50 p-5 hover:bg-slate-800/80 hover:border-slate-600/50 transition-all duration-300 cursor-pointer"
                     onClick={() => {
                       setSelectedOrder(order);
                       setOrderProgress(order.progress || 0);
@@ -712,30 +696,32 @@ const AdminDashboard = () => {
                           <span className={`px-3 py-1 rounded-full text-xs font-medium border ${statusColors[order.status]}`}>
                             {statusLabels[order.status]}
                           </span>
-                          <span className="text-xs text-gray-400">
+                          <span className="text-xs text-slate-500">
                             {new Date(order.created_at).toLocaleDateString("bn-BD")}
                           </span>
                         </div>
                         <div className="flex items-center gap-2 mb-1">
-                          <User className="w-4 h-4 text-gray-400" />
-                          <span className="font-bengali font-semibold text-gray-900">{order.customer_name}</span>
+                          <User className="w-4 h-4 text-slate-500" />
+                          <span className="font-bengali font-semibold text-white">{order.customer_name}</span>
                         </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-500">
+                        <div className="flex items-center gap-2 text-sm text-slate-400">
                           <Phone className="w-3 h-3" />
                           <span>{order.customer_phone}</span>
                         </div>
                         {/* Progress Bar */}
                         <div className="mt-4">
                           <div className="flex justify-between text-xs mb-2">
-                            <span className="text-gray-500 font-bengali">অগ্রগতি</span>
-                            <span className="font-semibold text-gray-700">{order.progress || 0}%</span>
+                            <span className="text-slate-500 font-bengali">অগ্রগতি</span>
+                            <span className="font-semibold text-slate-300">{order.progress || 0}%</span>
                           </div>
-                          <Progress value={order.progress || 0} className="h-2" />
+                          <div className="h-2 bg-slate-700/50 rounded-full overflow-hidden">
+                            <div className="h-full bg-cyan-500 rounded-full transition-all" style={{ width: `${order.progress || 0}%` }} />
+                          </div>
                         </div>
                       </div>
                       <div className="text-right ml-4">
-                        <p className="text-xl font-bold text-gray-900">৳{Number(order.total_price).toLocaleString()}</p>
-                        <p className="text-xs text-gray-400 font-bengali">{order.services?.length || 0} সার্ভিস</p>
+                        <p className="text-xl font-bold text-white">৳{Number(order.total_price).toLocaleString()}</p>
+                        <p className="text-xs text-slate-500 font-bengali">{order.services?.length || 0} সার্ভিস</p>
                       </div>
                     </div>
                   </motion.div>
@@ -759,8 +745,8 @@ const AdminDashboard = () => {
                     onClick={() => setPortfolioFilter(cat)}
                     className={`px-4 py-2 rounded-xl text-sm font-bengali whitespace-nowrap transition-all ${
                       portfolioFilter === cat
-                        ? "bg-gray-900 text-white"
-                        : "bg-white text-gray-600 border border-gray-100 hover:border-gray-200"
+                        ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30"
+                        : "bg-slate-800/60 text-slate-400 border border-slate-700/50 hover:bg-slate-800"
                     }`}
                   >
                     {cat === "all" ? "সব" : categoryLabels[cat]}
@@ -855,8 +841,8 @@ const AdminDashboard = () => {
         {activeTab === "messages" && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* Order List */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-4 max-h-[600px] overflow-y-auto">
-              <h3 className="font-bengali font-bold mb-4 text-gray-900">অর্ডার সিলেক্ট করুন</h3>
+            <div className="bg-slate-800/60 rounded-2xl border border-slate-700/50 p-4 max-h-[600px] overflow-y-auto">
+              <h3 className="font-bengali font-bold mb-4 text-white">অর্ডার সিলেক্ট করুন</h3>
               <div className="space-y-2">
                 {orders.filter(o => o.user_id).map((order) => (
                   <button
@@ -867,16 +853,16 @@ const AdminDashboard = () => {
                     }}
                     className={`w-full p-4 rounded-xl text-left transition-all duration-200 ${
                       selectedOrderChat?.id === order.id
-                        ? "bg-red-50 border-2 border-red-200"
-                        : "bg-gray-50 hover:bg-gray-100 border-2 border-transparent"
+                        ? "bg-cyan-500/15 border-2 border-cyan-500/30"
+                        : "bg-slate-700/30 hover:bg-slate-700/50 border-2 border-transparent"
                     }`}
                   >
-                    <p className="font-medium text-sm text-gray-900">{order.customer_name}</p>
-                    <p className="text-xs text-gray-500 mt-1">#{order.id.slice(0, 8)}</p>
+                    <p className="font-medium text-sm text-white">{order.customer_name}</p>
+                    <p className="text-xs text-slate-500 mt-1">#{order.id.slice(0, 8)}</p>
                   </button>
                 ))}
                 {orders.filter(o => o.user_id).length === 0 && (
-                  <p className="text-center text-gray-400 py-8 font-bengali">কোনো চ্যাট নেই</p>
+                  <p className="text-center text-slate-500 py-8 font-bengali">কোনো চ্যাট নেই</p>
                 )}
               </div>
             </div>
@@ -953,11 +939,12 @@ const AdminDashboard = () => {
         {activeTab === "content" && (
           <ContentManagement />
         )}
+        </main>
       </div>
 
       {/* Order Detail Modal */}
       <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
-        <DialogContent className="max-w-lg bg-white">
+        <DialogContent className="max-w-lg bg-slate-900 border-slate-700">
           <DialogHeader>
             <DialogTitle className="font-bengali text-xl">অর্ডার বিস্তারিত</DialogTitle>
           </DialogHeader>

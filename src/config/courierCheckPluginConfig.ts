@@ -1,11 +1,11 @@
 export const COURIER_CHECK_PLUGIN_CONFIG = {
-  version: "1.0.0",
+  version: "1.1.0",
   name: "WCBD Courier Check",
   slug: "wcbd-courier-check",
   fileName: "wcbd-courier-check.zip",
   fileSize: "~12KB",
-  badgeLabel: "NEW",
-  versionHighlight: "Initial Release",
+  badgeLabel: "UPDATE",
+  versionHighlight: "CSRF Fix + Improved Stability",
   features: [
     "📊 Courier Delivery History Check",
     "🔍 Phone Number Based Lookup",

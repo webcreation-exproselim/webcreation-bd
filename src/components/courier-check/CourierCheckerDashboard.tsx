@@ -6,6 +6,20 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 
+import pathaoLogo from "@/assets/courier-logos/pathao.png";
+import steadfastLogo from "@/assets/courier-logos/steadfast.png";
+import carrybeeLogo from "@/assets/courier-logos/carrybee.png";
+import redxLogo from "@/assets/courier-logos/redx.svg";
+
+const COURIER_LOGOS: Record<string, string> = {
+  pathao: pathaoLogo,
+  steadfast: steadfastLogo,
+  carrybee: carrybeeLogo,
+  redx: redxLogo,
+  "red x": redxLogo,
+  "carry bee": carrybeeLogo,
+};
+
 interface CourierData {
   name: string;
   orders: number;
@@ -165,21 +179,31 @@ export function CourierCheckerDashboard({ apiKey }: CourierCheckerDashboardProps
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {result.couriers.map((c, i) => (
-                    <tr key={i} className="hover:bg-gray-50/50 transition-colors">
-                      <td className="px-5 py-4">
-                        <span className="font-semibold text-gray-900 text-sm">{c.name}</span>
-                      </td>
-                      <td className="px-5 py-4 text-center">
-                        <span className="font-bold text-gray-700 text-sm">{c.orders}</span>
-                      </td>
-                      <td className="px-5 py-4 text-center">
-                        <span className={`font-bold text-sm ${c.delivered > 0 ? 'text-emerald-600' : 'text-gray-400'}`}>
-                          {c.delivered}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
+                  {result.couriers.map((c, i) => {
+                    const logoKey = Object.keys(COURIER_LOGOS).find(
+                      key => c.name.toLowerCase().includes(key)
+                    );
+                    const logo = logoKey ? COURIER_LOGOS[logoKey] : null;
+                    return (
+                      <tr key={i} className="hover:bg-gray-50/50 transition-colors">
+                        <td className="px-5 py-4">
+                          {logo ? (
+                            <img src={logo} alt={c.name} className="h-8 w-auto max-w-[120px] object-contain" />
+                          ) : (
+                            <span className="font-semibold text-gray-900 text-sm">{c.name}</span>
+                          )}
+                        </td>
+                        <td className="px-5 py-4 text-center">
+                          <span className="font-bold text-gray-700 text-sm">{c.orders}</span>
+                        </td>
+                        <td className="px-5 py-4 text-center">
+                          <span className={`font-bold text-sm ${c.delivered > 0 ? 'text-emerald-600' : 'text-gray-400'}`}>
+                            {c.delivered}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
                 {/* Total Row */}
                 <tfoot>

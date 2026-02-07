@@ -158,7 +158,7 @@ const AdminDashboard = () => {
   // Orders
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [orderFilter, setOrderFilter] = useState("all");
+  const [orderFilter, setOrderFilter] = useState("active");
   const [orderProgress, setOrderProgress] = useState<number>(0);
   
   // Users
@@ -579,7 +579,9 @@ const AdminDashboard = () => {
   // Stats calculations
   const filteredOrders = orderFilter === "all" 
     ? orders 
-    : orders.filter(o => o.status === orderFilter);
+    : orderFilter === "active"
+      ? orders.filter(o => o.status === "pending" || o.status === "processing")
+      : orders.filter(o => o.status === orderFilter);
 
   const stats = {
     total: orders.length,
@@ -636,10 +638,11 @@ const AdminDashboard = () => {
         <AdminSidebar activeTab={activeTab} onTabChange={setActiveTab} />
         
         <main className="flex-1 overflow-y-auto p-6 space-y-6">
-          {/* Stats Cards - Only on overview */}
+          {/* Stats Cards + Project Timer - Always on overview */}
           {activeTab === "overview" && (
             <>
               <StatsCards stats={stats} usersCount={users.length} />
+              <ProjectTimerManagement orders={orders} invoices={invoices} />
               <AnalyticsCharts orders={orders} usersCount={users.length} />
             </>
           )}
@@ -653,10 +656,10 @@ const AdminDashboard = () => {
             <FraudGuardManagement />
           )}
 
-        {activeTab === "orders" && (
+          {activeTab === "orders" && (
           <div className="space-y-4">
             <div className="flex gap-2 overflow-x-auto pb-2">
-              {["all", "pending", "processing", "completed", "cancelled"].map((f) => (
+              {["active", "all", "pending", "processing", "completed", "cancelled"].map((f) => (
                 <button
                   key={f}
                   onClick={() => setOrderFilter(f)}
@@ -666,7 +669,7 @@ const AdminDashboard = () => {
                       : "bg-slate-800/60 text-slate-400 border border-slate-700/50 hover:bg-slate-800"
                   }`}
                 >
-                  {f === "all" ? "সব" : statusLabels[f]}
+                  {f === "active" ? "চলমান" : f === "all" ? "সব" : statusLabels[f]}
                 </button>
               ))}
             </div>
@@ -759,7 +762,7 @@ const AdminDashboard = () => {
                   setPortfolioForm({ title: "", description: "", category: "graphics-design", image_url: "", live_url: "" });
                   setIsPortfolioModalOpen(true);
                 }}
-                className="bg-red-600 hover:bg-red-700 font-bengali shadow-lg shadow-red-600/20"
+                className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 font-bengali shadow-lg shadow-cyan-600/20"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 নতুন যোগ করুন
@@ -773,9 +776,9 @@ const AdminDashboard = () => {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.03 }}
-                  className="bg-white rounded-2xl border border-gray-100 overflow-hidden group hover:shadow-lg hover:shadow-gray-100/50 transition-all duration-300"
+                  className="bg-slate-800/60 rounded-2xl border border-slate-700/50 overflow-hidden group hover:shadow-lg hover:border-slate-600/50 transition-all duration-300"
                 >
-                  <div className="aspect-video relative overflow-hidden bg-gray-100">
+                  <div className="aspect-video relative overflow-hidden bg-slate-700/30">
                     <img
                       src={item.image_url}
                       alt={item.title}
@@ -794,25 +797,25 @@ const AdminDashboard = () => {
                           });
                           setIsPortfolioModalOpen(true);
                         }}
-                        className="p-2 bg-white rounded-xl shadow-lg hover:bg-gray-50 transition-colors"
+                        className="p-2 bg-slate-800/90 rounded-xl shadow-lg hover:bg-slate-700 transition-colors border border-slate-600"
                       >
-                        <Edit2 className="w-4 h-4 text-gray-600" />
+                        <Edit2 className="w-4 h-4 text-slate-300" />
                       </button>
                       <button
                         onClick={() => deletePortfolio(item.id)}
-                        className="p-2 bg-white rounded-xl shadow-lg hover:bg-red-50 transition-colors"
+                        className="p-2 bg-slate-800/90 rounded-xl shadow-lg hover:bg-red-500/20 transition-colors border border-slate-600"
                       >
-                        <Trash2 className="w-4 h-4 text-red-500" />
+                        <Trash2 className="w-4 h-4 text-red-400" />
                       </button>
                     </div>
                   </div>
                   <div className="p-4">
-                    <span className="text-xs px-2.5 py-1 bg-red-50 text-red-600 rounded-full font-bengali">
+                    <span className="text-xs px-2.5 py-1 bg-cyan-500/15 text-cyan-400 rounded-full font-bengali border border-cyan-500/20">
                       {categoryLabels[item.category] || item.category}
                     </span>
-                    <h3 className="font-bengali font-semibold text-gray-900 mt-3">{item.title}</h3>
+                    <h3 className="font-bengali font-semibold text-white mt-3">{item.title}</h3>
                     {item.description && (
-                      <p className="text-sm text-gray-500 mt-1 line-clamp-2">{item.description}</p>
+                      <p className="text-sm text-slate-400 mt-1 line-clamp-2">{item.description}</p>
                     )}
                   </div>
                 </motion.div>
@@ -820,9 +823,9 @@ const AdminDashboard = () => {
             </div>
 
             {filteredPortfolio.length === 0 && (
-              <div className="bg-white rounded-2xl border border-gray-100 p-16 text-center">
-                <FileImage className="w-16 h-16 text-gray-200 mx-auto mb-4" />
-                <p className="text-gray-500 font-bengali">কোনো পোর্টফোলিও আইটেম নেই</p>
+              <div className="bg-slate-800/40 rounded-2xl border border-slate-700/50 p-16 text-center">
+                <FileImage className="w-16 h-16 text-slate-700 mx-auto mb-4" />
+                <p className="text-slate-500 font-bengali">কোনো পোর্টফোলিও আইটেম নেই</p>
               </div>
             )}
           </div>
@@ -868,12 +871,12 @@ const AdminDashboard = () => {
             </div>
 
             {/* Chat Area */}
-            <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 flex flex-col h-[600px]">
+            <div className="lg:col-span-2 bg-slate-800/60 rounded-2xl border border-slate-700/50 flex flex-col h-[600px]">
               {selectedOrderChat ? (
                 <>
-                  <div className="p-5 border-b border-gray-100">
-                    <p className="font-bengali font-bold text-gray-900">{selectedOrderChat.customer_name}</p>
-                    <p className="text-xs text-gray-500">অর্ডার #{selectedOrderChat.id.slice(0, 8)}</p>
+                  <div className="p-5 border-b border-slate-700/50">
+                    <p className="font-bengali font-bold text-white">{selectedOrderChat.customer_name}</p>
+                    <p className="text-xs text-slate-500">অর্ডার #{selectedOrderChat.id.slice(0, 8)}</p>
                   </div>
                   <div className="flex-1 overflow-y-auto p-5 space-y-4">
                     {messages.map((msg) => (
@@ -884,12 +887,12 @@ const AdminDashboard = () => {
                         <div
                           className={`max-w-[75%] p-4 rounded-2xl ${
                             msg.is_admin
-                              ? "bg-red-600 text-white"
-                              : "bg-gray-100 text-gray-900"
+                              ? "bg-cyan-600 text-white"
+                              : "bg-slate-700/50 text-slate-200"
                           }`}
                         >
                           <p className="text-sm">{msg.content}</p>
-                          <p className={`text-xs mt-2 ${msg.is_admin ? "text-white/60" : "text-gray-400"}`}>
+                          <p className={`text-xs mt-2 ${msg.is_admin ? "text-white/60" : "text-slate-500"}`}>
                             {new Date(msg.created_at).toLocaleTimeString("bn-BD")}
                           </p>
                         </div>
@@ -897,20 +900,20 @@ const AdminDashboard = () => {
                     ))}
                     {messages.length === 0 && (
                       <div className="flex-1 flex items-center justify-center h-full">
-                        <p className="text-gray-400 font-bengali">কোনো মেসেজ নেই</p>
+                        <p className="text-slate-500 font-bengali">কোনো মেসেজ নেই</p>
                       </div>
                     )}
                   </div>
-                  <div className="p-4 border-t border-gray-100">
+                  <div className="p-4 border-t border-slate-700/50">
                     <div className="flex gap-2">
                       <Input
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
                         placeholder="মেসেজ লিখুন..."
-                        className="font-bengali bg-gray-50 border-gray-100 rounded-xl"
+                        className="font-bengali bg-slate-800 border-slate-700 rounded-xl text-white placeholder:text-slate-500"
                         onKeyPress={(e) => e.key === "Enter" && sendAdminMessage()}
                       />
-                      <Button onClick={sendAdminMessage} className="bg-red-600 hover:bg-red-700 rounded-xl px-4">
+                      <Button onClick={sendAdminMessage} className="bg-cyan-600 hover:bg-cyan-700 rounded-xl px-4">
                         <Send className="w-5 h-5" />
                       </Button>
                     </div>
@@ -919,8 +922,8 @@ const AdminDashboard = () => {
               ) : (
                 <div className="flex-1 flex items-center justify-center">
                   <div className="text-center">
-                    <MessageCircle className="w-16 h-16 text-gray-200 mx-auto mb-4" />
-                    <p className="text-gray-400 font-bengali">চ্যাট করতে একটি অর্ডার সিলেক্ট করুন</p>
+                    <MessageCircle className="w-16 h-16 text-slate-700 mx-auto mb-4" />
+                    <p className="text-slate-500 font-bengali">চ্যাট করতে একটি অর্ডার সিলেক্ট করুন</p>
                   </div>
                 </div>
               )}
@@ -944,7 +947,7 @@ const AdminDashboard = () => {
 
       {/* Order Detail Modal */}
       <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
-        <DialogContent className="max-w-lg bg-slate-900 border-slate-700">
+        <DialogContent className="max-w-lg bg-slate-900 border-slate-700 text-white">
           <DialogHeader>
             <DialogTitle className="font-bengali text-xl">অর্ডার বিস্তারিত</DialogTitle>
           </DialogHeader>
@@ -962,14 +965,14 @@ const AdminDashboard = () => {
               </div>
 
               {/* Customer Info */}
-              <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+              <div className="bg-slate-800/60 rounded-xl p-4 space-y-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                    <User className="w-5 h-5 text-gray-500" />
+                  <div className="w-10 h-10 bg-slate-700 rounded-full flex items-center justify-center">
+                    <User className="w-5 h-5 text-slate-400" />
                   </div>
                   <div>
-                    <span className="font-bengali font-semibold text-gray-900 block">{selectedOrder.customer_name}</span>
-                    <a href={`tel:${selectedOrder.customer_phone}`} className="text-sm text-blue-600">
+                    <span className="font-bengali font-semibold text-white block">{selectedOrder.customer_name}</span>
+                    <a href={`tel:${selectedOrder.customer_phone}`} className="text-sm text-cyan-400">
                       {selectedOrder.customer_phone}
                     </a>
                   </div>
@@ -977,17 +980,17 @@ const AdminDashboard = () => {
                     href={`https://wa.me/88${selectedOrder.customer_phone.replace(/\D/g, '')}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="ml-auto px-3 py-1.5 bg-green-50 text-green-600 rounded-lg text-sm font-medium hover:bg-green-100 transition-colors"
+                    className="ml-auto px-3 py-1.5 bg-emerald-500/15 text-emerald-400 rounded-lg text-sm font-medium hover:bg-emerald-500/25 transition-colors border border-emerald-500/20"
                   >
                     WhatsApp
                   </a>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-gray-600">
+                <div className="flex items-center gap-2 text-sm text-slate-400">
                   <CreditCard className="w-4 h-4" />
                   <span>{paymentLabels[selectedOrder.payment_method] || selectedOrder.payment_method}</span>
                 </div>
                 {selectedOrder.transaction_id && (
-                  <div className="text-sm font-mono text-gray-500">
+                  <div className="text-sm font-mono text-slate-500">
                     TrxID: {selectedOrder.transaction_id}
                   </div>
                 )}
@@ -997,7 +1000,7 @@ const AdminDashboard = () => {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <Label className="font-bengali font-medium">প্রজেক্ট অগ্রগতি</Label>
-                  <span className="text-lg font-bold text-red-600">{orderProgress}%</span>
+                  <span className="text-lg font-bold text-cyan-400">{orderProgress}%</span>
                 </div>
                 <Slider
                   value={[orderProgress]}
@@ -1010,7 +1013,7 @@ const AdminDashboard = () => {
                   onClick={() => updateOrderProgress(selectedOrder.id, orderProgress)}
                   variant="outline"
                   size="sm"
-                  className="font-bengali"
+                  className="font-bengali border-slate-600 text-slate-300 hover:bg-slate-800"
                 >
                   অগ্রগতি সেভ করুন
                 </Button>
@@ -1019,7 +1022,7 @@ const AdminDashboard = () => {
               {/* Payment Screenshot */}
               {selectedOrder.payment_screenshot_url && (
                 <div>
-                  <Label className="font-bengali font-medium mb-2 block">পেমেন্ট প্রমাণ</Label>
+                  <Label className="font-bengali font-medium text-slate-300 mb-2 block">পেমেন্ট প্রমাণ</Label>
                   <div className="relative">
                     <img 
                       src={selectedOrder.payment_screenshot_url} 
@@ -1040,26 +1043,26 @@ const AdminDashboard = () => {
 
               {/* Services */}
               <div>
-                <Label className="font-bengali font-medium mb-2 block">সার্ভিস সমূহ</Label>
+                <Label className="font-bengali font-medium text-slate-300 mb-2 block">সার্ভিস সমূহ</Label>
                 <div className="space-y-2">
                   {selectedOrder.services?.map((service, idx) => (
-                    <div key={idx} className="bg-gray-50 rounded-xl p-3 flex justify-between items-center">
+                    <div key={idx} className="bg-slate-800/60 rounded-xl p-3 flex justify-between items-center border border-slate-700/50">
                       <div>
-                        <span className="text-xs px-2 py-0.5 bg-red-100 text-red-600 rounded-full">
+                        <span className="text-xs px-2 py-0.5 bg-cyan-500/15 text-cyan-400 rounded-full border border-cyan-500/20">
                           {service.serviceName}
                         </span>
-                        <span className="ml-2 font-bengali text-gray-700">{service.packageName}</span>
+                        <span className="ml-2 font-bengali text-slate-300">{service.packageName}</span>
                       </div>
-                      <span className="font-bold text-gray-900">৳{service.price?.toLocaleString()}</span>
+                      <span className="font-bold text-white">৳{service.price?.toLocaleString()}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
               {/* Total */}
-              <div className="flex justify-between items-center pt-4 border-t">
-                <span className="font-bengali font-semibold text-gray-900">মোট</span>
-                <span className="text-2xl font-bold text-red-600">
+              <div className="flex justify-between items-center pt-4 border-t border-slate-700">
+                <span className="font-bengali font-semibold text-white">মোট</span>
+                <span className="text-2xl font-bold text-cyan-400">
                   ৳{Number(selectedOrder.total_price).toLocaleString()}
                 </span>
               </div>
@@ -1069,7 +1072,7 @@ const AdminDashboard = () => {
                 <Button
                   onClick={() => updateOrderStatus(selectedOrder.id, "processing")}
                   variant="outline"
-                  className="font-bengali"
+                  className="font-bengali border-slate-600 text-slate-300 hover:bg-slate-800"
                   disabled={selectedOrder.status === "processing"}
                 >
                   প্রসেসিং
@@ -1084,7 +1087,7 @@ const AdminDashboard = () => {
                 <Button
                   onClick={() => updateOrderStatus(selectedOrder.id, "cancelled")}
                   variant="outline"
-                  className="text-amber-600 border-amber-200 hover:bg-amber-50 font-bengali"
+                  className="text-amber-400 border-amber-500/30 hover:bg-amber-500/10 font-bengali"
                   disabled={selectedOrder.status === "cancelled"}
                 >
                   বাতিল করুন
@@ -1092,7 +1095,7 @@ const AdminDashboard = () => {
                 <Button
                   onClick={() => setDeleteOrderConfirm(selectedOrder.id)}
                   variant="outline"
-                  className="text-red-600 border-red-200 hover:bg-red-50 font-bengali"
+                  className="text-red-400 border-red-500/30 hover:bg-red-500/10 font-bengali"
                 >
                   <Trash2 className="w-4 h-4 mr-1" />
                   ডিলিট
@@ -1105,7 +1108,7 @@ const AdminDashboard = () => {
 
       {/* Portfolio Modal */}
       <Dialog open={isPortfolioModalOpen} onOpenChange={setIsPortfolioModalOpen}>
-        <DialogContent className="max-w-md bg-white">
+        <DialogContent className="max-w-md bg-slate-900 border-slate-700 text-white">
           <DialogHeader>
             <DialogTitle className="font-bengali text-xl">
               {editingPortfolio ? "পোর্টফোলিও এডিট করুন" : "নতুন পোর্টফোলিও"}
@@ -1119,10 +1122,10 @@ const AdminDashboard = () => {
                 value={portfolioForm.category}
                 onValueChange={(val) => setPortfolioForm(prev => ({ ...prev, category: val }))}
               >
-                <SelectTrigger className="mt-1">
+                <SelectTrigger className="mt-1 bg-slate-800 border-slate-600">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-slate-800 border-slate-600">
                   {Object.entries(categoryLabels).map(([key, label]) => (
                     <SelectItem key={key} value={key} className="font-bengali">
                       {label}
@@ -1137,7 +1140,7 @@ const AdminDashboard = () => {
               <Input
                 value={portfolioForm.title}
                 onChange={(e) => setPortfolioForm(prev => ({ ...prev, title: e.target.value }))}
-                className="mt-1 font-bengali"
+                className="mt-1 font-bengali bg-slate-800 border-slate-600"
                 placeholder="প্রজেক্টের নাম"
               />
             </div>
@@ -1147,7 +1150,7 @@ const AdminDashboard = () => {
               <Textarea
                 value={portfolioForm.description}
                 onChange={(e) => setPortfolioForm(prev => ({ ...prev, description: e.target.value }))}
-                className="mt-1 font-bengali"
+                className="mt-1 font-bengali bg-slate-800 border-slate-600"
                 placeholder="প্রজেক্ট সম্পর্কে সংক্ষেপে লিখুন"
                 rows={3}
               />
@@ -1160,7 +1163,7 @@ const AdminDashboard = () => {
                   <img
                     src={portfolioForm.image_url}
                     alt="Preview"
-                    className="w-full h-32 object-cover rounded-xl"
+                    className="w-full h-32 object-cover rounded-xl border border-slate-700"
                   />
                 )}
                 <div className="flex gap-2">
@@ -1168,10 +1171,10 @@ const AdminDashboard = () => {
                     value={portfolioForm.image_url}
                     onChange={(e) => setPortfolioForm(prev => ({ ...prev, image_url: e.target.value }))}
                     placeholder="ছবির URL দিন অথবা আপলোড করুন"
-                    className="flex-1"
+                    className="flex-1 bg-slate-800 border-slate-600"
                   />
                   <Label className="cursor-pointer">
-                    <div className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-xl flex items-center gap-2 transition-colors">
+                    <div className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-xl flex items-center gap-2 transition-colors text-slate-300">
                       {uploading ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
                       ) : (
@@ -1197,10 +1200,10 @@ const AdminDashboard = () => {
                 <Input
                   value={portfolioForm.live_url}
                   onChange={(e) => setPortfolioForm(prev => ({ ...prev, live_url: e.target.value }))}
-                  className="mt-1"
+                  className="mt-1 bg-slate-800 border-slate-600"
                   placeholder="https://example.com"
                 />
-                <p className="text-xs text-gray-500 mt-1 font-bengali">
+                <p className="text-xs text-slate-500 mt-1 font-bengali">
                   "লাইভ প্রিভিউ" বাটনে ক্লিক করলে এই লিংকে যাবে
                 </p>
               </div>
@@ -1208,7 +1211,7 @@ const AdminDashboard = () => {
 
             <Button
               onClick={savePortfolio}
-              className="w-full bg-red-600 hover:bg-red-700 font-bengali"
+              className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 font-bengali"
               disabled={uploading}
             >
               {editingPortfolio ? "আপডেট করুন" : "যোগ করুন"}
@@ -1219,7 +1222,7 @@ const AdminDashboard = () => {
 
       {/* Delete Order Confirmation */}
       <AlertDialog open={!!deleteOrderConfirm} onOpenChange={() => setDeleteOrderConfirm(null)}>
-        <AlertDialogContent className="bg-white">
+        <AlertDialogContent className="bg-slate-900 border-slate-700 text-white">
           <AlertDialogHeader>
             <AlertDialogTitle className="font-bengali">অর্ডার ডিলিট করবেন?</AlertDialogTitle>
             <AlertDialogDescription className="font-bengali">
@@ -1227,7 +1230,7 @@ const AdminDashboard = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="font-bengali">বাতিল</AlertDialogCancel>
+            <AlertDialogCancel className="font-bengali border-slate-600 text-slate-300 hover:bg-slate-800">বাতিল</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => deleteOrderConfirm && deleteOrder(deleteOrderConfirm)}
               className="bg-red-600 hover:bg-red-700 font-bengali"
@@ -1240,7 +1243,7 @@ const AdminDashboard = () => {
 
       {/* Delete User Confirmation */}
       <AlertDialog open={!!deleteUserConfirm} onOpenChange={() => setDeleteUserConfirm(null)}>
-        <AlertDialogContent className="bg-white">
+        <AlertDialogContent className="bg-slate-900 border-slate-700 text-white">
           <AlertDialogHeader>
             <AlertDialogTitle className="font-bengali">ইউজার ডিলিট করবেন?</AlertDialogTitle>
             <AlertDialogDescription className="font-bengali">
@@ -1248,7 +1251,7 @@ const AdminDashboard = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="font-bengali">বাতিল</AlertDialogCancel>
+            <AlertDialogCancel className="font-bengali border-slate-600 text-slate-300 hover:bg-slate-800">বাতিল</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 if (deleteUserConfirm) {

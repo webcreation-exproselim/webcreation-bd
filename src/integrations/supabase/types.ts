@@ -854,18 +854,7 @@ export type Database = {
       }
     }
     Views: {
-      admin_user_view: {
-        Row: {
-          avatar_url: string | null
-          created_at: string | null
-          email: string | null
-          full_name: string | null
-          phone: string | null
-          profile_id: string | null
-          user_id: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       get_admin_users: {

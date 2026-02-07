@@ -4,7 +4,7 @@
 
 export const PLUGIN_CONFIG = {
   // Current version - UPDATE THIS WHEN RELEASING NEW VERSIONS
-  version: "9.0.1",
+  version: "9.0.2",
   
   // Plugin metadata
   name: "WCBD Fraud Guard",

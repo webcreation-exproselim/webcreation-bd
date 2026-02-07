@@ -667,6 +667,87 @@ export type Database = {
         }
         Relationships: []
       }
+      projects: {
+        Row: {
+          client_name: string
+          client_phone: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          duration_days: number
+          end_date: string
+          id: string
+          invoice_id: string | null
+          order_id: string | null
+          paused_at: string | null
+          remaining_duration_ms: number | null
+          reminder_sent_1day: boolean
+          reminder_sent_3day: boolean
+          reminder_sent_same_day: boolean
+          start_date: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          client_name: string
+          client_phone?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          duration_days?: number
+          end_date: string
+          id?: string
+          invoice_id?: string | null
+          order_id?: string | null
+          paused_at?: string | null
+          remaining_duration_ms?: number | null
+          reminder_sent_1day?: boolean
+          reminder_sent_3day?: boolean
+          reminder_sent_same_day?: boolean
+          start_date?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          client_name?: string
+          client_phone?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          duration_days?: number
+          end_date?: string
+          id?: string
+          invoice_id?: string | null
+          order_id?: string | null
+          paused_at?: string | null
+          remaining_duration_ms?: number | null
+          reminder_sent_1day?: boolean
+          reminder_sent_3day?: boolean
+          reminder_sent_same_day?: boolean
+          start_date?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       site_content: {
         Row: {
           content_key: string

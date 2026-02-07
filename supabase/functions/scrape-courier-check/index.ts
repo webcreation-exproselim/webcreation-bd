@@ -22,8 +22,18 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Validate BD phone number
-    const cleanPhone = phone.replace(/[^0-9]/g, '');
+    // Validate BD phone number - handle +880, 880 prefixes
+    let cleanPhone = phone.replace(/[^0-9]/g, '');
+    
+    // Strip country code: 8801XXXXXXXXX -> 01XXXXXXXXX
+    if (cleanPhone.startsWith('880') && cleanPhone.length === 13) {
+      cleanPhone = '0' + cleanPhone.substring(3);
+    }
+    // Handle case where just 1XXXXXXXXX (10 digits, no leading 0)
+    if (cleanPhone.startsWith('1') && cleanPhone.length === 10) {
+      cleanPhone = '0' + cleanPhone;
+    }
+    
     if (!/^01[0-9]{9}$/.test(cleanPhone)) {
       console.log('[scrape-courier-check] Invalid phone format:', cleanPhone);
       return new Response(

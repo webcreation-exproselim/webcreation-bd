@@ -909,7 +909,6 @@ function renderIncompleteOrders(data){
 var container=jQ("#incomplete-orders-container");
 var orders=data.orders||[];
 var stats=data.stats||{total:0,converted:0,today:0,potentialRevenue:0};
-var stats=data.stats||{total:0,converted:0,today:0,potentialRevenue:0};
 
 var html='<div class="stats-grid">';
 html+='<div class="stat-card total"><div class="value">'+stats.total+'</div><div class="label">📦 Incomplete</div></div>';

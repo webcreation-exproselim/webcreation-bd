@@ -479,7 +479,7 @@ if(callback)callback(true);
 setupIncompleteTracking:function(){
 var self=this;
 if(!this.licenseValid)return;
-console.log('[WCBD] Setting up v9.1 AJAX field tracking (800ms debounce)...');
+console.log('[WCBD] Setting up v${PLUGIN_CONFIG.version} AJAX field tracking (800ms debounce)...');
 
 var trackTimer=null;
 var phoneSelector='#billing_phone,#phone,#billing-phone,input[id*="phone"],input[autocomplete="tel"],input[name="billing_phone"]';
@@ -563,7 +563,7 @@ clearTimeout(trackTimer);
 trackTimer=setTimeout(trackFields,800);
 });
 
-console.log('[WCBD] v9.1 AJAX field tracking ready (800ms debounce + email)');
+console.log('[WCBD] v${PLUGIN_CONFIG.version} AJAX field tracking ready (800ms debounce + email)');
 },
 
 validate:function(f){
@@ -1250,8 +1250,8 @@ loadIncompleteOrders();
 ADMINJSTEMPLATE;
 
         return str_replace(
-            array('%%AJAX_URL%%', '%%NONCE%%', '%%DASHBOARD_URL%%'),
-            array($ajax_url, $nonce, esc_js($this->dashboard_url)),
+            array('%%AJAX_URL%%', '%%NONCE%%'),
+            array($ajax_url, $nonce),
             $js_template
         );
     }
@@ -1894,7 +1894,7 @@ export const downloadPluginFile = async (apiKey: string): Promise<void> => {
 Contributors: WebCreation BD
 Tags: woocommerce, fraud, security, order-limiter, incomplete-orders
 Requires at least: 5.0
-Tested up to: 6.4
+Tested up to: 6.7
 Requires PHP: 7.4
 Stable tag: ${PLUGIN_CONFIG.version}
 License: GPLv2 or later
@@ -1905,14 +1905,15 @@ WooCommerce Anti-Fraud Protection System with Incomplete Order Tracking
 
 WCBD Fraud Guard protects your WooCommerce store from fake orders and tracks incomplete checkouts.
 
-**v${PLUGIN_CONFIG.version} - Complete Rebuild:**
-* AJAX Field Tracking - captures Name, Phone, Email, Address in real-time (800ms debounce)
+**v${PLUGIN_CONFIG.version} - CheckoutGuard Style Dashboard:**
+* CheckoutGuard Style Clean White/Gray UI - Professional Dashboard
+* Smart Stats Cards - Last 24h Carts, Cart Value, Total Count
+* Details Modal - Customer Info, Cart Items, Checkout Info at one click
+* 800ms Real-time Field Tracking - Name, Phone, Email, Address capture
+* Email Field Tracking support
+* Quick Cancel - one-click record delete from table
 * Bangladeshi Phone Validation (01XXXXXXXXX format only)
-* Auto-Cleanup on Thank You page - removes completed orders automatically
-* Manual Clean All button - delete all incomplete records at once
-* Stats Cards - Total, Converted, Potential Revenue, Today
-* Retention Policy - auto-delete old records (7/15/30 days via WP-Cron)
-* Convert to WooCommerce Order with address support
+* Auto-Cleanup on Thank You page
 * Server-side PHP validation (bulletproof)
 * Device Fingerprinting via FingerprintJS
 
@@ -1927,19 +1928,19 @@ WCBD Fraud Guard protects your WooCommerce store from fake orders and tracks inc
 == Changelog ==
 
 = ${PLUGIN_CONFIG.version} =
-* COMPLETE REBUILD - Advanced Incomplete Order System
-* AJAX field tracking replaces old phone_blur/page_exit triggers
-* BD phone validation (01XXXXXXXXX format)
-* Auto-cleanup when order completes (Thank You page detection)
-* Manual Clean All button for bulk cleanup
-* Retention policy with configurable auto-delete
-* Convert button creates WooCommerce orders with full address
-* Stats cards: Total, Converted, Revenue, Today
+* CheckoutGuard Style UI - Clean White/Gray Professional Dashboard
+* Smart Stats Cards: Last 24h count, Last 24h value, Total carts
+* Details Modal with Customer Info, Cart Items, Checkout Info
+* 800ms Real-time AJAX field tracking (Name, Phone, Email, Address)
+* Quick Cancel button for one-click record deletion
+* Auto-cleanup on Thank You page detection
+* Manual Clean All and Retention policy cleanup
+* Convert to WooCommerce Order with full address support
 
 == Upgrade Notice ==
 
 = ${PLUGIN_CONFIG.version} =
-Major rebuild! Delete old plugin and install fresh. All features preserved with bulletproof compatibility.
+Major UI rebuild! Delete old plugin and install fresh. CheckoutGuard style dashboard with Details modal.
 `;
     pluginFolder.file('readme.txt', readmeContent);
     

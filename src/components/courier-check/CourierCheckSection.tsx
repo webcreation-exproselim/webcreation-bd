@@ -58,7 +58,7 @@ export function CourierCheckSection({ userId }: CourierCheckSectionProps) {
                 {COURIER_CHECK_PLUGIN_CONFIG.name} {getCourierCheckVersionString()}
               </h2>
               <p className="text-white/80 text-sm font-bengali">
-                কাস্টমারের Courier Delivery History চেক করুন
+                কাস্টমারের Courier Delivery History চেক করুন — Pathao, Steadfast, CarryBee, RedX
               </p>
             </div>
           </div>

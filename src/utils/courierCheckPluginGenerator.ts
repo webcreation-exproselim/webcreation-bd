@@ -9,7 +9,7 @@ export const generateCourierCheckPluginFile = (apiKey: string): string => {
 /**
  * Plugin Name: WCBD Courier Check
  * Plugin URI: ${DASHBOARD_URL}
- * Description: Check customer courier delivery history & success rate from your WooCommerce order list.
+ * Description: Check customer courier delivery history & success rate (Pathao, Steadfast, CarryBee, RedX) from your WooCommerce order list.
  * Version: ${COURIER_CHECK_PLUGIN_CONFIG.version}
  * Author: WebCreation BD
  * Author URI: ${DASHBOARD_URL}
@@ -472,6 +472,56 @@ export const downloadCourierCheckPlugin = async (apiKey: string) => {
   if (!folder) return;
   
   folder.file('wcbd-courier-check.php', generateCourierCheckPluginFile(apiKey));
+  
+  // Add readme.txt
+  const readmeContent = `=== WCBD Courier Check ===
+Contributors: WebCreation BD
+Tags: woocommerce, courier, delivery, check, fraud
+Requires at least: 5.0
+Tested up to: 6.7
+Requires PHP: 7.4
+Stable tag: ${COURIER_CHECK_PLUGIN_CONFIG.version}
+License: GPLv2 or later
+
+== Description ==
+
+WCBD Courier Check allows you to check customer courier delivery history & success rate directly from your WooCommerce order list.
+
+**Supported Couriers:**
+* Pathao
+* Steadfast
+* CarryBee
+* RedX
+
+**Features:**
+* 📊 Courier Delivery History Check
+* 🔍 Phone Number Based Lookup
+* 📈 Success Rate Visualization
+* 🚚 Pathao, Steadfast, CarryBee, RedX Support
+* 🏷️ Trust Label (Green/Yellow/Red)
+* 📦 WooCommerce Order List Integration
+* 💼 Single Order View Analytics
+* 🔒 Domain-locked License
+* 📱 Mobile Responsive Bottom-Sheet Modal
+* 🇧🇩 Bangladesh Courier Support
+
+== Installation ==
+
+1. Upload the plugin ZIP via WordPress Admin → Plugins → Add New → Upload Plugin
+2. Activate the plugin
+3. Your API key is pre-configured
+4. Go to WooCommerce → Orders and click "Check" button on any order
+
+== Changelog ==
+
+= ${COURIER_CHECK_PLUGIN_CONFIG.version} =
+* New Design with Gradient Headers & Color-coded Risk Badges
+* 3-column Stats Summary (Total Orders, Delivered, Returned)
+* Pathao, Steadfast, CarryBee, RedX courier logos
+* Mobile responsive bottom-sheet modal for screens under 600px
+* Powered by WebCreation BD branding
+`;
+  folder.file('readme.txt', readmeContent);
   
   const blob = await zip.generateAsync({ type: 'blob' });
   const url = URL.createObjectURL(blob);

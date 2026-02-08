@@ -111,6 +111,17 @@ export function CourierCheckerDashboard({ apiKey }: CourierCheckerDashboardProps
 
   return (
     <div className="space-y-6">
+      {/* Supported Couriers Banner */}
+      <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
+        <p className="text-xs text-gray-500 font-bengali mb-3">সাপোর্টেড কুরিয়ার সার্ভিস</p>
+        <div className="flex items-center gap-6 flex-wrap">
+          <img src={pathaoLogo} alt="Pathao" className="h-7 w-auto object-contain opacity-80 hover:opacity-100 transition-opacity" />
+          <img src={steadfastLogo} alt="Steadfast" className="h-7 w-auto object-contain opacity-80 hover:opacity-100 transition-opacity" />
+          <img src={carrybeeLogo} alt="CarryBee" className="h-7 w-auto object-contain opacity-80 hover:opacity-100 transition-opacity" />
+          <img src={redxLogo} alt="RedX" className="h-7 w-auto object-contain opacity-80 hover:opacity-100 transition-opacity" />
+        </div>
+      </div>
+
       {/* Search Bar */}
       <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
         <h3 className="text-lg font-bold text-gray-900 font-bengali mb-4 flex items-center gap-2">

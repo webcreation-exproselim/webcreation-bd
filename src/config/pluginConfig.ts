@@ -4,28 +4,28 @@
 
 export const PLUGIN_CONFIG = {
   // Current version - UPDATE THIS WHEN RELEASING NEW VERSIONS
-  version: "9.0.3",
+  version: "9.1.0",
   
   // Plugin metadata
   name: "WCBD Fraud Guard",
   slug: "wcbd-fraud-guard",
   fileName: "wcbd-fraud-guard.zip",
-  fileSize: "~24KB",
+  fileSize: "~25KB",
   
   // Version badge styling
   badgeLabel: "STABLE",
   
   // Current version highlights (for banners and feature lists)
-  versionHighlight: "Device + IP Tracking Fix",
+  versionHighlight: "Incomplete Order System Rebuild",
   
   // What's new in this version (for feature list)
   whatsNew: [
-    { icon: "🔒", title: "Device + IP Blocking", description: "একই device থেকে ভিন্ন নম্বরেও order block হবে - device fingerprint + IP সার্ভার-সাইডে track" },
-    { icon: "🍪", title: "Cookie-Based Device Sync", description: "FingerprintJS device ID cookie তে সংরক্ষিত - server-side PHP ও পাঠায়" },
-    { icon: "🌐", title: "IP Address Tracking", description: "সার্ভার-সাইড PHP check এ customer IP address অটোমেটিক capture হয়" },
-    { icon: "📝", title: "AJAX Field Tracking", description: "Name, Phone, Address ফিল্ড টাইপ করার সাথে সাথে ক্যাপচার হয় - 2s debounce" },
-    { icon: "✅", title: "Auto-Cleanup", description: "Thank You পেজে গেলে incomplete record স্বয়ংক্রিয়ভাবে মুছে যায়" },
-    { icon: "🗑️", title: "Manual Clean All", description: "WordPress Admin থেকে সব incomplete records এক ক্লিকে মুছে ফেলুন" },
+    { icon: "⚡", title: "800ms Real-time Tracking", description: "ফিল্ড টাইপ করার ৮০০ms পর অটো-সেভ - আগের চেয়ে ২.৫x দ্রুত" },
+    { icon: "📧", title: "Email Field Tracking", description: "Email ফিল্ডও এখন ট্র্যাক হবে - Name, Phone, Email, Address সব ক্যাপচার" },
+    { icon: "🔥", title: "Hot/Warm/Cold Status", description: "সময় অনুযায়ী স্ট্যাটাস - Hot (<1hr), Warm (1-24hr), Cold (24hr+)" },
+    { icon: "💬", title: "WhatsApp Cart Recovery", description: "প্রি-ফিল্ড মেসেজ সহ WhatsApp বাটন - কাস্টমারের নাম ও কার্ট ভ্যালু সহ" },
+    { icon: "📞", title: "Direct Call Button", description: "এক ক্লিকে কাস্টমারকে ফোন করুন - tel: লিংক সহ" },
+    { icon: "🎨", title: "Clean SaaS Dashboard", description: "সম্পূর্ণ নতুন White/Gray প্রফেশনাল ডিজাইন - WordPress ও React উভয়ে" },
   ],
   
   // All features list
@@ -42,7 +42,10 @@ export const PLUGIN_CONFIG = {
     "⏱️ Cooldown Control (WordPress)",
     "💬 Custom Block Messages",
     "📞 WhatsApp/Phone Contact",
-    "📝 AJAX Field Tracking (Debounced)",
+    "⚡ 800ms Real-time Field Tracking",
+    "📧 Email Field Capture",
+    "🔥 Hot/Warm/Cold Status Badges",
+    "💬 WhatsApp Cart Recovery Message",
     "✅ Auto-Cleanup on Thank You",
     "🇧🇩 BD Phone Validation",
     "🗑️ Manual Clean All Button",

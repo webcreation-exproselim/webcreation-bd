@@ -45,6 +45,14 @@ interface CourierCheckerDashboardProps {
 
 const ALLOWED_COURIERS = ["pathao", "steadfast", "carrybee", "carry bee", "redx", "red x", "redx logistics", "red x logistics"];
 
+// Always show these 4 couriers in results, even if data is 0
+const DEFAULT_COURIERS: { name: string; logoKey: string }[] = [
+  { name: "Pathao", logoKey: "pathao" },
+  { name: "Steadfast", logoKey: "steadfast" },
+  { name: "CarryBee", logoKey: "carrybee" },
+  { name: "RedX", logoKey: "redx" },
+];
+
 const RISK_STYLES: Record<string, { bg: string; text: string; label: string }> = {
   trusted: { bg: "bg-emerald-500", text: "text-white", label: "✅ বিশ্বস্ত কাস্টমার" },
   moderate: { bg: "bg-amber-500", text: "text-white", label: "⚠️ মাঝারি ঝুঁকি" },
@@ -208,36 +216,36 @@ export function CourierCheckerDashboard({ apiKey }: CourierCheckerDashboardProps
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {result.couriers
-                    .filter((c) => {
-                      const name = c.name.toLowerCase();
-                      return ALLOWED_COURIERS.some(key => name.includes(key));
-                    })
-                    .map((c, i) => {
-                      const logoKey = Object.keys(COURIER_LOGOS).find(
-                        key => c.name.toLowerCase().includes(key)
-                      );
-                      const logo = logoKey ? COURIER_LOGOS[logoKey] : null;
-                      return (
-                        <tr key={i} className="hover:bg-gray-50/50 transition-colors">
-                          <td className="px-5 py-4">
-                            {logo ? (
-                              <img src={logo} alt={c.name} className="h-8 w-auto max-w-[120px] object-contain" />
-                            ) : (
-                              <span className="font-semibold text-gray-900 text-sm">{c.name}</span>
-                            )}
-                          </td>
-                          <td className="px-5 py-4 text-center">
-                            <span className="font-bold text-gray-700 text-sm">{c.orders}</span>
-                          </td>
-                          <td className="px-5 py-4 text-center">
-                            <span className={`font-bold text-sm ${c.delivered > 0 ? 'text-emerald-600' : 'text-gray-400'}`}>
-                              {c.delivered}
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
+                  {DEFAULT_COURIERS.map((dc, i) => {
+                    // Find matching courier data from results
+                    const matched = result.couriers.find(c =>
+                      c.name.toLowerCase().includes(dc.logoKey) ||
+                      (dc.logoKey === "carrybee" && c.name.toLowerCase().includes("carry bee")) ||
+                      (dc.logoKey === "redx" && (c.name.toLowerCase().includes("red x") || c.name.toLowerCase().includes("redx")))
+                    );
+                    const orders = matched?.orders || 0;
+                    const delivered = matched?.delivered || 0;
+                    const logo = COURIER_LOGOS[dc.logoKey];
+                    return (
+                      <tr key={i} className="hover:bg-gray-50/50 transition-colors">
+                        <td className="px-5 py-4">
+                          {logo ? (
+                            <img src={logo} alt={dc.name} className="h-8 w-auto max-w-[120px] object-contain" />
+                          ) : (
+                            <span className="font-semibold text-gray-900 text-sm">{dc.name}</span>
+                          )}
+                        </td>
+                        <td className="px-5 py-4 text-center">
+                          <span className="font-bold text-gray-700 text-sm">{orders}</span>
+                        </td>
+                        <td className="px-5 py-4 text-center">
+                          <span className={`font-bold text-sm ${delivered > 0 ? 'text-emerald-600' : 'text-gray-400'}`}>
+                            {delivered}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
                 {/* Total Row */}
                 <tfoot>

@@ -322,22 +322,23 @@ jQuery(document).ready(function($){
         'carry bee': 'https://carrybee.com.bd/wp-content/uploads/2024/01/Carrybee-Logo-04.png'
     };
     
-    var allowedCouriers = ['pathao','steadfast','carrybee','carry bee','redx','red x','redx logistics','red x logistics'];
+    // Always show these 4 couriers in results
+    var defaultCouriers = [
+        { name: 'Pathao', key: 'pathao' },
+        { name: 'Steadfast', key: 'steadfast' },
+        { name: 'CarryBee', key: 'carrybee' },
+        { name: 'RedX', key: 'redx' }
+    ];
     
-    function getCourierLogo(name) {
-        var lower = name.toLowerCase();
-        for (var key in courierLogos) {
-            if (lower.indexOf(key) !== -1) return courierLogos[key];
+    function findCourierData(couriers, key) {
+        if (!couriers || !couriers.length) return null;
+        for (var i = 0; i < couriers.length; i++) {
+            var lower = couriers[i].name.toLowerCase();
+            if (lower.indexOf(key) !== -1) return couriers[i];
+            if (key === 'carrybee' && lower.indexOf('carry bee') !== -1) return couriers[i];
+            if (key === 'redx' && (lower.indexOf('red x') !== -1 || lower.indexOf('redx') !== -1)) return couriers[i];
         }
         return null;
-    }
-    
-    function isAllowedCourier(name) {
-        var lower = name.toLowerCase();
-        for (var i = 0; i < allowedCouriers.length; i++) {
-            if (lower.indexOf(allowedCouriers[i]) !== -1) return true;
-        }
-        return false;
     }
 
     $(document).on('click','.wcbd-cc-btn',function(e){
@@ -366,22 +367,15 @@ jQuery(document).ready(function($){
                 if(res.success&&res.data){
                     var d=res.data;
                     
-                    // Filter to allowed couriers only
-                    var filteredCouriers = [];
-                    if (d.couriers && d.couriers.length > 0) {
-                        for (var i = 0; i < d.couriers.length; i++) {
-                            if (isAllowedCourier(d.couriers[i].name)) {
-                                filteredCouriers.push(d.couriers[i]);
-                            }
-                        }
-                    }
-                    
-                    // Recalculate totals from filtered couriers
+                    // Calculate totals from default 4 couriers
                     var totalOrders = 0, totalDelivered = 0, totalReturned = 0;
-                    for (var j = 0; j < filteredCouriers.length; j++) {
-                        totalOrders += filteredCouriers[j].orders || 0;
-                        totalDelivered += filteredCouriers[j].delivered || 0;
-                        totalReturned += filteredCouriers[j].returned || 0;
+                    for (var i = 0; i < defaultCouriers.length; i++) {
+                        var match = findCourierData(d.couriers, defaultCouriers[i].key);
+                        if (match) {
+                            totalOrders += match.orders || 0;
+                            totalDelivered += match.delivered || 0;
+                            totalReturned += match.returned || 0;
+                        }
                     }
                     var successRate = totalOrders > 0 ? Math.round((totalDelivered / totalOrders) * 100) : 0;
                     
@@ -415,29 +409,30 @@ jQuery(document).ready(function($){
                     html += '<div class="wcbd-cc-stat"><p class="wcbd-cc-stat-value returned">' + totalReturned + '</p><p class="wcbd-cc-stat-label">মোট বাতিল</p></div>';
                     html += '</div>';
                     
-                    // Courier table
-                    if (filteredCouriers.length > 0) {
-                        html += '<div class="wcbd-cc-table-wrap">';
-                        html += '<table class="wcbd-cc-table"><thead><tr><th>কুরিয়ার</th><th>মোট</th><th>সফল</th></tr></thead><tbody>';
+                    // Courier table - always show all 4 couriers
+                    html += '<div class="wcbd-cc-table-wrap">';
+                    html += '<table class="wcbd-cc-table"><thead><tr><th>কুরিয়ার</th><th>মোট</th><th>সফল</th></tr></thead><tbody>';
+                    
+                    for (var k = 0; k < defaultCouriers.length; k++) {
+                        var dc = defaultCouriers[k];
+                        var match = findCourierData(d.couriers, dc.key);
+                        var orders = match ? (match.orders || 0) : 0;
+                        var delivered = match ? (match.delivered || 0) : 0;
+                        var logo = courierLogos[dc.key];
+                        var courierCell = logo
+                            ? '<img src="' + logo + '" alt="' + dc.name + '" class="wcbd-cc-courier-logo" onerror="this.style.display=\\'none\\';this.nextSibling.style.display=\\'inline\\'"><span class="wcbd-cc-courier-name" style="display:none">' + dc.name + '</span>'
+                            : '<span class="wcbd-cc-courier-name">' + dc.name + '</span>';
                         
-                        for (var k = 0; k < filteredCouriers.length; k++) {
-                            var c = filteredCouriers[k];
-                            var logo = getCourierLogo(c.name);
-                            var courierCell = logo
-                                ? '<img src="' + logo + '" alt="' + c.name + '" class="wcbd-cc-courier-logo" onerror="this.style.display=\\'none\\';this.nextSibling.style.display=\\'inline\\'"><span class="wcbd-cc-courier-name" style="display:none">' + c.name + '</span>'
-                                : '<span class="wcbd-cc-courier-name">' + c.name + '</span>';
-                            
-                            html += '<tr>';
-                            html += '<td>' + courierCell + '</td>';
-                            html += '<td class="wcbd-cc-orders">' + c.orders + '</td>';
-                            html += '<td class="wcbd-cc-delivered">' + c.delivered + '</td>';
-                            html += '</tr>';
-                        }
-                        
-                        html += '</tbody>';
-                        html += '<tfoot><tr><td>মোট</td><td>' + totalOrders + '</td><td>' + totalDelivered + '</td></tr></tfoot>';
-                        html += '</table></div>';
+                        html += '<tr>';
+                        html += '<td>' + courierCell + '</td>';
+                        html += '<td class="wcbd-cc-orders">' + orders + '</td>';
+                        html += '<td class="wcbd-cc-delivered">' + delivered + '</td>';
+                        html += '</tr>';
                     }
+                    
+                    html += '</tbody>';
+                    html += '<tfoot><tr><td>মোট</td><td>' + totalOrders + '</td><td>' + totalDelivered + '</td></tr></tfoot>';
+                    html += '</table></div>';
                     
                     // Branding
                     html += '<div class="wcbd-cc-branding"><p class="wcbd-cc-branding-text">Powered by <a href="https://webcreation-bd.lovable.app" target="_blank">WebCreation BD</a></p></div>';

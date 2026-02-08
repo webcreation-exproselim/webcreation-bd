@@ -426,6 +426,7 @@ export default function ClientDashboard() {
                 merchant={merchant}
                 hasPendingOrder={!!pendingOrder}
                 onFraudGuardClick={() => setActiveTab("fraudguard")}
+                onCourierCheckClick={() => setActiveTab("couriercheck")}
               />
             )}
 

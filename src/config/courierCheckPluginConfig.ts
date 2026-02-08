@@ -6,6 +6,10 @@ export const COURIER_CHECK_PLUGIN_CONFIG = {
   fileSize: "~14KB",
   badgeLabel: "UPDATE",
   versionHighlight: "New Design + Mobile Responsive + Courier Logos",
+  pricing: {
+    monthly: 249,
+    yearly: 499,
+  },
   features: [
     "📊 Courier Delivery History Check",
     "🔍 Phone Number Based Lookup",

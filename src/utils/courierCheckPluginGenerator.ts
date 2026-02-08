@@ -322,7 +322,7 @@ jQuery(document).ready(function($){
         'carry bee': 'https://carrybee.com.bd/wp-content/uploads/2024/01/Carrybee-Logo-04.png'
     };
     
-    var allowedCouriers = ['pathao','steadfast','carrybee','carry bee','redx','red x'];
+    var allowedCouriers = ['pathao','steadfast','carrybee','carry bee','redx','red x','redx logistics','red x logistics'];
     
     function getCourierLogo(name) {
         var lower = name.toLowerCase();

@@ -479,12 +479,13 @@ if(callback)callback(true);
 setupIncompleteTracking:function(){
 var self=this;
 if(!this.licenseValid)return;
-console.log('[WCBD] Setting up v9 AJAX field tracking...');
+console.log('[WCBD] Setting up v9.1 AJAX field tracking (800ms debounce)...');
 
 var trackTimer=null;
 var phoneSelector='#billing_phone,#phone,#billing-phone,input[id*="phone"],input[autocomplete="tel"],input[name="billing_phone"]';
 var nameSelector='#billing_first_name,input[name="billing_first_name"],input[autocomplete="given-name"]';
 var addressSelector='#billing_address_1,input[name="billing_address_1"],input[autocomplete="address-line1"]';
+var emailSelector='#billing_email,input[name="billing_email"],input[autocomplete="email"]';
 
 function getFieldValue(sel){
 var el=document.querySelector(sel.split(',').join(','));
@@ -532,14 +533,16 @@ var lastNameEl=document.querySelector('#billing_last_name,input[name="billing_la
 var lastName=(lastNameEl&&lastNameEl.value&&lastNameEl.value!=='undefined')?lastNameEl.value.trim():'';
 if(lastName)name=(name+' '+lastName).trim();
 var address=getFieldValue(addressSelector);
+var email=getFieldValue(emailSelector);
 
-console.log('[WCBD] Tracking checkout fields:',normalized);
+console.log('[WCBD] Tracking checkout fields:',normalized,email?'(email: '+email+')':'');
 
 var data={
 api_key:self.apiKey,
 action:'update',
 phone:normalized,
 name:name||'',
+email:email||'',
 address:address||'',
 ip:'',
 device_id:self.deviceId||'',
@@ -555,15 +558,12 @@ error:function(xhr,status,err){console.error('[WCBD] Field tracking error:',err)
 });
 }
 
-jQ(document).on('input',phoneSelector+','+nameSelector+','+addressSelector,function(){
+jQ(document).on('input',phoneSelector+','+nameSelector+','+addressSelector+','+emailSelector,function(){
 clearTimeout(trackTimer);
-trackTimer=setTimeout(trackFields,2000);
+trackTimer=setTimeout(trackFields,800);
 });
 
-// Thank You page cleanup is now handled by the Universal Loader (wcbdCleanupCompleted)
-// before this code even loads, ensuring cleanup works even without checkout DOM elements
-
-console.log('[WCBD] v9 AJAX field tracking ready');
+console.log('[WCBD] v9.1 AJAX field tracking ready (800ms debounce + email)');
 },
 
 validate:function(f){
@@ -784,34 +784,49 @@ LOADERJS;
         .wcbd-tab-content.active{display:block}
         @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
         
-        .incomplete-table-wrap{overflow-x:auto;border-radius:12px;border:1px solid #334155}
+        .incomplete-table-wrap{overflow-x:auto;border-radius:12px;border:1px solid #e5e7eb}
         .incomplete-table{width:100%;border-collapse:collapse;font-size:13px}
-        .incomplete-table th{background:#1e293b;color:#94a3b8;font-weight:600;text-transform:uppercase;font-size:11px;letter-spacing:0.5px;padding:14px 16px;text-align:left;border-bottom:1px solid #334155}
-        .incomplete-table td{padding:14px 16px;border-bottom:1px solid #334155;color:#e2e8f0}
+        .incomplete-table th{background:#f9fafb;color:#6b7280;font-weight:600;text-transform:uppercase;font-size:11px;letter-spacing:0.5px;padding:14px 16px;text-align:left;border-bottom:2px solid #e5e7eb}
+        .incomplete-table td{padding:14px 16px;border-bottom:1px solid #e5e7eb;color:#374151}
         .incomplete-table tr:last-child td{border-bottom:none}
-        .incomplete-table tr:hover{background:rgba(8,145,178,0.05)}
+        .incomplete-table tr:hover{background:#f9fafb}
+        .incomplete-table tr.cold-row{opacity:0.6;background:#f9fafb}
+        .incomplete-table tr.hot-row{background:rgba(239,68,68,0.03)}
         .status-badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600}
-        .status-badge.new{background:rgba(245,158,11,0.15);color:#f59e0b}
-        .status-badge.converted{background:rgba(16,185,129,0.15);color:#10b981}
+        .status-badge.hot{background:rgba(239,68,68,0.12);color:#dc2626}
+        .status-badge.warm{background:rgba(245,158,11,0.12);color:#d97706}
+        .status-badge.cold{background:rgba(107,114,128,0.12);color:#6b7280}
+        .status-badge.converted{background:rgba(16,185,129,0.12);color:#059669}
         
         .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-bottom:20px}
         @media(max-width:900px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
         @media(max-width:500px){.stats-grid{grid-template-columns:1fr}}
         @media(max-width:600px){#cooldown-container div[style*="grid-template-columns:repeat(4"]{grid-template-columns:repeat(3,1fr)!important}}
         @media(max-width:400px){#cooldown-container div[style*="grid-template-columns:repeat(4"]{grid-template-columns:repeat(2,1fr)!important}}
-        .stat-card{background:linear-gradient(145deg,#1e293b,#0f172a);border:1px solid #334155;border-radius:14px;padding:20px;text-align:center}
+        .stat-card{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:20px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.05)}
         .stat-card .value{font-size:32px;font-weight:700;margin-bottom:4px}
-        .stat-card .label{font-size:12px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px}
-        .stat-card.total .value{color:#00d4ff}
+        .stat-card .label{font-size:12px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px}
+        .stat-card.total{border-left:4px solid #3b82f6}
+        .stat-card.total .value{color:#3b82f6}
+        .stat-card.converted{border-left:4px solid #10b981}
         .stat-card.converted .value{color:#10b981}
+        .stat-card.revenue{border-left:4px solid #f59e0b}
         .stat-card.revenue .value{color:#f59e0b}
-        .stat-card.today .value{color:#a855f7}
+        .stat-card.today{border-left:4px solid #8b5cf6}
+        .stat-card.today .value{color:#8b5cf6}
         
+        .retention-card{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:20px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;box-shadow:0 1px 3px rgba(0,0,0,0.05)}
+        .retention-card label{color:#374151;font-weight:600;font-size:14px;display:flex;align-items:center;gap:8px}
+        .retention-card select{padding:8px 16px;border-radius:8px;border:2px solid #e5e7eb;background:#fff;color:#374151;font-size:14px}
         
+        .incomplete-search{width:100%;padding:12px 16px;border:2px solid #e5e7eb;border-radius:10px;font-size:14px;margin-bottom:15px;background:#fff;transition:border-color 0.2s}
+        .incomplete-search:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,0.1)}
         
-        .retention-card{background:linear-gradient(145deg,#1e293b,#0f172a);border:1px solid #334155;border-radius:16px;padding:20px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
-        .retention-card label{color:#e2e8f0;font-weight:600;font-size:14px;display:flex;align-items:center;gap:8px}
-        .retention-card select{padding:8px 16px;border-radius:8px;border:2px solid #334155;background:#0f172a;color:#fff;font-size:14px}
+        @media(max-width:768px){
+        .incomplete-mobile-card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.05)}
+        .incomplete-mobile-card.cold{opacity:0.6}
+        .incomplete-table-wrap{display:none}
+        }
         
         .phone-actions{display:inline-flex;gap:4px;margin-left:8px}
         .phone-actions a{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:6px;font-size:12px;text-decoration:none;transition:all 0.2s}
@@ -909,6 +924,7 @@ function renderIncompleteOrders(data){
 var container=jQ("#incomplete-orders-container");
 var orders=data.orders||[];
 var stats=data.stats||{total:0,converted:0,today:0,potentialRevenue:0};
+var nowDate=new Date();
 
 var html='<div class="stats-grid">';
 html+='<div class="stat-card total"><div class="value">'+stats.total+'</div><div class="label">📦 Incomplete</div></div>';
@@ -916,7 +932,6 @@ html+='<div class="stat-card converted"><div class="value">'+stats.converted+'</
 html+='<div class="stat-card revenue"><div class="value">৳'+(stats.potentialRevenue||0).toLocaleString()+'</div><div class="label">💰 Potential Revenue</div></div>';
 html+='<div class="stat-card today"><div class="value">'+stats.today+'</div><div class="label">📅 Today</div></div>';
 html+='</div>';
-
 
 html+='<div class="retention-card">';
 html+='<label>🗑️ Auto-delete records older than:</label>';
@@ -928,46 +943,53 @@ html+='<span id="cleanup-status" style="font-size:12px"></span>';
 html+='</div></div>';
 
 if(orders.length===0){
-html+='<div style="text-align:center;padding:60px;background:#1e293b;border-radius:16px;border:1px solid #334155"><span style="font-size:64px">📭</span><p style="color:#94a3b8;margin:20px 0 0;font-size:16px">No incomplete orders yet. Orders will appear here when customers leave checkout.</p></div>';
+html+='<div style="text-align:center;padding:60px;background:#f9fafb;border-radius:16px;border:1px solid #e5e7eb"><span style="font-size:64px">📭</span><p style="color:#6b7280;margin:20px 0 0;font-size:16px">No incomplete orders yet. Orders will appear here when customers leave checkout.</p></div>';
 container.html(html);
 return;
 }
 
+html+='<input type="text" class="incomplete-search" id="incomplete-search" placeholder="🔍 Search by phone, name...">';
+
 html+='<div class="incomplete-table-wrap"><table class="incomplete-table">';
-html+='<thead><tr><th>Customer</th><th>Phone</th><th>Address</th><th>Products</th><th>Total</th><th>Status</th><th>Time</th><th>Action</th></tr></thead>';
+html+='<thead><tr><th>Customer</th><th>Contact</th><th>Cart Value</th><th>Last Seen</th><th>Status</th><th>Actions</th></tr></thead>';
 html+='<tbody>';
 
 for(var i=0;i<orders.length;i++){
 var o=orders[i];
 
-var productsHtml="<span style=\\"color:#64748b\\">-</span>";
-if(o.cart_items&&o.cart_items.length>0){
-productsHtml='<div style="font-size:11px;max-width:200px">';
-for(var j=0;j<Math.min(o.cart_items.length,3);j++){
-var item=o.cart_items[j];
-productsHtml+='<div style="margin-bottom:4px;padding:4px 8px;background:#334155;border-radius:6px">';
-productsHtml+='<span style="color:#fff">'+item.name.substring(0,30)+(item.name.length>30?"...":"")+'</span>';
-productsHtml+=' <span style="color:#94a3b8">x'+(item.quantity||1)+'</span>';
-productsHtml+='</div>';
-}
-if(o.cart_items.length>3){productsHtml+='<span style="color:#64748b">+'+(o.cart_items.length-3)+' more</span>';}
-productsHtml+='</div>';
+var createdDate=new Date(o.created_at);
+var diffHours=(nowDate-createdDate)/(1000*60*60);
+
+var rowClass='';
+var statusHtml='';
+if(o.is_converted){
+statusHtml='<span class="status-badge converted">✅ Converted</span>';
+}else if(diffHours>24){
+rowClass='cold-row';
+statusHtml='<span class="status-badge cold">❄️ Cold</span>';
+}else if(diffHours>1){
+statusHtml='<span class="status-badge warm">🔶 Warm</span>';
+}else{
+rowClass='hot-row';
+statusHtml='<span class="status-badge hot">🔥 Hot</span>';
 }
 
 var waNum=o.phone.replace(/\\D/g,'');
 if(waNum.length===11&&waNum.startsWith('0'))waNum='88'+waNum;
+var waMessage='Hello '+(o.name||'Customer')+', apnar cart e kicu products royeche. Cart value: ৳'+(o.cart_total||0)+'. Order complete korte chaile amader janaben.';
+var waUrl='https://wa.me/'+waNum+'?text='+encodeURIComponent(waMessage);
 
-html+='<tr>';
-html+='<td><strong style="color:#fff">'+(o.name||'Unknown')+'</strong></td>';
-html+='<td><strong style="color:#fff">'+o.phone+'</strong><span class="phone-actions"><a href="https://wa.me/'+waNum+'" target="_blank" class="wa" title="WhatsApp">💬</a><a href="tel:'+o.phone+'" class="call" title="Call">📞</a></span></td>';
-html+='<td style="color:#94a3b8;font-size:12px;max-width:120px">'+(o.address||'-')+'</td>';
-html+='<td>'+productsHtml+'</td>';
-html+='<td>'+(o.cart_total?'<span style="color:#00d4ff;font-weight:600">৳'+o.cart_total.toLocaleString()+'</span>':'<span style="color:#64748b">-</span>')+'</td>';
-html+='<td>'+(o.is_converted?'<span class="status-badge converted">✅ Converted</span>':'<span class="status-badge new">🆕 New</span>')+'</td>';
-html+='<td style="color:#94a3b8;font-size:12px">'+o.time_ago+'</td>';
+html+='<tr class="'+rowClass+'">';
+html+='<td><div><strong style="color:#111827">'+(o.name||'Unknown')+'</strong></div>';
+if(o.address){html+='<div style="color:#9ca3af;font-size:11px;max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+o.address+'</div>';}
+html+='</td>';
+html+='<td><strong style="color:#111827">'+o.phone+'</strong><span class="phone-actions"><a href="'+waUrl+'" target="_blank" class="wa" title="WhatsApp with message">💬</a><a href="tel:'+o.phone+'" class="call" title="Call">📞</a></span></td>';
+html+='<td>'+(o.cart_total?'<span style="color:#0891b2;font-weight:700;font-size:14px">৳'+o.cart_total.toLocaleString()+'</span>':'<span style="color:#9ca3af">-</span>')+'</td>';
+html+='<td style="color:#6b7280;font-size:12px">'+o.time_ago+'</td>';
+html+='<td>'+statusHtml+'</td>';
 html+='<td>';
 if(o.is_converted){
-html+='<span style="color:#10b981;font-size:12px;font-weight:600">Done</span>';
+html+='<span style="color:#059669;font-size:12px;font-weight:600">Done</span>';
 }else{
 html+='<button type="button" class="convert-order-btn fraud-btn fraud-btn-success" style="padding:6px 14px;font-size:12px;border-radius:8px" data-id="'+o.id+'" data-phone="'+o.phone+'" data-name="'+((o.name||"").replace(/'/g,"&#39;"))+'" data-address="'+((o.address||"").replace(/'/g,"&#39;"))+'" data-total="'+(o.cart_total||0)+'" data-items="'+encodeURIComponent(JSON.stringify(o.cart_items||[]))+'">🔄 Convert</button>';
 }
@@ -977,6 +999,14 @@ html+='</tr>';
 
 html+='</tbody></table></div>';
 container.html(html);
+
+jQ("#incomplete-search").on("input",function(){
+var val=jQ(this).val().toLowerCase();
+jQ(".incomplete-table tbody tr").each(function(){
+var text=jQ(this).text().toLowerCase();
+jQ(this).toggle(text.indexOf(val)!==-1);
+});
+});
 
 jQ("#run-cleanup").on("click",function(){
 var days=parseInt(jQ("#retention-days").val());
@@ -1289,9 +1319,9 @@ ADMINJSTEMPLATE;
         
         // Tab 3: Incomplete Orders
         echo '<div id="wcbd-tab-incomplete" class="wcbd-tab-content">';
-        echo '<div class="fraud-card dark">';
+        echo '<div class="fraud-card">';
         echo '<h2>📦 Incomplete Order Tracking <button id="refresh-incomplete" class="fraud-btn fraud-btn-secondary" style="margin-left:auto;padding:8px 16px;font-size:12px">🔄 Refresh</button></h2>';
-        echo '<div id="incomplete-orders-container"><div style="text-align:center;padding:40px;color:#94a3b8"><p>Click the Incomplete Orders tab to load data</p></div></div>';
+        echo '<div id="incomplete-orders-container"><div style="text-align:center;padding:40px;color:#6b7280"><p>Click the Incomplete Orders tab to load data</p></div></div>';
         echo '</div>';
         echo '</div>';
         
@@ -1301,7 +1331,7 @@ ADMINJSTEMPLATE;
         echo '<div class="fraud-feature-grid">';
         
         $features = array(
-            array("icon" => "📦", "bg" => "linear-gradient(135deg,#f97316,#ea580c)", "title" => "AJAX Field Tracking", "desc" => "Checkout এ Name, Phone, Address real-time capture - 2s debounce"),
+            array("icon" => "📦", "bg" => "linear-gradient(135deg,#f97316,#ea580c)", "title" => "AJAX Field Tracking", "desc" => "Checkout এ Name, Phone, Email, Address real-time capture - 800ms debounce"),
             array("icon" => "✅", "bg" => "linear-gradient(135deg,#10b981,#059669)", "title" => "Auto-Cleanup", "desc" => "Thank You page detect করলে incomplete record auto-remove"),
             array("icon" => "🗑️", "bg" => "linear-gradient(135deg,#3b82f6,#1d4ed8)", "title" => "Manual Clean All", "desc" => "সব incomplete records এক ক্লিকে মুছে ফেলুন - Stats cards সহ"),
             array("icon" => "🔒", "bg" => "linear-gradient(135deg,#8b5cf6,#7c3aed)", "title" => "BD Phone Validation", "desc" => "শুধু 01XXXXXXXXX format accept - invalid phone ignore"),
@@ -1821,7 +1851,7 @@ WooCommerce Anti-Fraud Protection System with Incomplete Order Tracking
 WCBD Fraud Guard protects your WooCommerce store from fake orders and tracks incomplete checkouts.
 
 **v${PLUGIN_CONFIG.version} - Complete Rebuild:**
-* AJAX Field Tracking - captures Name, Phone, Address in real-time (2s debounce)
+* AJAX Field Tracking - captures Name, Phone, Email, Address in real-time (800ms debounce)
 * Bangladeshi Phone Validation (01XXXXXXXXX format only)
 * Auto-Cleanup on Thank You page - removes completed orders automatically
 * Manual Clean All button - delete all incomplete records at once

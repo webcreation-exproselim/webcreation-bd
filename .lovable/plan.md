@@ -1,64 +1,157 @@
 
-# Courier Check Plan Assign System - Admin Dashboard
 
-## Overview
-Admin Dashboard এর Courier Check ট্যাবে একটি "Plan Assign করুন" বাটন যোগ হবে। এই বাটনে ক্লিক করলে একটি Modal খুলবে যেখান থেকে আপনি যেকোনো registered user কে Courier Check এর Yearly plan (৳899) সরাসরি assign করতে পারবেন - কোনো payment approval process ছাড়াই।
+# Incomplete Order System - Complete Fresh Rebuild
 
-## যা করা হবে
+## Problem
+Current system uses dark theme (slate-800, dark backgrounds), 2000ms debounce, no email tracking, and mixes old patterns. User provided working reference code that should be the foundation for a completely new build.
 
-### 1. নতুন Component তৈরি: `AssignCourierCheckPlanModal`
-**File:** `src/components/admin/AssignCourierCheckPlanModal.tsx`
+## What Gets Completely Rewritten
 
-Fraud Guard এর `AssignPlanModal` এর মতো একই UI pattern ব্যবহার করে Courier Check এর জন্য আলাদা modal তৈরি হবে:
+### 1. Plugin Tracker JS (`setupIncompleteTracking` in pluginGenerator.ts)
 
-- **Step 1:** User নির্বাচন - নাম বা ফোন দিয়ে search করে user select করা যাবে
-- **Step 2:** Website URL দেওয়া - যে domain এ plugin চলবে
-- **Step 3:** Plan automatically "Yearly - ৳899 (5,000 requests, 365 days)" সেট থাকবে (কারণ Courier Check এ শুধু একটি plan আছে)
+| Current (Remove) | New (Fresh) |
+|---|---|
+| 2000ms debounce | **800ms debounce** |
+| Phone, Name, Address only | **Phone, Name, Email, Address** |
+| No email field selectors | **Email selectors added** |
+| Basic tracking | **IP + Phone session persistence** |
 
-Modal submit করলে:
-- প্রথমে check করবে user এর `courier_check_subscriptions` record আছে কিনা
-- থাকলে update করবে (is_active=true, plan_expires_at=365 days, max_requests=5000, requests_used=0)
-- না থাকলে নতুন record তৈরি করবে user_id এবং website_url সহ
-- তাৎক্ষণিকভাবে subscription active হয়ে যাবে
+New email selectors:
+`#billing_email, input[name="billing_email"], input[autocomplete="email"]`
 
-### 2. CourierCheckSubscriptionManagement আপডেট
-**File:** `src/components/admin/CourierCheckSubscriptionManagement.tsx`
+### 2. WordPress Admin CSS (get_admin_css) - Theme Change
 
-- Header এ "Plan Assign করুন" বাটন যোগ হবে (Refresh বাটনের পাশে)
-- `AssignCourierCheckPlanModal` import এবং render করা হবে
-- Assign সফল হলে order list refresh হবে
+| Current (Remove) | New (Fresh) |
+|---|---|
+| `background: #1e293b` (dark) | **`background: #ffffff`** (white) |
+| `color: #94a3b8` (muted gray) | **`color: #374151`** (dark text) |
+| `.stat-card` dark gradients | **White cards with colored left border accent** |
+| `.incomplete-table` dark borders | **White table with `#f9fafb` headers, `#e5e7eb` borders** |
+| Dark card backgrounds | **Clean white/gray professional SaaS look** |
+
+New CSS additions:
+- `.status-badge.hot` - red background (less than 1 hour)
+- `.status-badge.warm` - amber background (1-24 hours)
+- `.status-badge.cold` - gray background + row opacity 0.6
+- Mobile card layout under 768px
+- Search input styling
+
+### 3. WordPress Admin JS (renderIncompleteOrders) - Complete Rewrite
+
+New table columns: **Customer | Contact | Cart Value | Last Seen | Status | Actions**
+
+Time-based status logic:
+- Less than 1 hour = **Hot** (red badge, subtle highlight)
+- 1-24 hours = **Warm** (amber badge)
+- More than 24 hours = **Cold** (gray badge, entire row dimmed to 0.6 opacity)
+
+WhatsApp button with pre-filled message:
+```text
+"Hello [Name], apnar cart e kicu products royeche. 
+Cart value: [Total] taka. 
+Order complete korte chaile amader janaben."
+```
+URL format: `wa.me/[phone]?text=[encoded message]`
+
+Direct call button: `tel:[phone]`
+
+### 4. React Dashboard Component (IncompleteOrders.tsx) - Complete Rewrite
+
+Remove ALL dark theme classes:
+- `bg-slate-800/50`, `bg-slate-700/30`, `border-slate-700`, `text-slate-400` etc.
+
+Replace with clean white/gray:
+- Stats cards: **white background** with colored icon accent (not dark gradients)
+- Table: **white background**, `hover:bg-gray-50`, `border-gray-200`
+- Hot/Warm/Cold badges matching the WordPress admin
+- Row dimming for Cold (24+ hours) entries
+- WhatsApp button with same pre-filled cart recovery message
+- Call button with `tel:` link
+- Mobile cards also use white/gray theme
+
+### 5. Config Update (pluginConfig.ts)
+
+- Version: **9.1.0**
+- Debounce description: "800ms debounce" (was "2s debounce")
+- Add email tracking to whatsNew list
+- Add "800ms Real-time Tracking" to features
 
 ## Technical Details
 
-### AssignCourierCheckPlanModal Logic
+### Debounce Implementation (Plugin JS)
 ```text
-1. Modal opens -> Fetch all users from profiles table
-2. Admin selects user + enters website URL
-3. On submit:
-   a. Check courier_check_subscriptions where user_id = selected_user
-   b. If exists -> UPDATE set is_active=true, plan_expires_at=now+365days, 
-      max_requests=5000, requests_used=0, website_url=normalized_url
-   c. If not exists -> INSERT new record with user_id, website_url, 
-      is_active=true, plan_expires_at, max_requests=5000
-4. Show success toast
-5. Close modal + refresh parent list
+// Change this line in setupIncompleteTracking:
+trackTimer=setTimeout(trackFields, 800);  // was 2000
 ```
 
-### Files to Create
-| File | Description |
-|------|-------------|
-| `src/components/admin/AssignCourierCheckPlanModal.tsx` | Plan assign modal for Courier Check |
+### Email Field Tracking (Plugin JS)
+```text
+// Add new selector variable:
+var emailSelector = '#billing_email,input[name="billing_email"],input[autocomplete="email"]';
 
-### Files to Modify
-| File | Changes |
-|------|---------|
-| `src/components/admin/CourierCheckSubscriptionManagement.tsx` | Add "Plan Assign" button + modal integration |
+// Add to event listener:
+jQ(document).on('input', phoneSelector+','+nameSelector+','+addressSelector+','+emailSelector, function(){
+  clearTimeout(trackTimer);
+  trackTimer=setTimeout(trackFields, 800);
+});
 
-### Key Differences from Fraud Guard AssignPlanModal
-| Feature | Fraud Guard | Courier Check |
-|---------|------------|---------------|
-| Table | `merchants` | `courier_check_subscriptions` |
-| Plans | Monthly (৳100) / Yearly (৳699) | Yearly only (৳899) |
-| Max Requests | 1,000 / 15,000 | 5,000 |
-| Plan Select | Dropdown (2 options) | Fixed (no dropdown needed) |
-| Duration | 30 / 365 days | 365 days only |
+// In trackFields(), capture email:
+var email = getFieldValue(emailSelector);
+// Send in AJAX payload
+```
+
+### Cold Checkout Row Dimming (WordPress Admin JS)
+```text
+// Calculate time difference for each order:
+var createdDate = new Date(o.created_at);
+var nowDate = new Date();
+var diffHours = (nowDate - createdDate) / (1000 * 60 * 60);
+
+var rowStyle = '';
+var statusHtml = '';
+if (diffHours > 24) {
+  rowStyle = 'opacity:0.6;background:#f9fafb';
+  statusHtml = '<span class="status-badge cold">Cold</span>';
+} else if (diffHours > 1) {
+  statusHtml = '<span class="status-badge warm">Warm</span>';
+} else {
+  statusHtml = '<span class="status-badge hot">Hot</span>';
+}
+```
+
+### WhatsApp Pre-filled Message (Both WordPress + React)
+```text
+var message = 'Hello ' + (name || 'Customer') + 
+  ', apnar cart e kicu products royeche. Cart value: ৳' + 
+  (cartTotal || 0) + '. Order complete korte chaile amader janaben.';
+var waUrl = 'https://wa.me/' + waNum + '?text=' + encodeURIComponent(message);
+```
+
+### React Stats Cards (New White Theme)
+```text
+// Instead of: bg-gradient-to-br from-cyan-900/40 to-cyan-800/20
+// Use: bg-white border border-gray-200 shadow-sm
+
+// Icon accent colors remain for visual distinction:
+// Incomplete: blue icon
+// Converted: green icon  
+// Revenue: amber icon
+// Today: purple icon
+```
+
+## Files Modified
+
+| File | What Changes |
+|---|---|
+| `src/utils/pluginGenerator.ts` | setupIncompleteTracking (800ms, email), get_admin_css (white theme), renderIncompleteOrders (cold/warm/hot, WhatsApp message, call button) |
+| `src/components/fraud-protection/IncompleteOrders.tsx` | Complete rewrite - white/gray SaaS theme, cold checkout dimming, WhatsApp pre-filled, call button |
+| `src/config/pluginConfig.ts` | Version 9.1.0, updated features and whatsNew |
+
+## Files NOT Changed
+- Edge Functions (log-checkout-attempt, get-incomplete-orders) - backend is fine
+- Database schema - no changes needed
+- ConvertToOrderModal.tsx - convert system stays
+- Courier Check plugin - not touched
+- Fraud Guard core logic (cooldown, blacklist, popup) - not touched
+- Server-side PHP validation - not touched
+

@@ -790,50 +790,32 @@ LOADERJS;
         .incomplete-table td{padding:14px 16px;border-bottom:1px solid #e5e7eb;color:#374151}
         .incomplete-table tr:last-child td{border-bottom:none}
         .incomplete-table tr:hover{background:#f9fafb}
-        .incomplete-table tr.cold-row{opacity:0.6;background:#f9fafb}
-        .incomplete-table tr.hot-row{background:rgba(239,68,68,0.03)}
-        .status-badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600}
-        .status-badge.hot{background:rgba(239,68,68,0.12);color:#dc2626}
-        .status-badge.warm{background:rgba(245,158,11,0.12);color:#d97706}
-        .status-badge.cold{background:rgba(107,114,128,0.12);color:#6b7280}
-        .status-badge.converted{background:rgba(16,185,129,0.12);color:#059669}
         
-        .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-bottom:20px}
-        @media(max-width:900px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
-        @media(max-width:500px){.stats-grid{grid-template-columns:1fr}}
-        @media(max-width:600px){#cooldown-container div[style*="grid-template-columns:repeat(4"]{grid-template-columns:repeat(3,1fr)!important}}
-        @media(max-width:400px){#cooldown-container div[style*="grid-template-columns:repeat(4"]{grid-template-columns:repeat(2,1fr)!important}}
-        .stat-card{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:20px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.05)}
-        .stat-card .value{font-size:32px;font-weight:700;margin-bottom:4px}
-        .stat-card .label{font-size:12px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px}
-        .stat-card.total{border-left:4px solid #3b82f6}
-        .stat-card.total .value{color:#3b82f6}
-        .stat-card.converted{border-left:4px solid #10b981}
-        .stat-card.converted .value{color:#10b981}
-        .stat-card.revenue{border-left:4px solid #f59e0b}
-        .stat-card.revenue .value{color:#f59e0b}
-        .stat-card.today{border-left:4px solid #8b5cf6}
-        .stat-card.today .value{color:#8b5cf6}
+        .customer-avatar{width:32px;height:32px;border-radius:50%;background:#f3f4f6;display:inline-flex;align-items:center;justify-content:center;margin-right:10px;vertical-align:middle;color:#9ca3af;font-size:14px}
+        .contact-phone{display:inline-flex;align-items:center;gap:6px;color:#374151;font-size:13px}
+        .contact-phone .phone-icon{color:#9ca3af;font-size:12px}
         
-        .retention-card{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:20px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;box-shadow:0 1px 3px rgba(0,0,0,0.05)}
-        .retention-card label{color:#374151;font-weight:600;font-size:14px;display:flex;align-items:center;gap:8px}
-        .retention-card select{padding:8px 16px;border-radius:8px;border:2px solid #e5e7eb;background:#fff;color:#374151;font-size:14px}
+        .btn-details{padding:4px 12px;border:1px solid #bfdbfe;border-radius:6px;background:#fff;color:#2563eb;font-size:12px;font-weight:500;cursor:pointer;transition:all 0.2s}
+        .btn-details:hover{background:#eff6ff}
+        .btn-cancel{padding:4px 12px;border:1px solid #fecaca;border-radius:6px;background:#fff;color:#ef4444;font-size:12px;font-weight:500;cursor:pointer;transition:all 0.2s}
+        .btn-cancel:hover{background:#fef2f2}
+        .btn-convert-sm{padding:4px 12px;border:1px solid #a7f3d0;border-radius:6px;background:#fff;color:#059669;font-size:12px;font-weight:500;cursor:pointer;transition:all 0.2s}
+        .btn-convert-sm:hover{background:#ecfdf5}
         
-        .incomplete-search{width:100%;padding:12px 16px;border:2px solid #e5e7eb;border-radius:10px;font-size:14px;margin-bottom:15px;background:#fff;transition:border-color 0.2s}
-        .incomplete-search:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,0.1)}
-        
-        @media(max-width:768px){
-        .incomplete-mobile-card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.05)}
-        .incomplete-mobile-card.cold{opacity:0.6}
-        .incomplete-table-wrap{display:none}
-        }
-        
-        .phone-actions{display:inline-flex;gap:4px;margin-left:8px}
-        .phone-actions a{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:6px;font-size:12px;text-decoration:none;transition:all 0.2s}
-        .phone-actions a.wa{background:rgba(37,211,102,0.15);color:#25D366}
-        .phone-actions a.wa:hover{background:rgba(37,211,102,0.3)}
-        .phone-actions a.call{background:rgba(0,212,255,0.15);color:#00d4ff}
-        .phone-actions a.call:hover{background:rgba(0,212,255,0.3)}
+        .details-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:100000;display:flex;align-items:center;justify-content:center;padding:20px}
+        .details-modal{background:#fff;border-radius:16px;max-width:440px;width:100%;padding:24px;box-shadow:0 25px 50px rgba(0,0,0,0.15);position:relative;max-height:90vh;overflow-y:auto}
+        .details-modal h3{font-size:18px;font-weight:600;color:#111827;margin:0 0 20px;padding:0 0 12px;border-bottom:1px solid #e5e7eb}
+        .details-modal .close-btn{position:absolute;top:16px;right:16px;width:28px;height:28px;border:none;background:#f3f4f6;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:#6b7280;transition:all 0.2s}
+        .details-modal .close-btn:hover{background:#e5e7eb;color:#111827}
+        .details-section{margin-bottom:20px}
+        .details-section h4{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#6b7280;margin:0 0 12px}
+        .details-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f9fafb}
+        .details-row:last-child{border-bottom:none}
+        .details-row .label{font-size:13px;color:#6b7280}
+        .details-row .value{font-size:13px;font-weight:500;color:#111827}
+        .details-item{background:#f9fafb;border-radius:8px;padding:8px 12px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;font-size:12px}
+        .details-item .item-name{color:#374151}
+        .details-item .item-meta{color:#6b7280}
         
         .api-result{margin-left:12px;font-weight:600;padding:4px 12px;border-radius:20px;font-size:13px}
         .api-result.success{color:#10b981;background:rgba(16,185,129,0.1)}
@@ -926,11 +908,21 @@ var orders=data.orders||[];
 var stats=data.stats||{total:0,converted:0,today:0,potentialRevenue:0};
 var nowDate=new Date();
 
+var last24hCount=0;
+var last24hValue=0;
+for(var i=0;i<orders.length;i++){
+var o=orders[i];
+if(!o.is_converted){
+var diff=(nowDate-new Date(o.created_at))/(1000*60*60);
+if(diff<24){last24hCount++;last24hValue+=(o.cart_total||0);}
+}
+}
+
 var html='<div class="stats-grid">';
-html+='<div class="stat-card total"><div class="value">'+stats.total+'</div><div class="label">📦 Incomplete</div></div>';
-html+='<div class="stat-card converted"><div class="value">'+stats.converted+'</div><div class="label">✅ Converted</div></div>';
-html+='<div class="stat-card revenue"><div class="value">৳'+(stats.potentialRevenue||0).toLocaleString()+'</div><div class="label">💰 Potential Revenue</div></div>';
-html+='<div class="stat-card today"><div class="value">'+stats.today+'</div><div class="label">📅 Today</div></div>';
+html+='<div class="stat-card total"><div class="value">'+last24hCount+'</div><div class="label">Incomplete Carts (Last 24h)</div></div>';
+html+='<div class="stat-card converted"><div class="value">৳'+last24hValue.toLocaleString()+'</div><div class="label">Value of Carts (Last 24h)</div></div>';
+html+='<div class="stat-card revenue"><div class="value">'+stats.total+'</div><div class="label">Total Incomplete Carts</div></div>';
+html+='<div class="stat-card today"><div class="value" style="font-size:16px">Need More Features?</div><div class="label"><a href="%%DASHBOARD_URL%%" target="_blank" style="color:#8b5cf6;text-decoration:underline;font-weight:600">Upgrade to Pro</a></div></div>';
 html+='</div>';
 
 html+='<div class="retention-card">';
@@ -948,51 +940,39 @@ container.html(html);
 return;
 }
 
-html+='<input type="text" class="incomplete-search" id="incomplete-search" placeholder="🔍 Search by phone, name...">';
+html+='<input type="text" class="incomplete-search" id="incomplete-search" placeholder="🔍 Search checkouts...">';
 
 html+='<div class="incomplete-table-wrap"><table class="incomplete-table">';
-html+='<thead><tr><th>Customer</th><th>Contact</th><th>Cart Value</th><th>Last Seen</th><th>Status</th><th>Actions</th></tr></thead>';
+html+='<thead><tr><th>Customer</th><th>Contact</th><th>Cart</th><th>Last Active</th><th>Actions</th></tr></thead>';
 html+='<tbody>';
 
 for(var i=0;i<orders.length;i++){
 var o=orders[i];
 
-var createdDate=new Date(o.created_at);
-var diffHours=(nowDate-createdDate)/(1000*60*60);
-
-var rowClass='';
-var statusHtml='';
-if(o.is_converted){
-statusHtml='<span class="status-badge converted">✅ Converted</span>';
-}else if(diffHours>24){
-rowClass='cold-row';
-statusHtml='<span class="status-badge cold">❄️ Cold</span>';
-}else if(diffHours>1){
-statusHtml='<span class="status-badge warm">🔶 Warm</span>';
-}else{
-rowClass='hot-row';
-statusHtml='<span class="status-badge hot">🔥 Hot</span>';
+function timeAgo(dateStr){
+var diff=(nowDate-new Date(dateStr))/1000;
+if(diff<60)return 'just now';
+if(diff<3600)return Math.floor(diff/60)+' min ago';
+if(diff<86400)return Math.floor(diff/3600)+' hr ago';
+return Math.floor(diff/86400)+' day'+(Math.floor(diff/86400)>1?'s':'')+' ago';
 }
 
-var waNum=o.phone.replace(/\\D/g,'');
-if(waNum.length===11&&waNum.startsWith('0'))waNum='88'+waNum;
-var waMessage='Hello '+(o.name||'Customer')+', apnar cart e kicu products royeche. Cart value: ৳'+(o.cart_total||0)+'. Order complete korte chaile amader janaben.';
-var waUrl='https://wa.me/'+waNum+'?text='+encodeURIComponent(waMessage);
+var itemCount=0;
+if(o.cart_items&&o.cart_items.length){
+for(var j=0;j<o.cart_items.length;j++){itemCount+=(o.cart_items[j].quantity||1);}
+}
 
-html+='<tr class="'+rowClass+'">';
-html+='<td><div><strong style="color:#111827">'+(o.name||'Unknown')+'</strong></div>';
-if(o.address){html+='<div style="color:#9ca3af;font-size:11px;max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+o.address+'</div>';}
-html+='</td>';
-html+='<td><strong style="color:#111827">'+o.phone+'</strong><span class="phone-actions"><a href="'+waUrl+'" target="_blank" class="wa" title="WhatsApp with message">💬</a><a href="tel:'+o.phone+'" class="call" title="Call">📞</a></span></td>';
-html+='<td>'+(o.cart_total?'<span style="color:#0891b2;font-weight:700;font-size:14px">৳'+o.cart_total.toLocaleString()+'</span>':'<span style="color:#9ca3af">-</span>')+'</td>';
-html+='<td style="color:#6b7280;font-size:12px">'+o.time_ago+'</td>';
-html+='<td>'+statusHtml+'</td>';
+html+='<tr>';
+html+='<td><span class="customer-avatar">👤</span><strong style="color:#111827">'+(o.name||'Unknown')+'</strong></td>';
+html+='<td><span class="contact-phone"><span class="phone-icon">📱</span>'+o.phone+'</span></td>';
+html+='<td>'+(o.cart_total?'<strong style="color:#111827">৳'+o.cart_total.toLocaleString()+'</strong>':'<span style="color:#9ca3af">—</span>')+(itemCount?' <span style="color:#9ca3af;font-size:11px">('+itemCount+' items)</span>':'')+'</td>';
+html+='<td style="color:#6b7280;font-size:12px">'+timeAgo(o.created_at)+'</td>';
 html+='<td>';
-if(o.is_converted){
-html+='<span style="color:#059669;font-size:12px;font-weight:600">Done</span>';
-}else{
-html+='<button type="button" class="convert-order-btn fraud-btn fraud-btn-success" style="padding:6px 14px;font-size:12px;border-radius:8px" data-id="'+o.id+'" data-phone="'+o.phone+'" data-name="'+((o.name||"").replace(/'/g,"&#39;"))+'" data-address="'+((o.address||"").replace(/'/g,"&#39;"))+'" data-total="'+(o.cart_total||0)+'" data-items="'+encodeURIComponent(JSON.stringify(o.cart_items||[]))+'">🔄 Convert</button>';
+html+='<button type="button" class="btn-details details-btn" data-idx="'+i+'">Details</button> ';
+if(!o.is_converted){
+html+='<button type="button" class="btn-convert-sm convert-order-btn" data-id="'+o.id+'" data-phone="'+o.phone+'" data-name="'+((o.name||"").replace(/'/g,"&#39;"))+'" data-address="'+((o.address||"").replace(/'/g,"&#39;"))+'" data-total="'+(o.cart_total||0)+'" data-items="'+encodeURIComponent(JSON.stringify(o.cart_items||[]))+'">Convert</button> ';
 }
+html+='<button type="button" class="btn-cancel cancel-order-btn" data-id="'+o.id+'">Cancel</button>';
 html+='</td>';
 html+='</tr>';
 }
@@ -1005,6 +985,68 @@ var val=jQ(this).val().toLowerCase();
 jQ(".incomplete-table tbody tr").each(function(){
 var text=jQ(this).text().toLowerCase();
 jQ(this).toggle(text.indexOf(val)!==-1);
+});
+});
+
+jQ(".details-btn").on("click",function(){
+var idx=parseInt(jQ(this).data("idx"));
+var o=orders[idx];
+if(!o)return;
+
+function fmtDate(d){try{var dt=new Date(d);return dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+' '+dt.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});}catch(e){return d;}}
+
+var modalHtml='<div class="details-overlay" id="wcbd-details-modal">';
+modalHtml+='<div class="details-modal">';
+modalHtml+='<button class="close-btn" id="close-details">✕</button>';
+modalHtml+='<h3>Checkout Details</h3>';
+
+modalHtml+='<div class="details-section">';
+modalHtml+='<h4>Customer Information</h4>';
+modalHtml+='<div class="details-row"><span class="label">Name</span><span class="value">'+(o.name||'Not provided')+'</span></div>';
+modalHtml+='<div class="details-row"><span class="label">Email</span><span class="value" style="color:#9ca3af">'+(o.email||'Not provided')+'</span></div>';
+modalHtml+='<div class="details-row"><span class="label">Phone</span><span class="value">'+o.phone+'</span></div>';
+modalHtml+='</div>';
+
+modalHtml+='<div class="details-section">';
+modalHtml+='<h4>Cart Details</h4>';
+modalHtml+='<div class="details-row"><span class="label">Cart Value</span><span class="value">'+(o.cart_total?'৳'+o.cart_total.toLocaleString():'—')+'</span></div>';
+if(o.cart_items&&o.cart_items.length>0){
+for(var k=0;k<o.cart_items.length;k++){
+var item=o.cart_items[k];
+modalHtml+='<div class="details-item"><span class="item-name">'+item.name+'</span><span class="item-meta">×'+(item.quantity||1)+' — ৳'+(item.price||0).toLocaleString()+'</span></div>';
+}
+}
+modalHtml+='</div>';
+
+modalHtml+='<div class="details-section">';
+modalHtml+='<h4>Checkout Information</h4>';
+modalHtml+='<div class="details-row"><span class="label">Address</span><span class="value">'+(o.address||'Not provided')+'</span></div>';
+modalHtml+='<div class="details-row"><span class="label">Captured on</span><span class="value">'+fmtDate(o.created_at)+'</span></div>';
+modalHtml+='</div>';
+
+modalHtml+='</div></div>';
+
+jQ("#wcbd-details-modal").remove();
+jQ("body").append(modalHtml);
+jQ("#close-details").on("click",function(){jQ("#wcbd-details-modal").remove();});
+jQ("#wcbd-details-modal").on("click",function(e){if(jQ(e.target).hasClass("details-overlay"))jQ("#wcbd-details-modal").remove();});
+});
+
+jQ(".cancel-order-btn").on("click",function(){
+var btn=jQ(this);
+var orderId=btn.data("id");
+if(!confirm("এই record মুছে ফেলতে চান?")){return;}
+btn.prop("disabled",true).text("...");
+jQ.ajax({
+url:"%%AJAX_URL%%",method:"POST",
+data:{action:"wcbd_fraud_guard_cleanup",nonce:"%%NONCE%%",order_id:orderId,single_delete:true},
+success:function(r){
+btn.closest("tr").fadeOut(300,function(){jQ(this).remove();});
+},
+error:function(){
+alert("❌ Delete failed");
+btn.prop("disabled",false).text("Cancel");
+}
 });
 });
 
@@ -1050,7 +1092,7 @@ try{cartItems=decodeURIComponent(cartItems);}catch(e){cartItems="[]";}
 
 if(!confirm("📦 Convert to WooCommerce Order?\\n\\nPhone: "+phone+"\\nName: "+(name||"Unknown")+"\\nAddress: "+(address||"N/A")+"\\nTotal: ৳"+total)){return;}
 
-btn.prop("disabled",true).html("🔄 Converting...");
+btn.prop("disabled",true).text("Converting...");
 
 jQ.ajax({
 url:"%%AJAX_URL%%",
@@ -1060,16 +1102,14 @@ success:function(r){
 if(r.success){
 var wcLink=r.data&&r.data.wc_order_id?'<a href="post.php?post='+r.data.wc_order_id+'&action=edit" style="color:#10b981;font-size:12px;font-weight:600;text-decoration:underline">✅ Order #'+r.data.wc_order_id+'</a>':'<span style="color:#10b981;font-size:12px;font-weight:600">✅ Converted</span>';
 btn.replaceWith(wcLink);
-var convertedEl=jQ(".stat-card.converted .value");
-convertedEl.text(parseInt(convertedEl.text())+1);
 }else{
 alert("❌ Error: "+(r.data||"Conversion failed"));
-btn.prop("disabled",false).html("🔄 Convert");
+btn.prop("disabled",false).text("Convert");
 }
 },
 error:function(){
 alert("❌ Connection error");
-btn.prop("disabled",false).html("🔄 Convert");
+btn.prop("disabled",false).text("Convert");
 }
 });
 });
@@ -1195,8 +1235,8 @@ loadIncompleteOrders();
 ADMINJSTEMPLATE;
 
         return str_replace(
-            array('%%AJAX_URL%%', '%%NONCE%%'),
-            array($ajax_url, $nonce),
+            array('%%AJAX_URL%%', '%%NONCE%%', '%%DASHBOARD_URL%%'),
+            array($ajax_url, $nonce, esc_js($this->dashboard_url)),
             $js_template
         );
     }

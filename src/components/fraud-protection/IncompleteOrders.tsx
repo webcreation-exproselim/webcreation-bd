@@ -1,21 +1,19 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ConvertToOrderModal } from "./ConvertToOrderModal";
 import { 
-  RefreshCw, Trash2, Phone, CheckCircle, 
-  ShoppingCart, MessageCircle, ArrowRightCircle,
-  TrendingUp, DollarSign, Calendar, AlertTriangle,
-  Search, Flame, Clock
+  RefreshCw, Trash2, ShoppingCart, ArrowRightCircle,
+  Search, User, Phone, Eye, X, ExternalLink, AlertTriangle
 } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, format } from "date-fns";
 
 interface CartItem {
   name: string;
@@ -42,23 +40,6 @@ interface IncompleteOrdersProps {
   merchantId: string;
 }
 
-type OrderStatus = 'hot' | 'warm' | 'cold' | 'converted';
-
-function getOrderStatus(order: IncompleteOrder): OrderStatus {
-  if (order.is_converted) return 'converted';
-  const diffHours = (Date.now() - new Date(order.created_at).getTime()) / (1000 * 60 * 60);
-  if (diffHours > 24) return 'cold';
-  if (diffHours > 1) return 'warm';
-  return 'hot';
-}
-
-function getWhatsAppUrl(phone: string, name: string | null, cartTotal: number | null): string {
-  let waNum = phone.replace(/\D/g, '');
-  if (waNum.length === 11 && waNum.startsWith('0')) waNum = '88' + waNum;
-  const message = `Hello ${name || 'Customer'}, apnar cart e kicu products royeche. Cart value: ৳${cartTotal || 0}. Order complete korte chaile amader janaben.`;
-  return `https://wa.me/${waNum}?text=${encodeURIComponent(message)}`;
-}
-
 export function IncompleteOrders({ merchantId }: IncompleteOrdersProps) {
   const { toast } = useToast();
   const isMobile = useIsMobile();
@@ -69,6 +50,7 @@ export function IncompleteOrders({ merchantId }: IncompleteOrdersProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [convertOrder, setConvertOrder] = useState<IncompleteOrder | null>(null);
   const [cleaning, setCleaning] = useState(false);
+  const [detailsOrder, setDetailsOrder] = useState<IncompleteOrder | null>(null);
 
   const fetchOrders = async () => {
     try {
@@ -170,96 +152,74 @@ export function IncompleteOrders({ merchantId }: IncompleteOrdersProps) {
     );
   });
 
-  const getStatusBadge = (order: IncompleteOrder) => {
-    const status = getOrderStatus(order);
-    switch (status) {
-      case 'converted':
-        return <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 text-xs">✅ Converted</Badge>;
-      case 'hot':
-        return <Badge className="bg-red-50 text-red-700 border-red-200 text-xs">🔥 Hot</Badge>;
-      case 'warm':
-        return <Badge className="bg-amber-50 text-amber-700 border-amber-200 text-xs">🔶 Warm</Badge>;
-      case 'cold':
-        return <Badge className="bg-gray-100 text-gray-500 border-gray-200 text-xs">❄️ Cold</Badge>;
-    }
+  // Stats calculations
+  const now = new Date();
+  const last24h = orders.filter(o => {
+    const diff = now.getTime() - new Date(o.created_at).getTime();
+    return diff < 24 * 60 * 60 * 1000 && !o.is_converted;
+  });
+  const last24hCount = last24h.length;
+  const last24hValue = last24h.reduce((sum, o) => sum + (Number(o.cart_total) || 0), 0);
+  const totalIncomplete = orders.filter(o => !o.is_converted).length;
+
+  const getCartItemCount = (order: IncompleteOrder) => {
+    if (!order.cart_items || order.cart_items.length === 0) return 0;
+    return order.cart_items.reduce((sum, item) => sum + (item.quantity || 1), 0);
   };
 
-  const renderMobileCard = (order: IncompleteOrder) => {
-    const status = getOrderStatus(order);
-    const isCold = status === 'cold';
-    
-    return (
-      <Card key={order.id} className={`bg-white border border-gray-200 mb-3 shadow-sm ${isCold ? 'opacity-60' : ''}`}>
-        <CardContent className="p-4 space-y-3">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <p className="font-mono text-gray-900 text-sm font-medium">{order.phone_number}</p>
-              <p className="text-gray-500 text-xs">{order.customer_name || 'Unknown'}</p>
-              {order.address && <p className="text-gray-400 text-xs truncate">{order.address}</p>}
-            </div>
-            {getStatusBadge(order)}
+  const renderMobileCard = (order: IncompleteOrder) => (
+    <div key={order.id} className="bg-white border border-gray-200 rounded-xl p-4 mb-3 shadow-sm">
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+            <User className="h-4 w-4 text-gray-400" />
           </div>
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-gray-900 truncate">{order.customer_name || 'Unknown'}</p>
+            <div className="flex items-center gap-1.5 text-xs text-gray-500">
+              <Phone className="h-3 w-3" />
+              <span>{order.phone_number}</span>
+            </div>
+          </div>
+        </div>
+        {order.is_converted && (
+          <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full shrink-0">Converted</span>
+        )}
+      </div>
 
+      <div className="flex items-center justify-between mb-3 text-sm">
+        <span className="text-gray-900 font-semibold">
+          {order.cart_total ? `৳${Number(order.cart_total).toLocaleString()}` : '—'}
           {order.cart_items && order.cart_items.length > 0 && (
-            <div className="space-y-1">
-              {order.cart_items.slice(0, 2).map((item, idx) => (
-                <div key={idx} className="text-xs bg-gray-50 border border-gray-100 rounded px-2 py-1 flex justify-between">
-                  <span className="text-gray-700 truncate mr-2">{item.name.substring(0, 30)}</span>
-                  <span className="text-gray-400 shrink-0">×{item.quantity} ৳{item.price}</span>
-                </div>
-              ))}
-              {order.cart_items.length > 2 && (
-                <span className="text-xs text-gray-400">+{order.cart_items.length - 2} more</span>
-              )}
-            </div>
+            <span className="text-gray-400 font-normal text-xs ml-1">({getCartItemCount(order)} items)</span>
           )}
+        </span>
+        <span className="text-gray-400 text-xs">
+          {formatDistanceToNow(new Date(order.created_at), { addSuffix: true })}
+        </span>
+      </div>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              {order.cart_total ? (
-                <span className="text-blue-600 font-semibold text-sm">৳{Number(order.cart_total).toLocaleString()}</span>
-              ) : null}
-              <span className="text-gray-400 text-xs">
-                {formatDistanceToNow(new Date(order.created_at), { addSuffix: true })}
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 pt-1 border-t border-gray-100">
-            {!order.is_converted && (
-              <Button size="sm" variant="ghost" className="h-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50 text-xs flex-1"
-                onClick={() => setConvertOrder(order)}>
-                <ArrowRightCircle className="h-3.5 w-3.5 mr-1" /> Convert
-              </Button>
-            )}
-            <Button size="sm" variant="ghost" className="h-8 text-green-600 hover:text-green-700 hover:bg-green-50"
-              onClick={() => window.open(getWhatsAppUrl(order.phone_number, order.customer_name, order.cart_total), '_blank')}>
-              <MessageCircle className="h-3.5 w-3.5" />
-            </Button>
-            <Button size="sm" variant="ghost" className="h-8 text-blue-500 hover:text-blue-600 hover:bg-blue-50"
-              onClick={() => window.open(`tel:${order.phone_number}`)}>
-              <Phone className="h-3.5 w-3.5" />
-            </Button>
-            <Button size="sm" variant="ghost" className="h-8 text-gray-400 hover:text-red-500 hover:bg-red-50"
-              onClick={() => handleDelete(order.id)}>
-              <Trash2 className="h-3.5 w-3.5" />
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  };
-
-  // Stats
-  const totalOrders = orders.filter(o => !o.is_converted).length;
-  const convertedCount = orders.filter(o => o.is_converted).length;
-  const potentialRevenue = orders.filter(o => !o.is_converted).reduce((sum, o) => sum + (Number(o.cart_total) || 0), 0);
-  const todayCount = orders.filter(o => {
-    return new Date(o.created_at).toDateString() === new Date().toDateString() && !o.is_converted;
-  }).length;
+      <div className="flex items-center gap-2 pt-2 border-t border-gray-100">
+        <Button size="sm" variant="outline" className="h-8 text-xs flex-1 border-blue-200 text-blue-600 hover:bg-blue-50"
+          onClick={() => setDetailsOrder(order)}>
+          <Eye className="h-3.5 w-3.5 mr-1" /> Details
+        </Button>
+        {!order.is_converted && (
+          <Button size="sm" variant="outline" className="h-8 text-xs flex-1 border-emerald-200 text-emerald-600 hover:bg-emerald-50"
+            onClick={() => setConvertOrder(order)}>
+            <ArrowRightCircle className="h-3.5 w-3.5 mr-1" /> Convert
+          </Button>
+        )}
+        <Button size="sm" variant="outline" className="h-8 w-8 p-0 border-red-200 text-red-500 hover:bg-red-50"
+          onClick={() => handleDelete(order.id)}>
+          <X className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="space-y-4 sm:space-y-5">
       {convertOrder && (
         <ConvertToOrderModal
           open={!!convertOrder}
@@ -269,50 +229,123 @@ export function IncompleteOrders({ merchantId }: IncompleteOrdersProps) {
         />
       )}
 
+      {/* Details Modal */}
+      <Dialog open={!!detailsOrder} onOpenChange={(open) => !open && setDetailsOrder(null)}>
+        <DialogContent className="sm:max-w-md bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-gray-900 text-lg">Checkout Details</DialogTitle>
+          </DialogHeader>
+          {detailsOrder && (
+            <div className="space-y-5">
+              {/* Customer Information */}
+              <div>
+                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Customer Information</h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center py-1.5">
+                    <span className="text-sm text-gray-500">Name</span>
+                    <span className="text-sm font-medium text-gray-900">{detailsOrder.customer_name || 'Not provided'}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-1.5 border-t border-gray-50">
+                    <span className="text-sm text-gray-500">Email</span>
+                    <span className="text-sm text-gray-400">Not provided</span>
+                  </div>
+                  <div className="flex justify-between items-center py-1.5 border-t border-gray-50">
+                    <span className="text-sm text-gray-500">Phone</span>
+                    <span className="text-sm font-medium text-gray-900">{detailsOrder.phone_number}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Cart Details */}
+              <div>
+                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Cart Details</h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center py-1.5">
+                    <span className="text-sm text-gray-500">Cart Value</span>
+                    <span className="text-sm font-semibold text-gray-900">
+                      {detailsOrder.cart_total ? `৳${Number(detailsOrder.cart_total).toLocaleString()}` : '—'}
+                    </span>
+                  </div>
+                  {detailsOrder.cart_items && detailsOrder.cart_items.length > 0 && (
+                    <div className="pt-1.5 border-t border-gray-50">
+                      <span className="text-sm text-gray-500 block mb-2">Items</span>
+                      <div className="space-y-1.5">
+                        {detailsOrder.cart_items.map((item, idx) => (
+                          <div key={idx} className="flex justify-between items-center text-xs bg-gray-50 rounded-lg px-3 py-2">
+                            <span className="text-gray-700 truncate mr-2">{item.name}</span>
+                            <span className="text-gray-500 shrink-0">×{item.quantity} — ৳{item.price.toLocaleString()}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Checkout Information */}
+              <div>
+                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Checkout Information</h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center py-1.5">
+                    <span className="text-sm text-gray-500">Address</span>
+                    <span className="text-sm text-gray-900 text-right max-w-[200px]">{detailsOrder.address || 'Not provided'}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-1.5 border-t border-gray-50">
+                    <span className="text-sm text-gray-500">Captured on</span>
+                    <span className="text-sm text-gray-900">{format(new Date(detailsOrder.created_at), 'MMM dd, yyyy hh:mm a')}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Stats Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-        <Card className="bg-white border border-gray-200 border-l-4 border-l-blue-500 shadow-sm">
-          <CardContent className="p-3 sm:p-4 text-center">
-            <ShoppingCart className="h-5 w-5 text-blue-500 mx-auto mb-1" />
-            <p className="text-2xl sm:text-3xl font-bold text-blue-600">{totalOrders}</p>
-            <p className="text-xs text-gray-500">Incomplete</p>
+        <Card className="bg-white border border-gray-200 shadow-sm">
+          <CardContent className="p-4">
+            <p className="text-xs text-gray-500 mb-1">Incomplete Carts (Last 24h)</p>
+            <p className="text-2xl font-bold text-gray-900">{last24hCount}</p>
           </CardContent>
         </Card>
-        <Card className="bg-white border border-gray-200 border-l-4 border-l-emerald-500 shadow-sm">
-          <CardContent className="p-3 sm:p-4 text-center">
-            <CheckCircle className="h-5 w-5 text-emerald-500 mx-auto mb-1" />
-            <p className="text-2xl sm:text-3xl font-bold text-emerald-600">{convertedCount}</p>
-            <p className="text-xs text-gray-500">Converted</p>
+        <Card className="bg-white border border-gray-200 shadow-sm">
+          <CardContent className="p-4">
+            <p className="text-xs text-gray-500 mb-1">Value of Carts (Last 24h)</p>
+            <p className="text-2xl font-bold text-gray-900">৳{last24hValue.toLocaleString()}</p>
           </CardContent>
         </Card>
-        <Card className="bg-white border border-gray-200 border-l-4 border-l-amber-500 shadow-sm">
-          <CardContent className="p-3 sm:p-4 text-center">
-            <DollarSign className="h-5 w-5 text-amber-500 mx-auto mb-1" />
-            <p className="text-2xl sm:text-3xl font-bold text-amber-600">৳{potentialRevenue.toLocaleString()}</p>
-            <p className="text-xs text-gray-500">Potential Revenue</p>
+        <Card className="bg-white border border-gray-200 shadow-sm">
+          <CardContent className="p-4">
+            <p className="text-xs text-gray-500 mb-1">Total Incomplete Carts</p>
+            <p className="text-2xl font-bold text-gray-900">{totalIncomplete}</p>
           </CardContent>
         </Card>
-        <Card className="bg-white border border-gray-200 border-l-4 border-l-purple-500 shadow-sm">
-          <CardContent className="p-3 sm:p-4 text-center">
-            <Calendar className="h-5 w-5 text-purple-500 mx-auto mb-1" />
-            <p className="text-2xl sm:text-3xl font-bold text-purple-600">{todayCount}</p>
-            <p className="text-xs text-gray-500">Today</p>
+        <Card className="bg-white border border-gray-200 shadow-sm hover:border-blue-300 transition-colors">
+          <CardContent className="p-4">
+            <p className="text-xs text-gray-500 mb-1">Need More Features?</p>
+            <Button size="sm" variant="outline" className="mt-1 text-xs border-blue-200 text-blue-600 hover:bg-blue-50"
+              onClick={() => window.open('https://webcreation-bd.lovable.app/dashboard', '_blank')}>
+              <ExternalLink className="h-3 w-3 mr-1" /> Upgrade to Pro
+            </Button>
           </CardContent>
         </Card>
       </div>
 
-      {/* Orders List */}
+      {/* Orders Table */}
       <Card className="bg-white border border-gray-200 shadow-sm">
-        <CardHeader className="p-4 sm:p-6">
+        <div className="p-4 sm:p-5 border-b border-gray-100">
           <div className="flex flex-col gap-3">
-            <CardTitle className="text-gray-900 flex items-center gap-2 text-base sm:text-lg">
-              <TrendingUp className="h-5 w-5 text-blue-600" /> Incomplete Orders
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                <ShoppingCart className="h-4 w-4 text-gray-500" /> Incomplete Checkouts
+              </h3>
+            </div>
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
               <div className="relative flex-1 sm:max-w-xs">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input 
-                  placeholder="Search phone, name..." 
+                  placeholder="Search checkouts..." 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9 bg-white border-gray-200 text-gray-900 text-sm"
@@ -321,7 +354,7 @@ export function IncompleteOrders({ merchantId }: IncompleteOrdersProps) {
               <div className="flex flex-wrap items-center gap-2">
                 <Select value={filterStatus} onValueChange={setFilterStatus}>
                   <SelectTrigger className="w-full sm:w-36 bg-white border-gray-200 text-gray-700 text-sm">
-                    <SelectValue placeholder="Filter status" />
+                    <SelectValue placeholder="Filter" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Records</SelectItem>
@@ -332,7 +365,7 @@ export function IncompleteOrders({ merchantId }: IncompleteOrdersProps) {
                 <Button variant="outline" size="sm" onClick={handleRefresh} disabled={refreshing} className="border-gray-200 text-gray-600 hover:bg-gray-50 w-full sm:w-auto">
                   <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} /> Refresh
                 </Button>
-                {totalOrders > 0 && (
+                {totalIncomplete > 0 && (
                   <Button 
                     variant="outline" 
                     size="sm" 
@@ -341,101 +374,88 @@ export function IncompleteOrders({ merchantId }: IncompleteOrdersProps) {
                     className="border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600 w-full sm:w-auto"
                   >
                     <AlertTriangle className={`h-4 w-4 mr-2 ${cleaning ? 'animate-spin' : ''}`} />
-                    {cleaning ? 'Cleaning...' : `Clean All (${totalOrders})`}
+                    {cleaning ? 'Cleaning...' : `Clean All (${totalIncomplete})`}
                   </Button>
                 )}
               </div>
             </div>
           </div>
-        </CardHeader>
-        <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
+        </div>
+        <CardContent className="p-4 sm:p-5 pt-0 sm:pt-0">
           {loading ? (
-            <div className="text-center py-8 text-gray-400">Loading...</div>
+            <div className="text-center py-12 text-gray-400">Loading...</div>
           ) : filteredOrders.length === 0 ? (
-            <div className="text-center py-8 text-gray-400">
-              <ShoppingCart className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p className="text-gray-600">No incomplete orders found</p>
-              <p className="text-sm text-gray-400">Checkout attempts will appear here automatically</p>
+            <div className="text-center py-12">
+              <ShoppingCart className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+              <p className="text-gray-500 font-medium">No incomplete orders found</p>
+              <p className="text-sm text-gray-400 mt-1">Checkout attempts will appear here automatically</p>
             </div>
           ) : isMobile ? (
-            <div>{filteredOrders.map(renderMobileCard)}</div>
+            <div className="pt-4">{filteredOrders.map(renderMobileCard)}</div>
           ) : (
-            <div className="overflow-x-auto rounded-lg border border-gray-200">
+            <div className="overflow-x-auto rounded-lg border border-gray-200 mt-4">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-gray-200 bg-gray-50">
-                    <TableHead className="text-gray-600 font-semibold">Customer</TableHead>
-                    <TableHead className="text-gray-600 font-semibold">Contact</TableHead>
-                    <TableHead className="text-gray-600 font-semibold">Cart Value</TableHead>
-                    <TableHead className="text-gray-600 font-semibold">Last Seen</TableHead>
-                    <TableHead className="text-gray-600 font-semibold">Status</TableHead>
-                    <TableHead className="text-gray-600 font-semibold text-right">Actions</TableHead>
+                  <TableRow className="border-gray-200 bg-gray-50/80">
+                    <TableHead className="text-gray-500 font-semibold text-xs uppercase tracking-wide">Customer</TableHead>
+                    <TableHead className="text-gray-500 font-semibold text-xs uppercase tracking-wide">Contact</TableHead>
+                    <TableHead className="text-gray-500 font-semibold text-xs uppercase tracking-wide">Cart</TableHead>
+                    <TableHead className="text-gray-500 font-semibold text-xs uppercase tracking-wide">Last Active</TableHead>
+                    <TableHead className="text-gray-500 font-semibold text-xs uppercase tracking-wide text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredOrders.map(order => {
-                    const status = getOrderStatus(order);
-                    const isCold = status === 'cold';
-                    
-                    return (
-                      <TableRow 
-                        key={order.id} 
-                        className={`border-gray-100 hover:bg-gray-50 ${isCold ? 'opacity-60 bg-gray-50/50' : ''} ${status === 'hot' ? 'bg-red-50/30' : ''}`}
-                      >
-                        <TableCell>
-                          <div>
-                            <p className="font-medium text-gray-900 text-sm">{order.customer_name || 'Unknown'}</p>
-                            {order.address && (
-                              <p className="text-gray-400 text-xs truncate max-w-[150px]">{order.address}</p>
-                            )}
+                  {filteredOrders.map(order => (
+                    <TableRow key={order.id} className="border-gray-100 hover:bg-gray-50/50">
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+                            <User className="h-3.5 w-3.5 text-gray-400" />
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <span className="font-mono text-gray-900 text-sm font-medium">{order.phone_number}</span>
-                            <div className="flex gap-1">
-                              <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
-                                onClick={() => window.open(getWhatsAppUrl(order.phone_number, order.customer_name, order.cart_total), '_blank')}
-                                title="WhatsApp with cart recovery message">
-                                <MessageCircle className="h-3 w-3" />
-                              </Button>
-                              <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-blue-500 hover:text-blue-600 hover:bg-blue-50"
-                                onClick={() => window.open(`tel:${order.phone_number}`)}
-                                title="Call customer">
-                                <Phone className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {order.cart_total ? (
-                            <span className="text-blue-600 font-semibold">৳{Number(order.cart_total).toLocaleString()}</span>
-                          ) : <span className="text-gray-300">-</span>}
-                        </TableCell>
-                        <TableCell className="text-gray-500 text-xs">
-                          <div className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {formatDistanceToNow(new Date(order.created_at), { addSuffix: true })}
-                          </div>
-                        </TableCell>
-                        <TableCell>{getStatusBadge(order)}</TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-1">
-                            {!order.is_converted && (
-                              <Button size="sm" variant="ghost" className="h-7 text-blue-600 hover:text-blue-700 hover:bg-blue-50 text-xs"
-                                onClick={() => setConvertOrder(order)}>
-                                <ArrowRightCircle className="h-3.5 w-3.5 mr-1" /> Convert
-                              </Button>
-                            )}
-                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-gray-400 hover:text-red-500 hover:bg-red-50"
-                              onClick={() => handleDelete(order.id)}>
-                              <Trash2 className="h-3.5 w-3.5" />
+                          <span className="text-sm font-medium text-gray-900">{order.customer_name || 'Unknown'}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1.5">
+                          <Phone className="h-3.5 w-3.5 text-gray-400" />
+                          <span className="text-sm text-gray-700">{order.phone_number}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <span className="text-sm font-semibold text-gray-900">
+                            {order.cart_total ? `৳${Number(order.cart_total).toLocaleString()}` : '—'}
+                          </span>
+                          {order.cart_items && order.cart_items.length > 0 && (
+                            <span className="text-xs text-gray-400 ml-1.5">({getCartItemCount(order)} items)</span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm text-gray-500">
+                          {formatDistanceToNow(new Date(order.created_at), { addSuffix: true })}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <Button size="sm" variant="outline" className="h-7 text-xs border-blue-200 text-blue-600 hover:bg-blue-50"
+                            onClick={() => setDetailsOrder(order)}>
+                            Details
+                          </Button>
+                          {!order.is_converted && (
+                            <Button size="sm" variant="outline" className="h-7 text-xs border-emerald-200 text-emerald-600 hover:bg-emerald-50"
+                              onClick={() => setConvertOrder(order)}>
+                              Convert
                             </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
+                          )}
+                          <Button size="sm" variant="outline" className="h-7 text-xs border-red-200 text-red-500 hover:bg-red-50"
+                            onClick={() => handleDelete(order.id)}>
+                            Cancel
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
             </div>

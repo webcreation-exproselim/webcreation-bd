@@ -170,9 +170,15 @@ export function DashboardStatsCards({
               <p className="text-xl font-bold mb-0.5">📊 Courier Check</p>
               <p className="text-sm text-white/80 font-bengali">
                 {courierCheckActive
-                  ? "সক্রিয় ✓ — কাস্টমার হিস্ট্রি চেক করুন"
-                  : "কাস্টমার Delivery History চেক — ৳২৪৯/মাস"}
+                  ? "সক্রিয় ✓ — Pathao, Steadfast, CarryBee, RedX হিস্ট্রি চেক"
+                  : "Pathao, Steadfast, CarryBee, RedX ডেলিভারি চেক — ৳২৪৯/মাস"}
               </p>
+              <div className="flex items-center gap-1.5 mt-1.5">
+                <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded-full">Pathao</span>
+                <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded-full">Steadfast</span>
+                <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded-full">CarryBee</span>
+                <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded-full font-bold">RedX</span>
+              </div>
             </div>
 
             <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-white/30 transition-colors flex-shrink-0">

@@ -11,7 +11,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { ConvertToOrderModal } from "./ConvertToOrderModal";
 import { 
   RefreshCw, Trash2, ShoppingCart, ArrowRightCircle,
-  Search, User, Phone, Eye, X, ExternalLink, AlertTriangle
+  Search, User, Phone, Eye, X, AlertTriangle
 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 
@@ -302,7 +302,7 @@ export function IncompleteOrders({ merchantId }: IncompleteOrdersProps) {
       </Dialog>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-3 gap-3 sm:gap-4">
         <Card className="bg-white border border-gray-200 shadow-sm">
           <CardContent className="p-4">
             <p className="text-xs text-gray-500 mb-1">Incomplete Carts (Last 24h)</p>
@@ -319,15 +319,6 @@ export function IncompleteOrders({ merchantId }: IncompleteOrdersProps) {
           <CardContent className="p-4">
             <p className="text-xs text-gray-500 mb-1">Total Incomplete Carts</p>
             <p className="text-2xl font-bold text-gray-900">{totalIncomplete}</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-white border border-gray-200 shadow-sm hover:border-blue-300 transition-colors">
-          <CardContent className="p-4">
-            <p className="text-xs text-gray-500 mb-1">Need More Features?</p>
-            <Button size="sm" variant="outline" className="mt-1 text-xs border-blue-200 text-blue-600 hover:bg-blue-50"
-              onClick={() => window.open('https://webcreation-bd.lovable.app/dashboard', '_blank')}>
-              <ExternalLink className="h-3 w-3 mr-1" /> Upgrade to Pro
-            </Button>
           </CardContent>
         </Card>
       </div>

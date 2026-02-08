@@ -4,7 +4,7 @@
 
 export const PLUGIN_CONFIG = {
   // Current version - UPDATE THIS WHEN RELEASING NEW VERSIONS
-  version: "9.1.0",
+  version: "9.2.0",
   
   // Plugin metadata
   name: "WCBD Fraud Guard",
@@ -16,16 +16,16 @@ export const PLUGIN_CONFIG = {
   badgeLabel: "STABLE",
   
   // Current version highlights (for banners and feature lists)
-  versionHighlight: "Incomplete Order System Rebuild",
+  versionHighlight: "CheckoutGuard Style Dashboard",
   
   // What's new in this version (for feature list)
   whatsNew: [
+    { icon: "🎨", title: "CheckoutGuard Style UI", description: "সম্পূর্ণ নতুন Clean White/Gray ডিজাইন - Details Modal সহ প্রফেশনাল Dashboard" },
+    { icon: "📊", title: "Smart Stats Cards", description: "Last 24h Carts, Cart Value, Total Count - এক নজরে সব তথ্য" },
+    { icon: "🔍", title: "Details Modal", description: "Customer Info, Cart Items, Checkout Info - সব ডিটেইলস এক ক্লিকে" },
     { icon: "⚡", title: "800ms Real-time Tracking", description: "ফিল্ড টাইপ করার ৮০০ms পর অটো-সেভ - আগের চেয়ে ২.৫x দ্রুত" },
     { icon: "📧", title: "Email Field Tracking", description: "Email ফিল্ডও এখন ট্র্যাক হবে - Name, Phone, Email, Address সব ক্যাপচার" },
-    { icon: "🔥", title: "Hot/Warm/Cold Status", description: "সময় অনুযায়ী স্ট্যাটাস - Hot (<1hr), Warm (1-24hr), Cold (24hr+)" },
-    { icon: "💬", title: "WhatsApp Cart Recovery", description: "প্রি-ফিল্ড মেসেজ সহ WhatsApp বাটন - কাস্টমারের নাম ও কার্ট ভ্যালু সহ" },
-    { icon: "📞", title: "Direct Call Button", description: "এক ক্লিকে কাস্টমারকে ফোন করুন - tel: লিংক সহ" },
-    { icon: "🎨", title: "Clean SaaS Dashboard", description: "সম্পূর্ণ নতুন White/Gray প্রফেশনাল ডিজাইন - WordPress ও React উভয়ে" },
+    { icon: "❌", title: "Quick Cancel", description: "এক ক্লিকে রেকর্ড ডিলিট - টেবিল থেকে সরাসরি Cancel বাটন" },
   ],
   
   // All features list
@@ -44,8 +44,7 @@ export const PLUGIN_CONFIG = {
     "📞 WhatsApp/Phone Contact",
     "⚡ 800ms Real-time Field Tracking",
     "📧 Email Field Capture",
-    "🔥 Hot/Warm/Cold Status Badges",
-    "💬 WhatsApp Cart Recovery Message",
+    "🔍 Checkout Details Modal",
     "✅ Auto-Cleanup on Thank You",
     "🇧🇩 BD Phone Validation",
     "🗑️ Manual Clean All Button",

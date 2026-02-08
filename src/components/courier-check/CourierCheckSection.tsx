@@ -46,6 +46,30 @@ export function CourierCheckSection({ userId }: CourierCheckSectionProps) {
 
   return (
     <div className="space-y-6">
+      {/* Courier Check Dashboard - ALWAYS ON TOP */}
+      {isActive ? (
+        <CourierCheckerDashboard apiKey={subscription!.api_key} />
+      ) : (
+        <div className="relative">
+          {/* Locked Overlay for Search */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-sm">
+            <div className="flex flex-col items-center justify-center text-center gap-4 py-6">
+              <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center">
+                <Lock className="w-8 h-8 text-gray-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 font-bengali mb-1">
+                  Courier Check Search লক করা আছে
+                </h3>
+                <p className="text-sm text-gray-500 font-bengali max-w-md">
+                  ফোন নম্বর দিয়ে কাস্টমারের Courier Delivery History চেক করতে Plan সক্রিয় করুন
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header Card */}
       <div className="bg-gradient-to-br from-cyan-600 via-blue-600 to-blue-700 rounded-2xl p-6 text-white shadow-xl shadow-cyan-500/20">
         <div className="flex flex-col sm:flex-row sm:items-start gap-4">
@@ -137,134 +161,6 @@ export function CourierCheckSection({ userId }: CourierCheckSectionProps) {
           </div>
         )}
       </div>
-
-      {/* API Key Section - Always Visible */}
-      {subscription && (
-        <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-cyan-100 flex items-center justify-center">
-              <Key className="w-5 h-5 text-cyan-600" />
-            </div>
-            <div>
-              <h3 className="text-lg font-bold text-gray-900 font-bengali">API Key</h3>
-              <p className="text-sm text-gray-500 font-bengali">Plugin এ এই API Key ব্যবহার হবে</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 font-mono text-sm text-gray-700 truncate">
-              {subscription.api_key}
-            </div>
-            <Button
-              onClick={handleCopyApiKey}
-              variant="outline"
-              size="sm"
-              className="border-gray-200 hover:bg-gray-50 rounded-xl px-4 h-[46px]"
-            >
-              {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4 text-gray-500" />}
-            </Button>
-          </div>
-          {!isActive && (
-            <p className="text-xs text-amber-600 mt-3 font-bengali flex items-center gap-1.5">
-              <AlertCircle className="w-3.5 h-3.5" />
-              Plan সক্রিয় না থাকলে API কাজ করবে না
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* Plugin Download Section - Always Visible */}
-      {subscription && (
-        <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
-              <Package className="w-5 h-5 text-blue-600" />
-            </div>
-            <div className="flex-1">
-              <h3 className="text-lg font-bold text-gray-900 font-bengali">Plugin Download</h3>
-              <p className="text-sm text-gray-500 font-bengali">WooCommerce Plugin ডাউনলোড করুন</p>
-            </div>
-            <span className="text-xs font-medium bg-cyan-100 text-cyan-700 px-2.5 py-1 rounded-full">
-              {getCourierCheckVersionString()}
-            </span>
-          </div>
-
-          {/* Features */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-5">
-            {COURIER_CHECK_PLUGIN_CONFIG.features.map((feature, i) => (
-              <div key={i} className="text-sm text-gray-600 font-bengali">
-                {feature}
-              </div>
-            ))}
-          </div>
-
-          {/* Requirements */}
-          <div className="flex flex-wrap gap-2 mb-5">
-            <span className="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full">
-              WordPress {COURIER_CHECK_PLUGIN_CONFIG.requirements.wordpress}
-            </span>
-            <span className="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full">
-              WooCommerce {COURIER_CHECK_PLUGIN_CONFIG.requirements.woocommerce}
-            </span>
-            <span className="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full">
-              PHP {COURIER_CHECK_PLUGIN_CONFIG.requirements.php}
-            </span>
-          </div>
-
-          <Button
-            onClick={() => downloadCourierCheckPlugin(subscription.api_key)}
-            className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white gap-2 rounded-xl h-12 font-bengali"
-          >
-            <Download className="w-5 h-5" />
-            Plugin ZIP ডাউনলোড করুন ({COURIER_CHECK_PLUGIN_CONFIG.fileSize})
-          </Button>
-        </div>
-      )}
-
-      {/* Embed Code Section - Always Visible */}
-      {subscription && (
-        <CourierCheckEmbedCode apiKey={subscription.api_key} />
-      )}
-
-      {/* Pending Order Alert */}
-      {pendingOrder && !isActive && (
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
-              <AlertCircle className="w-5 h-5 text-amber-600" />
-            </div>
-            <div>
-              <p className="font-medium text-amber-800 font-bengali">অর্ডার পেন্ডিং</p>
-              <p className="text-sm text-amber-600 font-bengali">
-                Plan - ৳{pendingOrder.amount} | Admin approval-এর জন্য অপেক্ষা করুন
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Courier Check Dashboard - Only when active */}
-      {isActive ? (
-        <CourierCheckerDashboard apiKey={subscription!.api_key} />
-      ) : (
-        <div className="relative">
-          {/* Locked Overlay for Search */}
-          <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-sm">
-            <div className="flex flex-col items-center justify-center text-center gap-4 py-6">
-              <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center">
-                <Lock className="w-8 h-8 text-gray-400" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-gray-900 font-bengali mb-1">
-                  Courier Check Search লক করা আছে
-                </h3>
-                <p className="text-sm text-gray-500 font-bengali max-w-md">
-                  ফোন নম্বর দিয়ে কাস্টমারের Courier Delivery History চেক করতে Plan সক্রিয় করুন
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Plan Purchase Section - when inactive and no pending order */}
       {!isActive && !pendingOrder && (

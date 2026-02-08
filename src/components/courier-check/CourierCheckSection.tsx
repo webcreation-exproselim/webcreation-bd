@@ -17,6 +17,8 @@ interface CourierCheckSectionProps {
 export function CourierCheckSection({ userId }: CourierCheckSectionProps) {
   const { subscription, pendingOrder, loading, refetch } = useCourierCheckData(userId);
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
+  const [showPlanSelection, setShowPlanSelection] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('yearly');
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
 
@@ -233,7 +235,7 @@ export function CourierCheckSection({ userId }: CourierCheckSectionProps) {
             <div>
               <p className="font-medium text-amber-800 font-bengali">অর্ডার পেন্ডিং</p>
               <p className="text-sm text-amber-600 font-bengali">
-                Yearly Plan - ৳899 | Admin approval-এর জন্য অপেক্ষা করুন
+                Plan - ৳{pendingOrder.amount} | Admin approval-এর জন্য অপেক্ষা করুন
               </p>
             </div>
           </div>
@@ -270,7 +272,10 @@ export function CourierCheckSection({ userId }: CourierCheckSectionProps) {
           <h3 className="text-lg font-bold text-gray-900 font-bengali mb-4">
             🚀 Courier Check Plan নিন
           </h3>
-          <CourierCheckPlans onSelectPlan={() => setShowPurchaseModal(true)} />
+          <CourierCheckPlans onSelectPlan={(planType) => {
+            setSelectedPlan(planType);
+            setShowPurchaseModal(true);
+          }} />
         </div>
       )}
 
@@ -281,6 +286,7 @@ export function CourierCheckSection({ userId }: CourierCheckSectionProps) {
           onClose={() => setShowPurchaseModal(false)}
           subscriptionId={subscription.id}
           userId={userId}
+          planType={selectedPlan}
           onSuccess={() => {
             refetch();
             setShowPurchaseModal(false);

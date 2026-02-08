@@ -18,6 +18,7 @@ interface CourierCheckPurchaseModalProps {
   onClose: () => void;
   subscriptionId: string;
   userId: string;
+  planType: 'monthly' | 'yearly';
   onSuccess: () => void;
 }
 
@@ -33,6 +34,7 @@ export function CourierCheckPurchaseModal({
   onClose,
   subscriptionId,
   userId,
+  planType,
   onSuccess,
 }: CourierCheckPurchaseModalProps) {
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
@@ -115,12 +117,12 @@ export function CourierCheckPurchaseModal({
         .eq('id', subscriptionId);
 
       // Create order
-      const { error } = await supabase
+          const { error } = await supabase
         .from('courier_check_orders')
         .insert({
           subscription_id: subscriptionId,
           user_id: userId,
-          amount: 899,
+          amount: planType === 'monthly' ? 249 : 499,
           payment_method: selectedMethod,
           sender_number: senderNumber.trim(),
           payment_screenshot_url: screenshotUrl,
@@ -163,8 +165,8 @@ export function CourierCheckPurchaseModal({
               <CreditCard className="w-5 h-5 text-white" />
             </div>
             <div>
-              <span className="block">Courier Check - Yearly</span>
-              <span className="text-sm font-normal text-gray-500">৳899/বছর</span>
+              <span className="block">Courier Check Payment</span>
+              <span className="text-sm font-normal text-gray-500">Monthly ৳249 | Yearly ৳499</span>
             </div>
           </DialogTitle>
         </DialogHeader>
@@ -216,7 +218,7 @@ export function CourierCheckPurchaseModal({
             {selectedPayment && (
               <div className="mt-3 p-3 rounded-xl bg-amber-50 border border-amber-200">
                 <p className="text-sm text-amber-700 font-bengali text-center">
-                  <strong>৳899</strong> পাঠান: <strong>{selectedPayment.account_number}</strong> ({selectedPayment.method})
+                  <strong>৳{planType === 'monthly' ? '249' : '499'}</strong> পাঠান: <strong>{selectedPayment.account_number}</strong> ({selectedPayment.method})
                 </p>
               </div>
             )}

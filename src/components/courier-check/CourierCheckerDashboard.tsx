@@ -43,7 +43,7 @@ interface CourierCheckerDashboardProps {
   apiKey: string;
 }
 
-const ALLOWED_COURIERS = ["pathao", "steadfast", "carrybee", "carry bee", "redx", "red x"];
+const ALLOWED_COURIERS = ["pathao", "steadfast", "carrybee", "carry bee", "redx", "red x", "redx logistics", "red x logistics"];
 
 const RISK_STYLES: Record<string, { bg: string; text: string; label: string }> = {
   trusted: { bg: "bg-emerald-500", text: "text-white", label: "✅ বিশ্বস্ত কাস্টমার" },

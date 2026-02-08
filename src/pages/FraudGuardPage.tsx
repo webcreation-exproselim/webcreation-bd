@@ -4,7 +4,8 @@ import {
   Shield, CheckCircle, Clock, Phone, Fingerprint, 
   FileText, ArrowRight, Zap, Lock, ShoppingCart,
   RefreshCw, Timer, Smartphone, AlertTriangle, Eye,
-  Star, TrendingUp, ArrowUpCircle, Sparkles, Globe
+  Star, TrendingUp, ArrowUpCircle, Sparkles, Globe,
+  Search, BarChart3, Truck
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
@@ -338,8 +339,8 @@ export default function FraudGuardPage() {
                 </div>
                 
                 <div className="mb-8">
-                  <span className="text-5xl font-bold text-white">৳১০০</span>
-                  <span className="text-white/40 text-lg">/মাস</span>
+                <span className="text-5xl font-bold text-white">৳১০০</span>
+                <span className="text-white/40 text-lg">/মাস</span>
                 </div>
                 
                 <ul className="space-y-3 mb-8">
@@ -390,8 +391,8 @@ export default function FraudGuardPage() {
                 </div>
                 
                 <div className="mb-2">
-                  <span className="text-5xl font-bold text-white">৳৬৯৯</span>
-                  <span className="text-white/40 text-lg">/বছর</span>
+                <span className="text-5xl font-bold text-white">৳৬৯৯</span>
+                <span className="text-white/40 text-lg">/বছর</span>
                 </div>
                 <div className="flex items-center gap-3 mb-8">
                   <span className="text-sm text-white/30 line-through">৳১,২০০/বছর</span>
@@ -488,6 +489,171 @@ export default function FraudGuardPage() {
                 )}
               </motion.div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Courier Check Section */}
+      <section className="py-24 px-4 relative">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-cyan-950/10 to-transparent" />
+        <div className="container mx-auto max-w-5xl relative z-10">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <div className="inline-flex items-center gap-2 bg-cyan-500/10 border border-cyan-500/20 rounded-full px-4 py-1.5 mb-4">
+              <Search className="w-4 h-4 text-cyan-400" />
+              <span className="text-cyan-400 text-xs font-bold uppercase tracking-wider">NEW FEATURE</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4 font-bengali">
+              <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">WCBD Courier Check</span>
+            </h2>
+            <p className="text-white/50 max-w-2xl mx-auto text-lg font-bengali">
+              অর্ডার নেওয়ার আগেই কাস্টমারের Courier Delivery History চেক করুন — ফেক অর্ডার কমান
+            </p>
+          </motion.div>
+
+          {/* Courier Check Features Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-12">
+            {[
+              {
+                icon: Search,
+                title: "ফোন নম্বর দিয়ে চেক",
+                description: "কাস্টমারের ফোন নম্বর দিয়ে Courier History তাৎক্ষণিক চেক করুন",
+                gradient: "from-cyan-500 to-blue-500",
+              },
+              {
+                icon: BarChart3,
+                title: "Success Rate দেখুন",
+                description: "কত % অর্ডার ডেলিভারি হয়েছে, কত % রিটার্ন হয়েছে — সব তথ্য",
+                gradient: "from-emerald-500 to-green-500",
+              },
+              {
+                icon: Truck,
+                title: "Courier-wise Breakdown",
+                description: "Pathao, Steadfast, RedX, CarryBee — প্রতিটি কুরিয়ারের ডেটা আলাদাভাবে",
+                gradient: "from-purple-500 to-pink-500",
+              },
+              {
+                icon: Shield,
+                title: "Trust Label",
+                description: "Green (Trusted), Yellow (Moderate), Red (Risky) — তাৎক্ষণিক রিস্ক লেভেল",
+                gradient: "from-amber-500 to-orange-500",
+              },
+              {
+                icon: Globe,
+                title: "WooCommerce Plugin",
+                description: "Order List এ সরাসরি Check বাটন + Single Order View তে Analytics",
+                gradient: "from-blue-500 to-indigo-500",
+              },
+              {
+                icon: Lock,
+                title: "Domain-Locked License",
+                description: "আপনার ওয়েবসাইটের জন্য নিরাপদ API Key — অন্য কেউ ব্যবহার করতে পারবে না",
+                gradient: "from-red-500 to-rose-500",
+              },
+            ].map((feature, index) => (
+              <motion.div
+                key={feature.title}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.05 }}
+                className="group relative bg-white/[0.03] backdrop-blur-sm border border-white/[0.08] rounded-2xl p-6 hover:border-cyan-500/30 transition-all duration-500 hover:bg-white/[0.06]"
+              >
+                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                  <feature.icon className="w-6 h-6 text-white" />
+                </div>
+                <h3 className="text-lg font-semibold text-white mb-1 font-bengali">{feature.title}</h3>
+                <p className="text-white/40 text-sm leading-relaxed font-bengali">{feature.description}</p>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Courier Check Pricing */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+            {/* Monthly */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="group bg-gradient-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-sm border border-white/10 rounded-3xl p-7 hover:border-cyan-500/30 transition-all duration-500"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gray-600 to-gray-800 flex items-center justify-center">
+                  <Clock className="w-5 h-5 text-white" />
+                </div>
+                <span className="text-white font-bold text-lg">Monthly</span>
+              </div>
+              <div className="mb-4">
+                <span className="text-4xl font-bold text-white">৳২৪৯</span>
+                <span className="text-white/40">/মাস</span>
+              </div>
+              <ul className="space-y-2 mb-6">
+                {["500 API requests", "WooCommerce Plugin", "All Courier Support", "Domain-locked License"].map((f, i) => (
+                  <li key={i} className="flex items-center gap-2 text-white/60 text-sm">
+                    <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>{f}</span>
+                  </li>
+                ))}
+              </ul>
+              <Link to="/auth">
+                <Button className="w-full h-11 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl font-bengali font-bold transition-all">
+                  শুরু করুন
+                </Button>
+              </Link>
+            </motion.div>
+
+            {/* Yearly */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="group relative overflow-hidden rounded-3xl"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-cyan-500 via-blue-500 to-blue-600 rounded-3xl" />
+              <div className="absolute inset-[2px] bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 rounded-[22px]" />
+              
+              <div className="absolute top-4 right-4 z-20">
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 text-white text-xs font-bold shadow-lg">
+                  <Star className="w-3 h-3" />
+                  <span>BEST VALUE</span>
+                </div>
+              </div>
+              
+              <div className="relative z-10 p-7">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg">
+                    <Zap className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-white font-bold text-lg">Yearly</span>
+                </div>
+                <div className="mb-1">
+                  <span className="text-4xl font-bold text-white">৳৪৯৯</span>
+                  <span className="text-white/40">/বছর</span>
+                </div>
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-sm text-white/30 line-through">৳২,৯৮৮</span>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-bold">83% সেভ</span>
+                </div>
+                <ul className="space-y-2 mb-6">
+                  {["5,000 API requests", "WooCommerce Plugin", "All Courier Support", "Domain-locked License", "Priority support"].map((f, i) => (
+                    <li key={i} className="flex items-center gap-2 text-white/70 text-sm">
+                      <CheckCircle className="w-4 h-4 text-cyan-400 shrink-0" />
+                      <span>{f}</span>
+                    </li>
+                  ))}
+                </ul>
+                <Link to="/auth">
+                  <Button className="w-full h-11 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white rounded-xl font-bengali font-bold shadow-lg">
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    শুরু করুন — সেরা মূল্যে
+                  </Button>
+                </Link>
+              </div>
+            </motion.div>
           </div>
         </div>
       </section>

@@ -832,7 +832,7 @@ LOADERJS;
         .wcbd-branding .btn-group a.secondary{background:#374151}
         .wcbd-branding .copyright{color:#64748b;font-size:12px;margin-top:20px}
         
-        .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px}
+        .stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px}
         @media(max-width:768px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
         .stat-card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;text-align:center;transition:all 0.2s}
         .stat-card:hover{box-shadow:0 4px 12px rgba(0,0,0,0.06)}
@@ -938,7 +938,6 @@ var html='<div class="stats-grid">';
 html+='<div class="stat-card total"><div class="value">'+last24hCount+'</div><div class="label">Incomplete Carts (Last 24h)</div></div>';
 html+='<div class="stat-card converted"><div class="value">৳'+last24hValue.toLocaleString()+'</div><div class="label">Value of Carts (Last 24h)</div></div>';
 html+='<div class="stat-card revenue"><div class="value">'+stats.total+'</div><div class="label">Total Incomplete Carts</div></div>';
-html+='<div class="stat-card today"><div class="value" style="font-size:16px">Need More Features?</div><div class="label"><a href="%%DASHBOARD_URL%%" target="_blank" style="color:#8b5cf6;text-decoration:underline;font-weight:600">Upgrade to Pro</a></div></div>';
 html+='</div>';
 
 html+='<div class="retention-card">';

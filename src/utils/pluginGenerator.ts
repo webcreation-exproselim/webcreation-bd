@@ -1764,29 +1764,16 @@ ADMINJSTEMPLATE;
             return;
         }
         
+        // Mark as converted in dashboard (no orders table insert)
         $response = wp_remote_post($this->update_settings_url, array(
             'timeout' => 15,
             'headers' => array('Content-Type' => 'application/json'),
             'body' => json_encode(array(
                 'api_key' => $api_key,
                 'action' => 'convert_order',
-                'order_id' => $order_id,
-                'customer_name' => $customer_name,
-                'customer_phone' => $customer_phone,
-                'total_price' => $total_price,
-                'notes' => 'Converted from WordPress - WC Order #' . $wc_order_id
+                'order_id' => $order_id
             ))
         ));
-        
-        if (is_wp_error($response)) {
-            wp_send_json_success(array(
-                'message' => 'WooCommerce order created (dashboard sync pending)',
-                'wc_order_id' => $wc_order_id
-            ));
-            return;
-        }
-        
-        $body = json_decode(wp_remote_retrieve_body($response), true);
         
         wp_send_json_success(array(
             'message' => 'Order converted successfully',

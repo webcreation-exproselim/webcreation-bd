@@ -89,9 +89,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Convert incomplete order to real order
+    // Convert incomplete order - just mark as converted, no orders table insert
     if (action === 'convert_order') {
-      const { order_id, customer_name, customer_phone, customer_email, total_price, notes, services } = body;
+      const { order_id } = body;
 
       if (!order_id) {
         return new Response(
@@ -103,7 +103,7 @@ Deno.serve(async (req) => {
       // Verify the incomplete order belongs to this merchant
       const { data: incOrder, error: incError } = await supabase
         .from('incomplete_orders')
-        .select('*')
+        .select('id, is_converted')
         .eq('id', order_id)
         .eq('merchant_id', merchant.id)
         .single();
@@ -123,41 +123,7 @@ Deno.serve(async (req) => {
         );
       }
 
-      // Build services from cart items or use provided
-      const orderServices = services && services.length > 0 
-        ? services 
-        : (incOrder.cart_items && Array.isArray(incOrder.cart_items) && incOrder.cart_items.length > 0)
-          ? (incOrder.cart_items as any[]).map((item: any) => ({ name: item.name, price: item.price, quantity: item.quantity }))
-          : [{ name: 'Converted from incomplete order', price: total_price || incOrder.cart_total || 0, quantity: 1 }];
-
-      const finalName = customer_name || incOrder.customer_name || 'Unknown Customer';
-      const finalPhone = customer_phone || incOrder.phone_number;
-      const finalTotal = total_price || incOrder.cart_total || 0;
-
-      // Create real order
-      const { error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          customer_name: finalName,
-          customer_phone: finalPhone,
-          customer_email: customer_email || null,
-          payment_method: 'manual',
-          services: orderServices,
-          total_price: finalTotal,
-          total_savings: 0,
-          status: 'pending',
-          notes: notes || `Converted from incomplete order #${order_id.substring(0, 8)}`,
-        });
-
-      if (orderError) {
-        console.error('[update-merchant-settings] Order creation error:', orderError);
-        return new Response(
-          JSON.stringify({ success: false, error: 'Failed to create order: ' + orderError.message }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      // Mark incomplete order as converted
+      // Mark incomplete order as converted (no longer inserts into orders table)
       const { error: updateErr } = await supabase
         .from('incomplete_orders')
         .update({ is_converted: true })
@@ -165,12 +131,16 @@ Deno.serve(async (req) => {
 
       if (updateErr) {
         console.error('[update-merchant-settings] Mark converted error:', updateErr);
+        return new Response(
+          JSON.stringify({ success: false, error: 'Failed to update' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
 
-      console.log('[update-merchant-settings] Order converted successfully:', order_id);
+      console.log('[update-merchant-settings] Order marked as converted:', order_id);
 
       return new Response(
-        JSON.stringify({ success: true, message: 'Order converted successfully' }),
+        JSON.stringify({ success: true, message: 'Order marked as converted' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

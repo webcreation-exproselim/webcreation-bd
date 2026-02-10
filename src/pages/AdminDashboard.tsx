@@ -329,6 +329,7 @@ const AdminDashboard = () => {
     const { data, error } = await supabase
       .from("orders")
       .select("*")
+      .not("user_id", "is", null)
       .order("created_at", { ascending: false });
     
     if (!error && data) {

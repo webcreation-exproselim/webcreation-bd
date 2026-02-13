@@ -56,9 +56,10 @@ export function CourierCheckSubscriptionManagement() {
 
     try {
       const now = new Date();
-      const expiresAt = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
+      const daysToAdd = 365; // Yearly by default for courier check orders
+      const expiresAt = new Date(now.getTime() + daysToAdd * 24 * 60 * 60 * 1000);
 
-      // Activate subscription
+      // Activate courier check subscription
       const { error: subError } = await supabase
         .from('courier_check_subscriptions')
         .update({
@@ -71,6 +72,38 @@ export function CourierCheckSubscriptionManagement() {
         .eq('id', order.subscription_id);
 
       if (subError) throw subError;
+
+      // Also activate Fraud Guard merchant for the same user
+      const { data: existingMerchant } = await supabase
+        .from('merchants')
+        .select('id')
+        .eq('user_id', order.user_id)
+        .maybeSingle();
+
+      if (existingMerchant) {
+        await supabase
+          .from('merchants')
+          .update({
+            is_active: true,
+            current_plan: 'yearly',
+            plan_expires_at: expiresAt.toISOString(),
+            max_requests: 15000,
+            requests_used: 0,
+            updated_at: now.toISOString(),
+          })
+          .eq('id', existingMerchant.id);
+      } else {
+        await supabase
+          .from('merchants')
+          .insert({
+            user_id: order.user_id,
+            is_active: true,
+            current_plan: 'yearly',
+            plan_expires_at: expiresAt.toISOString(),
+            max_requests: 15000,
+            requests_used: 0,
+          });
+      }
 
       // Update order status
       const { error: orderError } = await supabase

@@ -7,8 +7,9 @@ export const COURIER_CHECK_PLUGIN_CONFIG = {
   badgeLabel: "UPDATE",
   versionHighlight: "RedX Support + Enhanced Dashboard",
   pricing: {
-    monthly: 249,
-    yearly: 499,
+    monthly: 399,
+    yearly: 999,
+    note: "WCBD Bundle (Fraud Guard + Courier Check)",
   },
   features: [
     "📊 Courier Delivery History Check",

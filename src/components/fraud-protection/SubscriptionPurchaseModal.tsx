@@ -46,7 +46,7 @@ export function SubscriptionPurchaseModal({
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
-  const amount = planType === 'monthly' ? 100 : 699;
+  const amount = planType === 'monthly' ? 399 : 999;
   const planLabel = planType === 'monthly' ? 'Monthly' : 'Yearly';
 
   useEffect(() => {

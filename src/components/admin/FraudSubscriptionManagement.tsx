@@ -67,8 +67,9 @@ export function FraudSubscriptionManagement() {
       
       // Max requests based on plan
       const maxRequests = order.plan_type === 'yearly' ? 15000 : 1000;
+      const courierMaxRequests = order.plan_type === 'yearly' ? 5000 : 500;
 
-      // Update merchant
+      // Update merchant (Fraud Guard)
       const { error: merchantError } = await supabase
         .from('merchants')
         .update({
@@ -82,6 +83,46 @@ export function FraudSubscriptionManagement() {
         .eq('id', order.merchant_id);
 
       if (merchantError) throw merchantError;
+
+      // Also activate Courier Check subscription for the same user
+      // First get the user_id from merchant
+      const { data: merchantData } = await supabase
+        .from('merchants')
+        .select('user_id')
+        .eq('id', order.merchant_id)
+        .single();
+
+      if (merchantData?.user_id) {
+        // Check if courier check subscription exists
+        const { data: existingSub } = await supabase
+          .from('courier_check_subscriptions')
+          .select('id')
+          .eq('user_id', merchantData.user_id)
+          .maybeSingle();
+
+        if (existingSub) {
+          await supabase
+            .from('courier_check_subscriptions')
+            .update({
+              is_active: true,
+              plan_expires_at: expiresAt.toISOString(),
+              max_requests: courierMaxRequests,
+              requests_used: 0,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', existingSub.id);
+        } else {
+          await supabase
+            .from('courier_check_subscriptions')
+            .insert({
+              user_id: merchantData.user_id,
+              is_active: true,
+              plan_expires_at: expiresAt.toISOString(),
+              max_requests: courierMaxRequests,
+              requests_used: 0,
+            });
+        }
+      }
 
       // Update order status
       const { error: orderError } = await supabase

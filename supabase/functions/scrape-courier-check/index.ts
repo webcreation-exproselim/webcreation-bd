@@ -5,9 +5,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-const FRAUDSHIELD_BASE = 'https://fraudshield.bd';
-
 Deno.serve(async (req) => {
+  // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -16,28 +15,34 @@ Deno.serve(async (req) => {
     const { phone, api_key } = await req.json();
 
     if (!phone || !api_key) {
+      console.log('[scrape-courier-check] Missing phone or api_key');
       return new Response(
         JSON.stringify({ success: false, error: 'Phone number and API key are required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Normalize BD phone number
+    // Validate BD phone number - handle +880, 880 prefixes
     let cleanPhone = phone.replace(/[^0-9]/g, '');
+    
+    // Strip country code: 8801XXXXXXXXX -> 01XXXXXXXXX
     if (cleanPhone.startsWith('880') && cleanPhone.length === 13) {
       cleanPhone = '0' + cleanPhone.substring(3);
     }
+    // Handle case where just 1XXXXXXXXX (10 digits, no leading 0)
     if (cleanPhone.startsWith('1') && cleanPhone.length === 10) {
       cleanPhone = '0' + cleanPhone;
     }
+    
     if (!/^01[0-9]{9}$/.test(cleanPhone)) {
+      console.log('[scrape-courier-check] Invalid phone format:', cleanPhone);
       return new Response(
         JSON.stringify({ success: false, error: 'Invalid Bangladesh phone number format' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Validate API key
+    // Validate API key against courier_check_subscriptions
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -49,6 +54,7 @@ Deno.serve(async (req) => {
       .single();
 
     if (subError || !subscription) {
+      console.log('[scrape-courier-check] Invalid API key:', api_key);
       return new Response(
         JSON.stringify({ success: false, error: 'Invalid API key' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -56,39 +62,47 @@ Deno.serve(async (req) => {
     }
 
     if (!subscription.is_active) {
+      console.log('[scrape-courier-check] Subscription not active for:', api_key);
       return new Response(
         JSON.stringify({ success: false, error: 'Subscription is not active' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
+    // Check expiration
     if (subscription.plan_expires_at && new Date(subscription.plan_expires_at) < new Date()) {
+      console.log('[scrape-courier-check] Subscription expired');
       return new Response(
         JSON.stringify({ success: false, error: 'Subscription has expired' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
+    // Check request limits
     if (subscription.requests_used >= subscription.max_requests) {
+      console.log('[scrape-courier-check] Request limit reached');
       return new Response(
         JSON.stringify({ success: false, error: 'Request limit reached' }),
         { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('[scrape] Scraping FraudShield for phone:', cleanPhone);
+    console.log('[scrape-courier-check] Scraping elitemart for phone:', cleanPhone);
 
-    // Step 1: GET the homepage to obtain CSRF token and session cookies
-    const getResponse = await fetch(FRAUDSHIELD_BASE + '/', {
+    // Step 1: GET the page to obtain CSRF token and session cookies
+    const pageUrl = 'https://elitemart.com.bd/fraud-check';
+    
+    const getResponse = await fetch(pageUrl, {
       method: 'GET',
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
       },
     });
 
     if (!getResponse.ok) {
-      console.error('[scrape] GET failed:', getResponse.status);
+      console.error('[scrape-courier-check] GET page failed with status:', getResponse.status);
       return new Response(
         JSON.stringify({ success: false, error: 'Failed to access courier check service' }),
         { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -96,60 +110,105 @@ Deno.serve(async (req) => {
     }
 
     const pageHtml = await getResponse.text();
-    const cookieString = extractCookies(getResponse);
-
-    // Extract CSRF token from Inertia data-page JSON
+    
+    // Extract CSRF token from meta tag or hidden input
     let csrfToken = '';
-    const dataPageMatch = pageHtml.match(/data-page="([^"]+)"/i);
-    if (dataPageMatch) {
-      try {
-        const decoded = dataPageMatch[1].replace(/&quot;/g, '"').replace(/&amp;/g, '&');
-        const pageData = JSON.parse(decoded);
-        csrfToken = pageData.props?.csrfToken || '';
-      } catch (_e) { /* ignore */ }
+    
+    // Try meta tag: <meta name="csrf-token" content="...">
+    const metaMatch = pageHtml.match(/<meta\s+name=["']csrf-token["']\s+content=["']([^"']+)["']/i);
+    if (metaMatch) {
+      csrfToken = metaMatch[1];
+      console.log('[scrape-courier-check] CSRF token found in meta tag');
     }
-    // Fallback to meta tag
+    
+    // Try hidden input: <input type="hidden" name="_token" value="...">
     if (!csrfToken) {
-      const metaMatch = pageHtml.match(/<meta\s+name=["']csrf-token["']\s+content=["']([^"']+)["']/i);
-      if (metaMatch) csrfToken = metaMatch[1];
+      const inputMatch = pageHtml.match(/<input[^>]*name=["']_token["'][^>]*value=["']([^"']+)["']/i);
+      if (inputMatch) {
+        csrfToken = inputMatch[1];
+        console.log('[scrape-courier-check] CSRF token found in hidden input');
+      }
     }
-
-    console.log('[scrape] CSRF:', csrfToken ? 'found' : 'not found');
-    console.log('[scrape] Cookies:', cookieString ? 'yes' : 'no');
-
-    // Step 2: Try multiple search approaches for the Inertia.js app
-    let resultData: any = null;
-
-    // Approach 1: Inertia.js POST request (most likely for this Laravel+Inertia app)
-    const inertiaEndpoints = ['/search', '/guest/search', '/customer/check', '/api/search', '/api/customer/check', '/check'];
-    for (const endpoint of inertiaEndpoints) {
-      if (resultData) break;
-      resultData = await tryInertiaPost(endpoint, cleanPhone, cookieString, csrfToken);
-    }
-
-    // Approach 2: Standard JSON API POST
-    if (!resultData) {
-      for (const endpoint of ['/api/search', '/api/check', '/api/customer/check', '/api/guest/search']) {
-        if (resultData) break;
-        resultData = await tryJsonApiPost(endpoint, cleanPhone, cookieString, csrfToken);
+    
+    // Also try reverse order: value before name
+    if (!csrfToken) {
+      const inputMatch2 = pageHtml.match(/<input[^>]*value=["']([^"']+)["'][^>]*name=["']_token["']/i);
+      if (inputMatch2) {
+        csrfToken = inputMatch2[1];
+        console.log('[scrape-courier-check] CSRF token found in hidden input (reverse)');
       }
     }
 
-    // Approach 3: Standard form POST
-    if (!resultData) {
-      for (const endpoint of ['/search', '/', '/check']) {
-        if (resultData) break;
-        resultData = await tryFormPost(endpoint, cleanPhone, cookieString, csrfToken);
-      }
+    if (!csrfToken) {
+      console.error('[scrape-courier-check] Could not find CSRF token in page HTML');
+      console.log('[scrape-courier-check] Page HTML snippet (first 2000 chars):', pageHtml.substring(0, 2000));
     }
 
-    if (!resultData) {
-      console.error('[scrape] All search methods failed');
+    // Extract cookies from GET response
+    const setCookieHeaders = getResponse.headers.getSetCookie ? getResponse.headers.getSetCookie() : [];
+    let cookieString = '';
+    
+    // Fallback: try to get set-cookie header directly
+    if (setCookieHeaders.length === 0) {
+      const rawCookie = getResponse.headers.get('set-cookie');
+      if (rawCookie) {
+        // Parse multiple cookies from single header
+        const cookieParts = rawCookie.split(/,(?=\s*[a-zA-Z_]+=)/);
+        cookieString = cookieParts.map(c => c.split(';')[0].trim()).join('; ');
+      }
+    } else {
+      cookieString = setCookieHeaders.map(c => c.split(';')[0]).join('; ');
+    }
+
+    console.log('[scrape-courier-check] Cookies obtained:', cookieString ? 'yes' : 'no');
+    console.log('[scrape-courier-check] CSRF token:', csrfToken ? 'found' : 'not found');
+
+    // Step 2: POST with CSRF token and cookies
+    const postHeaders: Record<string, string> = {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+      'Accept-Language': 'en-US,en;q=0.5',
+      'Referer': pageUrl,
+      'Origin': 'https://elitemart.com.bd',
+    };
+
+    if (cookieString) {
+      postHeaders['Cookie'] = cookieString;
+    }
+
+    // Build POST body with CSRF token
+    let postBody = `phone=${cleanPhone}`;
+    if (csrfToken) {
+      postBody = `_token=${encodeURIComponent(csrfToken)}&phone=${cleanPhone}`;
+    }
+
+    console.log('[scrape-courier-check] Sending POST with body:', postBody.substring(0, 100));
+
+    const scrapeResponse = await fetch(pageUrl, {
+      method: 'POST',
+      headers: postHeaders,
+      body: postBody,
+      redirect: 'follow',
+    });
+
+    console.log('[scrape-courier-check] POST response status:', scrapeResponse.status);
+
+    if (!scrapeResponse.ok) {
+      const errorBody = await scrapeResponse.text();
+      console.error('[scrape-courier-check] Scrape failed with status:', scrapeResponse.status);
+      console.error('[scrape-courier-check] Error body snippet:', errorBody.substring(0, 500));
       return new Response(
         JSON.stringify({ success: false, error: 'Failed to fetch courier data. Please try again.' }),
         { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    const html = await scrapeResponse.text();
+    console.log('[scrape-courier-check] HTML received, length:', html.length);
+
+    // Parse HTML response
+    const result = parseElitemartHTML(html, cleanPhone);
 
     // Increment requests_used
     await supabase
@@ -160,14 +219,14 @@ Deno.serve(async (req) => {
       })
       .eq('id', subscription.id);
 
-    console.log('[scrape] Success:', JSON.stringify(resultData));
+    console.log('[scrape-courier-check] Success for phone:', cleanPhone, 'Result:', JSON.stringify(result));
 
     return new Response(
-      JSON.stringify({ success: true, data: resultData }),
+      JSON.stringify({ success: true, data: result }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('[scrape] Error:', error);
+    console.error('[scrape-courier-check] Error:', error);
     return new Response(
       JSON.stringify({ success: false, error: 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -175,215 +234,98 @@ Deno.serve(async (req) => {
   }
 });
 
-// ─── Helper Functions ────────────────────────────────────────
-
-function extractCookies(response: Response): string {
-  const setCookieHeaders = response.headers.getSetCookie ? response.headers.getSetCookie() : [];
-  if (setCookieHeaders.length > 0) {
-    return setCookieHeaders.map(c => c.split(';')[0]).join('; ');
-  }
-  const rawCookie = response.headers.get('set-cookie');
-  if (rawCookie) {
-    const parts = rawCookie.split(/,(?=\s*[a-zA-Z_]+=)/);
-    return parts.map(c => c.split(';')[0].trim()).join('; ');
-  }
-  return '';
-}
-
-async function tryInertiaPost(endpoint: string, phone: string, cookies: string, csrfToken: string) {
-  try {
-    const url = FRAUDSHIELD_BASE + endpoint;
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-      'Accept': 'text/html, application/xhtml+xml',
-      'X-Inertia': 'true',
-      'X-Inertia-Version': '',
-      'X-Requested-With': 'XMLHttpRequest',
-      'Referer': FRAUDSHIELD_BASE + '/',
-      'Origin': FRAUDSHIELD_BASE,
-    };
-    if (csrfToken) headers['X-CSRF-TOKEN'] = csrfToken;
-    if (cookies) headers['Cookie'] = cookies;
-
-    const response = await fetch(url, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ phone }),
-    });
-
-    console.log('[scrape] Inertia POST', endpoint, 'status:', response.status);
-    const text = await response.text();
-
-    if (response.ok && text.length > 50) {
-      return parseResponse(text, phone);
-    }
-    if (response.status === 302 || response.status === 303) {
-      // Follow redirect for Inertia
-      const location = response.headers.get('location');
-      if (location) {
-        console.log('[scrape] Following redirect to:', location);
-      }
-    }
-  } catch (e) {
-    console.log('[scrape] Inertia', endpoint, 'error:', e);
-  }
-  return null;
-}
-
-async function tryJsonApiPost(endpoint: string, phone: string, cookies: string, csrfToken: string) {
-  try {
-    const url = FRAUDSHIELD_BASE + endpoint;
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-      'Accept': 'application/json',
-      'X-Requested-With': 'XMLHttpRequest',
-      'Referer': FRAUDSHIELD_BASE + '/',
-      'Origin': FRAUDSHIELD_BASE,
-    };
-    if (csrfToken) headers['X-CSRF-TOKEN'] = csrfToken;
-    if (cookies) headers['Cookie'] = cookies;
-
-    const response = await fetch(url, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ phone }),
-    });
-
-    console.log('[scrape] JSON API', endpoint, 'status:', response.status);
-    const text = await response.text();
-
-    if (response.ok && text.length > 10) {
-      return parseResponse(text, phone);
-    }
-  } catch (e) {
-    console.log('[scrape] JSON API', endpoint, 'error:', e);
-  }
-  return null;
-}
-
-async function tryFormPost(endpoint: string, phone: string, cookies: string, csrfToken: string) {
-  try {
-    const url = FRAUDSHIELD_BASE + endpoint;
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-      'Referer': FRAUDSHIELD_BASE + '/',
-      'Origin': FRAUDSHIELD_BASE,
-    };
-    if (cookies) headers['Cookie'] = cookies;
-
-    let body = `phone=${encodeURIComponent(phone)}`;
-    if (csrfToken) body = `_token=${encodeURIComponent(csrfToken)}&${body}`;
-
-    const response = await fetch(url, {
-      method: 'POST',
-      headers,
-      body,
-      redirect: 'follow',
-    });
-
-    console.log('[scrape] Form POST', endpoint, 'status:', response.status);
-    const text = await response.text();
-
-    if (response.ok && text.length > 50) {
-      return parseResponse(text, phone);
-    }
-  } catch (e) {
-    console.log('[scrape] Form POST', endpoint, 'error:', e);
-  }
-  return null;
-}
-
-function parseResponse(text: string, phone: string) {
-  // Try JSON first
-  try {
-    const json = JSON.parse(text);
-
-    // Inertia.js response format: { component: "...", props: { ... } }
-    if (json.component && json.props) {
-      console.log('[scrape] Got Inertia response, component:', json.component);
-      return parseInertiaProps(json.props, phone);
-    }
-
-    // Direct API JSON response
-    if (json.data || json.results || json.couriers || json.customer) {
-      return parseJsonResponse(json, phone);
-    }
-
-    // If we got JSON but no recognizable structure, log it
-    console.log('[scrape] Unknown JSON structure, keys:', Object.keys(json));
-    return null;
-  } catch (_e) {
-    // Not JSON — parse as HTML
-  }
-
-  // HTML parsing
-  return parseHtml(text, phone);
-}
-
-function parseInertiaProps(props: any, phone: string) {
-  // Look for search results in props
-  const data = props.results || props.searchResults || props.customer || props.data || props;
-
-  if (data.couriers || data.courier_history) {
-    const courierData = data.couriers || data.courier_history || [];
-    return buildResult(phone, courierData, data);
-  }
-
-  // Try extracting from nested structure
-  for (const key of Object.keys(data)) {
-    const val = data[key];
-    if (val && typeof val === 'object' && (val.couriers || val.total_orders || val.success_rate !== undefined)) {
-      return buildResult(phone, val.couriers || val.courier_history || [], val);
-    }
-  }
-
-  console.log('[scrape] Could not extract data from Inertia props, keys:', Object.keys(data));
-  return null;
-}
-
-function parseJsonResponse(json: any, phone: string) {
-  const data = json.data || json.results || json;
-  const courierData = data.couriers || data.courier_history || [];
-  return buildResult(phone, courierData, data);
-}
-
-function buildResult(phone: string, courierRaw: any[], data: any) {
-  const couriers: { name: string; orders: number; delivered: number; returned: number; rate: number }[] = [];
+function parseElitemartHTML(html: string, phone: string) {
+  // Extract total orders, delivered, returned from courier table data
   let totalOrders = 0;
   let totalDelivered = 0;
   let totalReturned = 0;
 
-  if (Array.isArray(courierRaw)) {
-    for (const c of courierRaw) {
-      const name = normalizeCourierName(c.name || c.courier || c.courier_name || '');
-      const orders = parseInt(c.orders || c.total || c.total_parcels || c.count || 0, 10);
-      const delivered = parseInt(c.delivered || c.successful || c.successful_deliveries || c.success || 0, 10);
-      const returned = parseInt(c.returned || c.failed || c.return || c.cancelled || 0, 10) || (orders - delivered);
-      const rate = orders > 0 ? Math.round((delivered / orders) * 1000) / 10 : 0;
-
-      if (name) {
-        couriers.push({ name, orders, delivered, returned, rate });
-        totalOrders += orders;
-        totalDelivered += delivered;
-        totalReturned += returned;
+  // Extract courier breakdown from .courier_table tbody tr FIRST
+  // so we can calculate totals from courier data (most reliable)
+  const couriers: { name: string; orders: number; delivered: number; returned: number; rate: number }[] = [];
+  
+  const tableMatch = html.match(/<table[^>]*class=["'][^"']*courier_table[^"']*["'][^>]*>([\s\S]*?)<\/table>/i);
+  if (tableMatch) {
+    const tbodyMatch = tableMatch[1].match(/<tbody[^>]*>([\s\S]*?)<\/tbody>/i);
+    if (tbodyMatch) {
+      const rows = tbodyMatch[1].match(/<tr[^>]*>([\s\S]*?)<\/tr>/gi);
+      if (rows) {
+        for (const row of rows) {
+          const cells = row.match(/<td[^>]*>([\s\S]*?)<\/td>/gi);
+          if (cells && cells.length >= 5) {
+            const cellValues = cells.map(c => {
+              const text = c.replace(/<[^>]*>/g, '').trim();
+              return text;
+            });
+            const courierOrders = parseInt(cellValues[1], 10) || 0;
+            const courierDelivered = parseInt(cellValues[2], 10) || 0;
+            const courierReturned = parseInt(cellValues[3], 10) || 0;
+            const courierRate = parseFloat(cellValues[4]) || 0;
+            
+            couriers.push({
+              name: cellValues[0],
+              orders: courierOrders,
+              delivered: courierDelivered,
+              returned: courierReturned,
+              rate: courierRate,
+            });
+            
+            totalOrders += courierOrders;
+            totalDelivered += courierDelivered;
+            totalReturned += courierReturned;
+          }
+        }
       }
     }
   }
 
-  // Use provided totals if available
-  if (data.total_orders) totalOrders = parseInt(data.total_orders, 10) || totalOrders;
-  if (data.total_delivered) totalDelivered = parseInt(data.total_delivered, 10) || totalDelivered;
-  if (data.total_returned) totalReturned = parseInt(data.total_returned, 10) || totalReturned;
+  // Fallback: try grid stats if courier table gave 0
+  if (totalOrders === 0) {
+    // Look for bold numbers in the stats grid (text-info, text-success, text-danger)
+    const allInfoMatches = [...html.matchAll(/text-info[^>]*>(\d+)</gi)];
+    const allSuccessMatches = [...html.matchAll(/text-success[^>]*>(\d+)</gi)];
+    const allDangerMatches = [...html.matchAll(/text-danger[^>]*>(\d+)</gi)];
+    
+    if (allInfoMatches.length > 0) totalOrders = parseInt(allInfoMatches[0][1], 10);
+    if (allSuccessMatches.length > 0) totalDelivered = parseInt(allSuccessMatches[0][1], 10);
+    if (allDangerMatches.length > 0) totalReturned = parseInt(allDangerMatches[0][1], 10);
+  }
 
-  const successRate = data.success_rate !== undefined
-    ? Math.round(parseFloat(data.success_rate))
-    : (totalOrders > 0 ? Math.round((totalDelivered / totalOrders) * 100) : 0);
+  // Calculate success rate from actual data
+  let successRate = 0;
+  if (totalOrders > 0) {
+    successRate = Math.round((totalDelivered / totalOrders) * 100);
+  }
+  
+  // Also try to extract from HTML as backup
+  if (successRate === 0 && totalOrders > 0) {
+    const progressMatch = html.match(/data-percentage=["'](\d+)%?["']/i);
+    if (progressMatch) {
+      const parsed = parseInt(progressMatch[1], 10);
+      if (parsed > 0) successRate = parsed;
+    }
+  }
 
-  let riskLabel = data.risk_label || data.risk || 'new_customer';
+  // Extract risk label from #risk-container
+  let riskLabel = 'new_customer';
+  let riskMessage = '';
+  const riskMatch = html.match(/id=["']risk-container["'][^>]*>([\s\S]*?)<\/div>\s*<\/div>/i);
+  if (riskMatch) {
+    const riskText = riskMatch[1].replace(/<[^>]*>/g, '').trim().toLowerCase();
+    riskMessage = riskMatch[1].replace(/<[^>]*>/g, '').trim();
+    
+    if (riskText.includes('trusted') || riskText.includes('বিশ্বস্ত') || riskText.includes('reliable')) {
+      riskLabel = 'trusted';
+    } else if (riskText.includes('moderate') || riskText.includes('মাঝারি') || riskText.includes('warning')) {
+      riskLabel = 'moderate';
+    } else if (riskText.includes('risky') || riskText.includes('ঝুঁকি') || riskText.includes('risk') || riskText.includes('suspicious') || riskText.includes('নিম্ন')) {
+      riskLabel = 'risky';
+    } else if (riskText.includes('new') || riskText.includes('নতুন')) {
+      riskLabel = 'new_customer';
+    }
+  }
+
+  // Determine risk from success rate if label not found from HTML
   if (riskLabel === 'new_customer' && totalOrders > 0) {
     if (successRate >= 80) riskLabel = 'trusted';
     else if (successRate >= 50) riskLabel = 'moderate';
@@ -397,77 +339,7 @@ function buildResult(phone: string, courierRaw: any[], data: any) {
     total_delivered: totalDelivered,
     total_returned: totalReturned,
     risk_label: riskLabel,
-    risk_message: data.risk_message || '',
+    risk_message: riskMessage,
     couriers,
   };
-}
-
-function parseHtml(html: string, phone: string) {
-  // Check for Inertia data-page in HTML
-  const dataPageMatch = html.match(/data-page="([^"]+)"/i);
-  if (dataPageMatch) {
-    try {
-      const decoded = dataPageMatch[1].replace(/&quot;/g, '"').replace(/&amp;/g, '&');
-      const pageData = JSON.parse(decoded);
-      if (pageData.props) {
-        const result = parseInertiaProps(pageData.props, phone);
-        if (result && result.total_orders > 0) return result;
-      }
-    } catch (_e) { /* ignore */ }
-  }
-
-  // Standard HTML table parsing
-  const couriers: { name: string; orders: number; delivered: number; returned: number; rate: number }[] = [];
-  let totalOrders = 0;
-  let totalDelivered = 0;
-  let totalReturned = 0;
-
-  const tables = html.match(/<table[^>]*>([\s\S]*?)<\/table>/gi);
-  if (tables) {
-    for (const table of tables) {
-      const rows = table.match(/<tr[^>]*>([\s\S]*?)<\/tr>/gi);
-      if (rows) {
-        for (const row of rows) {
-          if (row.includes('<th')) continue;
-          const cells = row.match(/<td[^>]*>([\s\S]*?)<\/td>/gi);
-          if (cells && cells.length >= 3) {
-            const values = cells.map(c => c.replace(/<[^>]*>/g, '').trim());
-            const name = normalizeCourierName(values[0]);
-            if (name) {
-              const orders = parseInt(values[1], 10) || 0;
-              const delivered = parseInt(values[2], 10) || 0;
-              const returned = cells.length >= 4 ? (parseInt(values[3], 10) || 0) : (orders - delivered);
-              const rate = orders > 0 ? Math.round((delivered / orders) * 1000) / 10 : 0;
-              couriers.push({ name, orders, delivered, returned, rate });
-              totalOrders += orders;
-              totalDelivered += delivered;
-              totalReturned += returned;
-            }
-          }
-        }
-      }
-    }
-  }
-
-  if (totalOrders === 0) return null;
-
-  const successRate = totalOrders > 0 ? Math.round((totalDelivered / totalOrders) * 100) : 0;
-  let riskLabel = 'new_customer';
-  if (totalOrders > 0) {
-    if (successRate >= 80) riskLabel = 'trusted';
-    else if (successRate >= 50) riskLabel = 'moderate';
-    else riskLabel = 'risky';
-  }
-
-  return { phone, success_rate: successRate, total_orders: totalOrders, total_delivered: totalDelivered, total_returned: totalReturned, risk_label: riskLabel, risk_message: '', couriers };
-}
-
-function normalizeCourierName(raw: string): string {
-  const lower = (raw || '').toLowerCase().trim();
-  if (lower.includes('steadfast')) return 'Steadfast';
-  if (lower.includes('pathao')) return 'Pathao';
-  if (lower.includes('redx') || lower.includes('red x')) return 'RedX';
-  if (lower.includes('carrybee') || lower.includes('carry bee')) return 'CarryBee';
-  if (lower.length > 0 && lower.length < 30) return raw.trim();
-  return '';
 }

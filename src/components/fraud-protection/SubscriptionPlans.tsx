@@ -1,4 +1,4 @@
-import { Clock, Zap, CheckCircle, Shield, Sparkles } from "lucide-react";
+import { Clock, Zap, CheckCircle, Shield, Sparkles, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -11,7 +11,8 @@ export function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansProps) {
 
   const features = {
     monthly: [
-      { text: "1,000 API requests", highlight: false },
+      { text: "🛡️ Fraud Guard — 1,000 API requests", highlight: false },
+      { text: "🔍 Courier Check — 500 API requests", highlight: false },
       { text: "Unlimited blacklist", highlight: false },
       { text: "Real-time logs", highlight: false },
       { text: "Incomplete Order Tracking", highlight: false },
@@ -19,10 +20,14 @@ export function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansProps) {
       { text: "Order Conversion", highlight: false },
       { text: "Cooldown Control (WP)", highlight: false },
       { text: "Smart Risk Detection", highlight: false },
+      { text: "Steadfast, Pathao, RedX সাপোর্ট", highlight: false },
+      { text: "WooCommerce Plugin Access (Both)", highlight: false },
+      { text: "Domain-locked License", highlight: false },
       { text: "Standard support", highlight: false },
     ],
     yearly: [
-      { text: "15,000 API requests", highlight: true },
+      { text: "🛡️ Fraud Guard — 15,000 API requests", highlight: true },
+      { text: "🔍 Courier Check — 5,000 API requests", highlight: true },
       { text: "Unlimited blacklist", highlight: false },
       { text: "Real-time logs", highlight: false },
       { text: "Incomplete Order Tracking", highlight: false },
@@ -30,8 +35,11 @@ export function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansProps) {
       { text: "Order Conversion", highlight: false },
       { text: "Cooldown Control (WP)", highlight: false },
       { text: "Smart Risk Detection", highlight: false },
+      { text: "Steadfast, Pathao, RedX সাপোর্ট", highlight: false },
+      { text: "WooCommerce Plugin Access (Both)", highlight: false },
+      { text: "Domain-locked License", highlight: false },
       { text: "Priority support", highlight: true },
-      { text: "42% savings", highlight: true },
+      { text: "79% savings", highlight: true },
     ]
   };
 
@@ -39,19 +47,27 @@ export function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansProps) {
     <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'md:grid-cols-2'}`}>
       {/* Monthly Plan */}
       <div className="group relative bg-gradient-to-br from-slate-50 to-gray-100 border-2 border-gray-200 rounded-3xl p-5 sm:p-6 transition-all duration-300 hover:border-blue-300 hover:shadow-lg hover:shadow-blue-100/50">
+        {/* Bundle Badge */}
+        <div className="absolute -top-3 left-4">
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-xs font-bold shadow-lg">
+            <Package className="w-3 h-3" />
+            <span>BUNDLE</span>
+          </div>
+        </div>
+
         {/* Icon */}
-        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-gray-600 to-gray-800 flex items-center justify-center mb-4 shadow-lg shadow-gray-300/50">
+        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-gray-600 to-gray-800 flex items-center justify-center mb-4 mt-2 shadow-lg shadow-gray-300/50">
           <Clock className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
         </div>
         
         {/* Title */}
         <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-1">Monthly Plan</h3>
-        <p className="text-gray-500 text-sm font-bengali mb-4">নতুনদের জন্য আদর্শ</p>
+        <p className="text-gray-500 text-sm font-bengali mb-4">Fraud Guard + Courier Check একসাথে</p>
         
         {/* Price */}
         <div className="mb-5">
           <div className="flex items-baseline gap-1">
-            <span className="text-3xl sm:text-4xl font-bold text-gray-900">৳১০০</span>
+            <span className="text-3xl sm:text-4xl font-bold text-gray-900">৳৩৯৯</span>
             <span className="text-gray-500 text-sm">/মাস</span>
           </div>
         </div>
@@ -93,18 +109,18 @@ export function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansProps) {
         
         {/* Title */}
         <h3 className="text-lg sm:text-xl font-bold text-white mb-1">Yearly Plan</h3>
-        <p className="text-white/70 text-sm font-bengali mb-4">সাশ্রয়ী এবং সেরা মূল্য</p>
+        <p className="text-white/70 text-sm font-bengali mb-4">Fraud Guard + Courier Check একসাথে</p>
         
         {/* Price */}
         <div className="mb-5">
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl sm:text-4xl font-bold text-white">৳৬৯৯</span>
+            <span className="text-3xl sm:text-4xl font-bold text-white">৳৯৯৯</span>
             <span className="text-white/70 text-sm">/বছর</span>
           </div>
           <div className="flex items-center gap-2 mt-1">
-            <span className="text-sm text-white/50 line-through">৳১,২০০</span>
+            <span className="text-sm text-white/50 line-through">৳৪,৭৮৮</span>
             <span className="px-2 py-0.5 rounded-full bg-emerald-500/30 text-emerald-300 text-xs font-semibold">
-              42% সেভ
+              79% সেভ
             </span>
           </div>
         </div>

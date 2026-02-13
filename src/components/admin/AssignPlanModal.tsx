@@ -138,21 +138,14 @@ export function AssignPlanModal({ open, onOpenChange, onSuccess }: AssignPlanMod
 
       if (checkError) throw checkError;
       
-      console.log('Merchant check result:', existingMerchant);
-      
       if (existingMerchant && existingMerchant.id) {
-        // Update existing merchant
-        console.log('Updating existing merchant:', existingMerchant.id);
         const { error: updateError } = await supabase
           .from('merchants')
           .update(planData)
           .eq('id', existingMerchant.id);
 
         if (updateError) throw updateError;
-        console.log('Merchant updated successfully');
       } else {
-        // Create new merchant
-        console.log('Creating new merchant for user:', selectedUser.user_id);
         const { error: insertError } = await supabase
           .from('merchants')
           .insert({
@@ -161,7 +154,38 @@ export function AssignPlanModal({ open, onOpenChange, onSuccess }: AssignPlanMod
           });
 
         if (insertError) throw insertError;
-        console.log('Merchant created successfully');
+      }
+
+      // Also activate Courier Check subscription
+      const courierMaxRequests = planType === 'yearly' ? 5000 : 500;
+      const { data: existingCCSub } = await supabase
+        .from('courier_check_subscriptions')
+        .select('id')
+        .eq('user_id', selectedUser.user_id)
+        .maybeSingle();
+
+      if (existingCCSub) {
+        await supabase
+          .from('courier_check_subscriptions')
+          .update({
+            is_active: true,
+            plan_expires_at: expiresAt.toISOString(),
+            max_requests: courierMaxRequests,
+            requests_used: 0,
+            website_url: normalizedUrl,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', existingCCSub.id);
+      } else {
+        await supabase
+          .from('courier_check_subscriptions')
+          .insert({
+            user_id: selectedUser.user_id,
+            is_active: true,
+            plan_expires_at: expiresAt.toISOString(),
+            max_requests: courierMaxRequests,
+            website_url: normalizedUrl,
+          });
       }
 
       toast({
@@ -282,8 +306,8 @@ export function AssignPlanModal({ open, onOpenChange, onSuccess }: AssignPlanMod
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="monthly">📅 Monthly - ৳100 (1,000 requests, 30 days)</SelectItem>
-                <SelectItem value="yearly">📆 Yearly - ৳699 (15,000 requests, 365 days)</SelectItem>
+                <SelectItem value="monthly">📅 Monthly - ৳399 (1,000 FG + 500 CC requests, 30 days)</SelectItem>
+                <SelectItem value="yearly">📆 Yearly - ৳999 (15,000 FG + 5,000 CC requests, 365 days)</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -301,7 +325,7 @@ export function AssignPlanModal({ open, onOpenChange, onSuccess }: AssignPlanMod
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
               <p className="text-sm text-blue-800 font-bengali">
                 <strong>{selectedUser.full_name || 'User'}</strong> কে{' '}
-                <strong>{planType === 'yearly' ? 'Yearly (৳699)' : 'Monthly (৳100)'}</strong>{' '}
+                <strong>{planType === 'yearly' ? 'Yearly (৳999)' : 'Monthly (৳399)'}</strong>{' '}
                 plan assign করা হবে।
                 {websiteUrl.trim() && (
                   <span className="block mt-1 text-xs text-blue-600">

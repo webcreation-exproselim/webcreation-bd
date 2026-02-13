@@ -1,4 +1,4 @@
-// Centralized Plugin Configuration
+// Centralized Plugin Configuration (WCBD Bundle: Fraud Guard + Courier Check)
 // Update ONLY this file when releasing new plugin versions
 // All components will automatically use these values
 

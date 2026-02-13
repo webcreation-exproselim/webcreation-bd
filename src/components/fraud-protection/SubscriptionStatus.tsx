@@ -206,7 +206,7 @@ export function SubscriptionStatus({ merchant, pendingOrder, onPurchaseSuccess }
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-amber-800 font-bengali">Yearly Plan এ Upgrade করুন!</p>
-              <p className="text-xs text-amber-600">৳৬৯৯/বছর — <span className="font-bold">42% সেভ</span> করুন</p>
+              <p className="text-xs text-amber-600">৳৯৯৯/বছর — <span className="font-bold">79% সেভ</span> করুন</p>
             </div>
             <ArrowRight className="w-4 h-4 text-amber-500 flex-shrink-0" />
           </div>

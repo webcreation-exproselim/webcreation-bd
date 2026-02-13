@@ -236,7 +236,7 @@ export function FraudGuardQuickStatus({
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-[shimmer_2s_infinite] -skew-x-12" />
                   <Zap className="w-4 h-4 relative z-10" />
                   <span className="relative z-10">Yearly তে Upgrade করুন</span>
-                  <span className="relative z-10 bg-white/20 text-xs px-1.5 py-0.5 rounded-full">42% OFF</span>
+                  <span className="relative z-10 bg-white/20 text-xs px-1.5 py-0.5 rounded-full">79% OFF</span>
                 </Button>
               </motion.div>
             )}

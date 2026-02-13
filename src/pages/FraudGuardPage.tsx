@@ -95,7 +95,8 @@ const features = [
 ];
 
 const monthlyFeatures = [
-  "1,000 API requests",
+  "🛡️ Fraud Guard — 1,000 API requests",
+  "🔍 Courier Check — 500 API requests",
   "Unlimited blacklist entries",
   "Real-time fraud logs",
   "Incomplete Order Tracking",
@@ -103,12 +104,14 @@ const monthlyFeatures = [
   "Order Conversion",
   "Cooldown Control (WordPress)",
   "Smart Risk Detection",
-  "Plugin access",
+  "Steadfast, Pathao, RedX Support",
+  "Both Plugins Access",
   "Standard support",
 ];
 
 const yearlyFeatures = [
-  "15,000 API requests",
+  "🛡️ Fraud Guard — 15,000 API requests",
+  "🔍 Courier Check — 5,000 API requests",
   "Unlimited blacklist entries",
   "Real-time fraud logs",
   "Incomplete Order Tracking",
@@ -116,9 +119,10 @@ const yearlyFeatures = [
   "Order Conversion",
   "Cooldown Control (WordPress)",
   "Smart Risk Detection",
-  "Plugin access",
+  "Steadfast, Pathao, RedX Support",
+  "Both Plugins Access",
   "Priority support",
-  "42% savings",
+  "79% savings",
 ];
 
 const steps = [
@@ -214,7 +218,7 @@ export default function FraudGuardPage() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
               <Link to="/auth">
                 <Button size="lg" className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white px-10 py-7 text-lg font-bengali rounded-2xl shadow-2xl shadow-cyan-500/30 font-bold">
-                  শুরু করুন — ৳১০০/মাস
+                  শুরু করুন — ৳৩৯৯/মাস
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </Link>
@@ -339,7 +343,7 @@ export default function FraudGuardPage() {
                 </div>
                 
                 <div className="mb-8">
-                <span className="text-5xl font-bold text-white">৳১০০</span>
+                <span className="text-5xl font-bold text-white">৳৩৯৯</span>
                 <span className="text-white/40 text-lg">/মাস</span>
                 </div>
                 
@@ -391,13 +395,13 @@ export default function FraudGuardPage() {
                 </div>
                 
                 <div className="mb-2">
-                <span className="text-5xl font-bold text-white">৳৬৯৯</span>
+                <span className="text-5xl font-bold text-white">৳৯৯৯</span>
                 <span className="text-white/40 text-lg">/বছর</span>
                 </div>
                 <div className="flex items-center gap-3 mb-8">
-                  <span className="text-sm text-white/30 line-through">৳১,২০০/বছর</span>
+                  <span className="text-sm text-white/30 line-through">৳৪,৭৮৮/বছর</span>
                   <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-bold border border-emerald-500/30">
-                    42% সেভ
+                    79% সেভ
                   </span>
                 </div>
                 
@@ -588,11 +592,12 @@ export default function FraudGuardPage() {
                 <span className="text-white font-bold text-lg">Monthly</span>
               </div>
               <div className="mb-4">
-                <span className="text-4xl font-bold text-white">৳২৪৯</span>
+                <span className="text-4xl font-bold text-white">৳৩৯৯</span>
                 <span className="text-white/40">/মাস</span>
               </div>
+              <p className="text-white/50 text-xs mb-3 font-bengali">Bundle এ অন্তর্ভুক্ত — Fraud Guard + Courier Check</p>
               <ul className="space-y-2 mb-6">
-                {["500 API requests", "WooCommerce Plugin", "All Courier Support", "Domain-locked License"].map((f, i) => (
+                {["500 Courier Check API", "WooCommerce Plugin", "All Courier Support", "Domain-locked License"].map((f, i) => (
                   <li key={i} className="flex items-center gap-2 text-white/60 text-sm">
                     <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
                     <span>{f}</span>
@@ -631,15 +636,16 @@ export default function FraudGuardPage() {
                   <span className="text-white font-bold text-lg">Yearly</span>
                 </div>
                 <div className="mb-1">
-                  <span className="text-4xl font-bold text-white">৳৪৯৯</span>
+                  <span className="text-4xl font-bold text-white">৳৯৯৯</span>
                   <span className="text-white/40">/বছর</span>
                 </div>
                 <div className="flex items-center gap-2 mb-4">
-                  <span className="text-sm text-white/30 line-through">৳২,৯৮৮</span>
-                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-bold">83% সেভ</span>
+                  <span className="text-sm text-white/30 line-through">৳৪,৭৮৮</span>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-bold">79% সেভ</span>
                 </div>
+                <p className="text-white/50 text-xs mb-3 font-bengali">Bundle এ অন্তর্ভুক্ত — Fraud Guard + Courier Check</p>
                 <ul className="space-y-2 mb-6">
-                  {["5,000 API requests", "WooCommerce Plugin", "All Courier Support", "Domain-locked License", "Priority support"].map((f, i) => (
+                  {["5,000 Courier Check API", "WooCommerce Plugin", "All Courier Support", "Domain-locked License", "Priority support"].map((f, i) => (
                     <li key={i} className="flex items-center gap-2 text-white/70 text-sm">
                       <CheckCircle className="w-4 h-4 text-cyan-400 shrink-0" />
                       <span>{f}</span>
@@ -680,7 +686,7 @@ export default function FraudGuardPage() {
                 আজই আপনার স্টোর সুরক্ষিত করুন
               </h2>
               <p className="text-white/70 mb-8 max-w-lg mx-auto text-lg">
-                মাত্র ৳১০০/মাস থেকে শুরু করুন — সব features পান
+                মাত্র ৳৩৯৯/মাস থেকে শুরু করুন — Fraud Guard + Courier Check একসাথে
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link to="/auth">

@@ -1,82 +1,93 @@
 
+## FraudShield API Integration Plan
 
-# Fraud Guard + Courier Check একত্রিত Plan
+### লক্ষ্য
+বর্তমান courier check system কে FraudShield API দিয়ে রিপ্লেস করা যেখানে Steadfast, Pathao, RedX, CarryBee — সব ৪টি courier সাপোর্ট থাকবে এবং ডেটা refresh দ্রুত হবে।
 
-## লক্ষ্য
-দুটি আলাদা সার্ভিস (Fraud Guard এবং Courier Check) এর আলাদা pricing plan থাকবে না। একটি unified "WCBD Bundle" plan হবে যেখানে দুটো সার্ভিস একসাথে পাওয়া যাবে।
+### যা পরিবর্তন হবে
 
-## নতুন Pricing
-- **Monthly**: ৳৩৯৯/মাস
-- **Yearly**: ৳৯৯৯/বছর
+#### 1. FraudShield API Credentials Setup
+- FraudShield.bd এর কাছ থেকে API key নেওয়া দরকার
+- Edge function এ secrets হিসেবে সেভ করা হবে
+- Dashboard → Settings → Secrets এ `FRAUDSHIELD_API_KEY` যোগ করা হবে
 
-## যা পরিবর্তন হবে
+#### 2. Edge Function আপডেট (`scrape-courier-check`)
+বর্তমান `supabase/functions/scrape-courier-check/index.ts` এ যা আছে:
+- **Old Logic**: elitemart.com.bd এ POST করে HTML parse করা
+- **New Logic**: FraudShield API এ POST করে JSON response নেওয়া
 
-### 1. Unified Plan Component তৈরি
-`SubscriptionPlans.tsx` আপডেট করা হবে যেখানে দুটো সার্ভিসের features একসাথে দেখাবে:
+```typescript
+// FraudShield API request format (estimated)
+POST https://fraudshield.bd/api/check
+{
+  "phone": "01XXXXXXXXX",
+  "api_key": "..."
+}
 
-**Monthly (৳৩৯৯) features:**
-- Fraud Guard: 1,000 API requests, Unlimited blacklist, Real-time logs, Incomplete Order Tracking, Cart Tracking, Order Conversion, Cooldown Control, Smart Risk Detection
-- Courier Check: 500 API requests, Real-time Courier Data, Steadfast/Pathao/RedX Support
-- WooCommerce Plugin Access (both plugins)
-- Domain-locked License
-- Standard support
+// Response structure (estimated)
+{
+  "success": true,
+  "data": {
+    "phone": "01XXXXXXXXX",
+    "success_rate": 85,
+    "total_orders": 120,
+    "total_delivered": 102,
+    "total_returned": 18,
+    "risk_label": "trusted|moderate|risky|new_customer",
+    "risk_message": "...",
+    "couriers": [
+      {
+        "name": "Steadfast",
+        "orders": 40,
+        "delivered": 35,
+        "returned": 5,
+        "rate": 87.5
+      },
+      // ... more couriers
+    ]
+  }
+}
+```
 
-**Yearly (৳৯৯৯) features:**
-- Fraud Guard: 15,000 API requests
-- Courier Check: 5,000 API requests
-- সব Monthly features
-- Priority support
-- সেভিংস ব্যাজ
+#### 3. Courier Check Components আপডেট
+- `CourierCheckerDashboard.tsx` - কোনো পরিবর্তন লাগবে না (API response format same রাখব)
+- `CourierCheckPlans.tsx` - Pricing আপনার unified plan অনুযায়ী দেখাবে
 
-### 2. Purchase Modal আপডেট
-`SubscriptionPurchaseModal.tsx` এ amount পরিবর্তন:
-- Monthly: ৳৩৯৯
-- Yearly: ৳৯৯৯
+#### 4. Supported Couriers Update
+`ALLOWED_COURIERS` array update করা হবে:
+```typescript
+const ALLOWED_COURIERS = ["pathao", "steadfast", "carrybee", "redx"];
+```
 
-### 3. Courier Check Section পরিবর্তন
-`CourierCheckSection.tsx` এ আলাদা `CourierCheckPlans` ও `CourierCheckPurchaseModal` সরিয়ে দেওয়া হবে। পরিবর্তে unified `SubscriptionPlans` ও `SubscriptionPurchaseModal` ব্যবহার হবে।
+#### 5. Default Couriers Display
+```typescript
+const DEFAULT_COURIERS = [
+  { name: "Steadfast", logoKey: "steadfast" },
+  { name: "Pathao", logoKey: "pathao" },
+  { name: "RedX", logoKey: "redx" },
+  { name: "CarryBee", logoKey: "carrybee" },
+];
+```
 
-### 4. Admin Activation Logic
-Plan approve হলে **দুটো table-ই** activate হবে:
-- `merchants` table (Fraud Guard)
-- `courier_check_subscriptions` table (Courier Check)
+### Technical Details
 
-Admin এর `AssignPlanModal` এবং `AssignCourierCheckPlanModal` একত্রিত করে একটি unified assign modal বানানো হবে, অথবা একটি plan assign করলে দুটোই activate হবে।
-
-`FraudSubscriptionManagement` (admin) এ order approve করলে দুটো subscription-ই activate হবে।
-
-### 5. Landing Page (FraudGuardPage.tsx) আপডেট
-- Fraud Guard pricing section এ নতুন দাম দেখাবে (৳৩৯৯/৳৯৯৯)
-- Courier Check pricing section এ আলাদা দাম সরিয়ে "Bundle এ অন্তর্ভুক্ত" দেখাবে বা একই pricing card ব্যবহার হবে
-- CTA section এ "মাত্র ৳৩৯৯/মাস থেকে শুরু" আপডেট
-
-### 6. Config Files আপডেট
-- `pluginConfig.ts` এ pricing update
-- `courierCheckPluginConfig.ts` এ pricing update (bundle reference)
-
-### 7. Upgrade Nudge আপডেট
-`SubscriptionStatus.tsx` এ yearly upgrade nudge এর দাম ৳৯৯৯ এ পরিবর্তন
-
-## Technical Details
-
-### ফাইল পরিবর্তনের তালিকা:
-
+#### Files to Update:
 | ফাইল | পরিবর্তন |
 |------|---------|
-| `src/components/fraud-protection/SubscriptionPlans.tsx` | Unified features list, ৳৩৯৯/৳৯৯৯ pricing |
-| `src/components/fraud-protection/SubscriptionPurchaseModal.tsx` | Amount ৩৯৯/৯৯৯ |
-| `src/components/courier-check/CourierCheckSection.tsx` | `CourierCheckPlans` ও `CourierCheckPurchaseModal` সরিয়ে unified plan ব্যবহার |
-| `src/components/fraud-protection/SubscriptionStatus.tsx` | Upgrade nudge দাম আপডেট |
-| `src/components/client/FraudGuardQuickStatus.tsx` | Pricing reference আপডেট |
-| `src/pages/FraudGuardPage.tsx` | Landing page pricing আপডেট |
-| `src/config/pluginConfig.ts` | Pricing config আপডেট |
-| `src/config/courierCheckPluginConfig.ts` | Pricing config আপডেট |
-| `src/components/admin/FraudSubscriptionManagement.tsx` | Approve করলে দুটো table activate |
-| `src/components/admin/AssignPlanModal.tsx` | Assign করলে দুটো table activate |
-| `src/components/admin/CourierCheckSubscriptionManagement.tsx` | Unified flow reference |
+| `supabase/functions/scrape-courier-check/index.ts` | elitemart → FraudShield API integration |
+| `src/config/courierCheckPluginConfig.ts` | Courier list update: CarryBee যোগ করা |
+| `src/components/courier-check/CourierCheckerDashboard.tsx` | Supported couriers UI update (CarryBee যোগ) |
 
-### Database পরিবর্তন:
-- কোনো schema পরিবর্তন লাগবে না
-- বিদ্যমান `merchants` ও `courier_check_subscriptions` table দুটোই থাকবে
-- Admin approve করলে দুটোতেই data update হবে
+#### Steps:
+1. **FraudShield API Key পাওয়া** - আপনাকে fraudshield.bd এর সাথে যোগাযোগ করে API key চেয়ে নিতে হবে
+2. **Secret Configure করা** - API key `FRAUDSHIELD_API_KEY` হিসেবে secrets এ যোগ করা হবে
+3. **Edge Function আপডেট** - `scrape-courier-check` function কে FraudShield API call করতে modify করা হবে
+4. **Response Format Standardize** - FraudShield এর response কে আমাদের current response format এ convert করা হবে যেন frontend কোনো change ছাড়াই কাজ করে
+5. **Testing** - Phone number search test করে দেখা হবে সব ৪টি courier ঠিকমতো data দেখাচ্ছে কিনা
+
+### এক্সট্রা সুবিধা
+- ✅ CarryBee সাপোর্ট হবে (আগে elitemart এ ছিল না)
+- ✅ Bulk search support (আগে single search ছিল)
+- ✅ Real-time updated data (FraudShield নিয়মিত update করে)
+- ✅ No CSRF issues (simple API call, no session management needed)
 

@@ -127,7 +127,18 @@
 
   /* Glassmorphism - Frosted Glass */
   .glass-card {
-    @apply bg-white/10 backdrop-blur-md border border-white/20;
+    @apply bg-white/10 border border-white/20;
+    backdrop-filter: blur(8px);
+  }
+
+  /* Optimize for mobile - lower blur */
+  @media (max-width: 768px) {
+    .glass-card {
+      backdrop-filter: blur(4px);
+    }
+    .glassmorphism-nav {
+      backdrop-filter: blur(8px);
+    }
   }
 
   .glassmorphism-nav {

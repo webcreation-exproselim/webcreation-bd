@@ -149,7 +149,7 @@ export function HeroSection() {
           >
             <div className="relative">
               {/* Right Side Icons - Vertical Stack */}
-              <div className="absolute top-[15%] right-0 translate-x-[110%] flex flex-col gap-4 z-20">
+              <div className="absolute top-[15%] right-0 translate-x-[110%] flex flex-col gap-4 z-20 hidden lg:flex">
                 {[Palette, Code, Video].map((Icon, index) => (
                   <motion.div
                     key={index}
@@ -179,7 +179,7 @@ export function HeroSection() {
 
               {/* Left Side Icon */}
               <motion.div
-                className="absolute top-[40%] left-0 -translate-x-[110%] z-20"
+                className="absolute top-[40%] left-0 -translate-x-[110%] z-20 hidden lg:block"
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.4, delay: 1.0 }}

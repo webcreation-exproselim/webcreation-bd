@@ -92,7 +92,7 @@ export function MobilePortfolioCarousel({
               key={item.id}
               className="flex-[0_0_85%] min-w-0 pl-4 first:pl-0"
             >
-              <div className="group relative rounded-xl overflow-hidden bg-black/40 border border-white/10 hover:border-yellow-400/50 transition-all duration-300">
+              <div className="group relative rounded-xl overflow-hidden bg-black/40 border border-white/10 hover:border-yellow-400/50 transition-all duration-300 will-change-transform">
                 {/* Image Container */}
                 <div
                   className={`aspect-[4/3] relative overflow-hidden ${

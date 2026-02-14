@@ -22,6 +22,9 @@ export function ParticleNetwork() {
   const particlesRef = useRef<Particle[]>([]);
 
   useEffect(() => {
+    // Completely disable on mobile for maximum performance
+    if (window.innerWidth < 768) return;
+
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -109,6 +112,9 @@ export function ParticleNetwork() {
       }
     };
   }, []);
+
+  // Don't render canvas on mobile
+  if (typeof window !== "undefined" && window.innerWidth < 768) return null;
 
   return (
     <canvas

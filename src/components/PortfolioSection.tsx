@@ -320,10 +320,7 @@ export const PortfolioSection = () => {
         </div>
 
         {/* Dynamic Title based on Tab */}
-        <h3
-          key={activeTab}
-          className="text-xl sm:text-2xl md:text-3xl font-bengali font-bold text-gradient-gold text-center mb-8"
-        >
+        <h3 className="text-xl sm:text-2xl md:text-3xl font-bengali font-bold text-gradient-gold text-center mb-8">
           আমাদের {serviceTabs.find(t => t.id === activeTab)?.label} পোর্টফোলিও
         </h3>
 

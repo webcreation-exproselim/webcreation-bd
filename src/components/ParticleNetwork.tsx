@@ -10,10 +10,10 @@ interface Particle {
 }
 
 const colors = [
-  "rgba(34, 211, 238, 0.6)",  // cyan
-  "rgba(59, 130, 246, 0.5)",  // blue
-  "rgba(168, 85, 247, 0.4)",  // purple
-  "rgba(249, 115, 22, 0.4)",  // orange
+  "rgba(34, 211, 238, 0.5)",
+  "rgba(59, 130, 246, 0.4)",
+  "rgba(168, 85, 247, 0.3)",
+  "rgba(249, 115, 22, 0.3)",
 ];
 
 export function ParticleNetwork() {
@@ -36,63 +36,71 @@ export function ParticleNetwork() {
     resizeCanvas();
     window.addEventListener("resize", resizeCanvas);
 
-    // Initialize particles
-    const particleCount = Math.min(60, Math.floor(window.innerWidth / 20));
+    // Reduced particle count for better performance
+    const particleCount = Math.min(25, Math.floor(window.innerWidth / 50));
     particlesRef.current = [];
 
     for (let i = 0; i < particleCount; i++) {
       particlesRef.current.push({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
-        vx: (Math.random() - 0.5) * 0.4,
-        vy: (Math.random() - 0.5) * 0.4,
-        radius: Math.random() * 2 + 1,
+        vx: (Math.random() - 0.5) * 0.3,
+        vy: (Math.random() - 0.5) * 0.3,
+        radius: Math.random() * 1.5 + 0.5,
         color: colors[Math.floor(Math.random() * colors.length)],
       });
     }
 
-    const animate = () => {
-      if (!ctx || !canvas) return;
+    let lastTime = 0;
+    const targetFPS = 30; // Cap at 30fps instead of 60
+    const frameInterval = 1000 / targetFPS;
 
+    const animate = (currentTime: number) => {
+      animationRef.current = requestAnimationFrame(animate);
+
+      const delta = currentTime - lastTime;
+      if (delta < frameInterval) return;
+      lastTime = currentTime - (delta % frameInterval);
+
+      if (!ctx || !canvas) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Update and draw particles
-      particlesRef.current.forEach((particle, i) => {
-        // Update position
-        particle.x += particle.vx;
-        particle.y += particle.vy;
+      const particles = particlesRef.current;
+      const len = particles.length;
 
-        // Bounce off edges
-        if (particle.x < 0 || particle.x > canvas.width) particle.vx *= -1;
-        if (particle.y < 0 || particle.y > canvas.height) particle.vy *= -1;
+      for (let i = 0; i < len; i++) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
 
-        // Draw particle with glow
+        if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+        if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+
         ctx.beginPath();
-        ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
-        ctx.fillStyle = particle.color;
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
         ctx.fill();
 
-        // Draw connections
-        particlesRef.current.slice(i + 1).forEach((otherParticle) => {
-          const dx = particle.x - otherParticle.x;
-          const dy = particle.y - otherParticle.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
+        // Only check nearby particles with reduced distance
+        for (let j = i + 1; j < len; j++) {
+          const q = particles[j];
+          const dx = p.x - q.x;
+          const dy = p.y - q.y;
+          const distSq = dx * dx + dy * dy;
 
-          if (distance < 120) {
+          if (distSq < 10000) { // 100px distance (squared to avoid sqrt)
             ctx.beginPath();
-            ctx.moveTo(particle.x, particle.y);
-            ctx.lineTo(otherParticle.x, otherParticle.y);
-            ctx.strokeStyle = `rgba(255, 255, 255, ${0.12 * (1 - distance / 120)})`;
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(q.x, q.y);
+            ctx.strokeStyle = `rgba(255, 255, 255, ${0.08 * (1 - Math.sqrt(distSq) / 100)})`;
             ctx.lineWidth = 0.5;
             ctx.stroke();
           }
-        });
-      });
-
-      animationRef.current = requestAnimationFrame(animate);
+        }
+      }
     };
 
-    animate();
+    animationRef.current = requestAnimationFrame(animate);
 
     return () => {
       window.removeEventListener("resize", resizeCanvas);
@@ -106,7 +114,7 @@ export function ParticleNetwork() {
     <canvas
       ref={canvasRef}
       className="absolute inset-0 pointer-events-none z-0"
-      style={{ opacity: 0.5 }}
+      style={{ opacity: 0.4 }}
     />
   );
 }

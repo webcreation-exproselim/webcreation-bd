@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Megaphone, Code, Palette, Video, Activity, Layout, ExternalLink, X, Play, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -107,11 +107,7 @@ const PortfolioCard = ({ item, serviceId, onOpenModal }: PortfolioCardProps) => 
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      transition={{ duration: 0.3 }}
+    <div
       className="group relative rounded-xl overflow-hidden bg-black/40 border border-white/10 hover:border-yellow-400/50 transition-all duration-300"
     >
       {/* Image Container */}
@@ -157,19 +153,19 @@ const PortfolioCard = ({ item, serviceId, onOpenModal }: PortfolioCardProps) => 
         <Button
           variant="outline"
           size="sm"
-          className={`w-full font-bengali border-yellow-400/30 text-yellow-400 hover:bg-yellow-400 hover:text-black group/btn transition-all duration-300 ${isUrlService && !item.live_url ? 'opacity-50 cursor-not-allowed' : ''}`}
+          className={`w-full font-bengali border-yellow-400/30 text-yellow-400 hover:bg-yellow-400 hover:text-black transition-all duration-300 ${isUrlService && !item.live_url ? 'opacity-50 cursor-not-allowed' : ''}`}
           onClick={handleLivePreviewClick}
           disabled={isUrlService && !item.live_url}
         >
           {isVideoService ? (
-            <Play className="w-4 h-4 mr-2 group-hover/btn:scale-110 transition-transform" fill="currentColor" />
+            <Play className="w-4 h-4 mr-2" fill="currentColor" />
           ) : (
-            <ExternalLink className="w-4 h-4 mr-2 group-hover/btn:rotate-12 transition-transform" />
+            <ExternalLink className="w-4 h-4 mr-2" />
           )}
           {isUrlService ? "লাইভ প্রিভিউ" : "দেখুন"}
         </Button>
       </div>
-    </motion.div>
+    </div>
   );
 };
 
@@ -282,25 +278,13 @@ export const PortfolioSection = () => {
 
       <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-16 relative z-10">
         {/* Section Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-10 md:mb-14"
-        >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-yellow-400/20 to-red-500/20 border border-yellow-400/30 mb-6"
-          >
+        <div className="text-center mb-10 md:mb-14">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-yellow-400/20 to-red-500/20 border border-yellow-400/30 mb-6">
             <span className="text-yellow-400">🎨</span>
             <span className="text-sm sm:text-base text-white font-bengali font-medium">
               <EditableText page="home" section="portfolio" contentKey="badge_text" value={content.badge_text} />
             </span>
-          </motion.div>
+          </div>
 
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bengali font-bold text-white mb-4">
             <EditableText page="home" section="portfolio" contentKey="section_title_start" value={content.section_title_start} />{" "}
@@ -311,16 +295,10 @@ export const PortfolioSection = () => {
           <p className="text-muted-foreground text-sm sm:text-base md:text-lg max-w-2xl mx-auto font-bengali">
             <EditableText page="home" section="portfolio" contentKey="section_subtitle" value={content.section_subtitle} multiline />
           </p>
-        </motion.div>
+        </div>
 
         {/* Service Tabs */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-10 md:mb-12"
-        >
+        <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-10 md:mb-12">
           {serviceTabs.map((tab) => (
             <button
               key={tab.id}
@@ -339,17 +317,15 @@ export const PortfolioSection = () => {
               <span className="sm:hidden">{tab.label.split(' ')[0]}</span>
             </button>
           ))}
-        </motion.div>
+        </div>
 
         {/* Dynamic Title based on Tab */}
-        <motion.h3
+        <h3
           key={activeTab}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
           className="text-xl sm:text-2xl md:text-3xl font-bengali font-bold text-gradient-gold text-center mb-8"
         >
           আমাদের {serviceTabs.find(t => t.id === activeTab)?.label} পোর্টফোলিও
-        </motion.h3>
+        </h3>
 
         {/* Loading State */}
         {loading ? (
@@ -365,48 +341,36 @@ export const PortfolioSection = () => {
           />
         ) : (
           /* Desktop Portfolio Grid */
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTab}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.4 }}
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"
-            >
-              {items.length > 0 ? (
-                items.map((item) => (
-                  <PortfolioCard 
-                    key={item.id} 
-                    item={item} 
-                    serviceId={activeTab}
-                    onOpenModal={handleOpenModal}
-                  />
-                ))
-              ) : (
-                <div className="col-span-full text-center py-12">
-                  <p className="text-white/60 font-bengali">এই ক্যাটাগরিতে কোন পোর্টফোলিও নেই</p>
-                </div>
-              )}
-            </motion.div>
-          </AnimatePresence>
+          <div
+            key={activeTab}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"
+          >
+            {items.length > 0 ? (
+              items.map((item) => (
+                <PortfolioCard 
+                  key={item.id} 
+                  item={item} 
+                  serviceId={activeTab}
+                  onOpenModal={handleOpenModal}
+                />
+              ))
+            ) : (
+              <div className="col-span-full text-center py-12">
+                <p className="text-white/60 font-bengali">এই ক্যাটাগরিতে কোন পোর্টফোলিও নেই</p>
+              </div>
+            )}
+          </div>
         )}
 
         {/* Load More / CTA */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-          className="text-center mt-10 md:mt-12"
-        >
+        <div className="text-center mt-10 md:mt-12">
           <Button
             variant="outline"
             className="font-bengali border-yellow-400/50 text-yellow-400 hover:bg-yellow-400 hover:text-black px-8 py-3 rounded-full text-base"
           >
             আরও দেখুন
           </Button>
-        </motion.div>
+        </div>
       </div>
 
       {/* Fullscreen Preview Modal */}

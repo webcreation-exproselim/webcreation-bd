@@ -158,6 +158,7 @@ const AdminDashboard = () => {
   
   // Orders
   const [orders, setOrders] = useState<Order[]>([]);
+  const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [orderFilter, setOrderFilter] = useState("active");
   const [orderProgress, setOrderProgress] = useState<number>(0);
@@ -251,14 +252,17 @@ const AdminDashboard = () => {
               progress: payload.new.progress || 0,
             } as Order;
             setOrders(prev => [newOrder, ...prev]);
+            setAllOrders(prev => [newOrder, ...prev]);
           } else if (payload.eventType === 'UPDATE') {
-            setOrders(prev => prev.map(o => 
+            const updateOrder = (o: Order) => 
               o.id === payload.new.id 
                 ? { ...payload.new, services: (payload.new.services as unknown) as OrderService[], progress: payload.new.progress || 0 } as Order
-                : o
-            ));
+                : o;
+            setOrders(prev => prev.map(updateOrder));
+            setAllOrders(prev => prev.map(updateOrder));
           } else if (payload.eventType === 'DELETE') {
             setOrders(prev => prev.filter(o => o.id !== payload.old.id));
+            setAllOrders(prev => prev.filter(o => o.id !== payload.old.id));
           }
         }
       )
@@ -319,10 +323,27 @@ const AdminDashboard = () => {
   const fetchAllData = async () => {
     await Promise.all([
       fetchOrders(),
+      fetchAllOrdersForInvoices(),
       fetchUsers(),
       fetchPortfolio(),
       fetchInvoices(),
     ]);
+  };
+
+  const fetchAllOrdersForInvoices = async () => {
+    const { data, error } = await supabase
+      .from("orders")
+      .select("*")
+      .order("created_at", { ascending: false });
+    
+    if (!error && data) {
+      const typedOrders: Order[] = data.map(order => ({
+        ...order,
+        services: (order.services as unknown) as OrderService[],
+        progress: order.progress || 0,
+      }));
+      setAllOrders(typedOrders);
+    }
   };
 
   const fetchOrders = async () => {
@@ -841,9 +862,9 @@ const AdminDashboard = () => {
         {activeTab === "invoices" && (
           <InvoiceSystem
             invoices={invoices}
-            orders={orders}
+            orders={allOrders}
             onRefresh={async () => {
-              await Promise.all([fetchInvoices(), fetchOrders()]);
+              await Promise.all([fetchInvoices(), fetchOrders(), fetchAllOrdersForInvoices()]);
             }}
           />
         )}

@@ -7,9 +7,10 @@ import logo from "@/assets/logo.png";
 interface AdminHeaderProps {
   onRefresh: () => void;
   onLogout: () => void;
+  activeTabLabel?: string;
 }
 
-export function AdminHeader({ onRefresh, onLogout }: AdminHeaderProps) {
+export function AdminHeader({ onRefresh, onLogout, activeTabLabel }: AdminHeaderProps) {
   return (
     <header className="bg-white/95 backdrop-blur-xl border-b border-gray-100 sticky top-0 z-50 shadow-sm">
       <div className="px-6 py-3 flex items-center justify-between gap-4">
@@ -30,6 +31,11 @@ export function AdminHeader({ onRefresh, onLogout }: AdminHeaderProps) {
             <h1 className="font-bengali font-bold text-gray-900 text-sm">অ্যাডমিন ড্যাশবোর্ড</h1>
             <p className="text-[10px] text-gray-400">Web Creation BD</p>
           </div>
+          {activeTabLabel && (
+            <span className="sm:hidden font-bengali font-semibold text-gray-900 text-sm truncate max-w-[120px]">
+              {activeTabLabel}
+            </span>
+          )}
         </div>
 
         {/* Center: Search */}

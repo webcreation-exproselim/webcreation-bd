@@ -79,6 +79,12 @@ export function ClientLinksManagement() {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
+  const handleCopyAll = async () => {
+    const allUrls = filtered.map((link) => `${link.title}: ${link.url}`).join("\n");
+    await navigator.clipboard.writeText(allUrls);
+    toast({ title: `${filtered.length}টি লিংক কপি হয়েছে!` });
+  };
+
   const openAddModal = () => {
     setEditingLink(null);
     setForm({ title: "", url: "", category: "landing-page", description: "" });
@@ -149,9 +155,16 @@ export function ClientLinksManagement() {
           <h2 className="text-2xl font-bold font-bengali text-gray-900">ক্লায়েন্ট লিংক</h2>
           <p className="text-gray-500 text-sm font-bengali mt-1">পোর্টফোলিও ও ল্যান্ডিং পেজের লিংক ম্যানেজ করুন</p>
         </div>
-        <Button onClick={openAddModal} className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl shadow-lg">
-          <Plus className="w-4 h-4 mr-2" /> নতুন লিংক
-        </Button>
+        <div className="flex gap-2">
+          {filtered.length > 0 && (
+            <Button onClick={handleCopyAll} variant="outline" className="rounded-xl border-gray-200 font-bengali">
+              <Copy className="w-4 h-4 mr-2" /> সব কপি ({filtered.length})
+            </Button>
+          )}
+          <Button onClick={openAddModal} className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl shadow-lg">
+            <Plus className="w-4 h-4 mr-2" /> নতুন লিংক
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}

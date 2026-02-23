@@ -53,6 +53,7 @@ import { FraudGuardManagement } from "@/components/admin/FraudGuardManagement";
 import { UserManagement } from "@/components/admin/UserManagement";
 import { ProjectTimerManagement } from "@/components/admin/ProjectTimerManagement";
 import { CourierCheckSubscriptionManagement } from "@/components/admin/CourierCheckSubscriptionManagement";
+import { ClientLinksManagement } from "@/components/admin/ClientLinksManagement";
 
 interface OrderService {
   id: string;
@@ -969,6 +970,10 @@ const AdminDashboard = () => {
 
         {activeTab === "content" && (
           <ContentManagement />
+        )}
+
+        {activeTab === "clientlinks" && (
+          <ClientLinksManagement />
         )}
         </main>
       </div>

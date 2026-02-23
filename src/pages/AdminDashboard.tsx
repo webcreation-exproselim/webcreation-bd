@@ -54,6 +54,7 @@ import { UserManagement } from "@/components/admin/UserManagement";
 import { ProjectTimerManagement } from "@/components/admin/ProjectTimerManagement";
 import { CourierCheckSubscriptionManagement } from "@/components/admin/CourierCheckSubscriptionManagement";
 import { ClientLinksManagement } from "@/components/admin/ClientLinksManagement";
+import { AdminMobileNav } from "@/components/admin/AdminMobileNav";
 
 interface OrderService {
   id: string;
@@ -657,12 +658,15 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <AdminHeader onRefresh={fetchAllData} onLogout={handleLogout} />
+      <AdminHeader onRefresh={fetchAllData} onLogout={handleLogout} activeTabLabel={tabs.find(t => t.id === activeTab)?.label || activeTab} />
 
       <div className="flex flex-1 overflow-hidden">
-        <AdminSidebar activeTab={activeTab} onTabChange={setActiveTab} />
+        <div className="hidden lg:block">
+          <AdminSidebar activeTab={activeTab} onTabChange={setActiveTab} />
+        </div>
+        <AdminMobileNav activeTab={activeTab} onTabChange={setActiveTab} />
         
-        <main className="flex-1 overflow-y-auto p-6 space-y-6">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6 space-y-4 lg:space-y-6 pb-24 lg:pb-6">
           {/* Stats Cards + Project Timer - Always on overview */}
           {activeTab === "overview" && (
             <>

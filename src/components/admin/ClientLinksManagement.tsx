@@ -80,7 +80,7 @@ export function ClientLinksManagement() {
   };
 
   const handleCopyAll = async () => {
-    const allUrls = filtered.map((link) => `${link.title}: ${link.url}`).join("\n");
+    const allUrls = filtered.map((link, i) => `${i + 1}. ${link.title}: ${link.url}`).join("\n");
     await navigator.clipboard.writeText(allUrls);
     toast({ title: `${filtered.length}টি লিংক কপি হয়েছে!` });
   };

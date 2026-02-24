@@ -1,8 +1,7 @@
 import { motion } from "framer-motion";
 import { 
   Layout, ArrowLeft, CheckCircle, Star, TrendingUp, 
-  MousePointer, Users, Zap, Award, Clock, Target, Layers,
-  ExternalLink, Loader2
+  MousePointer, Users, Zap, Award, Clock, Target, Layers
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
@@ -10,65 +9,12 @@ import { Footer } from "@/components/Footer";
 import { Chatbot } from "@/components/Chatbot";
 import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useDynamicPortfolio } from "@/hooks/useDynamicPortfolio";
 import { useMemo } from "react";
 import { useSiteContent } from "@/hooks/useSiteContent";
 import { EditableText } from "@/components/EditableText";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { MobilePortfolioCarousel } from "@/components/MobilePortfolioCarousel";
-import { ServicePricingCard, PricingPlanData } from "@/components/ServicePricingCard";
 
-// Fallback Portfolio Items
-const fallbackPortfolioItems = [
-  {
-    id: "lp1",
-    title: "SaaS ল্যান্ডিং পেজ",
-    image_url: "https://images.unsplash.com/photo-1467232004584-a241de8bcf5d?w=800&h=600&fit=crop",
-    description: "৬০% কনভার্সন",
-    category: "landing-page",
-    live_url: null
-  },
-  {
-    id: "lp2",
-    title: "প্রোডাক্ট লঞ্চ পেজ",
-    image_url: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop",
-    description: "৫০০+ সেলস",
-    category: "landing-page",
-    live_url: null
-  },
-  {
-    id: "lp3",
-    title: "লিড জেন পেজ",
-    image_url: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=600&fit=crop",
-    description: "১০০০+ লিড",
-    category: "landing-page",
-    live_url: null
-  },
-  {
-    id: "lp4",
-    title: "ইভেন্ট ল্যান্ডিং পেজ",
-    image_url: "https://images.unsplash.com/photo-1504868584819-f8e8b4b6d7e3?w=800&h=600&fit=crop",
-    description: "৩০০+ রেজিস্ট্রেশন",
-    category: "landing-page",
-    live_url: null
-  },
-  {
-    id: "lp5",
-    title: "অ্যাপ ডাউনলোড পেজ",
-    image_url: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&h=600&fit=crop",
-    description: "৫K+ ডাউনলোড",
-    category: "landing-page",
-    live_url: null
-  },
-  {
-    id: "lp6",
-    title: "সার্ভিস পেজ",
-    image_url: "https://images.unsplash.com/photo-1517292987719-0369a794ec0f?w=800&h=600&fit=crop",
-    description: "হাই কনভার্সন",
-    category: "landing-page",
-    live_url: null
-  },
-];
+import { ServicePricingCard, PricingPlanData } from "@/components/ServicePricingCard";
+import { LandingPagePortfolio } from "@/components/LandingPagePortfolio";
 
 // Reviews for sliding
 const reviewsRow1 = [
@@ -330,8 +276,7 @@ const InfiniteSlider = ({
 };
 
 const LandingPageDesignPage = () => {
-  const isMobile = useIsMobile();
-  const { portfolioItems, loading: portfolioLoading } = useDynamicPortfolio("landing-page", fallbackPortfolioItems);
+  
   
   const fallbackContent = useMemo(() => ({
     badge_text: "কনভার্সন এক্সপার্ট",
@@ -527,81 +472,7 @@ const LandingPageDesignPage = () => {
       </section>
 
       {/* Portfolio Section */}
-      <section className="py-20 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-black via-teal-950/30 to-black" />
-        
-        <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-16 relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-3xl sm:text-4xl font-bengali font-bold text-white mb-4">
-              আমাদের সাম্প্রতিক কাজ
-            </h2>
-            <p className="text-teal-200/80 font-bengali max-w-2xl mx-auto">
-              আমাদের ক্লায়েন্টদের জন্য তৈরি করা কিছু ল্যান্ডিং পেজ
-            </p>
-          </motion.div>
-          
-          {isMobile ? (
-            <MobilePortfolioCarousel
-              items={portfolioItems}
-              serviceType="url"
-              onItemClick={(item) => {
-                if (item.live_url) {
-                  window.open(item.live_url, "_blank", "noopener,noreferrer");
-                }
-              }}
-              accentColor="teal"
-            />
-          ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {portfolioItems.map((item, index) => (
-              <motion.div
-                key={item.id}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className="group relative overflow-hidden rounded-2xl bg-black/40 border border-teal-400/20 hover:border-teal-400/50 transition-all duration-300"
-              >
-                {/* Image - Show top portion of website screenshot */}
-                <div className="aspect-[4/3] overflow-hidden">
-                  <img
-                    src={item.image_url}
-                    alt={item.title}
-                    className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
-                  />
-                </div>
-                
-                {/* Card Content */}
-                <div className="p-5">
-                  <span className="inline-block px-3 py-1 text-xs rounded-full bg-gradient-to-r from-teal-500 to-cyan-400 text-white font-medium mb-3">
-                    ল্যান্ডিং পেজ
-                  </span>
-                  <h3 className="text-lg font-bengali font-bold text-white mb-1 line-clamp-1">{item.title}</h3>
-                  {item.description && (
-                    <p className="text-teal-300/80 font-bengali text-sm mb-4">{item.description}</p>
-                  )}
-                  <Button 
-                    variant="outline"
-                    size="sm"
-                    className={`w-full border-teal-400/50 text-teal-400 hover:bg-teal-400 hover:text-black font-bengali ${!item.live_url ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    onClick={() => item.live_url && window.open(item.live_url, "_blank", "noopener,noreferrer")}
-                    disabled={!item.live_url}
-                  >
-                    <ExternalLink className="w-4 h-4 mr-2" />
-                    লাইভ প্রিভিউ
-                  </Button>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-          )}
-        </div>
-      </section>
+      <LandingPagePortfolio />
 
       {/* Reviews Section */}
       <section className="py-20 relative overflow-hidden">

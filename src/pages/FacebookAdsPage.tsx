@@ -566,6 +566,8 @@ const FacebookAdsPage = () => {
                       src={item.image_url}
                       alt={item.title}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      loading="lazy"
+                      decoding="async"
                     />
                     {/* Overlay */}
                     <div className="absolute inset-0 bg-gradient-to-t from-blue-950/95 via-blue-900/60 to-transparent" />
@@ -741,10 +743,12 @@ const FacebookAdsPage = () => {
               animate={{ opacity: 1, scale: 1 }}
               className="w-full pt-16 p-4"
             >
-              <img
+               <img
                 src={selectedItem.image_url}
                 alt={selectedItem.title}
                 className="w-full h-auto rounded-lg"
+                loading="lazy"
+                decoding="async"
               />
               <div className="mt-4 p-4 bg-blue-900/30 rounded-xl">
                 <div className="flex items-center justify-between">

@@ -239,6 +239,7 @@ export const LandingPagePortfolio = () => {
                 src={previewItem.image_url}
                 alt={previewItem.title}
                 className="max-w-full max-h-[75vh] object-contain rounded-lg"
+                decoding="async"
               />
             </motion.div>
           )}
@@ -283,6 +284,7 @@ const PortfolioCard = ({
             objectPosition: isHovered ? "center bottom" : "center top",
           }}
           loading="lazy"
+          decoding="async"
         />
         {/* Hover Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-3">

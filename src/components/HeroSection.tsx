@@ -196,6 +196,7 @@ export function HeroSection() {
                 alt="Professional Digital Agency Expert" 
                 className="relative z-10 w-60 sm:w-72 md:w-80 lg:w-[340px] xl:w-[400px] h-auto object-contain drop-shadow-2xl"
                 loading="eager"
+                decoding="async"
               />
             </div>
           </motion.div>

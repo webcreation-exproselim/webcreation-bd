@@ -173,6 +173,8 @@ export const ServicePageLayout = ({
                   src={item.image}
                   alt={item.title}
                   className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500"
+                  loading="lazy"
+                  decoding="async"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6">
                   <span className="text-yellow-400 text-sm font-bengali">{item.category}</span>
@@ -281,6 +283,8 @@ export const ServicePageLayout = ({
                     src={review.image}
                     alt={review.name}
                     className="w-12 h-12 rounded-full object-cover"
+                    loading="lazy"
+                    decoding="async"
                   />
                   <div>
                     <h4 className="text-white font-bengali font-bold">{review.name}</h4>

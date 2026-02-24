@@ -135,22 +135,22 @@ export const LandingPagePortfolio = () => {
 
         {/* Category Filter Chips - Grid Layout */}
         {categoryChips.length > 1 && (
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3 mb-10">
+          <div className="flex flex-wrap gap-2 sm:gap-3 mb-10 justify-center">
             {categoryChips.map((cat) => (
               <button
                 key={cat.name}
                 onClick={() => handleCategoryChange(cat.name)}
                 className={`
-                  px-3 py-3 sm:px-4 sm:py-3.5 rounded-xl font-bengali text-sm sm:text-base font-medium
-                  transition-all duration-300 flex flex-col items-center gap-1 text-center
+                  px-3 py-2 sm:px-4 sm:py-2.5 rounded-full font-bengali text-xs sm:text-sm font-medium
+                  transition-all duration-300 flex items-center gap-1.5 whitespace-nowrap
                   ${activeCategory === cat.name
                     ? "bg-gradient-to-r from-teal-400 to-cyan-500 text-black shadow-lg shadow-teal-400/25"
                     : "bg-black/60 text-white/80 border border-white/10 hover:border-teal-400/50 hover:text-white"
                   }
                 `}
               >
-                <span className="line-clamp-1">{cat.label}</span>
-                <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
+                <span>{cat.label}</span>
+                <span className={`text-[10px] sm:text-xs font-bold px-1.5 py-0.5 rounded-full ${
                   activeCategory === cat.name
                     ? "bg-black/20 text-black"
                     : "bg-white/10 text-white/60"
@@ -170,7 +170,7 @@ export const LandingPagePortfolio = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.3 }}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6"
+            className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5 lg:gap-6"
           >
             {visibleItems.map((item, index) => (
               <PortfolioCard
@@ -262,10 +262,10 @@ const PortfolioCard = ({
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ delay: Math.min(index * 0.05, 0.4) }}
-      className="group relative rounded-2xl overflow-hidden bg-black/50 border border-teal-400/15 hover:border-teal-400/50 transition-all duration-300 hover:-translate-y-1"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ delay: Math.min(index * 0.03, 0.2) }}
+      className="group relative rounded-xl sm:rounded-2xl overflow-hidden bg-black/50 border border-teal-400/15 hover:border-teal-400/50 transition-colors duration-300"
     >
       {/* Image with auto-scroll on hover */}
       <div
@@ -278,7 +278,7 @@ const PortfolioCard = ({
         <img
           src={item.image_url}
           alt={item.title}
-          className="w-full h-full object-cover transition-all duration-[6000ms] ease-in-out"
+          className="w-full h-full object-cover transition-all duration-[3000ms] ease-in-out will-change-[object-position]"
           style={{
             objectPosition: isHovered ? "center bottom" : "center top",
           }}
@@ -308,23 +308,23 @@ const PortfolioCard = ({
       </div>
 
       {/* Card Footer */}
-      <div className="p-4">
-        <h4 className="text-white font-bengali font-semibold text-sm sm:text-base mb-3 group-hover:text-teal-400 transition-colors line-clamp-1">
+      <div className="p-2.5 sm:p-4">
+        <h4 className="text-white font-bengali font-semibold text-xs sm:text-base mb-2 sm:mb-3 group-hover:text-teal-400 transition-colors line-clamp-1">
           {item.title}
         </h4>
-        <div className="flex gap-2">
+        <div className="flex gap-1.5 sm:gap-2">
           <Button
             variant="outline"
             size="sm"
-            className="flex-1 border-teal-400/30 text-teal-400 hover:bg-teal-400 hover:text-black font-bengali text-xs sm:text-sm transition-all"
+            className="flex-1 border-teal-400/30 text-teal-400 hover:bg-teal-400 hover:text-black font-bengali text-[10px] sm:text-sm h-7 sm:h-9 transition-all"
             onClick={() => onPreview(item)}
           >
-            <Eye className="w-3.5 h-3.5 mr-1.5" />
+            <Eye className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1" />
             প্রিভিউ
           </Button>
           <Button
             size="sm"
-            className={`flex-1 font-bengali text-xs sm:text-sm transition-all ${
+            className={`flex-1 font-bengali text-[10px] sm:text-sm h-7 sm:h-9 transition-all ${
               item.live_url
                 ? "bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white"
                 : "bg-white/10 text-white/40 cursor-not-allowed"
@@ -332,7 +332,7 @@ const PortfolioCard = ({
             onClick={() => item.live_url && window.open(item.live_url, "_blank", "noopener,noreferrer")}
             disabled={!item.live_url}
           >
-            <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
+            <ExternalLink className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1" />
             লাইভ
           </Button>
         </div>

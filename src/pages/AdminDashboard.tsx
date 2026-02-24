@@ -834,7 +834,7 @@ const AdminDashboard = () => {
                   value={newCategoryName}
                   onChange={(e) => setNewCategoryName(e.target.value)}
                   placeholder={editingCategory ? "ক্যাটাগরি এডিট করুন" : "নতুন ক্যাটাগরি নাম"}
-                  className="flex-1 font-bengali bg-gray-50 border-gray-200"
+                  className="flex-1 font-bengali bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400"
                   onKeyPress={(e) => e.key === "Enter" && saveLandingCategory()}
                 />
                 <Button onClick={saveLandingCategory} className="bg-blue-600 hover:bg-blue-700 font-bengali">
@@ -1265,12 +1265,12 @@ const AdminDashboard = () => {
                 value={portfolioForm.category}
                 onValueChange={(val) => setPortfolioForm(prev => ({ ...prev, category: val }))}
               >
-                <SelectTrigger className="mt-1 bg-gray-50 border-gray-200">
+                <SelectTrigger className="mt-1 bg-gray-50 border-gray-200 text-gray-900">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-white border-gray-200">
+                <SelectContent className="bg-white border-gray-200 text-gray-900">
                   {Object.entries(categoryLabels).map(([key, label]) => (
-                    <SelectItem key={key} value={key} className="font-bengali">
+                    <SelectItem key={key} value={key} className="font-bengali text-gray-900">
                       {label}
                     </SelectItem>
                   ))}
@@ -1283,7 +1283,7 @@ const AdminDashboard = () => {
               <Input
                 value={portfolioForm.title}
                 onChange={(e) => setPortfolioForm(prev => ({ ...prev, title: e.target.value }))}
-                className="mt-1 font-bengali bg-gray-50 border-gray-200"
+                className="mt-1 font-bengali bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400"
                 placeholder="প্রজেক্টের নাম"
               />
             </div>
@@ -1293,7 +1293,7 @@ const AdminDashboard = () => {
               <Textarea
                 value={portfolioForm.description}
                 onChange={(e) => setPortfolioForm(prev => ({ ...prev, description: e.target.value }))}
-                className="mt-1 font-bengali bg-gray-50 border-gray-200"
+                className="mt-1 font-bengali bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400"
                 placeholder="প্রজেক্ট সম্পর্কে সংক্ষেপে লিখুন"
                 rows={3}
               />
@@ -1314,7 +1314,7 @@ const AdminDashboard = () => {
                     value={portfolioForm.image_url}
                     onChange={(e) => setPortfolioForm(prev => ({ ...prev, image_url: e.target.value }))}
                     placeholder="ছবির URL দিন অথবা আপলোড করুন"
-                    className="flex-1 bg-gray-50 border-gray-200"
+                    className="flex-1 bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400"
                   />
                   <Label className="cursor-pointer">
                     <div className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-xl flex items-center gap-2 transition-colors text-gray-600">
@@ -1343,7 +1343,7 @@ const AdminDashboard = () => {
                 <Input
                   value={portfolioForm.live_url}
                   onChange={(e) => setPortfolioForm(prev => ({ ...prev, live_url: e.target.value }))}
-                  className="mt-1 bg-gray-50 border-gray-200"
+                  className="mt-1 bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400"
                   placeholder="https://example.com"
                 />
                 <p className="text-xs text-gray-400 mt-1 font-bengali">
@@ -1360,13 +1360,13 @@ const AdminDashboard = () => {
                   value={portfolioForm.sub_category || "none"}
                   onValueChange={(val) => setPortfolioForm(prev => ({ ...prev, sub_category: val === "none" ? "" : val }))}
                 >
-                  <SelectTrigger className="mt-1 bg-gray-50 border-gray-200">
+                  <SelectTrigger className="mt-1 bg-gray-50 border-gray-200 text-gray-900">
                     <SelectValue placeholder="সাব-ক্যাটাগরি সিলেক্ট করুন" />
                   </SelectTrigger>
-                  <SelectContent className="bg-white border-gray-200">
-                    <SelectItem value="none" className="font-bengali">কোনো সাব-ক্যাটাগরি নেই</SelectItem>
+                  <SelectContent className="bg-white border-gray-200 text-gray-900">
+                    <SelectItem value="none" className="font-bengali text-gray-900">কোনো সাব-ক্যাটাগরি নেই</SelectItem>
                     {landingCategories.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.name} className="font-bengali">
+                      <SelectItem key={cat.id} value={cat.name} className="font-bengali text-gray-900">
                         {cat.name}
                       </SelectItem>
                     ))}

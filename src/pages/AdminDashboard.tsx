@@ -825,9 +825,10 @@ const AdminDashboard = () => {
 
         {activeTab === "portfolio" && (
           <div className="space-y-6">
-            {/* Landing Page Category Management */}
+            {/* Landing Page Category Management - Only visible when landing-page filter is active */}
+            {portfolioFilter === "landing-page" && (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-              <h3 className="font-bengali font-bold text-gray-900 mb-4">ল্যান্ডিং পেজ ক্যাটাগরি ম্যানেজমেন্ট</h3>
+              <h3 className="font-bengali font-bold text-gray-900 mb-4">ল্যান্ডিং পেজ সাব-ক্যাটাগরি</h3>
               <div className="flex gap-2 mb-4">
                 <Input
                   value={newCategoryName}
@@ -868,6 +869,7 @@ const AdminDashboard = () => {
                 )}
               </div>
             </div>
+            )}
 
             <div className="flex flex-wrap gap-2 items-center justify-between">
               <div className="flex gap-2 overflow-x-auto">

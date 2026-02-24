@@ -597,6 +597,8 @@ const GraphicsDesignPage = () => {
                     src={item.image_url}
                     alt={item.title}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    loading="lazy"
+                    decoding="async"
                   />
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover:opacity-100 transition-opacity" />
@@ -707,6 +709,8 @@ const GraphicsDesignPage = () => {
                 src={selectedItem.image_url}
                 alt={selectedItem.title}
                 className="w-full h-auto"
+                loading="lazy"
+                decoding="async"
               />
               <div className="p-6 bg-gradient-to-t from-black to-transparent">
                 <span className="inline-block px-3 py-1 text-xs rounded-full bg-gradient-to-r from-purple-500 to-pink-400 text-white font-medium mb-2">

@@ -460,6 +460,27 @@ export type Database = {
           },
         ]
       }
+      landing_page_categories: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       merchants: {
         Row: {
           abandoned_timeout_minutes: number | null
@@ -728,6 +749,7 @@ export type Database = {
           id: string
           image_url: string
           live_url: string | null
+          sub_category: string | null
           title: string
           updated_at: string
         }
@@ -738,6 +760,7 @@ export type Database = {
           id?: string
           image_url: string
           live_url?: string | null
+          sub_category?: string | null
           title: string
           updated_at?: string
         }
@@ -748,6 +771,7 @@ export type Database = {
           id?: string
           image_url?: string
           live_url?: string | null
+          sub_category?: string | null
           title?: string
           updated_at?: string
         }

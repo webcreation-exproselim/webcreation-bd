@@ -99,7 +99,14 @@ interface PortfolioItem {
   category: string;
   image_url: string;
   live_url?: string | null;
+  sub_category?: string | null;
   created_at: string;
+}
+
+interface LandingCategory {
+  id: string;
+  name: string;
+  display_order: number;
 }
 
 interface Invoice {
@@ -187,7 +194,11 @@ const AdminDashboard = () => {
     category: "graphics-design",
     image_url: "",
     live_url: "",
+    sub_category: "",
   });
+  const [landingCategories, setLandingCategories] = useState<LandingCategory[]>([]);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [editingCategory, setEditingCategory] = useState<LandingCategory | null>(null);
   const [uploading, setUploading] = useState(false);
   
   // Invoices
@@ -315,9 +326,12 @@ const AdminDashboard = () => {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'portfolio_items' },
-        () => {
-          fetchPortfolio();
-        }
+        () => { fetchPortfolio(); }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'landing_page_categories' },
+        () => { fetchLandingCategories(); }
       )
       .subscribe();
 
@@ -336,6 +350,7 @@ const AdminDashboard = () => {
       fetchUsers(),
       fetchPortfolio(),
       fetchInvoices(),
+      fetchLandingCategories(),
     ]);
   };
 
@@ -392,6 +407,39 @@ const AdminDashboard = () => {
     if (!error && data) {
       setPortfolioItems(data);
     }
+  };
+
+  const fetchLandingCategories = async () => {
+    const { data } = await supabase
+      .from("landing_page_categories")
+      .select("*")
+      .order("display_order", { ascending: true });
+    if (data) setLandingCategories(data);
+  };
+
+  const saveLandingCategory = async () => {
+    if (!newCategoryName.trim()) return;
+    if (editingCategory) {
+      await supabase
+        .from("landing_page_categories")
+        .update({ name: newCategoryName.trim() })
+        .eq("id", editingCategory.id);
+      setEditingCategory(null);
+    } else {
+      const maxOrder = landingCategories.length > 0
+        ? Math.max(...landingCategories.map(c => c.display_order)) + 1
+        : 0;
+      await supabase
+        .from("landing_page_categories")
+        .insert({ name: newCategoryName.trim(), display_order: maxOrder });
+    }
+    setNewCategoryName("");
+    fetchLandingCategories();
+  };
+
+  const deleteLandingCategory = async (id: string) => {
+    await supabase.from("landing_page_categories").delete().eq("id", id);
+    fetchLandingCategories();
   };
 
   const fetchInvoices = async () => {
@@ -500,16 +548,19 @@ const AdminDashboard = () => {
       return;
     }
     
+    const portfolioData: any = {
+      title: portfolioForm.title,
+      description: portfolioForm.description,
+      category: portfolioForm.category,
+      image_url: portfolioForm.image_url,
+      live_url: portfolioForm.live_url || null,
+      sub_category: portfolioForm.category === "landing-page" ? (portfolioForm.sub_category || null) : null,
+    };
+
     if (editingPortfolio) {
       const { error } = await supabase
         .from("portfolio_items")
-        .update({
-          title: portfolioForm.title,
-          description: portfolioForm.description,
-          category: portfolioForm.category,
-          image_url: portfolioForm.image_url,
-          live_url: portfolioForm.live_url || null,
-        })
+        .update(portfolioData)
         .eq("id", editingPortfolio.id);
       
       if (!error) {
@@ -518,13 +569,7 @@ const AdminDashboard = () => {
     } else {
       const { error } = await supabase
         .from("portfolio_items")
-        .insert({
-          title: portfolioForm.title,
-          description: portfolioForm.description,
-          category: portfolioForm.category,
-          image_url: portfolioForm.image_url,
-          live_url: portfolioForm.live_url || null,
-        });
+        .insert(portfolioData);
       
       if (!error) {
         toast({ title: "পোর্টফোলিও যোগ হয়েছে" });
@@ -533,7 +578,7 @@ const AdminDashboard = () => {
     
     setIsPortfolioModalOpen(false);
     setEditingPortfolio(null);
-    setPortfolioForm({ title: "", description: "", category: "graphics-design", image_url: "", live_url: "" });
+    setPortfolioForm({ title: "", description: "", category: "graphics-design", image_url: "", live_url: "", sub_category: "" });
     fetchPortfolio();
   };
 
@@ -779,7 +824,51 @@ const AdminDashboard = () => {
         )}
 
         {activeTab === "portfolio" && (
-          <div className="space-y-4">
+          <div className="space-y-6">
+            {/* Landing Page Category Management */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+              <h3 className="font-bengali font-bold text-gray-900 mb-4">ল্যান্ডিং পেজ ক্যাটাগরি ম্যানেজমেন্ট</h3>
+              <div className="flex gap-2 mb-4">
+                <Input
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  placeholder={editingCategory ? "ক্যাটাগরি এডিট করুন" : "নতুন ক্যাটাগরি নাম"}
+                  className="flex-1 font-bengali bg-gray-50 border-gray-200"
+                  onKeyPress={(e) => e.key === "Enter" && saveLandingCategory()}
+                />
+                <Button onClick={saveLandingCategory} className="bg-blue-600 hover:bg-blue-700 font-bengali">
+                  {editingCategory ? "আপডেট" : <><Plus className="w-4 h-4 mr-1" /> যোগ করুন</>}
+                </Button>
+                {editingCategory && (
+                  <Button variant="outline" onClick={() => { setEditingCategory(null); setNewCategoryName(""); }} className="border-gray-200">
+                    <X className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {landingCategories.map((cat) => (
+                  <div key={cat.id} className="flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full border border-blue-200 text-sm font-bengali">
+                    <span>{cat.name}</span>
+                    <button
+                      onClick={() => { setEditingCategory(cat); setNewCategoryName(cat.name); }}
+                      className="ml-1 hover:text-blue-900"
+                    >
+                      <Edit2 className="w-3 h-3" />
+                    </button>
+                    <button
+                      onClick={() => deleteLandingCategory(cat.id)}
+                      className="hover:text-red-500"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+                {landingCategories.length === 0 && (
+                  <p className="text-sm text-gray-400 font-bengali">কোনো ক্যাটাগরি নেই। উপরে থেকে যোগ করুন।</p>
+                )}
+              </div>
+            </div>
+
             <div className="flex flex-wrap gap-2 items-center justify-between">
               <div className="flex gap-2 overflow-x-auto">
                 {["all", ...Object.keys(categoryLabels)].map((cat) => (
@@ -799,7 +888,7 @@ const AdminDashboard = () => {
               <Button
                 onClick={() => {
                   setEditingPortfolio(null);
-                  setPortfolioForm({ title: "", description: "", category: "graphics-design", image_url: "", live_url: "" });
+                  setPortfolioForm({ title: "", description: "", category: "graphics-design", image_url: "", live_url: "", sub_category: "" });
                   setIsPortfolioModalOpen(true);
                 }}
                 className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 font-bengali shadow-lg shadow-blue-600/20"
@@ -834,6 +923,7 @@ const AdminDashboard = () => {
                             category: item.category,
                             image_url: item.image_url,
                             live_url: item.live_url || "",
+                            sub_category: (item as any).sub_category || "",
                           });
                           setIsPortfolioModalOpen(true);
                         }}
@@ -850,9 +940,16 @@ const AdminDashboard = () => {
                     </div>
                   </div>
                   <div className="p-4">
-                    <span className="text-xs px-2.5 py-1 bg-blue-50 text-blue-600 rounded-full font-bengali border border-blue-100">
-                      {categoryLabels[item.category] || item.category}
-                    </span>
+                    <div className="flex gap-2 flex-wrap">
+                      <span className="text-xs px-2.5 py-1 bg-blue-50 text-blue-600 rounded-full font-bengali border border-blue-100">
+                        {categoryLabels[item.category] || item.category}
+                      </span>
+                      {item.sub_category && (
+                        <span className="text-xs px-2.5 py-1 bg-teal-50 text-teal-600 rounded-full font-bengali border border-teal-100">
+                          {item.sub_category}
+                        </span>
+                      )}
+                    </div>
                     <h3 className="font-bengali font-semibold text-gray-900 mt-3">{item.title}</h3>
                     {item.description && (
                       <p className="text-sm text-gray-500 mt-1 line-clamp-2">{item.description}</p>
@@ -1250,6 +1347,29 @@ const AdminDashboard = () => {
                 <p className="text-xs text-gray-400 mt-1 font-bengali">
                   "লাইভ প্রিভিউ" বাটনে ক্লিক করলে এই লিংকে যাবে
                 </p>
+              </div>
+            )}
+
+            {/* Sub-category dropdown - Only for landing-page */}
+            {portfolioForm.category === "landing-page" && landingCategories.length > 0 && (
+              <div>
+                <Label className="font-bengali">সাব-ক্যাটাগরি</Label>
+                <Select
+                  value={portfolioForm.sub_category || "none"}
+                  onValueChange={(val) => setPortfolioForm(prev => ({ ...prev, sub_category: val === "none" ? "" : val }))}
+                >
+                  <SelectTrigger className="mt-1 bg-gray-50 border-gray-200">
+                    <SelectValue placeholder="সাব-ক্যাটাগরি সিলেক্ট করুন" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border-gray-200">
+                    <SelectItem value="none" className="font-bengali">কোনো সাব-ক্যাটাগরি নেই</SelectItem>
+                    {landingCategories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.name} className="font-bengali">
+                        {cat.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             )}
 

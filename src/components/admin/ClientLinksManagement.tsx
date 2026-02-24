@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
-  Plus, Trash2, Copy, ExternalLink, Edit2, X, Check, Link2, Search,
+  Plus, Trash2, Copy, ExternalLink, Edit2, X, Check, Link2, Search, CheckSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,6 +48,7 @@ export function ClientLinksManagement() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [form, setForm] = useState({ title: "", url: "", category: "landing-page", description: "" });
   const { toast } = useToast();
 
@@ -79,10 +80,31 @@ export function ClientLinksManagement() {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const handleCopyAll = async () => {
-    const allUrls = filtered.map((link, i) => `${i + 1}. ${link.title}: ${link.url}`).join("\n");
+  const handleCopySelected = async () => {
+    const toCopy = selectedIds.size > 0
+      ? filtered.filter((l) => selectedIds.has(l.id))
+      : filtered;
+    const allUrls = toCopy.map((link, i) => `${i + 1}. ${link.title}: ${link.url}`).join("\n");
     await navigator.clipboard.writeText(allUrls);
-    toast({ title: `${filtered.length}টি লিংক কপি হয়েছে!` });
+    toast({ title: `${toCopy.length}টি লিংক কপি হয়েছে!` });
+    setSelectedIds(new Set());
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filtered.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filtered.map((l) => l.id)));
+    }
   };
 
   const openAddModal = () => {
@@ -155,11 +177,18 @@ export function ClientLinksManagement() {
           <h2 className="text-2xl font-bold font-bengali text-gray-900">ক্লায়েন্ট লিংক</h2>
           <p className="text-gray-500 text-sm font-bengali mt-1">পোর্টফোলিও ও ল্যান্ডিং পেজের লিংক ম্যানেজ করুন</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           {filtered.length > 0 && (
-            <Button onClick={handleCopyAll} variant="outline" className="rounded-xl border-gray-200 font-bengali">
-              <Copy className="w-4 h-4 mr-2" /> সব কপি ({filtered.length})
-            </Button>
+            <>
+              <Button onClick={toggleSelectAll} variant="outline" className="rounded-xl border-gray-200 font-bengali">
+                <CheckSquare className="w-4 h-4 mr-2" />
+                {selectedIds.size === filtered.length ? "সব বাদ দিন" : "সব সিলেক্ট"}
+              </Button>
+              <Button onClick={handleCopySelected} variant="outline" className="rounded-xl border-gray-200 font-bengali">
+                <Copy className="w-4 h-4 mr-2" />
+                {selectedIds.size > 0 ? `কপি (${selectedIds.size})` : `সব কপি (${filtered.length})`}
+              </Button>
+            </>
           )}
           <Button onClick={openAddModal} className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl shadow-lg">
             <Plus className="w-4 h-4 mr-2" /> নতুন লিংক
@@ -199,12 +228,17 @@ export function ClientLinksManagement() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.05 }}
-            className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all p-5 group"
+            className={`bg-white rounded-2xl border shadow-sm hover:shadow-md transition-all p-5 group cursor-pointer ${selectedIds.has(link.id) ? "border-blue-400 ring-2 ring-blue-100" : "border-gray-100"}`}
+            onClick={() => toggleSelect(link.id)}
           >
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-3 min-w-0 flex-1">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center shrink-0">
-                  <Link2 className="w-5 h-5 text-blue-600" />
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors ${selectedIds.has(link.id) ? "bg-blue-500" : "bg-gradient-to-br from-blue-100 to-purple-100"}`}>
+                  {selectedIds.has(link.id) ? (
+                    <Check className="w-5 h-5 text-white" />
+                  ) : (
+                    <Link2 className="w-5 h-5 text-blue-600" />
+                  )}
                 </div>
                 <div className="min-w-0 flex-1">
                   <h3 className="font-semibold text-gray-900 truncate font-bengali">{link.title}</h3>
@@ -214,10 +248,10 @@ export function ClientLinksManagement() {
                 </div>
               </div>
               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button onClick={() => openEditModal(link)} className="p-1.5 hover:bg-gray-100 rounded-lg">
+                <button onClick={(e) => { e.stopPropagation(); openEditModal(link); }} className="p-1.5 hover:bg-gray-100 rounded-lg">
                   <Edit2 className="w-3.5 h-3.5 text-gray-500" />
                 </button>
-                <button onClick={() => setDeleteConfirm(link.id)} className="p-1.5 hover:bg-red-50 rounded-lg">
+                <button onClick={(e) => { e.stopPropagation(); setDeleteConfirm(link.id); }} className="p-1.5 hover:bg-red-50 rounded-lg">
                   <Trash2 className="w-3.5 h-3.5 text-red-400" />
                 </button>
               </div>
@@ -230,7 +264,7 @@ export function ClientLinksManagement() {
             <div className="flex items-center gap-2 bg-gray-50 rounded-xl p-2.5 border border-gray-100">
               <p className="text-xs text-gray-600 truncate flex-1 font-mono">{link.url}</p>
               <button
-                onClick={() => handleCopy(link.url, link.id)}
+                onClick={(e) => { e.stopPropagation(); handleCopy(link.url, link.id); }}
                 className="p-1.5 hover:bg-white rounded-lg transition-colors shrink-0"
                 title="কপি করুন"
               >
@@ -244,6 +278,7 @@ export function ClientLinksManagement() {
                 href={link.url}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
                 className="p-1.5 hover:bg-white rounded-lg transition-colors shrink-0"
                 title="ওপেন করুন"
               >

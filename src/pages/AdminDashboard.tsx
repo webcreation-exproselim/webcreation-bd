@@ -155,7 +155,14 @@ const AdminDashboard = () => {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<TabType>("overview");
+  const [activeTab, setActiveTab] = useState<TabType>(() => {
+    const saved = localStorage.getItem("admin-active-tab");
+    return (saved as TabType) || "overview";
+  });
+
+  useEffect(() => {
+    localStorage.setItem("admin-active-tab", activeTab);
+  }, [activeTab]);
   // Note: TabType is now imported from AdminSidebar
   
   // Orders

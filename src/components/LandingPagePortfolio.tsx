@@ -278,7 +278,7 @@ const PortfolioCard = ({
         <img
           src={item.image_url}
           alt={item.title}
-          className="w-full h-full object-cover transition-all duration-[3000ms] ease-in-out will-change-[object-position]"
+          className="w-full h-full object-cover transition-all duration-[5000ms] ease-in-out will-change-[object-position]"
           style={{
             objectPosition: isHovered ? "center bottom" : "center top",
           }}

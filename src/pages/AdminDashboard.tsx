@@ -55,6 +55,7 @@ import { ProjectTimerManagement } from "@/components/admin/ProjectTimerManagemen
 import { CourierCheckSubscriptionManagement } from "@/components/admin/CourierCheckSubscriptionManagement";
 import { ClientLinksManagement } from "@/components/admin/ClientLinksManagement";
 import { AdminMobileNav } from "@/components/admin/AdminMobileNav";
+import { convertToWebP } from "@/utils/imageConverter";
 
 interface OrderService {
   id: string;
@@ -519,27 +520,35 @@ const AdminDashboard = () => {
     if (!file) return;
     
     setUploading(true);
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Date.now()}.${fileExt}`;
-    const filePath = `portfolio/${fileName}`;
     
-    const { error: uploadError } = await supabase.storage
-      .from("payment-screenshots")
-      .upload(filePath, file);
-    
-    if (uploadError) {
-      toast({ title: "আপলোড ব্যর্থ", variant: "destructive" });
+    try {
+      // Convert to WebP before uploading
+      const webpFile = await convertToWebP(file, 0.85);
+      const fileName = `${Date.now()}.webp`;
+      const filePath = `portfolio/${fileName}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from("payment-screenshots")
+        .upload(filePath, webpFile, { contentType: "image/webp" });
+      
+      if (uploadError) {
+        toast({ title: "আপলোড ব্যর্থ", variant: "destructive" });
+        setUploading(false);
+        return;
+      }
+      
+      const { data: { publicUrl } } = supabase.storage
+        .from("payment-screenshots")
+        .getPublicUrl(filePath);
+      
+      setPortfolioForm(prev => ({ ...prev, image_url: publicUrl }));
       setUploading(false);
-      return;
+      toast({ title: `ছবি WebP-তে কনভার্ট হয়ে আপলোড হয়েছে` });
+    } catch (err) {
+      console.error("WebP conversion error:", err);
+      setUploading(false);
+      toast({ title: "কনভার্শন ব্যর্থ", variant: "destructive" });
     }
-    
-    const { data: { publicUrl } } = supabase.storage
-      .from("payment-screenshots")
-      .getPublicUrl(filePath);
-    
-    setPortfolioForm(prev => ({ ...prev, image_url: publicUrl }));
-    setUploading(false);
-    toast({ title: "ছবি আপলোড হয়েছে" });
   };
 
   const savePortfolio = async () => {

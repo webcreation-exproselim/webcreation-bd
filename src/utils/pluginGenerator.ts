@@ -2,7 +2,7 @@ const ENDPOINT_URL = 'https://gtjmfvwkatrorhuyrpby.supabase.co/functions/v1/chec
 const INCOMPLETE_ENDPOINT_URL = 'https://gtjmfvwkatrorhuyrpby.supabase.co/functions/v1/log-checkout-attempt';
 const GET_INCOMPLETE_URL = 'https://gtjmfvwkatrorhuyrpby.supabase.co/functions/v1/get-incomplete-orders';
 const UPDATE_SETTINGS_URL = 'https://gtjmfvwkatrorhuyrpby.supabase.co/functions/v1/update-merchant-settings';
-const DASHBOARD_URL = 'https://webcreation-bd.lovable.app/dashboard';
+const DASHBOARD_URL = 'https://www.webcreationbd.online/dashboard';
 const WHATSAPP_DEFAULT = '+8801332052874';
 import JSZip from 'jszip';
 import { PLUGIN_CONFIG } from '@/config/pluginConfig';
@@ -11,11 +11,11 @@ export const generateMainPluginFile = (apiKey: string): string => {
   return `<?php
 /**
  * Plugin Name: WCBD Fraud Guard
- * Plugin URI: https://webcreation-bd.lovable.app/fraud-guard
+ * Plugin URI: https://www.webcreationbd.online/fraud-guard
  * Description: Order Limiter & Anti-Fraud System for WooCommerce - Protect your store from fake orders with Incomplete Order Tracking.
  * Version: ${PLUGIN_CONFIG.version}
  * Author: WebCreation BD
- * Author URI: https://webcreation-bd.lovable.app
+ * Author URI: https://www.webcreationbd.online
  * Text Domain: wcbd-fraud-guard
  * Requires at least: 5.0
  * Requires PHP: 7.4
@@ -1406,7 +1406,7 @@ ADMINJSTEMPLATE;
         
         // Branding Footer
         echo '<div class="wcbd-branding">';
-        echo '<img src="https://webcreation-bd.lovable.app/logo.png" alt="WebCreation BD">';
+        echo '<img src="https://www.webcreationbd.online/logo.png" alt="WebCreation BD">';
         echo '<h3>WebCreation BD</h3>';
         echo '<p>Professional Web Solutions</p>';
         echo '<div class="btn-group">';

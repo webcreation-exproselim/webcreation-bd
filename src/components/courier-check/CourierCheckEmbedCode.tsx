@@ -160,7 +160,7 @@ export function CourierCheckEmbedCode({ apiKey }: CourierCheckEmbedCodeProps) {
                 var cell=logo?'<img src="'+logo+'" alt="'+c.name+'" class="wcbd-cc-courier-logo" onerror="this.style.display=\\'none\\';this.nextSibling.style.display=\\'inline\\'"><span class="wcbd-cc-courier-name" style="display:none">'+c.name+'</span>':'<span class="wcbd-cc-courier-name">'+c.name+'</span>';
                 html+='<tr><td>'+cell+'</td><td class="wcbd-cc-orders">'+c.orders+'</td><td class="wcbd-cc-delivered">'+c.delivered+'</td></tr>';}
               html+='</tbody><tfoot><tr><td>মোট</td><td>'+tO+'</td><td>'+tD+'</td></tr></tfoot></table></div>';}
-            html+='<div class="wcbd-cc-branding"><p class="wcbd-cc-branding-text">Powered by <a href="https://webcreation-bd.lovable.app" target="_blank">WebCreation BD</a></p></div>';
+            html+='<div class="wcbd-cc-branding"><p class="wcbd-cc-branding-text">Powered by <a href="https://www.webcreationbd.online" target="_blank">WebCreation BD</a></p></div>';
             html+='</div>';
             overlay.find('.wcbd-cc-modal').html('<button class="wcbd-cc-close">&times;</button>'+html);
             overlay.find('.wcbd-cc-close').on('click',function(){overlay.remove();});

@@ -2,7 +2,7 @@ import JSZip from 'jszip';
 import { COURIER_CHECK_PLUGIN_CONFIG } from '@/config/courierCheckPluginConfig';
 
 const SCRAPE_ENDPOINT = 'https://gtjmfvwkatrorhuyrpby.supabase.co/functions/v1/scrape-courier-check';
-const DASHBOARD_URL = 'https://webcreation-bd.lovable.app/dashboard';
+const DASHBOARD_URL = 'https://www.webcreationbd.online/dashboard';
 
 export const generateCourierCheckPluginFile = (apiKey: string): string => {
   return `<?php
@@ -435,7 +435,7 @@ jQuery(document).ready(function($){
                     html += '</table></div>';
                     
                     // Branding
-                    html += '<div class="wcbd-cc-branding"><p class="wcbd-cc-branding-text">Powered by <a href="https://webcreation-bd.lovable.app" target="_blank">WebCreation BD</a></p></div>';
+                    html += '<div class="wcbd-cc-branding"><p class="wcbd-cc-branding-text">Powered by <a href="https://www.webcreationbd.online" target="_blank">WebCreation BD</a></p></div>';
                     
                     html += '</div>'; // end body
                     

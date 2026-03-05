@@ -12,9 +12,10 @@ import { useToast } from "@/hooks/use-toast";
 
 interface CourierCheckSectionProps {
   userId: string;
+  subscriptionId?: string;
 }
 
-export function CourierCheckSection({ userId }: CourierCheckSectionProps) {
+export function CourierCheckSection({ userId, subscriptionId: propSubId }: CourierCheckSectionProps) {
   const { subscription, pendingOrder, loading, refetch } = useCourierCheckData(userId);
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [showPlanSelection, setShowPlanSelection] = useState(false);

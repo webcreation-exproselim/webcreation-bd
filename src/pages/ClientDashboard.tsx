@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Loader2 } from "lucide-react";
+import { Loader2, Store } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { User as SupabaseUser, Session } from "@supabase/supabase-js";
@@ -13,6 +13,13 @@ import { useMerchantData } from "@/hooks/useMerchantData";
 import { useSubscriptionData } from "@/hooks/useSubscriptionData";
 import { SubscriptionPurchaseModal } from "@/components/fraud-protection/SubscriptionPurchaseModal";
 import { useNotifications } from "@/hooks/useNotifications";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // Refactored components
 import { DashboardSidebar } from "@/components/client/DashboardSidebar";
@@ -83,7 +90,7 @@ export default function ClientDashboard() {
   const { toast } = useToast();
   
   // Fraud Guard merchant data
-  const { merchant, refetchMerchant, updateCooldownMinutes } = useMerchantData();
+  const { merchant, merchants, selectedMerchantId, setSelectedMerchantId, refetchMerchant, updateCooldownMinutes } = useMerchantData();
   const { pendingOrder, refetch: refetchSubscription } = useSubscriptionData(merchant?.id || null);
   
   // Notifications
@@ -388,6 +395,30 @@ export default function ClientDashboard() {
         {/* Scrollable Content */}
         <main className="flex-1 overflow-y-auto pb-24 lg:pb-6">
           <div className="max-w-7xl mx-auto px-4 lg:px-6 py-4 lg:py-6">
+            {/* Store Switcher - show when user has multiple stores */}
+            {merchants.length > 1 && (
+              <div className="mb-4 flex items-center gap-3 bg-white rounded-xl border border-gray-200 p-3 shadow-sm">
+                <Store className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                <span className="text-sm font-medium text-gray-700 font-bengali flex-shrink-0">Store:</span>
+                <Select
+                  value={selectedMerchantId || ''}
+                  onValueChange={(val) => setSelectedMerchantId(val)}
+                >
+                  <SelectTrigger className="flex-1 max-w-xs border-gray-200">
+                    <SelectValue placeholder="Store নির্বাচন করুন" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {merchants.map((m) => (
+                      <SelectItem key={m.id} value={m.id}>
+                        {m.store_name || m.website_url || 'Default Store'}
+                        {m.is_active && ' ✅'}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             {/* Welcome Section - Only show on orders tab */}
             {activeTab === "orders" && (
               <DashboardWelcome
@@ -465,7 +496,7 @@ export default function ClientDashboard() {
 
             {activeTab === "fraudguard" && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                {user && <FraudGuardSection userId={user.id} />}
+                {user && <FraudGuardSection userId={user.id} merchantId={merchant?.id} />}
               </motion.div>
             )}
 

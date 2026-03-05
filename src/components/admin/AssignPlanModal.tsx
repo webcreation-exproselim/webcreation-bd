@@ -38,6 +38,7 @@ export function AssignPlanModal({ open, onOpenChange, onSuccess }: AssignPlanMod
   const [search, setSearch] = useState("");
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [websiteUrl, setWebsiteUrl] = useState("");
+  const [storeName, setStoreName] = useState("");
   const [planType, setPlanType] = useState<'monthly' | 'yearly'>('monthly');
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
@@ -48,6 +49,7 @@ export function AssignPlanModal({ open, onOpenChange, onSuccess }: AssignPlanMod
       // Reset state when modal opens
       setSelectedUser(null);
       setWebsiteUrl("");
+      setStoreName("");
       setPlanType('monthly');
       setSearch("");
       setError(null);
@@ -119,74 +121,36 @@ export function AssignPlanModal({ open, onOpenChange, onSuccess }: AssignPlanMod
       // Normalize the URL before saving
       const normalizedUrl = normalizeUrl(websiteUrl);
 
-      const planData = {
-        website_url: normalizedUrl,
-        is_active: true,
-        current_plan: planType,
-        plan_expires_at: expiresAt.toISOString(),
-        max_requests: planType === 'yearly' ? 15000 : 1000,
-        requests_used: 0,
-        updated_at: new Date().toISOString(),
-      };
+      const storeLabel = storeName.trim() || normalizedUrl;
 
-      // Check if merchant exists for this user
-      const { data: existingMerchant, error: checkError } = await supabase
+      // Always INSERT a new merchant (each domain = new record)
+      const { error: insertError } = await supabase
         .from('merchants')
-        .select('id')
-        .eq('user_id', selectedUser.user_id)
-        .maybeSingle();
+        .insert({
+          user_id: selectedUser.user_id,
+          website_url: normalizedUrl,
+          store_name: storeLabel,
+          is_active: true,
+          current_plan: planType,
+          plan_expires_at: expiresAt.toISOString(),
+          max_requests: planType === 'yearly' ? 15000 : 1000,
+          requests_used: 0,
+        });
 
-      if (checkError) throw checkError;
-      
-      if (existingMerchant && existingMerchant.id) {
-        const { error: updateError } = await supabase
-          .from('merchants')
-          .update(planData)
-          .eq('id', existingMerchant.id);
+      if (insertError) throw insertError;
 
-        if (updateError) throw updateError;
-      } else {
-        const { error: insertError } = await supabase
-          .from('merchants')
-          .insert({
-            user_id: selectedUser.user_id,
-            ...planData,
-          });
-
-        if (insertError) throw insertError;
-      }
-
-      // Also activate Courier Check subscription
+      // Always INSERT a new courier check subscription for this domain
       const courierMaxRequests = planType === 'yearly' ? 5000 : 500;
-      const { data: existingCCSub } = await supabase
+      await supabase
         .from('courier_check_subscriptions')
-        .select('id')
-        .eq('user_id', selectedUser.user_id)
-        .maybeSingle();
-
-      if (existingCCSub) {
-        await supabase
-          .from('courier_check_subscriptions')
-          .update({
-            is_active: true,
-            plan_expires_at: expiresAt.toISOString(),
-            max_requests: courierMaxRequests,
-            requests_used: 0,
-            website_url: normalizedUrl,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', existingCCSub.id);
-      } else {
-        await supabase
-          .from('courier_check_subscriptions')
-          .insert({
-            user_id: selectedUser.user_id,
-            is_active: true,
-            plan_expires_at: expiresAt.toISOString(),
-            max_requests: courierMaxRequests,
-            website_url: normalizedUrl,
-          });
-      }
+        .insert({
+          user_id: selectedUser.user_id,
+          is_active: true,
+          plan_expires_at: expiresAt.toISOString(),
+          max_requests: courierMaxRequests,
+          website_url: normalizedUrl,
+          store_name: storeLabel,
+        });
 
       toast({
         title: "✅ Plan Assigned Successfully",
@@ -280,10 +244,23 @@ export function AssignPlanModal({ open, onOpenChange, onSuccess }: AssignPlanMod
             </div>
           </div>
 
-          {/* Step 2: Website URL */}
+          {/* Step 2: Store Name */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700 font-bengali">
-              ২. Website URL দিন
+              ২. Store Name দিন (ঐচ্ছিক)
+            </label>
+            <Input
+              placeholder="যেমন: My Shop BD"
+              value={storeName}
+              onChange={(e) => setStoreName(e.target.value)}
+              className="font-bengali"
+            />
+          </div>
+
+          {/* Step 3: Website URL */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 font-bengali">
+              ৩. Website URL দিন
             </label>
             <div className="relative">
               <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -299,7 +276,7 @@ export function AssignPlanModal({ open, onOpenChange, onSuccess }: AssignPlanMod
           {/* Step 3: Select Plan */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700 font-bengali">
-              ৩. Plan নির্বাচন করুন
+              ৪. Plan নির্বাচন করুন
             </label>
             <Select value={planType} onValueChange={(v: 'monthly' | 'yearly') => setPlanType(v)}>
               <SelectTrigger>

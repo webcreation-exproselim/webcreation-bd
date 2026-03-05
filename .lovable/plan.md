@@ -1,56 +1,87 @@
 
 
-# ল্যান্ডিং পেজ পোর্টফোলিও আপগ্রেড প্ল্যান
+# Multi-Domain Support — Admin-Only Assignment
 
-## ফিচার ১: ইমেজ অটো-স্ক্রল (হোভারে)
-পোর্টফোলিও কার্ডের ইমেজে হোভার করলে ইমেজটি উপর থেকে নিচে স্ক্রল হবে (CSS transition দিয়ে), যাতে পুরো ল্যান্ডিং পেজের স্ক্রিনশট দেখা যায়। মোবাইলেও টাচ করলে একই ইফেক্ট কাজ করবে।
+## সারমর্ম
+Admin একটি user-কে একাধিক domain assign করতে পারবে। প্রতিটি domain-এর আলাদা API key ও আলাদা plugin download থাকবে। User তার dashboard থেকে সব domain দেখবে ও প্রতিটির plugin আলাদাভাবে download করতে পারবে। Existing subscription purchase flow অপরিবর্তিত থাকবে।
 
-## ফিচার ২: ডায়নামিক ক্যাটাগরি সিস্টেম
+---
 
-### ডাটাবেজ পরিবর্তন
-- নতুন টেবিল: `landing_page_categories` — ক্যাটাগরি নাম ও অর্ডার সংরক্ষণ করবে
-  - `id` (uuid), `name` (text - যেমন "পাঞ্জাবি", "টি-শার্ট"), `display_order` (integer), `created_at`
-  - RLS: সবাই দেখতে পারবে, শুধু অ্যাডমিন ম্যানেজ করতে পারবে
-- `portfolio_items` টেবিলে নতুন কলাম: `sub_category` (text, nullable) — ল্যান্ডিং পেজ আইটেমের সাব-ক্যাটাগরি (যেমন "পাঞ্জাবি")
+## Step 1: Database Migration
 
-### অ্যাডমিন ড্যাশবোর্ড আপডেট
-- পোর্টফোলিও সেকশনে "ল্যান্ডিং পেজ ক্যাটাগরি ম্যানেজমেন্ট" যোগ হবে:
-  - ক্যাটাগরি তৈরি, এডিট, ডিলিট করা যাবে
-- পোর্টফোলিও আইটেম এড/এডিট করার সময় ক্যাটাগরি "landing-page" সিলেক্ট করলে একটি নতুন "সাব-ক্যাটাগরি" ড্রপডাউন দেখাবে (ডাটাবেজ থেকে ক্যাটাগরি লোড হবে)
+- **Remove** `merchants_user_id_key` UNIQUE constraint — একই `user_id` দিয়ে multiple merchant rows allow করবে
+- **Add** `store_name` column (text, nullable) to `merchants` — domain চেনার জন্য label
+- **Add** `store_name` column (text, nullable) to `courier_check_subscriptions`
 
-### ফ্রন্টেন্ড (LandingPagePortfolio.tsx) আপডেট
-- ক্যাটাগরি চিপস ডেমো সাইটের মতো গ্রিড লেআউটে দেখাবে (প্রতিটিতে আইটেম কাউন্ট সহ)
-- ক্যাটাগরিতে ক্লিক করলে শুধু সেই ক্যাটাগরির পোর্টফোলিও দেখাবে
-- "সব দেখুন" বাটনে সব আইটেম দেখাবে
-- ইমেজ হোভারে অটো-স্ক্রল ইফেক্ট যোগ হবে
-
-## টেকনিক্যাল ডিটেইলস
-
-### ফাইল পরিবর্তন:
-1. **DB Migration** — `landing_page_categories` টেবিল তৈরি + `portfolio_items`-এ `sub_category` কলাম যোগ
-2. **`src/components/LandingPagePortfolio.tsx`** — সম্পূর্ণ আপডেট:
-   - `landing_page_categories` থেকে ক্যাটাগরি ফেচ
-   - `sub_category` ফিল্ড দিয়ে ফিল্টার
-   - ইমেজে CSS `object-position` transition দিয়ে অটো-স্ক্রল (হোভারে `object-position: top` থেকে `bottom`-এ যাবে ৩ সেকেন্ডে)
-   - ক্যাটাগরি চিপস গ্রিড (৬ কলাম ডেস্কটপ, ৩ কলাম মোবাইল)
-3. **`src/pages/AdminDashboard.tsx`** — আপডেট:
-   - ক্যাটাগরি CRUD ম্যানেজমেন্ট UI যোগ
-   - পোর্টফোলিও ফর্মে `sub_category` ড্রপডাউন যোগ (শুধু landing-page ক্যাটাগরির জন্য)
-
-### ইমেজ অটো-স্ক্রল টেকনিক:
-```text
-CSS approach:
-- Image container: fixed height, overflow hidden
-- Image: object-fit: cover, object-position: top
-- On hover: object-position transitions to bottom over 3s
-- Works on both PC and mobile (touch events)
+```sql
+ALTER TABLE merchants DROP CONSTRAINT merchants_user_id_key;
+ALTER TABLE merchants ADD COLUMN store_name text;
+ALTER TABLE courier_check_subscriptions ADD COLUMN store_name text;
 ```
 
-### ক্যাটাগরি চিপস লেআউট (ডেমো সাইটের মতো):
-```text
-+----------+----------+----------+----------+----------+----------+
-| সব দেখুন | টি-শার্ট | পাঞ্জাবি | বোরকা   | শাড়ি    | ইলেক...  |
-|   450    |    42    |    14    |    17   |    9     |    38    |
-+----------+----------+----------+----------+----------+----------+
-```
+---
+
+## Step 2: Admin AssignPlanModal Update (`AssignPlanModal.tsx`)
+
+**Current**: Checks for existing merchant via `.maybeSingle()`, updates if found, inserts if not.
+**Change**: Always **INSERT** a new merchant row (new domain = new record). Add a `store_name` input field. Same for courier_check_subscriptions — always insert new.
+
+---
+
+## Step 3: Client Dashboard — Store Switcher
+
+**Files**: `useMerchantData.ts`, `ClientDashboard.tsx`, `FraudGuardSection.tsx`, `CourierCheckSection.tsx`
+
+**Current**: `useMerchantData` fetches `.single()` merchant. `FraudGuardSection` fetches `.maybeSingle()`.
+**Change**:
+- `useMerchantData.ts`: Fetch ALL merchants for user (`.select()` without `.single()`). Add `selectedMerchantId` state and a setter. Return `merchants[]` + `selectedMerchant`.
+- `ClientDashboard.tsx`: Add a **Store Selector dropdown** at the top showing all domains. Pass selected merchant context down.
+- `FraudGuardSection.tsx`: Accept optional `merchantId` prop. If provided, use that instead of fetching. Otherwise fetch all and let user pick.
+- `CourierCheckSection.tsx`: Same — accept store context, show data for selected store.
+- `useCourierCheckData.ts`: Change to accept optional subscription ID or fetch all for user, with selection.
+
+---
+
+## Step 4: Plugin Download Per-Store
+
+No plugin generator changes needed — they already take `apiKey` as parameter. The dashboard will pass the selected store's API key to `downloadPluginFile()` and `downloadCourierCheckPlugin()`.
+
+---
+
+## Step 5: Admin MerchantManagement Update
+
+**Current**: Shows one merchant per user.
+**Change**: Will naturally show multiple rows since it fetches all merchants. Add `store_name` / `website_url` display. AssignCourierCheckPlanModal — same pattern, always insert new.
+
+---
+
+## Step 6: Edge Functions
+
+No changes needed — they identify merchants by `api_key`, not `user_id`.
+
+---
+
+## Affected Files (~12 files)
+
+| File | Change |
+|------|--------|
+| DB Migration | Drop unique, add store_name |
+| `useMerchantData.ts` | Multi-merchant fetch + selector |
+| `useCourierCheckData.ts` | Multi-subscription support |
+| `ClientDashboard.tsx` | Store switcher UI |
+| `FraudGuardSection.tsx` | Use selected merchant context |
+| `CourierCheckSection.tsx` | Use selected store context |
+| `AssignPlanModal.tsx` | Always insert new, add store_name |
+| `AssignCourierCheckPlanModal.tsx` | Always insert new |
+| `MerchantManagement.tsx` | Show store_name column |
+| `FraudSubscriptionManagement.tsx` | Minor — works already |
+| `CourierCheckSubscriptionManagement.tsx` | Minor — works already |
+| `FraudGuardQuickStatus.tsx` | Accept selected merchant |
+
+---
+
+## Important Notes
+- Existing single-domain users will continue working — তাদের ১টি merchant row আছে, সেটাই দেখাবে
+- Admin ছাড়া কেউ নতুন domain add করতে পারবে না
+- User-এর self-purchase flow (SubscriptionPurchaseModal) অপরিবর্তিত থাকবে — existing merchant-এ apply হবে
 

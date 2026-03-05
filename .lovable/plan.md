@@ -1,4 +1,4 @@
-
+<!-- Last synced: 2026-03-05 -->
 
 # Multi-Domain Support — Admin-Only Assignment ✅ IMPLEMENTED
 

@@ -30,6 +30,7 @@ import { SubscriptionPurchaseModal } from "./SubscriptionPurchaseModal";
 
 interface FraudGuardSectionProps {
   userId: string;
+  merchantId?: string;
 }
 
 interface Merchant {
@@ -43,7 +44,7 @@ interface Merchant {
   cooldown_period_minutes: number;
 }
 
-export function FraudGuardSection({ userId }: FraudGuardSectionProps) {
+export function FraudGuardSection({ userId, merchantId: propMerchantId }: FraudGuardSectionProps) {
   const [merchant, setMerchant] = useState<Merchant | null>(null);
   const [logs, setLogs] = useState<{ id: string; status: string; created_at: string }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,21 +60,38 @@ export function FraudGuardSection({ userId }: FraudGuardSectionProps) {
   useEffect(() => {
     const fetchOrCreateMerchant = async () => {
       try {
-        let { data: merchantData, error } = await supabase
-          .from('merchants')
-          .select('id, api_key, is_active, current_plan, plan_expires_at, requests_used, max_requests, cooldown_period_minutes')
-          .eq('user_id', userId)
-          .maybeSingle();
+        let merchantData: any = null;
 
-        if (!merchantData && !error) {
-          const { data: newMerchant, error: insertError } = await supabase
+        if (propMerchantId) {
+          // Fetch specific merchant by ID
+          const { data, error } = await supabase
             .from('merchants')
-            .insert({ user_id: userId })
             .select('id, api_key, is_active, current_plan, plan_expires_at, requests_used, max_requests, cooldown_period_minutes')
+            .eq('id', propMerchantId)
             .single();
+          if (!error) merchantData = data;
+        } else {
+          // Legacy: fetch first merchant for user
+          const { data, error } = await supabase
+            .from('merchants')
+            .select('id, api_key, is_active, current_plan, plan_expires_at, requests_used, max_requests, cooldown_period_minutes')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: true })
+            .limit(1)
+            .maybeSingle();
+          if (!data && !error) {
+            // No merchant, create one (legacy single-merchant flow)
+            const { data: newMerchant, error: insertError } = await supabase
+              .from('merchants')
+              .insert({ user_id: userId })
+              .select('id, api_key, is_active, current_plan, plan_expires_at, requests_used, max_requests, cooldown_period_minutes')
+              .single();
 
-          if (!insertError && newMerchant) {
-            merchantData = newMerchant;
+            if (!insertError && newMerchant) {
+              merchantData = newMerchant;
+            }
+          } else {
+            merchantData = data;
           }
         }
 
@@ -109,7 +127,7 @@ export function FraudGuardSection({ userId }: FraudGuardSectionProps) {
     };
 
     fetchOrCreateMerchant();
-  }, [userId]);
+  }, [userId, propMerchantId]);
 
   const handleSelectPlan = (planType: 'monthly' | 'yearly') => {
     setSelectedPlan(planType);
@@ -122,11 +140,14 @@ export function FraudGuardSection({ userId }: FraudGuardSectionProps) {
   const handlePurchaseSuccess = async () => {
     refetchSubscription();
     
+    const merchantIdToFetch = propMerchantId || merchant?.id;
+    if (!merchantIdToFetch) return;
+
     const { data } = await supabase
       .from('merchants')
       .select('id, api_key, is_active, current_plan, plan_expires_at, requests_used, max_requests, cooldown_period_minutes')
-      .eq('user_id', userId)
-      .maybeSingle();
+      .eq('id', merchantIdToFetch)
+      .single();
     
     if (data) {
       setMerchant({

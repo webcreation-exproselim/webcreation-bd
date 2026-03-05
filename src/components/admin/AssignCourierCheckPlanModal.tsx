@@ -30,6 +30,7 @@ export function AssignCourierCheckPlanModal({ open, onOpenChange, onSuccess }: A
   const [search, setSearch] = useState("");
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [websiteUrl, setWebsiteUrl] = useState("");
+  const [storeName, setStoreName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -38,6 +39,7 @@ export function AssignCourierCheckPlanModal({ open, onOpenChange, onSuccess }: A
       fetchUsers();
       setSelectedUser(null);
       setWebsiteUrl("");
+      setStoreName("");
       setSearch("");
       setError(null);
     }
@@ -92,45 +94,22 @@ export function AssignCourierCheckPlanModal({ open, onOpenChange, onSuccess }: A
       const expiresAt = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
       const normalizedUrl = normalizeUrl(websiteUrl);
 
-      // Check if subscription exists for this user
-      const { data: existingSub, error: checkError } = await supabase
+      const storeLabel = storeName.trim() || normalizedUrl;
+
+      // Always INSERT new subscription (each domain = new record)
+      const { error: insertError } = await supabase
         .from('courier_check_subscriptions')
-        .select('id')
-        .eq('user_id', selectedUser.user_id)
-        .maybeSingle();
+        .insert({
+          user_id: selectedUser.user_id,
+          website_url: normalizedUrl,
+          store_name: storeLabel,
+          is_active: true,
+          plan_expires_at: expiresAt.toISOString(),
+          max_requests: 5000,
+          requests_used: 0,
+        });
 
-      if (checkError) throw checkError;
-
-      if (existingSub && existingSub.id) {
-        // Update existing subscription
-        const { error: updateError } = await supabase
-          .from('courier_check_subscriptions')
-          .update({
-            is_active: true,
-            plan_expires_at: expiresAt.toISOString(),
-            max_requests: 5000,
-            requests_used: 0,
-            website_url: normalizedUrl,
-            updated_at: now.toISOString(),
-          })
-          .eq('id', existingSub.id);
-
-        if (updateError) throw updateError;
-      } else {
-        // Create new subscription
-        const { error: insertError } = await supabase
-          .from('courier_check_subscriptions')
-          .insert({
-            user_id: selectedUser.user_id,
-            website_url: normalizedUrl,
-            is_active: true,
-            plan_expires_at: expiresAt.toISOString(),
-            max_requests: 5000,
-            requests_used: 0,
-          });
-
-        if (insertError) throw insertError;
-      }
+      if (insertError) throw insertError;
 
       toast({
         title: "✅ Plan Assigned Successfully",
@@ -224,10 +203,23 @@ export function AssignCourierCheckPlanModal({ open, onOpenChange, onSuccess }: A
             </div>
           </div>
 
-          {/* Step 2: Website URL */}
+          {/* Step 2: Store Name */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700 font-bengali">
-              ২. Website URL দিন
+              ২. Store Name দিন (ঐচ্ছিক)
+            </label>
+            <Input
+              placeholder="যেমন: My Shop BD"
+              value={storeName}
+              onChange={(e) => setStoreName(e.target.value)}
+              className="font-bengali"
+            />
+          </div>
+
+          {/* Step 3: Website URL */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 font-bengali">
+              ৩. Website URL দিন
             </label>
             <div className="relative">
               <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -243,7 +235,7 @@ export function AssignCourierCheckPlanModal({ open, onOpenChange, onSuccess }: A
           {/* Plan Info (Fixed - no dropdown needed) */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700 font-bengali">
-              ৩. Plan
+              ৪. Plan
             </label>
             <div className="bg-cyan-50 border border-cyan-200 rounded-lg p-3 flex items-center gap-2">
               <Truck className="w-4 h-4 text-cyan-600" />

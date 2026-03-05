@@ -188,6 +188,7 @@ export type Database = {
           max_requests: number
           plan_expires_at: string | null
           requests_used: number
+          store_name: string | null
           updated_at: string
           user_id: string
           website_url: string | null
@@ -200,6 +201,7 @@ export type Database = {
           max_requests?: number
           plan_expires_at?: string | null
           requests_used?: number
+          store_name?: string | null
           updated_at?: string
           user_id: string
           website_url?: string | null
@@ -212,6 +214,7 @@ export type Database = {
           max_requests?: number
           plan_expires_at?: string | null
           requests_used?: number
+          store_name?: string | null
           updated_at?: string
           user_id?: string
           website_url?: string | null
@@ -511,6 +514,7 @@ export type Database = {
           show_contact_buttons: boolean | null
           steadfast_api_key: string | null
           steadfast_secret_key: string | null
+          store_name: string | null
           updated_at: string
           user_id: string
           website_url: string | null
@@ -545,6 +549,7 @@ export type Database = {
           show_contact_buttons?: boolean | null
           steadfast_api_key?: string | null
           steadfast_secret_key?: string | null
+          store_name?: string | null
           updated_at?: string
           user_id: string
           website_url?: string | null
@@ -579,6 +584,7 @@ export type Database = {
           show_contact_buttons?: boolean | null
           steadfast_api_key?: string | null
           steadfast_secret_key?: string | null
+          store_name?: string | null
           updated_at?: string
           user_id?: string
           website_url?: string | null

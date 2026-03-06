@@ -169,22 +169,163 @@ export function IntegrationManager() {
 
   const getIntegrationCode = (record: IntegrationRecord) => {
     if (record.type === "fraudguard") {
-      return `// Fraud Guard Integration
-const response = await fetch('${getEndpointUrl("fraudguard")}', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    api_key: '${record.api_key}',
-    phone: customerPhone,
-    device_id: deviceFingerprint,
-    check_type: 'order'
-  })
-});
-const result = await response.json();
-if (!result.allowed) {
-  // Order blocked - show message
-  alert(result.message);
-}`;
+      return `<!-- WCBD Fraud Guard - Complete Integration with Popup -->
+<!-- এই কোডটি আপনার সাইটের checkout page বা footer-এ বসান -->
+<!-- ⚙️ নিচে WhatsApp ও Phone নম্বর কাস্টমাইজ করুন -->
+<style>
+.wcbd-fg-overlay{position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;background:rgba(0,0,0,.7)!important;backdrop-filter:blur(6px)!important;z-index:999999!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:16px!important;animation:wcbd-fg-fadeIn .3s ease!important}
+@keyframes wcbd-fg-fadeIn{from{opacity:0}to{opacity:1}}
+.wcbd-fg-popup{background:#fff!important;border-radius:20px!important;max-width:440px!important;width:100%!important;box-shadow:0 25px 60px rgba(0,0,0,.3)!important;overflow:hidden!important;animation:wcbd-fg-scaleIn .3s ease!important;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif!important}
+@keyframes wcbd-fg-scaleIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
+.wcbd-fg-header{background:linear-gradient(135deg,#dc2626,#991b1b)!important;padding:20px 24px!important;text-align:center!important}
+.wcbd-fg-header-icon{font-size:48px!important;margin-bottom:8px!important;display:block!important}
+.wcbd-fg-header h3{margin:0!important;font-size:18px!important;color:#fff!important;font-weight:700!important}
+.wcbd-fg-header p{margin:6px 0 0!important;font-size:13px!important;color:rgba(255,255,255,.8)!important}
+.wcbd-fg-body{padding:20px 24px 24px!important}
+.wcbd-fg-message{background:#fef2f2!important;border:1px solid #fecaca!important;border-radius:14px!important;padding:16px!important;margin-bottom:16px!important;text-align:center!important}
+.wcbd-fg-message p{margin:0!important;font-size:14px!important;color:#991b1b!important;font-weight:500!important;line-height:1.6!important}
+.wcbd-fg-timer{display:flex!important;align-items:center!important;justify-content:center!important;gap:8px!important;margin-bottom:16px!important;padding:10px!important;background:#f8fafc!important;border-radius:12px!important;border:1px solid #e2e8f0!important}
+.wcbd-fg-timer-icon{font-size:20px!important}
+.wcbd-fg-timer-text{font-size:14px!important;color:#475569!important;font-weight:600!important}
+.wcbd-fg-timer-count{font-size:20px!important;font-weight:800!important;color:#dc2626!important;min-width:30px!important;text-align:center!important}
+.wcbd-fg-contact{display:flex!important;gap:10px!important;margin-bottom:12px!important}
+.wcbd-fg-contact a{flex:1!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:8px!important;padding:12px!important;border-radius:12px!important;text-decoration:none!important;font-size:13px!important;font-weight:600!important;transition:all .2s!important}
+.wcbd-fg-wa{background:#25d366!important;color:#fff!important}
+.wcbd-fg-wa:hover{background:#1da851!important}
+.wcbd-fg-call{background:#2563eb!important;color:#fff!important}
+.wcbd-fg-call:hover{background:#1d4ed8!important}
+.wcbd-fg-branding{text-align:center!important;padding-top:12px!important;border-top:1px solid #e5e7eb!important;font-size:11px!important;color:#94a3b8!important}
+.wcbd-fg-branding a{color:#dc2626!important;text-decoration:none!important;font-weight:600!important}
+@media(max-width:600px){
+.wcbd-fg-overlay{align-items:flex-end!important;padding:0!important}
+.wcbd-fg-popup{border-radius:20px 20px 0 0!important;max-height:90vh!important;overflow-y:auto!important;animation:wcbd-fg-slideUp .3s ease!important}
+@keyframes wcbd-fg-slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+}
+</style>
+<script src="https://openfpcdn.io/fingerprintjs/v4" async></script>
+<script>
+(function(){
+  // ═══════════════════════════════════════════
+  // ⚙️ কাস্টমাইজ করুন - নিচের নম্বরগুলো পরিবর্তন করুন
+  // ═══════════════════════════════════════════
+  var WCBD_CONFIG = {
+    API_KEY: '${record.api_key}',
+    ENDPOINT: '${getEndpointUrl("fraudguard")}',
+    WHATSAPP: '+8801332052874',   // ← আপনার WhatsApp নম্বর দিন
+    PHONE: '+8801332052874',      // ← আপনার Phone নম্বর দিন
+    POPUP_TIMER: 30,              // ← সেকেন্ডে popup timer (0 = no timer)
+    POPUP_LANGUAGE: 'bn'          // ← 'bn' বাংলা, 'en' English
+  };
+  // ═══════════════════════════════════════════
+
+  var deviceId = null;
+  var fpPromise = typeof FingerprintJS !== 'undefined' ? FingerprintJS.load() : null;
+
+  function getDeviceId(cb) {
+    if (deviceId) return cb(deviceId);
+    if (fpPromise) {
+      fpPromise.then(function(fp) { return fp.get(); }).then(function(r) { deviceId = r.visitorId; cb(deviceId); });
+    } else if (typeof FingerprintJS !== 'undefined') {
+      FingerprintJS.load().then(function(fp) { return fp.get(); }).then(function(r) { deviceId = r.visitorId; cb(deviceId); });
+    } else {
+      // Fallback
+      deviceId = 'fg_' + Math.random().toString(36).substr(2, 12);
+      cb(deviceId);
+    }
+  }
+
+  function showBlockedPopup(message) {
+    var existing = document.querySelector('.wcbd-fg-overlay');
+    if (existing) existing.remove();
+
+    var msgs = {
+      bn: { title: '⚠️ অর্ডার সীমাবদ্ধ', subtitle: 'আপনার অর্ডারটি প্রক্রিয়া করা সম্ভব হচ্ছে না', wa: '💬 WhatsApp', call: '📞 কল করুন', timer: 'সেকেন্ড পর বন্ধ হবে' },
+      en: { title: '⚠️ Order Restricted', subtitle: 'Your order could not be processed', wa: '💬 WhatsApp', call: '📞 Call Us', timer: 'seconds remaining' }
+    };
+    var t = msgs[WCBD_CONFIG.POPUP_LANGUAGE] || msgs.bn;
+
+    var ov = document.createElement('div');
+    ov.className = 'wcbd-fg-overlay';
+    var timer = WCBD_CONFIG.POPUP_TIMER;
+    var timerHtml = timer > 0 ? '<div class="wcbd-fg-timer"><span class="wcbd-fg-timer-icon">⏱️</span><span class="wcbd-fg-timer-count" id="wcbd-fg-countdown">' + timer + '</span><span class="wcbd-fg-timer-text">' + t.timer + '</span></div>' : '';
+    var contactHtml = '';
+    if (WCBD_CONFIG.WHATSAPP || WCBD_CONFIG.PHONE) {
+      contactHtml = '<div class="wcbd-fg-contact">';
+      if (WCBD_CONFIG.WHATSAPP) contactHtml += '<a href="https://wa.me/' + WCBD_CONFIG.WHATSAPP.replace(/[^0-9]/g,'') + '" target="_blank" class="wcbd-fg-wa">' + t.wa + '</a>';
+      if (WCBD_CONFIG.PHONE) contactHtml += '<a href="tel:' + WCBD_CONFIG.PHONE + '" class="wcbd-fg-call">' + t.call + '</a>';
+      contactHtml += '</div>';
+    }
+
+    ov.innerHTML = '<div class="wcbd-fg-popup">'
+      + '<div class="wcbd-fg-header"><span class="wcbd-fg-header-icon">🛡️</span><h3>' + t.title + '</h3><p>' + t.subtitle + '</p></div>'
+      + '<div class="wcbd-fg-body">'
+      + '<div class="wcbd-fg-message"><p>' + (message || 'আপনি সম্প্রতি অর্ডার করেছেন।') + '</p></div>'
+      + timerHtml
+      + contactHtml
+      + '<div class="wcbd-fg-branding">Protected by <a href="https://www.webcreationbd.online" target="_blank">WebCreation BD</a></div>'
+      + '</div></div>';
+
+    document.body.appendChild(ov);
+    document.body.style.overflow = 'hidden';
+    window.scrollTo(0, 0);
+
+    if (timer > 0) {
+      var countdown = timer;
+      var interval = setInterval(function() {
+        countdown--;
+        var el = document.getElementById('wcbd-fg-countdown');
+        if (el) el.textContent = countdown;
+        if (countdown <= 0) { clearInterval(interval); ov.remove(); document.body.style.overflow = ''; }
+      }, 1000);
+    }
+  }
+
+  // ═══ Auto-hook into checkout forms ═══
+  window.wcbdFraudCheck = function(phone, callback) {
+    getDeviceId(function(did) {
+      fetch(WCBD_CONFIG.ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ api_key: WCBD_CONFIG.API_KEY, phone: phone, device_id: did, check_type: 'order' })
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(res) {
+        if (!res.allowed) {
+          showBlockedPopup(res.message);
+          if (callback) callback(false, res);
+        } else {
+          if (callback) callback(true, res);
+        }
+      })
+      .catch(function() { if (callback) callback(true, {}); });
+    });
+  };
+
+  // Auto-detect WooCommerce checkout
+  document.addEventListener('DOMContentLoaded', function() {
+    // Classic checkout
+    var form = document.querySelector('form.checkout, form.woocommerce-checkout');
+    if (form) {
+      form.addEventListener('submit', function(e) {
+        var phoneInput = form.querySelector('#billing_phone, [name="billing_phone"]');
+        if (!phoneInput || !phoneInput.value) return;
+        e.preventDefault();
+        wcbdFraudCheck(phoneInput.value, function(allowed) {
+          if (allowed) { form.removeEventListener('submit', arguments.callee); form.submit(); }
+        });
+      });
+    }
+  });
+})();
+</script>
+<!-- End WCBD Fraud Guard -->
+
+<!-- 📋 ব্যবহার নির্দেশিকা:
+1. উপরের WCBD_CONFIG এ আপনার WhatsApp ও Phone নম্বর দিন
+2. কোডটি আপনার সাইটের footer-এ পেস্ট করুন
+3. WooCommerce checkout automatically detect হবে
+4. Manual check: wcbdFraudCheck('01XXXXXXXXX', function(allowed, res) { ... })
+-->`;
     } else {
       return `<!-- WCBD Courier Check - Complete Integration with Popup -->
 <!-- এই কোডটি আপনার সাইটের <head> বা <body> এর শেষে বসান -->

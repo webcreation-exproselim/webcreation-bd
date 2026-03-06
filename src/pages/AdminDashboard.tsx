@@ -57,6 +57,7 @@ import { ClientLinksManagement } from "@/components/admin/ClientLinksManagement"
 import { IntegrationManager } from "@/components/admin/IntegrationManager";
 import { AdminMobileNav } from "@/components/admin/AdminMobileNav";
 import { convertToWebP } from "@/utils/imageConverter";
+import { getYouTubeThumbnail } from "@/utils/youtube";
 
 interface OrderService {
   id: string;
@@ -1313,42 +1314,70 @@ const AdminDashboard = () => {
               />
             </div>
 
-            <div>
-              <Label className="font-bengali">ছবি</Label>
-              <div className="mt-2 space-y-2">
-                {portfolioForm.image_url && (
-                  <img
-                    src={portfolioForm.image_url}
-                    alt="Preview"
-                    className="w-full h-32 object-cover rounded-xl border border-gray-200"
-                  />
-                )}
-                <div className="flex gap-2">
-                  <Input
-                    value={portfolioForm.image_url}
-                    onChange={(e) => setPortfolioForm(prev => ({ ...prev, image_url: e.target.value }))}
-                    placeholder="ছবির URL দিন অথবা আপলোড করুন"
-                    className="flex-1 bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400"
-                  />
-                  <Label className="cursor-pointer">
-                    <div className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-xl flex items-center gap-2 transition-colors text-gray-600">
-                      {uploading ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Upload className="w-4 h-4" />
-                      )}
-                    </div>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handlePortfolioImageUpload}
-                      className="hidden"
-                      disabled={uploading}
+            {/* Video categories: YouTube URL field */}
+            {(portfolioForm.category === "video-editing" || portfolioForm.category === "motion-graphics") ? (
+              <div>
+                <Label className="font-bengali">ইউটিউব ভিডিও URL</Label>
+                <Input
+                  value={portfolioForm.image_url}
+                  onChange={(e) => setPortfolioForm(prev => ({ ...prev, image_url: e.target.value }))}
+                  className="mt-1 bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400"
+                  placeholder="https://youtube.com/shorts/xxxxx বা https://youtu.be/xxxxx"
+                />
+                <p className="text-xs text-gray-400 mt-1 font-bengali">
+                  YouTube ভিডিও লিংক দিন — থাম্বনেইল অটো তৈরি হবে
+                </p>
+                {portfolioForm.image_url && (() => {
+                  const thumb = getYouTubeThumbnail(portfolioForm.image_url);
+                  return thumb ? (
+                    <img
+                      src={thumb}
+                      alt="YouTube Thumbnail"
+                      className="w-full h-32 object-cover rounded-xl border border-gray-200 mt-2"
                     />
-                  </Label>
+                  ) : (
+                    <p className="text-xs text-red-400 mt-1 font-bengali">⚠️ সঠিক YouTube URL দিন</p>
+                  );
+                })()}
+              </div>
+            ) : (
+              <div>
+                <Label className="font-bengali">ছবি</Label>
+                <div className="mt-2 space-y-2">
+                  {portfolioForm.image_url && (
+                    <img
+                      src={portfolioForm.image_url}
+                      alt="Preview"
+                      className="w-full h-32 object-cover rounded-xl border border-gray-200"
+                    />
+                  )}
+                  <div className="flex gap-2">
+                    <Input
+                      value={portfolioForm.image_url}
+                      onChange={(e) => setPortfolioForm(prev => ({ ...prev, image_url: e.target.value }))}
+                      placeholder="ছবির URL দিন অথবা আপলোড করুন"
+                      className="flex-1 bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400"
+                    />
+                    <Label className="cursor-pointer">
+                      <div className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-xl flex items-center gap-2 transition-colors text-gray-600">
+                        {uploading ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Upload className="w-4 h-4" />
+                        )}
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePortfolioImageUpload}
+                        className="hidden"
+                        disabled={uploading}
+                      />
+                    </Label>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Live URL - Only for web-development and landing-page */}
             {(portfolioForm.category === "web-development" || portfolioForm.category === "landing-page") && (

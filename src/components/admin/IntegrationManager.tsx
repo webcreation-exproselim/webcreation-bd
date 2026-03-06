@@ -50,6 +50,7 @@ export function IntegrationManager() {
   const [showAssignFG, setShowAssignFG] = useState(false);
   const [showAssignCC, setShowAssignCC] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<IntegrationRecord | null>(null);
+  const [dashboardCodeRecord, setDashboardCodeRecord] = useState<IntegrationRecord | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {

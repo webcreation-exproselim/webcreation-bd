@@ -344,7 +344,7 @@ const MotionGraphicsPage = () => {
 
   const handlePlayVideo = (item: typeof fallbackPortfolioItems[0]) => {
     setSelectedItem(item);
-    setVideoUrl(getRandomDemoVideo());
+    setVideoUrl(item.live_url || getRandomDemoVideo());
     setIsVideoOpen(true);
   };
 

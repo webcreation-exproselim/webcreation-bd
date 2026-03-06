@@ -87,10 +87,23 @@ interface PortfolioCardProps {
   onOpenModal: (item: PortfolioItem) => void;
 }
 
+// Helper to get YouTube thumbnail from a URL
+function getYouTubeThumbnail(url: string): string | null {
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
+  ];
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) return `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg`;
+  }
+  return null;
+}
+
 const PortfolioCard = ({ item, serviceId, onOpenModal }: PortfolioCardProps) => {
   const isModalService = modalServices.includes(serviceId);
   const isVideoService = videoServices.includes(serviceId);
   const isUrlService = urlServices.includes(serviceId);
+  const displayImage = getYouTubeThumbnail(item.image_url) || item.image_url;
 
   const handleImageClick = () => {
     if (isModalService || isVideoService) {
@@ -116,7 +129,7 @@ const PortfolioCard = ({ item, serviceId, onOpenModal }: PortfolioCardProps) => 
         onClick={handleImageClick}
       >
         <img 
-          src={item.image_url} 
+          src={displayImage} 
           alt={item.title}
           className={`w-full h-full ${isUrlService ? 'object-cover object-top' : 'object-cover'} group-hover:scale-105 transition-transform duration-500`}
           loading="lazy"
@@ -266,7 +279,12 @@ export const PortfolioSection = () => {
     const isVideo = videoServices.includes(activeTab);
     if (isVideo) {
       setSelectedItem(item);
-      setVideoUrl(item.live_url || getRandomDemoVideo());
+      // Check both live_url and image_url for YouTube links
+      const youtubePatterns = /(?:youtube\.com|youtu\.be)/i;
+      const videoSource = item.live_url 
+        || (youtubePatterns.test(item.image_url) ? item.image_url : null)
+        || getRandomDemoVideo();
+      setVideoUrl(videoSource);
       setIsVideoOpen(true);
     } else {
       setSelectedItem(item);
@@ -423,7 +441,7 @@ export const PortfolioSection = () => {
         onClose={() => { setIsVideoOpen(false); setSelectedItem(null); }}
         videoUrl={videoUrl}
         title={selectedItem?.title || ""}
-        thumbnail={selectedItem?.image_url}
+        thumbnail={selectedItem ? (getYouTubeThumbnail(selectedItem.image_url) || selectedItem.image_url) : undefined}
       />
     </section>
   );

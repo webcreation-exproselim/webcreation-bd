@@ -103,7 +103,10 @@ const PortfolioCard = ({ item, serviceId, onOpenModal }: PortfolioCardProps) => 
   const isModalService = modalServices.includes(serviceId);
   const isVideoService = videoServices.includes(serviceId);
   const isUrlService = urlServices.includes(serviceId);
-  const displayImage = getYouTubeThumbnail(item.image_url) || item.image_url;
+  
+  // Try YouTube thumbnail from live_url first, then image_url, then fallback to image_url as-is
+  const ytThumb = getYouTubeThumbnail(item.live_url || '') || getYouTubeThumbnail(item.image_url);
+  const displayImage = ytThumb || (item.image_url && !/(?:youtube\.com|youtu\.be)/i.test(item.image_url) ? item.image_url : 'https://images.unsplash.com/photo-1492619375914-88005aa9e8fb?w=800&h=600&fit=crop');
 
   const handleImageClick = () => {
     if (isModalService || isVideoService) {

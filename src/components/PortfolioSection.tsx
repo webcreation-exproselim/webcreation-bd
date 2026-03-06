@@ -87,16 +87,41 @@ interface PortfolioCardProps {
   onOpenModal: (item: PortfolioItem) => void;
 }
 
+function getYouTubeIdFromUrl(url: string): string | null {
+  const input = (url || "").trim();
+  if (!input) return null;
+
+  if (/^[a-zA-Z0-9_-]{11}$/.test(input)) return input;
+
+  try {
+    const parsed = new URL(input);
+    const host = parsed.hostname.replace(/^www\./, "").toLowerCase();
+
+    if (host === "youtu.be") {
+      const id = parsed.pathname.split("/").filter(Boolean)[0];
+      if (id && /^[a-zA-Z0-9_-]{11}$/.test(id)) return id;
+    }
+
+    const vParam = parsed.searchParams.get("v");
+    if (vParam && /^[a-zA-Z0-9_-]{11}$/.test(vParam)) return vParam;
+
+    const parts = parsed.pathname.split("/").filter(Boolean);
+    const markerIndex = parts.findIndex((part) => part === "shorts" || part === "embed" || part === "v");
+    if (markerIndex !== -1) {
+      const candidate = parts[markerIndex + 1];
+      if (candidate && /^[a-zA-Z0-9_-]{11}$/.test(candidate)) return candidate;
+    }
+  } catch {
+    // ignore invalid urls
+  }
+
+  return null;
+}
+
 // Helper to get YouTube thumbnail from a URL
 function getYouTubeThumbnail(url: string): string | null {
-  const patterns = [
-    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
-  ];
-  for (const pattern of patterns) {
-    const match = url.match(pattern);
-    if (match) return `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg`;
-  }
-  return null;
+  const id = getYouTubeIdFromUrl(url);
+  return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : null;
 }
 
 const PortfolioCard = ({ item, serviceId, onOpenModal }: PortfolioCardProps) => {
@@ -283,9 +308,8 @@ export const PortfolioSection = () => {
     if (isVideo) {
       setSelectedItem(item);
       // Check both live_url and image_url for YouTube links
-      const youtubePatterns = /(?:youtube\.com|youtu\.be)/i;
       const videoSource = item.live_url 
-        || (youtubePatterns.test(item.image_url) ? item.image_url : null)
+        || (getYouTubeIdFromUrl(item.image_url) ? item.image_url : null)
         || getRandomDemoVideo();
       setVideoUrl(videoSource);
       setIsVideoOpen(true);

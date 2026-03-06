@@ -87,10 +87,23 @@ interface PortfolioCardProps {
   onOpenModal: (item: PortfolioItem) => void;
 }
 
+// Helper to get YouTube thumbnail from a URL
+function getYouTubeThumbnail(url: string): string | null {
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
+  ];
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) return `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg`;
+  }
+  return null;
+}
+
 const PortfolioCard = ({ item, serviceId, onOpenModal }: PortfolioCardProps) => {
   const isModalService = modalServices.includes(serviceId);
   const isVideoService = videoServices.includes(serviceId);
   const isUrlService = urlServices.includes(serviceId);
+  const displayImage = getYouTubeThumbnail(item.image_url) || item.image_url;
 
   const handleImageClick = () => {
     if (isModalService || isVideoService) {

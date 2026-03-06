@@ -417,6 +417,15 @@ export const PortfolioSection = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Video Player Modal */}
+      <VideoPlayerModal
+        isOpen={isVideoOpen}
+        onClose={() => { setIsVideoOpen(false); setSelectedItem(null); }}
+        videoUrl={videoUrl}
+        title={selectedItem?.title || ""}
+        thumbnail={selectedItem?.image_url}
+      />
     </section>
   );
 };

@@ -441,7 +441,7 @@ export const PortfolioSection = () => {
         onClose={() => { setIsVideoOpen(false); setSelectedItem(null); }}
         videoUrl={videoUrl}
         title={selectedItem?.title || ""}
-        thumbnail={selectedItem?.image_url}
+        thumbnail={selectedItem ? (getYouTubeThumbnail(selectedItem.image_url) || selectedItem.image_url) : undefined}
       />
     </section>
   );

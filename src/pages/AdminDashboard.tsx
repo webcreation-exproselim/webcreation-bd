@@ -57,6 +57,7 @@ import { ClientLinksManagement } from "@/components/admin/ClientLinksManagement"
 import { IntegrationManager } from "@/components/admin/IntegrationManager";
 import { AdminMobileNav } from "@/components/admin/AdminMobileNav";
 import { convertToWebP } from "@/utils/imageConverter";
+import { getYouTubeThumbnail } from "@/utils/youtube";
 
 interface OrderService {
   id: string;

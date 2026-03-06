@@ -1328,7 +1328,6 @@ const AdminDashboard = () => {
                   YouTube ভিডিও লিংক দিন — থাম্বনেইল অটো তৈরি হবে
                 </p>
                 {portfolioForm.image_url && (() => {
-                  const { getYouTubeThumbnail } = require("@/utils/youtube");
                   const thumb = getYouTubeThumbnail(portfolioForm.image_url);
                   return thumb ? (
                     <img

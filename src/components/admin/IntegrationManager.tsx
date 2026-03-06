@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Globe, Copy, Search, RefreshCw, Loader2, Shield, Truck,
   CheckCircle, XCircle, ExternalLink, Trash2, Eye, EyeOff,
-  Plus, Code, Calendar, BarChart3
+  Plus, Code, Calendar, BarChart3, LayoutDashboard
 } from "lucide-react";
 import {
   AlertDialog,
@@ -50,6 +50,7 @@ export function IntegrationManager() {
   const [showAssignFG, setShowAssignFG] = useState(false);
   const [showAssignCC, setShowAssignCC] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<IntegrationRecord | null>(null);
+  const [dashboardCodeRecord, setDashboardCodeRecord] = useState<IntegrationRecord | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -197,6 +198,80 @@ const response = await fetch('${getEndpointUrl("couriercheck")}', {
 const result = await response.json();
 // result.data contains: success_rate, total_orders, total_delivered, total_returned, risk_label`;
     }
+  };
+
+  const getManageStoreEndpoint = () => {
+    const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID || 'gtjmfvwkatrorhuyrpby';
+    return `https://${projectId}.supabase.co/functions/v1/manage-store`;
+  };
+
+  const getManageDashboardCode = (record: IntegrationRecord) => {
+    const endpoint = getManageStoreEndpoint();
+    return `// ═══════════════════════════════════════════════════════════
+// WCBD Fraud Guard - Remote Dashboard Integration
+// এই কোডটি অন্য Lovable সাইটে বসিয়ে API দিয়ে সব manage করুন
+// ═══════════════════════════════════════════════════════════
+
+const API_KEY = '${record.api_key}';
+const ENDPOINT = '${endpoint}';
+
+// Helper function - সব API call এটা দিয়ে হবে
+async function manageStore(action, params = {}) {
+  const res = await fetch(ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ api_key: API_KEY, action, params })
+  });
+  return await res.json();
+}
+
+// ══════ EXAMPLES ══════
+
+// 1️⃣ Dashboard Summary (সব তথ্য একসাথে)
+const dashboard = await manageStore('get_dashboard');
+// dashboard.data = { subscription, incomplete_orders, fraud_logs, blacklist_count, abandoned_carts }
+
+// 2️⃣ Settings দেখুন
+const settings = await manageStore('get_settings');
+
+// 3️⃣ Settings আপডেট করুন
+await manageStore('update_settings', {
+  cooldown_period_minutes: 1440,
+  msg_cooldown: 'আপনি সম্প্রতি অর্ডার করেছেন।'
+});
+
+// 4️⃣ Incomplete Orders দেখুন
+const orders = await manageStore('get_incomplete_orders', { limit: 50, filter: 'pending' });
+
+// 5️⃣ Order Convert করুন
+await manageStore('convert_order', { order_id: 'ORDER_UUID' });
+
+// 6️⃣ Incomplete Order মুছুন
+await manageStore('delete_incomplete_order', { order_id: 'ORDER_UUID' });
+
+// 7️⃣ সব Pending Orders একসাথে মুছুন
+await manageStore('cleanup_incomplete_orders');
+
+// 8️⃣ Blacklist দেখুন
+const bl = await manageStore('get_blacklist');
+
+// 9️⃣ Blacklist-এ যোগ করুন
+await manageStore('add_blacklist', { value: '01700000000', type: 'phone', reason: 'Fraud' });
+
+// 🔟 Blacklist থেকে বাদ দিন
+await manageStore('remove_blacklist', { id: 'ENTRY_UUID' });
+
+// 1️⃣1️⃣ Fraud Logs দেখুন
+const logs = await manageStore('get_fraud_logs', { limit: 100 });
+
+// 1️⃣2️⃣ Abandoned Carts দেখুন
+const carts = await manageStore('get_abandoned_carts');
+
+// 1️⃣3️⃣ Abandoned Cart Recovered mark করুন
+await manageStore('recover_abandoned', { id: 'CART_UUID' });
+
+// 1️⃣4️⃣ Abandoned Cart মুছুন
+await manageStore('delete_abandoned', { id: 'CART_UUID' });`;
   };
 
   const filtered = records.filter(r => {
@@ -384,6 +459,16 @@ const result = await response.json();
                       >
                         <Code className="w-4 h-4 text-gray-500" />
                       </Button>
+                      {record.type === "fraudguard" && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setDashboardCodeRecord(dashboardCodeRecord?.id === record.id ? null : record)}
+                          title="Dashboard Management Code"
+                        >
+                          <LayoutDashboard className="w-4 h-4 text-blue-500" />
+                        </Button>
+                      )}
                       <Button
                         size="sm"
                         variant="ghost"
@@ -454,6 +539,30 @@ const result = await response.json();
                       </div>
                       <div className="mt-2 text-xs text-gray-500 font-bengali bg-blue-50 border border-blue-100 rounded-lg p-2">
                         💡 এই কোডটি আপনার অন্য Lovable সাইটে বা যেকোনো frontend থেকে ব্যবহার করুন। API Key দিয়ে সরাসরি call করলেই কাজ করবে।
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* Dashboard Management Code Block */}
+                  {record.type === "fraudguard" && dashboardCodeRecord?.id === record.id && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      className="mt-3"
+                    >
+                      <div className="bg-gray-900 rounded-lg p-4 relative">
+                        <button
+                          onClick={() => copyToClipboard(getManageDashboardCode(record), 'Dashboard Code')}
+                          className="absolute top-2 right-2 text-gray-400 hover:text-white"
+                        >
+                          <Copy className="w-4 h-4" />
+                        </button>
+                        <pre className="text-xs text-cyan-400 overflow-x-auto whitespace-pre font-mono max-h-80 overflow-y-auto">
+                          {getManageDashboardCode(record)}
+                        </pre>
+                      </div>
+                      <div className="mt-2 text-xs text-gray-500 font-bengali bg-emerald-50 border border-emerald-100 rounded-lg p-2">
+                        🎛️ এই কোড দিয়ে অন্য Lovable সাইটে Fraud Guard সম্পূর্ণ manage করুন — Incomplete Orders, Blacklist, Logs, Settings সব API দিয়ে control হবে।
                       </div>
                     </motion.div>
                   )}

@@ -17,6 +17,7 @@ import { EditableText } from "@/components/EditableText";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobilePortfolioCarousel } from "@/components/MobilePortfolioCarousel";
 import { ServicePricingCard, PricingPlanData } from "@/components/ServicePricingCard";
+import { getPortfolioVideoSource, getPortfolioVideoThumbnail } from "@/utils/youtube";
 
 // Fallback Portfolio Items
 const fallbackPortfolioItems = [
@@ -345,7 +346,13 @@ const MotionGraphicsPage = () => {
   const handlePlayVideo = (item: typeof fallbackPortfolioItems[0]) => {
     setSelectedItem(item);
     const itemWithUrl = item as typeof item & { live_url?: string | null };
-    setVideoUrl(itemWithUrl.live_url || getRandomDemoVideo());
+    setVideoUrl(
+      getPortfolioVideoSource(
+        itemWithUrl.image_url,
+        itemWithUrl.live_url,
+        getRandomDemoVideo(),
+      ),
+    );
     setIsVideoOpen(true);
   };
 
@@ -548,7 +555,7 @@ const MotionGraphicsPage = () => {
               >
                 <div className="aspect-[4/3] overflow-hidden">
                   <img
-                    src={item.image_url}
+                    src={getPortfolioVideoThumbnail(item.image_url, (item as typeof item & { live_url?: string | null }).live_url)}
                     alt={item.title}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                     loading="lazy"
@@ -659,7 +666,7 @@ const MotionGraphicsPage = () => {
         onClose={() => setIsVideoOpen(false)}
         videoUrl={videoUrl}
         title={selectedItem?.title || ""}
-        thumbnail={selectedItem?.image_url}
+        thumbnail={selectedItem ? getPortfolioVideoThumbnail(selectedItem.image_url, (selectedItem as typeof selectedItem & { live_url?: string | null }).live_url) : undefined}
       />
 
       <Footer />

@@ -7,6 +7,7 @@ import { useSiteContent } from "@/hooks/useSiteContent";
 import { EditableText } from "./EditableText";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobilePortfolioCarousel } from "./MobilePortfolioCarousel";
+import { VideoPlayerModal, getRandomDemoVideo } from "./VideoPlayerModal";
 import {
   Dialog,
   DialogContent,
@@ -174,6 +175,8 @@ export const PortfolioSection = () => {
   const [activeTab, setActiveTab] = useState("facebook-ads");
   const [selectedItem, setSelectedItem] = useState<PortfolioItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isVideoOpen, setIsVideoOpen] = useState(false);
+  const [videoUrl, setVideoUrl] = useState("");
   const [portfolioData, setPortfolioData] = useState<Record<string, PortfolioItem[]>>(fallbackData);
   const [loading, setLoading] = useState(true);
   const isMobile = useIsMobile();
@@ -261,8 +264,15 @@ export const PortfolioSection = () => {
   const items = portfolioData[activeTab] || [];
 
   const handleOpenModal = (item: PortfolioItem) => {
-    setSelectedItem(item);
-    setIsModalOpen(true);
+    const isVideo = videoServices.includes(activeTab);
+    if (isVideo) {
+      setSelectedItem(item);
+      setVideoUrl(item.live_url || getRandomDemoVideo());
+      setIsVideoOpen(true);
+    } else {
+      setSelectedItem(item);
+      setIsModalOpen(true);
+    }
   };
 
   const handleCloseModal = () => {

@@ -186,17 +186,110 @@ if (!result.allowed) {
   alert(result.message);
 }`;
     } else {
-      return `// Courier Check Integration
-const response = await fetch('${getEndpointUrl("couriercheck")}', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    api_key: '${record.api_key}',
-    phone: customerPhone
-  })
-});
-const result = await response.json();
-// result.data contains: success_rate, total_orders, total_delivered, total_returned, risk_label`;
+      return `<!-- WCBD Courier Check - Complete Integration with Popup -->
+<!-- এই কোডটি আপনার সাইটের <head> বা <body> এর শেষে বসান -->
+<style>
+.wcbd-cc-trigger{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border:none;border-radius:10px;background:linear-gradient(135deg,#0891b2,#2563eb);color:#fff;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;box-shadow:0 2px 8px rgba(8,145,178,.3)}
+.wcbd-cc-trigger:hover{background:linear-gradient(135deg,#0e7490,#1d4ed8);transform:translateY(-1px)}
+.wcbd-cc-popup-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;animation:wcbd-fadeIn .2s ease}
+@keyframes wcbd-fadeIn{from{opacity:0}to{opacity:1}}
+.wcbd-cc-popup{background:#fff;border-radius:20px;max-width:480px;width:100%;box-shadow:0 25px 60px rgba(0,0,0,.25);overflow:hidden;animation:wcbd-scaleIn .3s ease}
+@keyframes wcbd-scaleIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
+.wcbd-cc-popup-header{background:linear-gradient(135deg,#0891b2,#2563eb);padding:16px 20px;display:flex;align-items:center;justify-content:space-between}
+.wcbd-cc-popup-header h3{margin:0;font-size:16px;color:#fff;font-weight:700;display:flex;align-items:center;gap:8px}
+.wcbd-cc-popup-phone{background:rgba(255,255,255,.2);padding:3px 10px;border-radius:16px;font-size:12px;color:#fff}
+.wcbd-cc-popup-close{width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.2);border:none;color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.wcbd-cc-popup-close:hover{background:rgba(255,255,255,.35)}
+.wcbd-cc-popup-body{padding:16px 20px 20px}
+.wcbd-cc-popup-risk{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:10px;font-weight:700;font-size:13px;margin-bottom:12px}
+.wcbd-cc-popup-risk.trusted{background:#d1fae5;color:#065f46}
+.wcbd-cc-popup-risk.moderate{background:#fef3c7;color:#92400e}
+.wcbd-cc-popup-risk.risky{background:#fee2e2;color:#991b1b}
+.wcbd-cc-popup-risk.new_customer{background:#dbeafe;color:#1e40af}
+.wcbd-cc-popup-stats{display:flex;align-items:center;gap:16px;margin-bottom:16px;flex-wrap:wrap}
+.wcbd-cc-popup-stat{display:flex;align-items:center;gap:4px;font-size:13px;color:#475569;font-weight:500}
+.wcbd-cc-popup-stat strong{font-weight:700}
+.wcbd-cc-popup-stat .success{color:#10b981}
+.wcbd-cc-popup-stat .returned{color:#ef4444}
+.wcbd-cc-popup-stat .total{color:#0891b2}
+.wcbd-cc-popup-table{width:100%;border-collapse:collapse;border-radius:12px;overflow:hidden;border:1px solid #e2e8f0;margin-bottom:14px}
+.wcbd-cc-popup-table thead{background:linear-gradient(135deg,#2563eb,#4f46e5)}
+.wcbd-cc-popup-table th{padding:8px 12px;font-size:11px;font-weight:700;color:#fff;text-align:center}
+.wcbd-cc-popup-table th:first-child{text-align:left}
+.wcbd-cc-popup-table td{padding:10px 12px;text-align:center;border-bottom:1px solid #f1f5f9;font-size:12px}
+.wcbd-cc-popup-table td:first-child{text-align:left;font-weight:600;color:#1e293b}
+.wcbd-cc-popup-table tfoot{background:linear-gradient(135deg,#2563eb,#4f46e5)}
+.wcbd-cc-popup-table tfoot td{color:#fff;font-weight:700;font-size:12px}
+.wcbd-cc-popup-branding{text-align:center;padding-top:12px;border-top:1px solid #e5e7eb;font-size:11px;color:#94a3b8}
+.wcbd-cc-popup-branding a{color:#0891b2;text-decoration:none;font-weight:600}
+.wcbd-cc-popup-loading{text-align:center;padding:40px 20px}
+.wcbd-cc-popup-spinner{display:inline-block;width:36px;height:36px;border:3px solid #e5e7eb;border-top-color:#0891b2;border-radius:50%;animation:wcbd-spin .7s linear infinite}
+@keyframes wcbd-spin{to{transform:rotate(360deg)}}
+@media(max-width:600px){
+.wcbd-cc-popup-overlay{align-items:flex-end;padding:0}
+.wcbd-cc-popup{border-radius:20px 20px 0 0;max-height:90vh;overflow-y:auto;animation:wcbd-slideUp .3s ease}
+@keyframes wcbd-slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+}
+</style>
+<script>
+(function(){
+  var WCBD_API_KEY='${record.api_key}';
+  var WCBD_ENDPOINT='${getEndpointUrl("couriercheck")}';
+  var defaultCouriers=[{name:'Pathao',key:'pathao'},{name:'Steadfast',key:'steadfast'},{name:'CarryBee',key:'carrybee'},{name:'RedX',key:'redx'}];
+
+  window.wcbdCourierCheck=function(phone){
+    if(!phone)return;
+    var clean=String(phone).replace(/[^0-9]/g,'');
+    if(clean.indexOf('880')===0&&clean.length===13)clean='0'+clean.substring(3);
+    if(clean.indexOf('1')===0&&clean.length===10)clean='0'+clean;
+
+    var ov=document.createElement('div');ov.className='wcbd-cc-popup-overlay';
+    ov.innerHTML='<div class="wcbd-cc-popup"><div class="wcbd-cc-popup-header"><h3>📦 Courier History</h3><button class="wcbd-cc-popup-close">&times;</button></div><div class="wcbd-cc-popup-body"><div class="wcbd-cc-popup-loading"><div class="wcbd-cc-popup-spinner"></div><p style="margin-top:12px;color:#64748b;font-size:13px">Checking...</p></div></div></div>';
+    document.body.appendChild(ov);
+    ov.querySelector('.wcbd-cc-popup-close').onclick=function(){ov.remove();};
+    ov.onclick=function(e){if(e.target===ov)ov.remove();};
+
+    fetch(WCBD_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone:clean,api_key:WCBD_API_KEY})})
+    .then(function(r){return r.json()})
+    .then(function(res){
+      if(!res.success||!res.data){ov.querySelector('.wcbd-cc-popup-body').innerHTML='<p style="color:#ef4444;text-align:center;padding:20px">'+( res.error||'No data found')+'</p>';return;}
+      var d=res.data,tO=0,tD=0,tR=0;
+      for(var i=0;i<defaultCouriers.length;i++){var m=findMatch(d.couriers,defaultCouriers[i].key);if(m){tO+=m.orders||0;tD+=m.delivered||0;tR+=m.returned||0;}}
+      var sr=tO>0?Math.round((tD/tO)*100):0;
+      var rc='new_customer',rl='🆕 New Customer';
+      if(tO>0){if(sr>=80){rc='trusted';rl='✅ Trusted'}else if(sr>=50){rc='moderate';rl='⚠️ Moderate'}else{rc='risky';rl='🚫 High Risk'}}
+
+      var h='<div class="wcbd-cc-popup-header"><h3>📦 Courier History</h3><span class="wcbd-cc-popup-phone">'+d.phone+'</span><button class="wcbd-cc-popup-close" style="position:absolute;top:12px;right:12px">&times;</button></div>';
+      h+='<div class="wcbd-cc-popup-body">';
+      h+='<div class="wcbd-cc-popup-risk '+rc+'">'+rl+' &nbsp; Success: '+sr+'%</div>';
+      h+='<div class="wcbd-cc-popup-stats">';
+      h+='<div class="wcbd-cc-popup-stat"><strong class="total">'+tO+'</strong> Orders</div>';
+      h+='<div class="wcbd-cc-popup-stat">✅ <strong class="success">'+tD+'</strong></div>';
+      h+='<div class="wcbd-cc-popup-stat">📦 <strong class="returned">'+tR+'</strong></div>';
+      h+='</div>';
+      h+='<table class="wcbd-cc-popup-table"><thead><tr><th>Courier</th><th>Orders</th><th>Delivered</th></tr></thead><tbody>';
+      for(var j=0;j<defaultCouriers.length;j++){var cm=findMatch(d.couriers,defaultCouriers[j].key);h+='<tr><td>'+defaultCouriers[j].name+'</td><td>'+(cm?cm.orders:0)+'</td><td style="color:'+(cm&&cm.delivered>0?'#10b981':'#94a3b8')+';font-weight:700">'+(cm?cm.delivered:0)+'</td></tr>';}
+      h+='</tbody><tfoot><tr><td>Total</td><td>'+tO+'</td><td>'+tD+'</td></tr></tfoot></table>';
+      h+='<div class="wcbd-cc-popup-branding">Powered by <a href="https://www.webcreationbd.online" target="_blank">WebCreation BD</a></div>';
+      h+='</div>';
+      ov.querySelector('.wcbd-cc-popup').innerHTML=h;
+      ov.querySelector('.wcbd-cc-popup-close').onclick=function(){ov.remove();};
+    }).catch(function(){ov.querySelector('.wcbd-cc-popup-body').innerHTML='<p style="color:#ef4444;text-align:center;padding:20px">Connection failed</p>';});
+  };
+
+  function findMatch(couriers,key){if(!couriers)return null;for(var i=0;i<couriers.length;i++){var l=couriers[i].name.toLowerCase();if(l.indexOf(key)!==-1)return couriers[i];if(key==='carrybee'&&l.indexOf('carry bee')!==-1)return couriers[i];if(key==='redx'&&(l.indexOf('red x')!==-1||l.indexOf('redx')!==-1))return couriers[i];}return null;}
+})();
+</script>
+
+<!-- ব্যবহার: যেকোনো জায়গায় button বা JS দিয়ে call করুন -->
+<!-- Example 1: Button -->
+<button class="wcbd-cc-trigger" onclick="wcbdCourierCheck('01XXXXXXXXX')">📊 Check Courier</button>
+
+<!-- Example 2: JavaScript -->
+<script>
+// যেকোনো phone number দিয়ে popup দেখান:
+// wcbdCourierCheck('01712345678');
+</script>`;
     }
   };
 

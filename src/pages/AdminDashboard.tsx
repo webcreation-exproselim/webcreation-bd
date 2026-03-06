@@ -54,6 +54,7 @@ import { UserManagement } from "@/components/admin/UserManagement";
 import { ProjectTimerManagement } from "@/components/admin/ProjectTimerManagement";
 import { CourierCheckSubscriptionManagement } from "@/components/admin/CourierCheckSubscriptionManagement";
 import { ClientLinksManagement } from "@/components/admin/ClientLinksManagement";
+import { IntegrationManager } from "@/components/admin/IntegrationManager";
 import { AdminMobileNav } from "@/components/admin/AdminMobileNav";
 import { convertToWebP } from "@/utils/imageConverter";
 
@@ -1093,6 +1094,10 @@ const AdminDashboard = () => {
 
         {activeTab === "clientlinks" && (
           <ClientLinksManagement />
+        )}
+
+        {activeTab === "integrations" && (
+          <IntegrationManager />
         )}
         </main>
       </div>

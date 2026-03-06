@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard, Package, Timer, Users, Shield, FileImage,
   FileText, MessageCircle, CreditCard, Star, PenTool,
-  Search, Link2, Menu, X, ChevronRight,
+  Search, Link2, Menu, X, ChevronRight, Globe,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { TabType } from "@/components/admin/AdminSidebar";
@@ -22,6 +22,7 @@ const navItems: { id: TabType; label: string; icon: typeof LayoutDashboard; colo
   { id: "reviews", label: "রিভিউ", icon: Star, color: "from-yellow-500 to-amber-500" },
   { id: "content", label: "CMS", icon: PenTool, color: "from-violet-500 to-purple-500" },
   { id: "clientlinks", label: "ক্লায়েন্ট লিংক", icon: Link2, color: "from-teal-500 to-emerald-500" },
+  { id: "integrations", label: "Integrations", icon: Globe, color: "from-rose-500 to-pink-500" },
 ];
 
 interface AdminMobileNavProps {

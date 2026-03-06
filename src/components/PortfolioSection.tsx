@@ -129,7 +129,7 @@ const PortfolioCard = ({ item, serviceId, onOpenModal }: PortfolioCardProps) => 
         onClick={handleImageClick}
       >
         <img 
-          src={item.image_url} 
+          src={displayImage} 
           alt={item.title}
           className={`w-full h-full ${isUrlService ? 'object-cover object-top' : 'object-cover'} group-hover:scale-105 transition-transform duration-500`}
           loading="lazy"

@@ -266,7 +266,12 @@ export const PortfolioSection = () => {
     const isVideo = videoServices.includes(activeTab);
     if (isVideo) {
       setSelectedItem(item);
-      setVideoUrl(item.live_url || getRandomDemoVideo());
+      // Check both live_url and image_url for YouTube links
+      const youtubePatterns = /(?:youtube\.com|youtu\.be)/i;
+      const videoSource = item.live_url 
+        || (youtubePatterns.test(item.image_url) ? item.image_url : null)
+        || getRandomDemoVideo();
+      setVideoUrl(videoSource);
       setIsVideoOpen(true);
     } else {
       setSelectedItem(item);

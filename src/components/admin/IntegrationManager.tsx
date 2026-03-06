@@ -542,6 +542,30 @@ await manageStore('delete_abandoned', { id: 'CART_UUID' });`;
                       </div>
                     </motion.div>
                   )}
+
+                  {/* Dashboard Management Code Block */}
+                  {record.type === "fraudguard" && dashboardCodeRecord?.id === record.id && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      className="mt-3"
+                    >
+                      <div className="bg-gray-900 rounded-lg p-4 relative">
+                        <button
+                          onClick={() => copyToClipboard(getManageDashboardCode(record), 'Dashboard Code')}
+                          className="absolute top-2 right-2 text-gray-400 hover:text-white"
+                        >
+                          <Copy className="w-4 h-4" />
+                        </button>
+                        <pre className="text-xs text-cyan-400 overflow-x-auto whitespace-pre font-mono max-h-80 overflow-y-auto">
+                          {getManageDashboardCode(record)}
+                        </pre>
+                      </div>
+                      <div className="mt-2 text-xs text-gray-500 font-bengali bg-emerald-50 border border-emerald-100 rounded-lg p-2">
+                        🎛️ এই কোড দিয়ে অন্য Lovable সাইটে Fraud Guard সম্পূর্ণ manage করুন — Incomplete Orders, Blacklist, Logs, Settings সব API দিয়ে control হবে।
+                      </div>
+                    </motion.div>
+                  )}
                 </div>
               </motion.div>
             );

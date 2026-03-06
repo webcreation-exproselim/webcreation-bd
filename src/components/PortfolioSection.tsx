@@ -112,7 +112,7 @@ const PortfolioCard = ({ item, serviceId, onOpenModal }: PortfolioCardProps) => 
     >
       {/* Image Container */}
       <div 
-        className={`${isUrlService ? 'aspect-[4/3]' : 'aspect-[4/3]'} relative overflow-hidden ${isModalService ? 'cursor-pointer' : ''}`}
+        className={`${isUrlService ? 'aspect-[4/3]' : 'aspect-[4/3]'} relative overflow-hidden ${(isModalService || isVideoService) ? 'cursor-pointer' : ''}`}
         onClick={handleImageClick}
       >
         <img 

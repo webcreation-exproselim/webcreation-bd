@@ -459,6 +459,16 @@ await manageStore('delete_abandoned', { id: 'CART_UUID' });`;
                       >
                         <Code className="w-4 h-4 text-gray-500" />
                       </Button>
+                      {record.type === "fraudguard" && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setDashboardCodeRecord(dashboardCodeRecord?.id === record.id ? null : record)}
+                          title="Dashboard Management Code"
+                        >
+                          <LayoutDashboard className="w-4 h-4 text-blue-500" />
+                        </Button>
+                      )}
                       <Button
                         size="sm"
                         variant="ghost"

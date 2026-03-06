@@ -200,6 +200,80 @@ const result = await response.json();
     }
   };
 
+  const getManageStoreEndpoint = () => {
+    const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID || 'gtjmfvwkatrorhuyrpby';
+    return `https://${projectId}.supabase.co/functions/v1/manage-store`;
+  };
+
+  const getManageDashboardCode = (record: IntegrationRecord) => {
+    const endpoint = getManageStoreEndpoint();
+    return `// ═══════════════════════════════════════════════════════════
+// WCBD Fraud Guard - Remote Dashboard Integration
+// এই কোডটি অন্য Lovable সাইটে বসিয়ে API দিয়ে সব manage করুন
+// ═══════════════════════════════════════════════════════════
+
+const API_KEY = '${record.api_key}';
+const ENDPOINT = '${endpoint}';
+
+// Helper function - সব API call এটা দিয়ে হবে
+async function manageStore(action, params = {}) {
+  const res = await fetch(ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ api_key: API_KEY, action, params })
+  });
+  return await res.json();
+}
+
+// ══════ EXAMPLES ══════
+
+// 1️⃣ Dashboard Summary (সব তথ্য একসাথে)
+const dashboard = await manageStore('get_dashboard');
+// dashboard.data = { subscription, incomplete_orders, fraud_logs, blacklist_count, abandoned_carts }
+
+// 2️⃣ Settings দেখুন
+const settings = await manageStore('get_settings');
+
+// 3️⃣ Settings আপডেট করুন
+await manageStore('update_settings', {
+  cooldown_period_minutes: 1440,
+  msg_cooldown: 'আপনি সম্প্রতি অর্ডার করেছেন।'
+});
+
+// 4️⃣ Incomplete Orders দেখুন
+const orders = await manageStore('get_incomplete_orders', { limit: 50, filter: 'pending' });
+
+// 5️⃣ Order Convert করুন
+await manageStore('convert_order', { order_id: 'ORDER_UUID' });
+
+// 6️⃣ Incomplete Order মুছুন
+await manageStore('delete_incomplete_order', { order_id: 'ORDER_UUID' });
+
+// 7️⃣ সব Pending Orders একসাথে মুছুন
+await manageStore('cleanup_incomplete_orders');
+
+// 8️⃣ Blacklist দেখুন
+const bl = await manageStore('get_blacklist');
+
+// 9️⃣ Blacklist-এ যোগ করুন
+await manageStore('add_blacklist', { value: '01700000000', type: 'phone', reason: 'Fraud' });
+
+// 🔟 Blacklist থেকে বাদ দিন
+await manageStore('remove_blacklist', { id: 'ENTRY_UUID' });
+
+// 1️⃣1️⃣ Fraud Logs দেখুন
+const logs = await manageStore('get_fraud_logs', { limit: 100 });
+
+// 1️⃣2️⃣ Abandoned Carts দেখুন
+const carts = await manageStore('get_abandoned_carts');
+
+// 1️⃣3️⃣ Abandoned Cart Recovered mark করুন
+await manageStore('recover_abandoned', { id: 'CART_UUID' });
+
+// 1️⃣4️⃣ Abandoned Cart মুছুন
+await manageStore('delete_abandoned', { id: 'CART_UUID' });`;
+  };
+
   const filtered = records.filter(r => {
     if (filter === "fraudguard" && r.type !== "fraudguard") return false;
     if (filter === "couriercheck" && r.type !== "couriercheck") return false;

@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Globe, Copy, Search, RefreshCw, Loader2, Shield, Truck,
   CheckCircle, XCircle, ExternalLink, Trash2, Eye, EyeOff,
-  Plus, Code, Calendar, BarChart3
+  Plus, Code, Calendar, BarChart3, LayoutDashboard
 } from "lucide-react";
 import {
   AlertDialog,

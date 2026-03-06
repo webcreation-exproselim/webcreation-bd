@@ -24,6 +24,22 @@ export function getRandomDemoVideo(): string {
   return demoVideos[Math.floor(Math.random() * demoVideos.length)];
 }
 
+function getYouTubeId(url: string): string | null {
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
+    /^([a-zA-Z0-9_-]{11})$/,
+  ];
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) return match[1];
+  }
+  return null;
+}
+
+function isYouTubeUrl(url: string): boolean {
+  return getYouTubeId(url) !== null;
+}
+
 export function VideoPlayerModal({
   isOpen,
   onClose,
@@ -36,6 +52,9 @@ export function VideoPlayerModal({
   const [progress, setProgress] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  const youtubeId = getYouTubeId(videoUrl);
+  const isYouTube = !!youtubeId;
 
   useEffect(() => {
     if (!isOpen) {
@@ -114,44 +133,57 @@ export function VideoPlayerModal({
 
             {/* Video Container */}
             <div className="relative aspect-video">
-              <video
-                ref={videoRef}
-                src={videoUrl}
-                poster={thumbnail}
-                className="w-full h-full object-cover"
-                onTimeUpdate={handleTimeUpdate}
-                onLoadedData={() => setIsLoaded(true)}
-                onEnded={() => setIsPlaying(false)}
-                muted={isMuted}
-                playsInline
-              />
+              {isYouTube ? (
+                <iframe
+                  src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0`}
+                  title={title}
+                  className="w-full h-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                  frameBorder="0"
+                />
+              ) : (
+                <>
+                  <video
+                    ref={videoRef}
+                    src={videoUrl}
+                    poster={thumbnail}
+                    className="w-full h-full object-cover"
+                    onTimeUpdate={handleTimeUpdate}
+                    onLoadedData={() => setIsLoaded(true)}
+                    onEnded={() => setIsPlaying(false)}
+                    muted={isMuted}
+                    playsInline
+                  />
 
-              {/* Play overlay when not playing */}
-              {!isPlaying && isLoaded && (
-                <div
-                  className="absolute inset-0 flex items-center justify-center cursor-pointer"
-                  onClick={handlePlayPause}
-                >
-                  <motion.div
-                    initial={{ scale: 0.8 }}
-                    animate={{ scale: 1 }}
-                    className="w-24 h-24 rounded-full bg-gradient-to-r from-red-500 to-orange-500 flex items-center justify-center shadow-2xl"
-                  >
-                    <Play className="w-12 h-12 text-white ml-2" />
-                  </motion.div>
-                </div>
-              )}
+                  {/* Play overlay when not playing */}
+                  {!isPlaying && isLoaded && (
+                    <div
+                      className="absolute inset-0 flex items-center justify-center cursor-pointer"
+                      onClick={handlePlayPause}
+                    >
+                      <motion.div
+                        initial={{ scale: 0.8 }}
+                        animate={{ scale: 1 }}
+                        className="w-24 h-24 rounded-full bg-gradient-to-r from-red-500 to-orange-500 flex items-center justify-center shadow-2xl"
+                      >
+                        <Play className="w-12 h-12 text-white ml-2" />
+                      </motion.div>
+                    </div>
+                  )}
 
-              {/* Loading indicator */}
-              {!isLoaded && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-                  <div className="w-16 h-16 border-4 border-white/20 border-t-red-500 rounded-full animate-spin" />
-                </div>
+                  {/* Loading indicator */}
+                  {!isLoaded && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                      <div className="w-16 h-16 border-4 border-white/20 border-t-red-500 rounded-full animate-spin" />
+                    </div>
+                  )}
+                </>
               )}
             </div>
 
-            {/* Controls */}
-            {isLoaded && (
+            {/* Controls - only for non-YouTube videos */}
+            {!isYouTube && isLoaded && (
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-4">
                 {/* Progress Bar */}
                 <div

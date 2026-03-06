@@ -7,6 +7,7 @@ import { useSiteContent } from "@/hooks/useSiteContent";
 import { EditableText } from "./EditableText";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobilePortfolioCarousel } from "./MobilePortfolioCarousel";
+import { VideoPlayerModal, getRandomDemoVideo } from "./VideoPlayerModal";
 import {
   Dialog,
   DialogContent,
@@ -92,16 +93,15 @@ const PortfolioCard = ({ item, serviceId, onOpenModal }: PortfolioCardProps) => 
   const isUrlService = urlServices.includes(serviceId);
 
   const handleImageClick = () => {
-    if (isModalService) {
+    if (isModalService || isVideoService) {
       onOpenModal(item);
     }
   };
 
   const handleLivePreviewClick = () => {
-    if (isModalService) {
+    if (isModalService || isVideoService) {
       onOpenModal(item);
     } else if (isUrlService && item.live_url) {
-      // For web dev and landing page - navigate to the live_url
       window.open(item.live_url, "_blank", "noopener,noreferrer");
     }
   };
@@ -112,7 +112,7 @@ const PortfolioCard = ({ item, serviceId, onOpenModal }: PortfolioCardProps) => 
     >
       {/* Image Container */}
       <div 
-        className={`${isUrlService ? 'aspect-[4/3]' : 'aspect-[4/3]'} relative overflow-hidden ${isModalService ? 'cursor-pointer' : ''}`}
+        className={`${isUrlService ? 'aspect-[4/3]' : 'aspect-[4/3]'} relative overflow-hidden ${(isModalService || isVideoService) ? 'cursor-pointer' : ''}`}
         onClick={handleImageClick}
       >
         <img 
@@ -126,7 +126,7 @@ const PortfolioCard = ({ item, serviceId, onOpenModal }: PortfolioCardProps) => 
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         
         {/* Click indicator for modal services */}
-        {isModalService && (
+        {(isModalService || isVideoService) && (
           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             <div className="w-16 h-16 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 flex items-center justify-center shadow-lg shadow-yellow-400/40">
               {isVideoService ? (
@@ -174,6 +174,8 @@ export const PortfolioSection = () => {
   const [activeTab, setActiveTab] = useState("facebook-ads");
   const [selectedItem, setSelectedItem] = useState<PortfolioItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isVideoOpen, setIsVideoOpen] = useState(false);
+  const [videoUrl, setVideoUrl] = useState("");
   const [portfolioData, setPortfolioData] = useState<Record<string, PortfolioItem[]>>(fallbackData);
   const [loading, setLoading] = useState(true);
   const isMobile = useIsMobile();
@@ -261,8 +263,15 @@ export const PortfolioSection = () => {
   const items = portfolioData[activeTab] || [];
 
   const handleOpenModal = (item: PortfolioItem) => {
-    setSelectedItem(item);
-    setIsModalOpen(true);
+    const isVideo = videoServices.includes(activeTab);
+    if (isVideo) {
+      setSelectedItem(item);
+      setVideoUrl(item.live_url || getRandomDemoVideo());
+      setIsVideoOpen(true);
+    } else {
+      setSelectedItem(item);
+      setIsModalOpen(true);
+    }
   };
 
   const handleCloseModal = () => {
@@ -407,6 +416,15 @@ export const PortfolioSection = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Video Player Modal */}
+      <VideoPlayerModal
+        isOpen={isVideoOpen}
+        onClose={() => { setIsVideoOpen(false); setSelectedItem(null); }}
+        videoUrl={videoUrl}
+        title={selectedItem?.title || ""}
+        thumbnail={selectedItem?.image_url}
+      />
     </section>
   );
 };

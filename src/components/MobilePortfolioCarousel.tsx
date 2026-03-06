@@ -20,6 +20,42 @@ interface MobilePortfolioCarouselProps {
   accentColor?: string;
 }
 
+function getYouTubeIdFromUrl(url: string): string | null {
+  const input = (url || "").trim();
+  if (!input) return null;
+
+  if (/^[a-zA-Z0-9_-]{11}$/.test(input)) return input;
+
+  try {
+    const parsed = new URL(input);
+    const host = parsed.hostname.replace(/^www\./, "").toLowerCase();
+
+    if (host === "youtu.be") {
+      const id = parsed.pathname.split("/").filter(Boolean)[0];
+      if (id && /^[a-zA-Z0-9_-]{11}$/.test(id)) return id;
+    }
+
+    const vParam = parsed.searchParams.get("v");
+    if (vParam && /^[a-zA-Z0-9_-]{11}$/.test(vParam)) return vParam;
+
+    const parts = parsed.pathname.split("/").filter(Boolean);
+    const markerIndex = parts.findIndex((part) => part === "shorts" || part === "embed" || part === "v");
+    if (markerIndex !== -1) {
+      const candidate = parts[markerIndex + 1];
+      if (candidate && /^[a-zA-Z0-9_-]{11}$/.test(candidate)) return candidate;
+    }
+  } catch {
+    // ignore invalid urls
+  }
+
+  return null;
+}
+
+function getYouTubeThumbnail(url?: string | null): string | null {
+  const id = getYouTubeIdFromUrl(url || "");
+  return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : null;
+}
+
 export function MobilePortfolioCarousel({
   items,
   serviceType,
@@ -92,6 +128,13 @@ export function MobilePortfolioCarousel({
               key={item.id}
               className="flex-[0_0_85%] min-w-0 pl-4 first:pl-0"
             >
+              {(() => {
+                const ytThumb = getYouTubeThumbnail(item.live_url) || getYouTubeThumbnail(item.image_url);
+                const displayImage = ytThumb || (item.image_url && !/(?:youtube\.com|youtu\.be)/i.test(item.image_url)
+                  ? item.image_url
+                  : "https://images.unsplash.com/photo-1492619375914-88005aa9e8fb?w=800&h=600&fit=crop");
+
+                return (
               <div className="group relative rounded-xl overflow-hidden bg-black/40 border border-white/10 hover:border-yellow-400/50 transition-all duration-300 will-change-transform">
                 {/* Image Container */}
                 <div
@@ -101,7 +144,7 @@ export function MobilePortfolioCarousel({
                   onClick={() => handleItemClick(item)}
                 >
                   <img
-                    src={item.image_url}
+                    src={displayImage}
                     alt={item.title}
                     className={`w-full h-full ${
                       isUrlService ? "object-cover object-top" : "object-cover"
@@ -159,6 +202,8 @@ export function MobilePortfolioCarousel({
                   </Button>
                 </div>
               </div>
+                );
+              })()}
             </div>
           ))}
         </div>

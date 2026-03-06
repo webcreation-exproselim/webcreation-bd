@@ -25,15 +25,39 @@ export function getRandomDemoVideo(): string {
 }
 
 function getYouTubeId(url: string): string | null {
-  const patterns = [
-    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
-    /^([a-zA-Z0-9_-]{11})$/,
-  ];
-  for (const pattern of patterns) {
-    const match = url.match(pattern);
-    if (match) return match[1];
+  const input = (url || "").trim();
+  if (!input) return null;
+
+  // Accept raw video ID directly
+  if (/^[a-zA-Z0-9_-]{11}$/.test(input)) return input;
+
+  try {
+    const parsed = new URL(input);
+    const host = parsed.hostname.replace(/^www\./, "").toLowerCase();
+
+    // youtu.be/<id>
+    if (host === "youtu.be") {
+      const id = parsed.pathname.split("/").filter(Boolean)[0];
+      if (id && /^[a-zA-Z0-9_-]{11}$/.test(id)) return id;
+    }
+
+    // youtube.com/watch?v=<id>
+    const vParam = parsed.searchParams.get("v");
+    if (vParam && /^[a-zA-Z0-9_-]{11}$/.test(vParam)) return vParam;
+
+    // youtube.com/shorts/<id> or /embed/<id>
+    const parts = parsed.pathname.split("/").filter(Boolean);
+    const markerIndex = parts.findIndex((part) => part === "shorts" || part === "embed" || part === "v");
+    if (markerIndex !== -1) {
+      const candidate = parts[markerIndex + 1];
+      if (candidate && /^[a-zA-Z0-9_-]{11}$/.test(candidate)) return candidate;
+    }
+  } catch {
+    // Non-URL input fallback
   }
-  return null;
+
+  const fallback = input.match(/(?:youtube\.com\/(?:shorts|embed|watch)\S*v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/i);
+  return fallback?.[1] ?? null;
 }
 
 function isYouTubeUrl(url: string): boolean {

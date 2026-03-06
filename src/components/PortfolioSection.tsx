@@ -93,16 +93,15 @@ const PortfolioCard = ({ item, serviceId, onOpenModal }: PortfolioCardProps) => 
   const isUrlService = urlServices.includes(serviceId);
 
   const handleImageClick = () => {
-    if (isModalService) {
+    if (isModalService || isVideoService) {
       onOpenModal(item);
     }
   };
 
   const handleLivePreviewClick = () => {
-    if (isModalService) {
+    if (isModalService || isVideoService) {
       onOpenModal(item);
     } else if (isUrlService && item.live_url) {
-      // For web dev and landing page - navigate to the live_url
       window.open(item.live_url, "_blank", "noopener,noreferrer");
     }
   };

@@ -318,7 +318,7 @@ const PortfolioCard = ({
           <Button
             variant="outline"
             size="sm"
-            className="flex-1 border-teal-400/30 text-teal-400 hover:bg-teal-400 hover:text-black font-bengali text-[10px] sm:text-sm h-7 sm:h-9 transition-all"
+            className="flex-1 border-teal-400/30 text-teal-400 hover:bg-teal-400 hover:text-black font-bengali text-xs sm:text-sm h-8 sm:h-9 transition-all"
             onClick={() => onPreview(item)}
           >
             <Eye className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1" />

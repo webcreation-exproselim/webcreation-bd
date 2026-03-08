@@ -310,7 +310,7 @@ const PortfolioCard = ({
       </div>
 
       {/* Card Footer */}
-      <div className="p-2.5 sm:p-4">
+      <div className="p-3 sm:p-4">
         <h4 className="text-white font-bengali font-semibold text-xs sm:text-base mb-2 sm:mb-3 group-hover:text-teal-400 transition-colors line-clamp-1">
           {item.title}
         </h4>

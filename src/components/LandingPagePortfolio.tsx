@@ -326,7 +326,7 @@ const PortfolioCard = ({
           </Button>
           <Button
             size="sm"
-            className={`flex-1 font-bengali text-[10px] sm:text-sm h-7 sm:h-9 transition-all ${
+            className={`flex-1 font-bengali text-xs sm:text-sm h-8 sm:h-9 transition-all ${
               item.live_url
                 ? "bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white"
                 : "bg-white/10 text-white/40 cursor-not-allowed"

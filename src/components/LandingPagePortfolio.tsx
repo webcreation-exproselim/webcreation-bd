@@ -334,7 +334,7 @@ const PortfolioCard = ({
             onClick={() => item.live_url && window.open(item.live_url, "_blank", "noopener,noreferrer")}
             disabled={!item.live_url}
           >
-            <ExternalLink className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1" />
+            <ExternalLink className="w-3.5 h-3.5 sm:w-3.5 sm:h-3.5 mr-1" />
             লাইভ
           </Button>
         </div>

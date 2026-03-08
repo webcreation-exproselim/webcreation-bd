@@ -135,7 +135,7 @@ export const LandingPagePortfolio = () => {
 
         {/* Category Filter Chips - Grid Layout */}
         {categoryChips.length > 1 && (
-          <div className="flex flex-wrap gap-2 sm:gap-3 mb-10 justify-center">
+          <div className="grid grid-cols-3 sm:flex sm:flex-wrap gap-2 sm:gap-3 mb-10 sm:justify-center">
             {categoryChips.map((cat) => (
               <button
                 key={cat.name}

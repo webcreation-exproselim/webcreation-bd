@@ -270,7 +270,7 @@ const PortfolioCard = ({
     >
       {/* Image with auto-scroll on hover */}
       <div
-        className="aspect-[4/3] relative overflow-hidden"
+        className="aspect-[3/2] relative overflow-hidden"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         onTouchStart={() => setIsHovered(true)}

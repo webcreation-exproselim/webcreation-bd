@@ -314,7 +314,7 @@ const PortfolioCard = ({
         <h4 className="text-white font-bengali font-semibold text-sm sm:text-base mb-2 sm:mb-3 group-hover:text-teal-400 transition-colors line-clamp-1">
           {item.title}
         </h4>
-        <div className="flex gap-1.5 sm:gap-2">
+        <div className="flex gap-2 sm:gap-2">
           <Button
             variant="outline"
             size="sm"

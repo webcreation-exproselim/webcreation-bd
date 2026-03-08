@@ -594,6 +594,16 @@ const AdminDashboard = () => {
   };
 
   const deletePortfolio = async (id: string) => {
+    const item = portfolioItems.find(p => p.id === id);
+    
+    // Delete storage file if it's an uploaded image
+    if (item?.image_url?.includes('payment-screenshots')) {
+      const path = item.image_url.split('/payment-screenshots/')[1];
+      if (path) {
+        await supabase.storage.from('payment-screenshots').remove([decodeURIComponent(path)]);
+      }
+    }
+    
     const { error } = await supabase
       .from("portfolio_items")
       .delete()

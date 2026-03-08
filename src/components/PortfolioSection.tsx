@@ -153,7 +153,7 @@ const PortfolioCard = ({ item, serviceId, onOpenModal }: PortfolioCardProps) => 
     >
       {/* Image Container */}
       <div 
-        className={`${isUrlService ? 'aspect-[4/3]' : 'aspect-[4/3]'} relative overflow-hidden ${(isModalService || isVideoService) ? 'cursor-pointer' : ''}`}
+        className={`aspect-[3/2] relative overflow-hidden ${(isModalService || isVideoService) ? 'cursor-pointer' : ''}`}
         onClick={handleImageClick}
       >
         <img 
@@ -353,13 +353,13 @@ export const PortfolioSection = () => {
         </div>
 
         {/* Service Tabs */}
-        <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-10 md:mb-12">
+        <div className="grid grid-cols-3 sm:flex sm:flex-wrap sm:justify-center gap-2 sm:gap-3 mb-10 md:mb-12">
           {serviceTabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`
-                relative flex items-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3 rounded-full font-bengali text-sm sm:text-base font-medium
+                relative flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 py-2 sm:px-5 sm:py-3 rounded-full font-bengali text-xs sm:text-base font-medium
                 transition-all duration-300
                 ${activeTab === tab.id 
                   ? 'bg-gradient-to-r from-yellow-400 to-red-500 text-black shadow-lg shadow-yellow-400/25' 
@@ -367,9 +367,8 @@ export const PortfolioSection = () => {
                 }
               `}
             >
-              <tab.icon className="w-4 h-4" />
-              <span className="hidden sm:inline">{tab.label}</span>
-              <span className="sm:hidden">{tab.label.split(' ')[0]}</span>
+              <tab.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+              <span className="truncate">{tab.label}</span>
             </button>
           ))}
         </div>

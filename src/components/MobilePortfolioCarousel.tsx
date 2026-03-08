@@ -138,7 +138,7 @@ export function MobilePortfolioCarousel({
               <div className="group relative rounded-xl overflow-hidden bg-black/40 border border-white/10 hover:border-yellow-400/50 transition-all duration-300 will-change-transform">
                 {/* Image Container */}
                 <div
-                  className={`aspect-[4/3] relative overflow-hidden ${
+                  className={`aspect-[3/2] relative overflow-hidden ${
                     serviceType !== "url" ? "cursor-pointer" : ""
                   }`}
                   onClick={() => handleItemClick(item)}

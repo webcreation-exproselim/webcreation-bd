@@ -266,7 +266,7 @@ const PortfolioCard = ({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ delay: Math.min(index * 0.03, 0.2) }}
-      className="group relative rounded-xl sm:rounded-2xl overflow-hidden bg-black/50 border border-teal-400/15 hover:border-teal-400/50 transition-colors duration-300"
+        className="group relative rounded-xl sm:rounded-2xl overflow-hidden bg-black/50 border border-teal-400/15 hover:border-teal-400/50 transition-colors duration-300"
     >
       {/* Image with auto-scroll on hover */}
       <div

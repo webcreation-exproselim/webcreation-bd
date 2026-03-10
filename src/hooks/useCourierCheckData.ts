@@ -64,7 +64,8 @@ export function useCourierCheckData(userId: string | null) {
         })) as CourierCheckSubscription[];
         setSubscriptions(typed);
         if (!selectedSubscriptionId || !typed.find(s => s.id === selectedSubscriptionId)) {
-          setSelectedSubscriptionId(typed[0].id);
+          const firstActive = typed.find(s => s.is_active) || typed[0];
+          setSelectedSubscriptionId(firstActive.id);
         }
 
         // Fetch pending order for first/selected subscription

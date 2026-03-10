@@ -119,9 +119,10 @@ export function useMerchantData() {
       if (merchantsData && merchantsData.length > 0) {
         const fullMerchants = merchantsData.map(applyMerchantDefaults);
         setMerchants(fullMerchants);
-        // Keep selection if still valid, otherwise select first
+        // Keep selection if still valid, otherwise select first active one
         if (!selectedMerchantId || !fullMerchants.find(m => m.id === selectedMerchantId)) {
-          setSelectedMerchantId(fullMerchants[0].id);
+          const firstActive = fullMerchants.find(m => m.is_active) || fullMerchants[0];
+          setSelectedMerchantId(firstActive.id);
         }
       } else {
         // No merchant exists — create one

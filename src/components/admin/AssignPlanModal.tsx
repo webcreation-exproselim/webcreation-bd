@@ -188,7 +188,7 @@ export function AssignPlanModal({ open, onOpenChange, onSuccess }: AssignPlanMod
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 flex-1 overflow-hidden flex flex-col">
+        <div className="space-y-4 flex-1 overflow-y-auto flex flex-col pr-1">
           {/* Step 1: Select User */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700 font-bengali">

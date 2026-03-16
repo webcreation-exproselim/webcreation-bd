@@ -180,7 +180,7 @@ export function AssignPlanModal({ open, onOpenChange, onSuccess }: AssignPlanMod
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-hidden flex flex-col bg-white text-gray-900">
         <DialogHeader>
           <DialogTitle className="font-bengali flex items-center gap-2">
             <Shield className="w-5 h-5 text-blue-500" />
@@ -204,7 +204,7 @@ export function AssignPlanModal({ open, onOpenChange, onSuccess }: AssignPlanMod
               />
             </div>
             
-            <div className="max-h-40 overflow-y-auto border rounded-lg">
+            <div className="max-h-40 overflow-y-auto border border-gray-200 rounded-lg bg-white">
               {loading ? (
                 <div className="flex items-center justify-center py-6">
                   <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
@@ -214,7 +214,7 @@ export function AssignPlanModal({ open, onOpenChange, onSuccess }: AssignPlanMod
                   কোনো User পাওয়া যায়নি
                 </div>
               ) : (
-                <div className="divide-y">
+                <div className="divide-y divide-gray-100">
                   {filteredUsers.map((user) => (
                     <button
                       key={user.user_id}
@@ -227,10 +227,10 @@ export function AssignPlanModal({ open, onOpenChange, onSuccess }: AssignPlanMod
                         <User className="w-4 h-4 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900 truncate">
+                        <p className="font-medium text-gray-900 truncate text-sm">
                           {user.full_name || "নাম নেই"}
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-gray-500 truncate">
                           {user.phone || "ফোন নেই"}
                         </p>
                       </div>

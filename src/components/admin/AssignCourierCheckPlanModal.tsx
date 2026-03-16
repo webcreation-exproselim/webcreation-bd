@@ -139,7 +139,7 @@ export function AssignCourierCheckPlanModal({ open, onOpenChange, onSuccess }: A
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-hidden flex flex-col bg-white text-gray-900">
         <DialogHeader>
           <DialogTitle className="font-bengali flex items-center gap-2">
             <Truck className="w-5 h-5 text-cyan-500" />
@@ -163,7 +163,7 @@ export function AssignCourierCheckPlanModal({ open, onOpenChange, onSuccess }: A
               />
             </div>
 
-            <div className="max-h-40 overflow-y-auto border rounded-lg">
+            <div className="max-h-40 overflow-y-auto border border-gray-200 rounded-lg bg-white">
               {loading ? (
                 <div className="flex items-center justify-center py-6">
                   <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
@@ -173,7 +173,7 @@ export function AssignCourierCheckPlanModal({ open, onOpenChange, onSuccess }: A
                   কোনো User পাওয়া যায়নি
                 </div>
               ) : (
-                <div className="divide-y">
+                <div className="divide-y divide-gray-100">
                   {filteredUsers.map((user) => (
                     <button
                       key={user.user_id}

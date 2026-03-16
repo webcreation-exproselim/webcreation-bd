@@ -163,7 +163,7 @@ export function AssignCourierCheckPlanModal({ open, onOpenChange, onSuccess }: A
               />
             </div>
 
-            <div className="max-h-40 overflow-y-auto border rounded-lg">
+            <div className="max-h-40 overflow-y-auto border border-gray-200 rounded-lg bg-white">
               {loading ? (
                 <div className="flex items-center justify-center py-6">
                   <Loader2 className="w-5 h-5 animate-spin text-gray-400" />

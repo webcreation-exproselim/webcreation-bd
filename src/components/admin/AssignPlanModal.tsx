@@ -214,7 +214,7 @@ export function AssignPlanModal({ open, onOpenChange, onSuccess }: AssignPlanMod
                   কোনো User পাওয়া যায়নি
                 </div>
               ) : (
-                <div className="divide-y">
+                <div className="divide-y divide-gray-100">
                   {filteredUsers.map((user) => (
                     <button
                       key={user.user_id}

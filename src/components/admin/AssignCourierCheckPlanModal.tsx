@@ -139,7 +139,7 @@ export function AssignCourierCheckPlanModal({ open, onOpenChange, onSuccess }: A
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-hidden flex flex-col bg-white text-gray-900">
         <DialogHeader>
           <DialogTitle className="font-bengali flex items-center gap-2">
             <Truck className="w-5 h-5 text-cyan-500" />

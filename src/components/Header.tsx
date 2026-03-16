@@ -23,7 +23,7 @@ const navItems = [
   { label: "সার্ভিস", href: "#services", hasSubmenu: true, submenu: serviceItems },
   { label: "Fraud Protection", href: "/fraud-guard", hasSubmenu: false, isRoute: true },
   { label: "পোর্টফোলিও", href: "#portfolio", hasSubmenu: false },
-  { label: "আমাদের সম্পর্কে", href: "#about", hasSubmenu: false },
+  { label: "আমাদের সম্পর্কে", href: "/about", hasSubmenu: false, isRoute: true },
   { label: "যোগাযোগ", href: "#contact", hasSubmenu: false },
 ];
 

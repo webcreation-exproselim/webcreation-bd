@@ -51,6 +51,7 @@ const App = () => (
               <Route path="/dashboard" element={<ClientDashboard />} />
               <Route path="/fraud-protection" element={<FraudProtectionPage />} />
               <Route path="/fraud-guard" element={<FraudGuardPage />} />
+              <Route path="/about" element={<AboutPage />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

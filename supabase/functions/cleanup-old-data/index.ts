@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
     if (error) throw error;
 
     const deletedCount = data?.length || 0;
-    console.log(`Cleanup complete: deleted ${deletedCount} fraud logs older than 15 days`);
+    console.log(`Cleanup complete: deleted ${deletedCount} fraud logs older than 7 days`);
 
     return new Response(
       JSON.stringify({ success: true, deleted_fraud_logs: deletedCount }),

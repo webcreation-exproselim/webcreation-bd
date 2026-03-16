@@ -23,7 +23,7 @@ Deno.serve(async (req) => {
     const { data, error } = await supabase
       .from("fraud_logs")
       .delete()
-      .lt("created_at", fifteenDaysAgo.toISOString())
+      .lt("created_at", sevenDaysAgo.toISOString())
       .select("id");
 
     if (error) throw error;

@@ -16,20 +16,20 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    // Delete fraud_logs older than 15 days
-    const fifteenDaysAgo = new Date();
-    fifteenDaysAgo.setDate(fifteenDaysAgo.getDate() - 15);
+    // Delete fraud_logs older than 7 days
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
     const { data, error } = await supabase
       .from("fraud_logs")
       .delete()
-      .lt("created_at", fifteenDaysAgo.toISOString())
+      .lt("created_at", sevenDaysAgo.toISOString())
       .select("id");
 
     if (error) throw error;
 
     const deletedCount = data?.length || 0;
-    console.log(`Cleanup complete: deleted ${deletedCount} fraud logs older than 15 days`);
+    console.log(`Cleanup complete: deleted ${deletedCount} fraud logs older than 7 days`);
 
     return new Response(
       JSON.stringify({ success: true, deleted_fraud_logs: deletedCount }),

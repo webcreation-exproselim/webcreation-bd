@@ -180,7 +180,7 @@ export function AssignPlanModal({ open, onOpenChange, onSuccess }: AssignPlanMod
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-hidden flex flex-col bg-white text-gray-900">
         <DialogHeader>
           <DialogTitle className="font-bengali flex items-center gap-2">
             <Shield className="w-5 h-5 text-blue-500" />

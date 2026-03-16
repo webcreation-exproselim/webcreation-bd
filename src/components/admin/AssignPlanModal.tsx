@@ -227,10 +227,10 @@ export function AssignPlanModal({ open, onOpenChange, onSuccess }: AssignPlanMod
                         <User className="w-4 h-4 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900 truncate">
+                        <p className="font-medium text-gray-900 truncate text-sm">
                           {user.full_name || "নাম নেই"}
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-gray-500 truncate">
                           {user.phone || "ফোন নেই"}
                         </p>
                       </div>

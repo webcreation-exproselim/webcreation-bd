@@ -23,6 +23,8 @@ import AdminLoginPage from "./pages/AdminLoginPage";
 import FraudProtectionPage from "./pages/FraudProtectionPage";
 import FraudGuardPage from "./pages/FraudGuardPage";
 import AboutPage from "./pages/AboutPage";
+import PortfolioPage from "./pages/PortfolioPage";
+import ContactPage from "./pages/ContactPage";
 
 const queryClient = new QueryClient();
 

@@ -78,7 +78,13 @@ export function DollarTracker() {
   const [searchQuery, setSearchQuery] = useState("");
   const [clientSearch, setClientSearch] = useState("");
   const [useExistingClient, setUseExistingClient] = useState(false);
+  const [showCalc, setShowCalc] = useState(false);
+  const [calcBdt, setCalcBdt] = useState("");
+  const [calcRate, setCalcRate] = useState("");
   const { toast } = useToast();
+
+  const calcDollar = Number(calcRate) > 0 ? Number(calcBdt) / Number(calcRate) : 0;
+  const calcTotalBdt = Number(calcBdt) > 0 && Number(calcRate) > 0 ? Number(calcBdt) : 0;
 
   const fetchTransactions = async () => {
     const { data, error } = await supabase

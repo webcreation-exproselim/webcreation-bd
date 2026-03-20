@@ -178,6 +178,24 @@ export function DollarTracker() {
     fetchTransactions();
   };
 
+  // Auto-paid logic: if transaction_date + duration_days <= now, consider it "paid"
+  const getEffectiveStatus = (t: DollarTransaction) => {
+    if (t.payment_status === "paid") return "paid";
+    if (t.duration_days > 0) {
+      const dueDate = new Date(t.transaction_date);
+      dueDate.setDate(dueDate.getDate() + t.duration_days);
+      if (dueDate <= new Date()) return "paid";
+    }
+    return "unpaid";
+  };
+
+  const getDueDate = (t: DollarTransaction) => {
+    if (t.duration_days <= 0) return null;
+    const d = new Date(t.transaction_date);
+    d.setDate(d.getDate() + t.duration_days);
+    return d;
+  };
+
   const filteredTransactions = transactions.filter(t =>
     t.client_name.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -190,9 +208,9 @@ export function DollarTracker() {
   const summary = {
     totalDollars: transactions.reduce((s, t) => s + Number(t.dollar_amount), 0),
     totalBdt: transactions.reduce((s, t) => s + Number(t.total_bdt), 0),
-    paid: transactions.filter(t => t.payment_status === "paid").reduce((s, t) => s + Number(t.total_bdt), 0),
-    unpaid: transactions.filter(t => t.payment_status === "unpaid").reduce((s, t) => s + Number(t.total_bdt), 0),
-    unpaidDollars: transactions.filter(t => t.payment_status === "unpaid").reduce((s, t) => s + Number(t.dollar_amount), 0),
+    paid: transactions.filter(t => getEffectiveStatus(t) === "paid").reduce((s, t) => s + Number(t.total_bdt), 0),
+    unpaid: transactions.filter(t => getEffectiveStatus(t) === "unpaid").reduce((s, t) => s + Number(t.total_bdt), 0),
+    unpaidDollars: transactions.filter(t => getEffectiveStatus(t) === "unpaid").reduce((s, t) => s + Number(t.dollar_amount), 0),
   };
 
   return (

@@ -59,7 +59,7 @@ interface Profile {
 const emptyForm = {
   client_name: "",
   client_user_id: null as string | null,
-  dollar_amount: "",
+  bdt_amount: "",
   rate_per_dollar: "",
   duration_days: "",
   transaction_date: new Date(),
@@ -100,10 +100,12 @@ export function DollarTracker() {
     fetchProfiles();
   }, []);
 
-  const totalBdt = Number(form.dollar_amount || 0) * Number(form.rate_per_dollar || 0);
+  const bdtAmount = Number(form.bdt_amount || 0);
+  const ratePerDollar = Number(form.rate_per_dollar || 0);
+  const autoDollars = ratePerDollar > 0 ? bdtAmount / ratePerDollar : 0;
 
   const handleSave = async () => {
-    if (!form.client_name.trim() || !form.dollar_amount || !form.rate_per_dollar) {
+    if (!form.client_name.trim() || !form.bdt_amount || !form.rate_per_dollar) {
       toast({ title: "সব তথ্য পূরণ করুন", variant: "destructive" });
       return;
     }
@@ -111,9 +113,9 @@ export function DollarTracker() {
     const payload = {
       client_name: form.client_name.trim(),
       client_user_id: form.client_user_id,
-      dollar_amount: Number(form.dollar_amount),
-      rate_per_dollar: Number(form.rate_per_dollar),
-      total_bdt: totalBdt,
+      dollar_amount: parseFloat(autoDollars.toFixed(2)),
+      rate_per_dollar: ratePerDollar,
+      total_bdt: bdtAmount,
       duration_days: Number(form.duration_days) || 0,
       transaction_date: form.transaction_date.toISOString(),
       payment_status: form.payment_status,
@@ -151,7 +153,7 @@ export function DollarTracker() {
     setForm({
       client_name: t.client_name,
       client_user_id: t.client_user_id,
-      dollar_amount: String(t.dollar_amount),
+      bdt_amount: String(t.total_bdt),
       rate_per_dollar: String(t.rate_per_dollar),
       duration_days: String(t.duration_days),
       transaction_date: new Date(t.transaction_date),
@@ -297,11 +299,11 @@ export function DollarTracker() {
 
       {/* Add/Edit Modal */}
       <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent className="max-w-md bg-white text-gray-900">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-hidden flex flex-col bg-white text-gray-900">
           <DialogHeader>
             <DialogTitle className="font-bengali">{editingId ? "এডিট করুন" : "নতুন ডলার এন্ট্রি"}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 overflow-y-auto flex-1 pr-1">
             {/* Client selection toggle */}
             <div className="flex gap-2 mb-2">
               <button
@@ -365,12 +367,12 @@ export function DollarTracker() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="font-bengali text-gray-700">কত ডলার দিয়েছেন</Label>
+                <Label className="font-bengali text-gray-700">কত টাকা দিয়েছেন (৳)</Label>
                 <Input
                   type="number"
-                  value={form.dollar_amount}
-                  onChange={(e) => setForm({ ...form, dollar_amount: e.target.value })}
-                  placeholder="$"
+                  value={form.bdt_amount}
+                  onChange={(e) => setForm({ ...form, bdt_amount: e.target.value })}
+                  placeholder="৳"
                   className="mt-1 bg-gray-50 border-gray-200 text-gray-900"
                 />
               </div>
@@ -386,10 +388,11 @@ export function DollarTracker() {
               </div>
             </div>
 
-            {/* Auto-calculated total */}
+            {/* Auto-calculated dollar amount */}
             <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-3 border border-green-200">
-              <p className="text-xs text-green-600 font-bengali">ক্লায়েন্টের পাওনা (অটো ক্যালকুলেটেড)</p>
-              <p className="text-xl font-bold text-green-700">৳{totalBdt.toLocaleString()}</p>
+              <p className="text-xs text-green-600 font-bengali">অটো ডলার কনভার্ট</p>
+              <p className="text-xl font-bold text-green-700">${autoDollars.toFixed(2)}</p>
+              <p className="text-[10px] text-green-500 mt-0.5">৳{bdtAmount.toLocaleString()} ÷ ৳{ratePerDollar || '?'} = ${autoDollars.toFixed(2)}</p>
             </div>
 
             <div className="grid grid-cols-2 gap-3">

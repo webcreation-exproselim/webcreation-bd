@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard, Package, Timer, Users, Shield, FileImage,
   FileText, MessageCircle, CreditCard, Star, PenTool,
-  Search, Link2, Menu, X, ChevronRight, Globe,
+  Search, Link2, Menu, X, ChevronRight, Globe, DollarSign,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { TabType } from "@/components/admin/AdminSidebar";

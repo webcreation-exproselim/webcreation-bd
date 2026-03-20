@@ -365,7 +365,7 @@ export function DollarTracker() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="font-bengali text-gray-700">ডলার পরিমাণ</Label>
+                <Label className="font-bengali text-gray-700">কত ডলার দিয়েছেন</Label>
                 <Input
                   type="number"
                   value={form.dollar_amount}
@@ -375,7 +375,7 @@ export function DollarTracker() {
                 />
               </div>
               <div>
-                <Label className="font-bengali text-gray-700">রেট (প্রতি $)</Label>
+                <Label className="font-bengali text-gray-700">প্রতি ডলার কত টাকা</Label>
                 <Input
                   type="number"
                   value={form.rate_per_dollar}
@@ -388,7 +388,7 @@ export function DollarTracker() {
 
             {/* Auto-calculated total */}
             <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-3 border border-green-200">
-              <p className="text-xs text-green-600 font-bengali">মোট টাকা (অটো)</p>
+              <p className="text-xs text-green-600 font-bengali">ক্লায়েন্টের পাওনা (অটো ক্যালকুলেটেড)</p>
               <p className="text-xl font-bold text-green-700">৳{totalBdt.toLocaleString()}</p>
             </div>
 

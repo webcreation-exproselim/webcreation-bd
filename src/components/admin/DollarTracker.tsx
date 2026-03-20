@@ -190,17 +190,19 @@ export function DollarTracker() {
     totalBdt: transactions.reduce((s, t) => s + Number(t.total_bdt), 0),
     paid: transactions.filter(t => t.payment_status === "paid").reduce((s, t) => s + Number(t.total_bdt), 0),
     unpaid: transactions.filter(t => t.payment_status === "unpaid").reduce((s, t) => s + Number(t.total_bdt), 0),
+    unpaidDollars: transactions.filter(t => t.payment_status === "unpaid").reduce((s, t) => s + Number(t.dollar_amount), 0),
   };
 
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {[
-          { label: "মোট ডলার", value: `$${summary.totalDollars.toLocaleString()}`, gradient: "from-green-500 to-emerald-500" },
-          { label: "মোট টাকা", value: `৳${summary.totalBdt.toLocaleString()}`, gradient: "from-blue-500 to-indigo-500" },
-          { label: "পেইড", value: `৳${summary.paid.toLocaleString()}`, gradient: "from-emerald-500 to-teal-500" },
-          { label: "বাকি", value: `৳${summary.unpaid.toLocaleString()}`, gradient: "from-red-500 to-orange-500" },
+          { label: "মোট ডলার দিয়েছি", value: `$${summary.totalDollars.toLocaleString()}`, gradient: "from-green-500 to-emerald-500" },
+          { label: "মোট পাওনা (৳)", value: `৳${summary.totalBdt.toLocaleString()}`, gradient: "from-blue-500 to-indigo-500" },
+          { label: "আদায় হয়েছে", value: `৳${summary.paid.toLocaleString()}`, gradient: "from-emerald-500 to-teal-500" },
+          { label: "বাকি আছে (৳)", value: `৳${summary.unpaid.toLocaleString()}`, gradient: "from-red-500 to-orange-500" },
+          { label: "বাকি ডলার", value: `$${summary.unpaidDollars.toLocaleString()}`, gradient: "from-amber-500 to-orange-500" },
         ].map((card, i) => (
           <motion.div
             key={card.label}
@@ -271,10 +273,10 @@ export function DollarTracker() {
                     </button>
                   </div>
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500">
-                    <span>${Number(t.dollar_amount).toLocaleString()}</span>
-                    <span>রেট: ৳{Number(t.rate_per_dollar)}</span>
-                    <span className="font-semibold text-gray-700">= ৳{Number(t.total_bdt).toLocaleString()}</span>
-                    {t.duration_days > 0 && <span>{t.duration_days} দিন</span>}
+                    <span>দিয়েছি: ${Number(t.dollar_amount).toLocaleString()}</span>
+                    <span>রেট: ৳{Number(t.rate_per_dollar)}/$</span>
+                    <span className="font-semibold text-gray-700">পাওনা: ৳{Number(t.total_bdt).toLocaleString()}</span>
+                    {t.duration_days > 0 && <span>{t.duration_days} দিনের জন্য</span>}
                     <span>{format(new Date(t.transaction_date), "dd MMM yyyy")}</span>
                   </div>
                   {t.notes && <p className="text-xs text-gray-400 mt-1 truncate">{t.notes}</p>}
@@ -363,7 +365,7 @@ export function DollarTracker() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="font-bengali text-gray-700">ডলার পরিমাণ</Label>
+                <Label className="font-bengali text-gray-700">কত ডলার দিয়েছেন</Label>
                 <Input
                   type="number"
                   value={form.dollar_amount}
@@ -373,7 +375,7 @@ export function DollarTracker() {
                 />
               </div>
               <div>
-                <Label className="font-bengali text-gray-700">রেট (প্রতি $)</Label>
+                <Label className="font-bengali text-gray-700">প্রতি ডলার কত টাকা</Label>
                 <Input
                   type="number"
                   value={form.rate_per_dollar}
@@ -386,7 +388,7 @@ export function DollarTracker() {
 
             {/* Auto-calculated total */}
             <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-3 border border-green-200">
-              <p className="text-xs text-green-600 font-bengali">মোট টাকা (অটো)</p>
+              <p className="text-xs text-green-600 font-bengali">ক্লায়েন্টের পাওনা (অটো ক্যালকুলেটেড)</p>
               <p className="text-xl font-bold text-green-700">৳{totalBdt.toLocaleString()}</p>
             </div>
 

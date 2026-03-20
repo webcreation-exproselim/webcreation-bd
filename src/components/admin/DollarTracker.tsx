@@ -297,7 +297,7 @@ export function DollarTracker() {
 
       {/* Add/Edit Modal */}
       <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent className="max-w-md bg-white text-gray-900">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-hidden flex flex-col bg-white text-gray-900">
           <DialogHeader>
             <DialogTitle className="font-bengali">{editingId ? "এডিট করুন" : "নতুন ডলার এন্ট্রি"}</DialogTitle>
           </DialogHeader>

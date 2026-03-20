@@ -59,7 +59,7 @@ interface Profile {
 const emptyForm = {
   client_name: "",
   client_user_id: null as string | null,
-  dollar_amount: "",
+  bdt_amount: "",
   rate_per_dollar: "",
   duration_days: "",
   transaction_date: new Date(),

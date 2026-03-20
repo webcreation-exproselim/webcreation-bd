@@ -273,10 +273,10 @@ export function DollarTracker() {
                     </button>
                   </div>
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500">
-                    <span>${Number(t.dollar_amount).toLocaleString()}</span>
-                    <span>রেট: ৳{Number(t.rate_per_dollar)}</span>
-                    <span className="font-semibold text-gray-700">= ৳{Number(t.total_bdt).toLocaleString()}</span>
-                    {t.duration_days > 0 && <span>{t.duration_days} দিন</span>}
+                    <span>দিয়েছি: ${Number(t.dollar_amount).toLocaleString()}</span>
+                    <span>রেট: ৳{Number(t.rate_per_dollar)}/$</span>
+                    <span className="font-semibold text-gray-700">পাওনা: ৳{Number(t.total_bdt).toLocaleString()}</span>
+                    {t.duration_days > 0 && <span>{t.duration_days} দিনের জন্য</span>}
                     <span>{format(new Date(t.transaction_date), "dd MMM yyyy")}</span>
                   </div>
                   {t.notes && <p className="text-xs text-gray-400 mt-1 truncate">{t.notes}</p>}

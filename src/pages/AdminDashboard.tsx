@@ -1111,6 +1111,10 @@ const AdminDashboard = () => {
         {activeTab === "integrations" && (
           <IntegrationManager />
         )}
+
+        {activeTab === "dollartracker" && (
+          <DollarTracker />
+        )}
         </main>
       </div>
 

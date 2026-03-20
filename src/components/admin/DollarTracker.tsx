@@ -301,7 +301,7 @@ export function DollarTracker() {
           <DialogHeader>
             <DialogTitle className="font-bengali">{editingId ? "এডিট করুন" : "নতুন ডলার এন্ট্রি"}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 overflow-y-auto flex-1 pr-1">
             {/* Client selection toggle */}
             <div className="flex gap-2 mb-2">
               <button

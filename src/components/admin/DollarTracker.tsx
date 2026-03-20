@@ -100,10 +100,12 @@ export function DollarTracker() {
     fetchProfiles();
   }, []);
 
-  const totalBdt = Number(form.dollar_amount || 0) * Number(form.rate_per_dollar || 0);
+  const bdtAmount = Number(form.bdt_amount || 0);
+  const ratePerDollar = Number(form.rate_per_dollar || 0);
+  const autoDollars = ratePerDollar > 0 ? bdtAmount / ratePerDollar : 0;
 
   const handleSave = async () => {
-    if (!form.client_name.trim() || !form.dollar_amount || !form.rate_per_dollar) {
+    if (!form.client_name.trim() || !form.bdt_amount || !form.rate_per_dollar) {
       toast({ title: "সব তথ্য পূরণ করুন", variant: "destructive" });
       return;
     }
@@ -111,9 +113,9 @@ export function DollarTracker() {
     const payload = {
       client_name: form.client_name.trim(),
       client_user_id: form.client_user_id,
-      dollar_amount: Number(form.dollar_amount),
-      rate_per_dollar: Number(form.rate_per_dollar),
-      total_bdt: totalBdt,
+      dollar_amount: parseFloat(autoDollars.toFixed(2)),
+      rate_per_dollar: ratePerDollar,
+      total_bdt: bdtAmount,
       duration_days: Number(form.duration_days) || 0,
       transaction_date: form.transaction_date.toISOString(),
       payment_status: form.payment_status,

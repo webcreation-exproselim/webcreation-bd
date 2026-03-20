@@ -278,28 +278,44 @@ export function DollarTracker() {
             >
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-semibold text-gray-900 truncate">{t.client_name}</h3>
-                    <button
-                      onClick={() => toggleStatus(t)}
-                      className={cn(
-                        "px-2.5 py-0.5 rounded-full text-xs font-medium transition-all cursor-pointer",
-                        t.payment_status === "paid"
-                          ? "bg-emerald-100 text-emerald-700"
-                          : "bg-red-100 text-red-700"
-                      )}
-                    >
-                      {t.payment_status === "paid" ? "পেইড ✓" : "বাকি"}
-                    </button>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500">
-                    <span>দিয়েছি: ${Number(t.dollar_amount).toLocaleString()}</span>
-                    <span>রেট: ৳{Number(t.rate_per_dollar)}/$</span>
-                    <span className="font-semibold text-gray-700">পাওনা: ৳{Number(t.total_bdt).toLocaleString()}</span>
-                    {t.duration_days > 0 && <span>{t.duration_days} দিনের জন্য</span>}
-                    <span>{format(new Date(t.transaction_date), "dd MMM yyyy")}</span>
-                  </div>
-                  {t.notes && <p className="text-xs text-gray-400 mt-1 truncate">{t.notes}</p>}
+                  {(() => {
+                    const status = getEffectiveStatus(t);
+                    const dueDate = getDueDate(t);
+                    return (
+                      <>
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-semibold text-gray-900 truncate">{t.client_name}</h3>
+                          <button
+                            onClick={() => toggleStatus(t)}
+                            className={cn(
+                              "px-2.5 py-0.5 rounded-full text-xs font-medium transition-all cursor-pointer",
+                              status === "paid"
+                                ? "bg-emerald-100 text-emerald-700"
+                                : "bg-red-100 text-red-700"
+                            )}
+                          >
+                            {status === "paid" ? "পেইড ✓" : "বাকি"}
+                          </button>
+                          {status === "paid" && t.payment_status !== "paid" && (
+                            <span className="text-[10px] text-amber-500 font-bengali">(অটো)</span>
+                          )}
+                        </div>
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500">
+                          <span>৳{Number(t.total_bdt).toLocaleString()}</span>
+                          <span>→ ${Number(t.dollar_amount).toLocaleString()}</span>
+                          <span>রেট: ৳{Number(t.rate_per_dollar)}/$</span>
+                          {t.duration_days > 0 && <span>{t.duration_days} দিন</span>}
+                          <span>{format(new Date(t.transaction_date), "dd MMM yyyy")}</span>
+                          {dueDate && (
+                            <span className={cn("text-xs", dueDate <= new Date() ? "text-emerald-600" : "text-orange-500")}>
+                              পে ডেট: {format(dueDate, "dd MMM yyyy")}
+                            </span>
+                          )}
+                        </div>
+                        {t.notes && <p className="text-xs text-gray-400 mt-1 truncate">{t.notes}</p>}
+                      </>
+                    );
+                  })()}
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <button onClick={() => handleEdit(t)} className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 flex items-center justify-center transition-colors">

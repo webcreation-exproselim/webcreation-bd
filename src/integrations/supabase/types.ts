@@ -322,6 +322,51 @@ export type Database = {
         }
         Relationships: []
       }
+      dollar_transactions: {
+        Row: {
+          client_name: string
+          client_user_id: string | null
+          created_at: string
+          dollar_amount: number
+          duration_days: number
+          id: string
+          notes: string | null
+          payment_status: string
+          rate_per_dollar: number
+          total_bdt: number
+          transaction_date: string
+          updated_at: string
+        }
+        Insert: {
+          client_name: string
+          client_user_id?: string | null
+          created_at?: string
+          dollar_amount?: number
+          duration_days?: number
+          id?: string
+          notes?: string | null
+          payment_status?: string
+          rate_per_dollar?: number
+          total_bdt?: number
+          transaction_date?: string
+          updated_at?: string
+        }
+        Update: {
+          client_name?: string
+          client_user_id?: string | null
+          created_at?: string
+          dollar_amount?: number
+          duration_days?: number
+          id?: string
+          notes?: string | null
+          payment_status?: string
+          rate_per_dollar?: number
+          total_bdt?: number
+          transaction_date?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       fraud_logs: {
         Row: {
           created_at: string

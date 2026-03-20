@@ -153,7 +153,7 @@ export function DollarTracker() {
     setForm({
       client_name: t.client_name,
       client_user_id: t.client_user_id,
-      dollar_amount: String(t.dollar_amount),
+      bdt_amount: String(t.total_bdt),
       rate_per_dollar: String(t.rate_per_dollar),
       duration_days: String(t.duration_days),
       transaction_date: new Date(t.transaction_date),

@@ -244,7 +244,64 @@ export function DollarTracker() {
         ))}
       </div>
 
-      {/* Header */}
+      {/* Quick Calculator */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
+      >
+        <button
+          onClick={() => setShowCalc(!showCalc)}
+          className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center">
+              <DollarSign className="w-4 h-4 text-white" />
+            </div>
+            <span className="font-semibold text-gray-900 font-bengali">ডলার ক্যালকুলেটর</span>
+          </div>
+          <span className="text-xs text-gray-400">{showCalc ? "▲" : "▼"}</span>
+        </button>
+        {showCalc && (
+          <div className="px-4 pb-4 space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="font-bengali text-gray-700 text-xs">টাকা (৳)</Label>
+                <Input
+                  type="number"
+                  value={calcBdt}
+                  onChange={(e) => setCalcBdt(e.target.value)}
+                  placeholder="৳ পরিমাণ"
+                  className="mt-1 bg-gray-50 border-gray-200 text-gray-900"
+                />
+              </div>
+              <div>
+                <Label className="font-bengali text-gray-700 text-xs">রেট (৳/$)</Label>
+                <Input
+                  type="number"
+                  value={calcRate}
+                  onChange={(e) => setCalcRate(e.target.value)}
+                  placeholder="৳ প্রতি $"
+                  className="mt-1 bg-gray-50 border-gray-200 text-gray-900"
+                />
+              </div>
+            </div>
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-3 border border-blue-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-blue-600 font-bengali">ডলার পরিমাণ</p>
+                  <p className="text-2xl font-bold text-blue-700">${calcDollar.toFixed(2)}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-blue-600 font-bengali">হিসাব</p>
+                  <p className="text-sm text-blue-500">৳{Number(calcBdt || 0).toLocaleString()} ÷ ৳{calcRate || '?'} = ${calcDollar.toFixed(2)}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </motion.div>
+
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div className="relative flex-1 max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />

@@ -190,17 +190,19 @@ export function DollarTracker() {
     totalBdt: transactions.reduce((s, t) => s + Number(t.total_bdt), 0),
     paid: transactions.filter(t => t.payment_status === "paid").reduce((s, t) => s + Number(t.total_bdt), 0),
     unpaid: transactions.filter(t => t.payment_status === "unpaid").reduce((s, t) => s + Number(t.total_bdt), 0),
+    unpaidDollars: transactions.filter(t => t.payment_status === "unpaid").reduce((s, t) => s + Number(t.dollar_amount), 0),
   };
 
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {[
-          { label: "মোট ডলার", value: `$${summary.totalDollars.toLocaleString()}`, gradient: "from-green-500 to-emerald-500" },
-          { label: "মোট টাকা", value: `৳${summary.totalBdt.toLocaleString()}`, gradient: "from-blue-500 to-indigo-500" },
-          { label: "পেইড", value: `৳${summary.paid.toLocaleString()}`, gradient: "from-emerald-500 to-teal-500" },
-          { label: "বাকি", value: `৳${summary.unpaid.toLocaleString()}`, gradient: "from-red-500 to-orange-500" },
+          { label: "মোট ডলার দিয়েছি", value: `$${summary.totalDollars.toLocaleString()}`, gradient: "from-green-500 to-emerald-500" },
+          { label: "মোট পাওনা (৳)", value: `৳${summary.totalBdt.toLocaleString()}`, gradient: "from-blue-500 to-indigo-500" },
+          { label: "আদায় হয়েছে", value: `৳${summary.paid.toLocaleString()}`, gradient: "from-emerald-500 to-teal-500" },
+          { label: "বাকি আছে (৳)", value: `৳${summary.unpaid.toLocaleString()}`, gradient: "from-red-500 to-orange-500" },
+          { label: "বাকি ডলার", value: `$${summary.unpaidDollars.toLocaleString()}`, gradient: "from-amber-500 to-orange-500" },
         ].map((card, i) => (
           <motion.div
             key={card.label}

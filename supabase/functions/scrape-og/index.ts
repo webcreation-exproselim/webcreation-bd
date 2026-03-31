@@ -21,6 +21,87 @@ Deno.serve(async (req) => {
 
     console.log('Fetching OG data for:', url);
 
+    const decodeHtml = (value: string) => value
+      .replaceAll('&amp;', '&')
+      .replaceAll('&quot;', '"')
+      .replaceAll('&#39;', "'")
+      .replaceAll('&#x27;', "'");
+
+    const sb = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
+
+    const uploadRemoteImage = async (imageUrl: string | null) => {
+      if (!imageUrl) return null;
+
+      try {
+        console.log('Downloading image:', imageUrl);
+        const imgRes = await fetch(imageUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)',
+            'Referer': 'https://www.facebook.com/',
+          },
+        });
+
+        if (!imgRes.ok) {
+          console.error('Image download failed with status:', imgRes.status);
+          return null;
+        }
+
+        const ct = imgRes.headers.get('content-type') || '';
+        if (!ct.startsWith('image/')) {
+          console.error('Image download returned non-image content type:', ct);
+          return null;
+        }
+
+        const buf = new Uint8Array(await imgRes.arrayBuffer());
+        const ext = ct.includes('png') ? 'png' : ct.includes('webp') ? 'webp' : 'jpg';
+        const name = `stories/og-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+
+        const { error: upErr } = await sb.storage
+          .from('payment-screenshots')
+          .upload(name, buf, { contentType: ct, upsert: true });
+
+        if (upErr) {
+          console.error('Upload failed:', upErr.message);
+          return null;
+        }
+
+        const { data: pub } = sb.storage.from('payment-screenshots').getPublicUrl(name);
+        console.log('Re-uploaded image:', pub.publicUrl);
+        return pub.publicUrl;
+      } catch (error) {
+        console.error('Image re-upload error:', error);
+        return null;
+      }
+    };
+
+    const getFallbackScreenshot = async (pageUrl: string) => {
+      try {
+        const fallbackRes = await fetch(
+          `https://api.microlink.io/?url=${encodeURIComponent(pageUrl)}&screenshot=true&meta=false`,
+          {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)',
+              'Accept': 'application/json',
+            },
+          }
+        );
+
+        if (!fallbackRes.ok) {
+          console.error('Fallback screenshot request failed:', fallbackRes.status);
+          return null;
+        }
+
+        const fallbackJson = await fallbackRes.json();
+        return fallbackJson?.data?.screenshot?.url ?? null;
+      } catch (error) {
+        console.error('Fallback screenshot error:', error);
+        return null;
+      }
+    };
+
     const response = await fetch(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
@@ -49,41 +130,17 @@ Deno.serve(async (req) => {
 
     const description = getMetaContent('og:description') || getMetaContent('twitter:description') || getMetaContent('description');
     let image: string | null = getMetaContent('og:image') || getMetaContent('twitter:image');
+    image = image ? decodeHtml(image) : null;
 
-    // Download image and re-upload to Supabase storage so browsers can load it
-    if (image) {
-      try {
-        console.log('Downloading OG image to re-upload...');
-        const imgRes = await fetch(image, {
-          headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)' },
-        });
-        if (imgRes.ok) {
-          const ct = imgRes.headers.get('content-type') || 'image/jpeg';
-          const buf = new Uint8Array(await imgRes.arrayBuffer());
-          const ext = ct.includes('png') ? 'png' : ct.includes('webp') ? 'webp' : 'jpg';
-          const name = `stories/og-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    let storedImage = await uploadRemoteImage(image);
 
-          const sb = createClient(
-            Deno.env.get('SUPABASE_URL')!,
-            Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-          );
-
-          const { error: upErr } = await sb.storage
-            .from('payment-screenshots')
-            .upload(name, buf, { contentType: ct, upsert: true });
-
-          if (!upErr) {
-            const { data: pub } = sb.storage.from('payment-screenshots').getPublicUrl(name);
-            image = pub.publicUrl;
-            console.log('Re-uploaded image:', image);
-          } else {
-            console.error('Upload failed:', upErr.message);
-          }
-        }
-      } catch (e) {
-        console.error('Image re-upload error:', e);
-      }
+    if (!storedImage) {
+      console.log('Primary OG image failed, trying screenshot fallback');
+      const fallbackImage = await getFallbackScreenshot(url);
+      storedImage = await uploadRemoteImage(fallbackImage);
     }
+
+    image = storedImage;
 
     return new Response(JSON.stringify({
       title: title || null,

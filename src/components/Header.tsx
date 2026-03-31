@@ -21,7 +21,7 @@ const serviceItems = [
 const navItems = [
   { label: "হোম", href: "#", hasSubmenu: false },
   { label: "সার্ভিস", href: "#services", hasSubmenu: true, submenu: serviceItems },
-  { label: "অফার", href: "#stories", hasSubmenu: false },
+  { label: "অফার", href: "/offer", hasSubmenu: false, isRoute: true },
   { label: "Fraud Protection", href: "/fraud-guard", hasSubmenu: false, isRoute: true },
   { label: "পোর্টফোলিও", href: "/portfolio", hasSubmenu: false, isRoute: true },
   { label: "আমাদের সম্পর্কে", href: "/about", hasSubmenu: false, isRoute: true },

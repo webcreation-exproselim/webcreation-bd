@@ -82,3 +82,4 @@ export function StoriesSection() {
       </div>
     </section>
   );
+}

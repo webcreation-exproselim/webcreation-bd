@@ -1116,6 +1116,10 @@ const AdminDashboard = () => {
         {activeTab === "dollartracker" && (
           <DollarTracker />
         )}
+
+        {activeTab === "stories" && (
+          <StoriesManagement />
+        )}
         </main>
       </div>
 

@@ -975,6 +975,42 @@ export type Database = {
         }
         Relationships: []
       }
+      stories: {
+        Row: {
+          caption: string | null
+          created_at: string
+          created_by: string | null
+          facebook_url: string
+          id: string
+          is_active: boolean
+          sort_order: number
+          thumbnail_url: string | null
+          title: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          created_by?: string | null
+          facebook_url: string
+          id?: string
+          is_active?: boolean
+          sort_order?: number
+          thumbnail_url?: string | null
+          title: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          created_by?: string | null
+          facebook_url?: string
+          id?: string
+          is_active?: boolean
+          sort_order?: number
+          thumbnail_url?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
       subscription_orders: {
         Row: {
           amount: number

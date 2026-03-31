@@ -147,40 +147,43 @@ export function StoriesManagement() {
                 exit={{ opacity: 0, y: -10 }}
                 className="bg-white rounded-xl border border-gray-100 p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 hover:shadow-md transition-shadow"
               >
-                {/* Reorder */}
-                <button onClick={() => moveUp(index)} className="text-gray-300 hover:text-gray-500 cursor-grab" title="উপরে নিন">
-                  <GripVertical className="w-5 h-5" />
-                </button>
+                {/* Top row: thumbnail + info */}
+                <div className="flex items-center gap-3 w-full sm:flex-1 min-w-0">
+                  {/* Reorder */}
+                  <button onClick={() => moveUp(index)} className="text-gray-300 hover:text-gray-500 cursor-grab hidden sm:block" title="উপরে নিন">
+                    <GripVertical className="w-5 h-5" />
+                  </button>
 
-                {/* Thumbnail preview */}
-                <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 p-[2px] shrink-0">
-                  <div className="w-full h-full rounded-full bg-white overflow-hidden flex items-center justify-center">
-                    {story.thumbnail_url ? (
-                      <img src={story.thumbnail_url} alt={story.title} className="w-full h-full object-cover" />
-                    ) : (
-                      <Facebook className="w-6 h-6 text-blue-500" />
-                    )}
+                  {/* Thumbnail preview */}
+                  <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 p-[2px] shrink-0">
+                    <div className="w-full h-full rounded-full bg-white overflow-hidden flex items-center justify-center">
+                      {story.thumbnail_url ? (
+                        <img src={story.thumbnail_url} alt={story.title} className="w-full h-full object-cover" />
+                      ) : (
+                        <Facebook className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500" />
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm sm:text-base text-gray-900 font-bengali truncate">{story.title}</p>
+                    <p className="text-[10px] sm:text-xs text-gray-400 truncate">{story.facebook_url}</p>
+                    {story.caption && <p className="text-[10px] sm:text-xs text-gray-500 font-bengali truncate mt-0.5">{story.caption}</p>}
                   </div>
                 </div>
 
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-gray-900 font-bengali truncate">{story.title}</p>
-                  <p className="text-xs text-gray-400 truncate">{story.facebook_url}</p>
-                  {story.caption && <p className="text-xs text-gray-500 font-bengali truncate mt-0.5">{story.caption}</p>}
-                </div>
-
                 {/* Actions */}
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 self-end sm:self-center">
                   <Switch checked={story.is_active} onCheckedChange={() => toggleActive(story)} />
                   <span className="text-xs text-gray-400">{story.is_active ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}</span>
-                  <a href={story.facebook_url} target="_blank" rel="noopener noreferrer" className="p-2 text-gray-400 hover:text-blue-500 transition-colors">
+                  <a href={story.facebook_url} target="_blank" rel="noopener noreferrer" className="p-1.5 sm:p-2 text-gray-400 hover:text-blue-500 transition-colors">
                     <ExternalLink className="w-4 h-4" />
                   </a>
-                  <button onClick={() => openEdit(story)} className="p-2 text-gray-400 hover:text-blue-600 transition-colors">
+                  <button onClick={() => openEdit(story)} className="p-1.5 sm:p-2 text-gray-400 hover:text-blue-600 transition-colors">
                     <Edit2 className="w-4 h-4" />
                   </button>
-                  <button onClick={() => setDeleteConfirm(story.id)} className="p-2 text-gray-400 hover:text-red-500 transition-colors">
+                  <button onClick={() => setDeleteConfirm(story.id)} className="p-1.5 sm:p-2 text-gray-400 hover:text-red-500 transition-colors">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>

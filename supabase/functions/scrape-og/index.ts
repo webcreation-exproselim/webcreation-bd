@@ -37,24 +37,39 @@ Deno.serve(async (req) => {
 
       try {
         console.log('Downloading image:', imageUrl);
-        const imgRes = await fetch(imageUrl, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)',
+        // Try multiple User-Agent / header combos since FB CDN is picky
+        const attempts = [
+          {
+            'User-Agent': 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)',
+          },
+          {
+            'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+          },
+          {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             'Referer': 'https://www.facebook.com/',
           },
-        });
+        ];
 
-        if (!imgRes.ok) {
-          console.error('Image download failed with status:', imgRes.status);
+        let imgRes: Response | null = null;
+        for (const hdrs of attempts) {
+          const res = await fetch(imageUrl, { headers: hdrs, redirect: 'follow' });
+          const ct = res.headers.get('content-type') || '';
+          if (res.ok && ct.startsWith('image/')) {
+            imgRes = res;
+            break;
+          }
+          // consume body so connection is released
+          await res.arrayBuffer();
+          console.log('Attempt failed:', res.status, ct);
+        }
+
+        if (!imgRes) {
+          console.error('All image download attempts failed for:', imageUrl);
           return null;
         }
 
-        const ct = imgRes.headers.get('content-type') || '';
-        if (!ct.startsWith('image/')) {
-          console.error('Image download returned non-image content type:', ct);
-          return null;
-        }
-
+        const ct = imgRes.headers.get('content-type') || 'image/jpeg';
         const buf = new Uint8Array(await imgRes.arrayBuffer());
         const ext = ct.includes('png') ? 'png' : ct.includes('webp') ? 'webp' : 'jpg';
         const name = `stories/og-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
@@ -73,31 +88,6 @@ Deno.serve(async (req) => {
         return pub.publicUrl;
       } catch (error) {
         console.error('Image re-upload error:', error);
-        return null;
-      }
-    };
-
-    const getFallbackScreenshot = async (pageUrl: string) => {
-      try {
-        const fallbackRes = await fetch(
-          `https://api.microlink.io/?url=${encodeURIComponent(pageUrl)}&screenshot=true&meta=false`,
-          {
-            headers: {
-              'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)',
-              'Accept': 'application/json',
-            },
-          }
-        );
-
-        if (!fallbackRes.ok) {
-          console.error('Fallback screenshot request failed:', fallbackRes.status);
-          return null;
-        }
-
-        const fallbackJson = await fallbackRes.json();
-        return fallbackJson?.data?.screenshot?.url ?? null;
-      } catch (error) {
-        console.error('Fallback screenshot error:', error);
         return null;
       }
     };
@@ -132,15 +122,7 @@ Deno.serve(async (req) => {
     let image: string | null = getMetaContent('og:image') || getMetaContent('twitter:image');
     image = image ? decodeHtml(image) : null;
 
-    let storedImage = await uploadRemoteImage(image);
-
-    if (!storedImage) {
-      console.log('Primary OG image failed, trying screenshot fallback');
-      const fallbackImage = await getFallbackScreenshot(url);
-      storedImage = await uploadRemoteImage(fallbackImage);
-    }
-
-    image = storedImage;
+    image = await uploadRemoteImage(image);
 
     return new Response(JSON.stringify({
       title: title || null,

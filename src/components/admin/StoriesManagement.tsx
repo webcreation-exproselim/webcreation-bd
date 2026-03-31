@@ -145,7 +145,7 @@ export function StoriesManagement() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="bg-white rounded-xl border border-gray-100 p-4 flex items-center gap-4 hover:shadow-md transition-shadow"
+                className="bg-white rounded-xl border border-gray-100 p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 hover:shadow-md transition-shadow"
               >
                 {/* Reorder */}
                 <button onClick={() => moveUp(index)} className="text-gray-300 hover:text-gray-500 cursor-grab" title="উপরে নিন">

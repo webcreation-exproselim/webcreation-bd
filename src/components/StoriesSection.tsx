@@ -1,7 +1,8 @@
 import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { Facebook, ExternalLink, ArrowRight } from "lucide-react";
+import { Facebook, Eye, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { StoryViewer } from "./StoryViewer";
 
 interface Story {
   id: string;
@@ -14,6 +15,8 @@ interface Story {
 
 export function StoriesSection() {
   const [stories, setStories] = useState<Story[]>([]);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerIndex, setViewerIndex] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -34,76 +37,106 @@ export function StoriesSection() {
     if (data) setStories(data);
   };
 
+  const openStory = (index: number) => {
+    setViewerIndex(index);
+    setViewerOpen(true);
+  };
+
   if (stories.length === 0) return null;
 
   return (
-    <section className="bg-black py-4 sm:py-6 md:py-8 border-b border-white/5">
-      <div className="max-w-7xl mx-auto px-3 sm:px-4">
-        {/* Section Header */}
-        <div className="flex items-center gap-2 mb-3 sm:mb-4">
-          <div className="w-1 h-5 sm:h-6 bg-gradient-to-b from-blue-500 to-purple-600 rounded-full" />
-          <h3 className="text-sm sm:text-base font-semibold text-white/80 font-bengali tracking-wide">সাম্প্রতিক পোস্ট</h3>
-        </div>
+    <>
+      <section id="stories" className="bg-black py-6 sm:py-8 md:py-10 border-b border-white/5">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4">
+          {/* Section Header */}
+          <div className="flex items-center justify-between mb-4 sm:mb-5">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br from-pink-500 via-red-500 to-yellow-500 rounded-lg flex items-center justify-center">
+                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+              </div>
+              <div>
+                <h3 className="text-sm sm:text-base font-bold text-white font-bengali">সাম্প্রতিক আপডেট</h3>
+                <p className="text-[10px] sm:text-xs text-gray-500">আমাদের লেটেস্ট পোস্ট দেখুন</p>
+              </div>
+            </div>
+            <div className="px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20">
+              <span className="text-[10px] sm:text-xs text-blue-400 font-medium">{stories.length}টি পোস্ট</span>
+            </div>
+          </div>
 
-        {/* Horizontal Scroll Cards */}
-        <div
-          ref={scrollRef}
-          className="flex gap-3 sm:gap-4 overflow-x-auto scrollbar-hide pb-2 -mx-3 px-3 sm:mx-0 sm:px-0 snap-x snap-mandatory"
-          style={{ WebkitOverflowScrolling: "touch" }}
-        >
-          {stories.map((story, i) => (
-            <motion.a
-              key={story.id}
-              href={story.facebook_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.07, duration: 0.4 }}
-              className="group relative flex-shrink-0 w-[200px] sm:w-[240px] md:w-[270px] snap-start rounded-2xl overflow-hidden bg-gray-900/80 border border-white/[0.06] hover:border-white/15 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/10 active:scale-[0.97]"
-            >
-              {/* Image */}
-              <div className="relative w-full aspect-[4/3] bg-gray-800 overflow-hidden">
-                {story.thumbnail_url ? (
-                  <img
-                    src={story.thumbnail_url}
-                    alt={story.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    loading="lazy"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-900/40 to-purple-900/40">
-                    <Facebook className="w-10 h-10 sm:w-12 sm:h-12 text-blue-400/60" />
+          {/* Horizontal Scroll Cards - Ad Style */}
+          <div
+            ref={scrollRef}
+            className="flex gap-3 sm:gap-4 overflow-x-auto scrollbar-hide pb-2 -mx-3 px-3 sm:mx-0 sm:px-0 snap-x snap-mandatory"
+            style={{ WebkitOverflowScrolling: "touch" }}
+          >
+            {stories.map((story, i) => (
+              <motion.div
+                key={story.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.06, duration: 0.4 }}
+                onClick={() => openStory(i)}
+                className="group relative flex-shrink-0 w-[160px] sm:w-[200px] md:w-[220px] snap-start rounded-xl overflow-hidden cursor-pointer active:scale-[0.97] transition-transform duration-200"
+              >
+                {/* Image with gradient ring effect */}
+                <div className="relative w-full aspect-[3/4] bg-gray-800 overflow-hidden rounded-xl ring-2 ring-transparent group-hover:ring-pink-500/50 transition-all duration-300">
+                  {story.thumbnail_url ? (
+                    <img
+                      src={story.thumbnail_url}
+                      alt={story.title}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-900/60 to-purple-900/60">
+                      <Facebook className="w-10 h-10 sm:w-12 sm:h-12 text-blue-400/50" />
+                    </div>
+                  )}
+
+                  {/* Gradient overlays */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-80" />
+                  <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-transparent" />
+
+                  {/* Top badge - Sponsored/Ad style */}
+                  <div className="absolute top-2 left-2 flex items-center gap-1 bg-black/50 backdrop-blur-sm rounded-full px-2 py-1">
+                    <Facebook className="w-3 h-3 text-blue-400" fill="#60a5fa" />
+                    <span className="text-[9px] sm:text-[10px] text-white/80 font-medium">Post</span>
                   </div>
-                )}
-                {/* Gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-                
-                {/* Facebook badge */}
-                <div className="absolute top-2 right-2 w-7 h-7 sm:w-8 sm:h-8 bg-blue-600 rounded-full flex items-center justify-center shadow-lg">
-                  <Facebook className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" fill="white" />
-                </div>
-              </div>
 
-              {/* Content */}
-              <div className="p-3 sm:p-3.5">
-                <h4 className="text-[13px] sm:text-sm font-semibold text-white font-bengali line-clamp-2 leading-snug mb-1">
-                  {story.title}
-                </h4>
-                {story.caption && (
-                  <p className="text-[11px] sm:text-xs text-gray-400 font-bengali line-clamp-2 leading-relaxed">
-                    {story.caption}
-                  </p>
-                )}
-                <div className="flex items-center gap-1 mt-2 text-blue-400 group-hover:text-blue-300 transition-colors">
-                  <span className="text-[10px] sm:text-[11px] font-medium">পোস্ট দেখুন</span>
-                  <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                  {/* View indicator */}
+                  <div className="absolute top-2 right-2 w-7 h-7 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Eye className="w-3.5 h-3.5 text-white" />
+                  </div>
+
+                  {/* Content at bottom */}
+                  <div className="absolute bottom-0 left-0 right-0 p-2.5 sm:p-3">
+                    <h4 className="text-[11px] sm:text-xs font-bold text-white font-bengali line-clamp-2 leading-snug mb-1 drop-shadow-lg">
+                      {story.title}
+                    </h4>
+                    {story.caption && (
+                      <p className="text-[9px] sm:text-[10px] text-white/50 font-bengali line-clamp-1">
+                        {story.caption}
+                      </p>
+                    )}
+                    <div className="mt-1.5 flex items-center gap-1">
+                      <div className="h-[2px] flex-1 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 rounded-full opacity-60 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </motion.a>
-          ))}
+              </motion.div>
+            ))}
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+
+      {/* Story Viewer Modal */}
+      <StoryViewer
+        stories={stories}
+        initialIndex={viewerIndex}
+        open={viewerOpen}
+        onClose={() => setViewerOpen(false)}
+      />
+    </>
   );
 }

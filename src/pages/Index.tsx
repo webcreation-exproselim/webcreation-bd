@@ -1,4 +1,5 @@
 import { Header } from "@/components/Header";
+import { StoriesSection } from "@/components/StoriesSection";
 import { HeroSection } from "@/components/HeroSection";
 import { StatsSection } from "@/components/StatsSection";
 import { ServicesSection } from "@/components/ServicesSection";

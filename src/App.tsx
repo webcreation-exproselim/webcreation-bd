@@ -25,6 +25,7 @@ import FraudGuardPage from "./pages/FraudGuardPage";
 import AboutPage from "./pages/AboutPage";
 import PortfolioPage from "./pages/PortfolioPage";
 import ContactPage from "./pages/ContactPage";
+import OfferPage from "./pages/OfferPage";
 
 const queryClient = new QueryClient();
 
@@ -56,6 +57,7 @@ const App = () => (
               <Route path="/about" element={<AboutPage />} />
               <Route path="/portfolio" element={<PortfolioPage />} />
               <Route path="/contact" element={<ContactPage />} />
+              <Route path="/offer" element={<OfferPage />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

@@ -26,6 +26,7 @@ const navItems: { id: TabType; label: string; icon: typeof LayoutDashboard; colo
   { id: "clientlinks", label: "ক্লায়েন্ট লিংক", icon: Link2, color: "from-teal-500 to-emerald-500", iconBg: "bg-teal-100", iconColor: "text-teal-600" },
   { id: "integrations", label: "Integrations", icon: Globe, color: "from-rose-500 to-pink-500", iconBg: "bg-rose-100", iconColor: "text-rose-600" },
   { id: "dollartracker", label: "ডলার হিসাব", icon: DollarSign, color: "from-green-500 to-emerald-500", iconBg: "bg-green-100", iconColor: "text-green-600" },
+  { id: "stories", label: "স্টোরি", icon: LayoutDashboard, color: "from-pink-500 to-purple-500", iconBg: "bg-pink-100", iconColor: "text-pink-600" },
 ];
 
 interface AdminSidebarProps {

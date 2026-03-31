@@ -119,10 +119,10 @@ export function StoriesManagement() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-xl font-bold text-gray-900 font-bengali">স্টোরি ম্যানেজমেন্ট</h2>
-          <p className="text-sm text-gray-500 font-bengali">Facebook পোস্টের লিংক দিয়ে হোমপেজে স্টোরি দেখান</p>
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900 font-bengali">স্টোরি ম্যানেজমেন্ট</h2>
+          <p className="text-xs sm:text-sm text-gray-500 font-bengali">Facebook পোস্টের লিংক দিয়ে হোমপেজে স্টোরি দেখান</p>
         </div>
         <Button onClick={openAdd} className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bengali">
           <Plus className="w-4 h-4 mr-1" /> নতুন স্টোরি

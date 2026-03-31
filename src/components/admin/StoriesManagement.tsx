@@ -234,7 +234,7 @@ export function StoriesManagement() {
                   value={form.facebook_url}
                   onChange={e => setForm(f => ({ ...f, facebook_url: e.target.value }))}
                   onBlur={e => {
-                    if (!editing && e.target.value.trim()) autoFetchOG(e.target.value);
+                    if (e.target.value.trim()) autoFetchOG(e.target.value);
                   }}
                   placeholder="https://www.facebook.com/..."
                 />

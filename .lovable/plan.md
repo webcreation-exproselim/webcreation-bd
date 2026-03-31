@@ -1,17 +1,39 @@
-<!-- Last synced: 2026-03-05 -->
 
-# Multi-Domain Support — Admin-Only Assignment ✅ IMPLEMENTED
 
-## সারমর্ম
-Admin একটি user-কে একাধিক domain assign করতে পারবে। প্রতিটি domain-এর আলাদা API key ও আলাদা plugin download থাকবে। User তার dashboard থেকে সব domain দেখবে ও প্রতিটির plugin আলাদাভাবে download করতে পারবে। Existing subscription purchase flow অপরিবর্তিত থাকবে।
+## Plan: Facebook Post Links — Story Style UI
 
-## Completed Changes
+### Summary
+Admin Dashboard থেকে Facebook পোস্টের লিংক দিবেন, হোমপেজে সেগুলো Instagram/Facebook Story-র মতো সুন্দর circular cards হিসেবে সবসময় দেখাবে। ক্লিক করলে নতুন ট্যাবে Facebook পোস্ট ওপেন হবে।
 
-1. ✅ **Database Migration** — Dropped `merchants_user_id_key` unique constraint, added `store_name` to `merchants` and `courier_check_subscriptions`
-2. ✅ **AssignPlanModal** — Always INSERTs new merchant + courier_check_subscription, added store_name input
-3. ✅ **AssignCourierCheckPlanModal** — Always INSERTs new subscription, added store_name input
-4. ✅ **useMerchantData** — Returns `merchants[]`, `selectedMerchantId`, `setSelectedMerchantId`, derived `merchant`
-5. ✅ **useCourierCheckData** — Returns `subscriptions[]`, `selectedSubscriptionId`, derived `subscription`
-6. ✅ **ClientDashboard** — Store Switcher dropdown when multiple stores exist
-7. ✅ **FraudGuardSection** — Accepts optional `merchantId` prop
-8. ✅ **CourierCheckSection** — Accepts optional `subscriptionId` prop
+### Database
+- New table: **`stories`** — `id` (uuid), `title` (text), `facebook_url` (text), `thumbnail_url` (text, nullable), `caption` (text, nullable), `is_active` (boolean, default true), `sort_order` (int), `created_at` (timestamptz), `created_by` (uuid)
+- RLS: Public SELECT for active stories, admin-only INSERT/UPDATE/DELETE
+
+### New Components
+
+**1. `src/components/StoriesSection.tsx`** (Homepage)
+- Header এর নিচে সবসময় visible থাকবে
+- Horizontal scrollable row of circular cards with gradient ring (Instagram style)
+- প্রতিটি card এ thumbnail দেখাবে (admin যদি thumbnail দেয়), না দিলে Facebook icon + title দেখাবে
+- Click করলে সরাসরি Facebook post link নতুন ট্যাবে ওপেন হবে
+- Dark theme (`bg-black`) matching homepage
+- Mobile-friendly touch scroll
+
+**2. `src/components/admin/StoriesManagement.tsx`** (Admin Dashboard)
+- Facebook post URL paste করার ইনপুট
+- Title ও optional thumbnail URL দেওয়ার ফিল্ড
+- Active/inactive toggle
+- Edit, delete, reorder functionality
+- List view with preview
+
+### Integration Points
+- **`Index.tsx`**: Add `<StoriesSection />` after `<Header />`, before `<HeroSection />`
+- **`AdminSidebar.tsx`** + **`AdminMobileNav.tsx`**: Add "স্টোরি" tab (`id: "stories"`)
+- **`AdminDashboard.tsx`**: Register stories tab with `<StoriesManagement />`
+- **TabType**: Add `"stories"` to the type union
+
+### Technical Details
+- No Facebook API or embed needed — just stores URLs and opens them on click
+- Thumbnail can be manually provided by admin (paste image URL) or show a default Facebook-style placeholder
+- Framer Motion animations for smooth scroll and hover effects
+

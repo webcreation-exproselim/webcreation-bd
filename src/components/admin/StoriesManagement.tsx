@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Edit2, Trash2, ExternalLink, GripVertical, Eye, EyeOff, Facebook, Loader2 } from "lucide-react";
+import { Plus, Edit2, Trash2, ExternalLink, GripVertical, Eye, EyeOff, Facebook, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,6 +30,7 @@ export function StoriesManagement() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [form, setForm] = useState({ title: "", facebook_url: "", thumbnail_url: "", caption: "" });
   const [saving, setSaving] = useState(false);
+  const [fetching, setFetching] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -48,6 +50,35 @@ export function StoriesManagement() {
     if (data) setStories(data as Story[]);
     setLoading(false);
   };
+
+  const autoFetchOG = useCallback(async (url: string) => {
+    if (!url.trim() || fetching) return;
+    const trimmed = url.trim();
+    if (!trimmed.startsWith("http")) return;
+
+    setFetching(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("scrape-og", {
+        body: { url: trimmed },
+      });
+
+      if (!error && data) {
+        setForm(f => ({
+          ...f,
+          title: f.title || data.title || "",
+          caption: f.caption || data.description || "",
+          thumbnail_url: f.thumbnail_url || data.image || "",
+        }));
+        if (data.title || data.image) {
+          toast({ title: "✨ অটো-ফেচ সফল!", description: "টাইটেল, ইমেজ ও ক্যাপশন পাওয়া গেছে" });
+        }
+      }
+    } catch (e) {
+      console.error("OG fetch error:", e);
+    } finally {
+      setFetching(false);
+    }
+  }, [fetching, toast]);
 
   const openAdd = () => {
     setEditing(null);
@@ -76,13 +107,13 @@ export function StoriesManagement() {
 
     if (editing) {
       const { error } = await supabase.from("stories").update(payload).eq("id", editing.id);
-      if (error) { toast({ title: "আপডেট ব্যর্থ", variant: "destructive" }); }
-      else { toast({ title: "স্টোরি আপডেট হয়েছে" }); }
+      if (error) toast({ title: "আপডেট ব্যর্থ", variant: "destructive" });
+      else toast({ title: "স্টোরি আপডেট হয়েছে" });
     } else {
       const maxOrder = stories.length > 0 ? Math.max(...stories.map(s => s.sort_order)) + 1 : 0;
       const { error } = await supabase.from("stories").insert({ ...payload, sort_order: maxOrder });
-      if (error) { toast({ title: "যোগ করা ব্যর্থ", variant: "destructive" }); }
-      else { toast({ title: "নতুন স্টোরি যোগ হয়েছে" }); }
+      if (error) toast({ title: "যোগ করা ব্যর্থ", variant: "destructive" });
+      else toast({ title: "নতুন স্টোরি যোগ হয়েছে" });
     }
     setSaving(false);
     setModalOpen(false);
@@ -122,7 +153,7 @@ export function StoriesManagement() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
           <h2 className="text-lg sm:text-xl font-bold text-gray-900 font-bengali">স্টোরি ম্যানেজমেন্ট</h2>
-          <p className="text-xs sm:text-sm text-gray-500 font-bengali">Facebook পোস্টের লিংক দিয়ে হোমপেজে স্টোরি দেখান</p>
+          <p className="text-xs sm:text-sm text-gray-500 font-bengali">Facebook পোস্টের লিংক দিলে অটো ইমেজ ও ক্যাপশন আসবে</p>
         </div>
         <Button onClick={openAdd} className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bengali">
           <Plus className="w-4 h-4 mr-1" /> নতুন স্টোরি
@@ -147,25 +178,22 @@ export function StoriesManagement() {
                 exit={{ opacity: 0, y: -10 }}
                 className="bg-white rounded-xl border border-gray-100 p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 hover:shadow-md transition-shadow"
               >
-                {/* Top row: thumbnail + info */}
                 <div className="flex items-center gap-3 w-full sm:flex-1 min-w-0">
-                  {/* Reorder */}
                   <button onClick={() => moveUp(index)} className="text-gray-300 hover:text-gray-500 cursor-grab hidden sm:block" title="উপরে নিন">
                     <GripVertical className="w-5 h-5" />
                   </button>
 
-                  {/* Thumbnail preview */}
-                  <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 p-[2px] shrink-0">
-                    <div className="w-full h-full rounded-full bg-white overflow-hidden flex items-center justify-center">
-                      {story.thumbnail_url ? (
-                        <img src={story.thumbnail_url} alt={story.title} className="w-full h-full object-cover" />
-                      ) : (
-                        <Facebook className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500" />
-                      )}
-                    </div>
+                  {/* Card preview */}
+                  <div className="w-16 h-12 sm:w-20 sm:h-14 rounded-lg overflow-hidden bg-gray-100 shrink-0">
+                    {story.thumbnail_url ? (
+                      <img src={story.thumbnail_url} alt={story.title} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-blue-50">
+                        <Facebook className="w-5 h-5 text-blue-500" />
+                      </div>
+                    )}
                   </div>
 
-                  {/* Info */}
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sm sm:text-base text-gray-900 font-bengali truncate">{story.title}</p>
                     <p className="text-[10px] sm:text-xs text-gray-400 truncate">{story.facebook_url}</p>
@@ -173,7 +201,6 @@ export function StoriesManagement() {
                   </div>
                 </div>
 
-                {/* Actions */}
                 <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 self-end sm:self-center">
                   <Switch checked={story.is_active} onCheckedChange={() => toggleActive(story)} />
                   <span className="text-xs text-gray-400">{story.is_active ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}</span>
@@ -201,26 +228,66 @@ export function StoriesManagement() {
           </DialogHeader>
           <div className="space-y-4 pt-2">
             <div>
+              <Label className="font-bengali">Facebook পোস্ট URL *</Label>
+              <div className="relative">
+                <Input
+                  value={form.facebook_url}
+                  onChange={e => setForm(f => ({ ...f, facebook_url: e.target.value }))}
+                  onBlur={e => {
+                    if (!editing && e.target.value.trim()) autoFetchOG(e.target.value);
+                  }}
+                  placeholder="https://www.facebook.com/..."
+                />
+                {fetching && (
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                    <Loader2 className="w-4 h-4 animate-spin text-purple-500" />
+                  </div>
+                )}
+              </div>
+              <p className="text-xs text-purple-500 mt-1 font-bengali flex items-center gap-1">
+                <Sparkles className="w-3 h-3" /> লিংক পেস্ট করে বাইরে ক্লিক করলে অটো ইমেজ ও ক্যাপশন আসবে
+              </p>
+            </div>
+            <div>
               <Label className="font-bengali">টাইটেল *</Label>
               <Input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="যেমন: নতুন ওয়েবসাইট লঞ্চ" />
             </div>
             <div>
-              <Label className="font-bengali">Facebook পোস্ট URL *</Label>
-              <Input value={form.facebook_url} onChange={e => setForm(f => ({ ...f, facebook_url: e.target.value }))} placeholder="https://www.facebook.com/..." />
+              <Label className="font-bengali">থাম্বনেইল URL</Label>
+              <Input value={form.thumbnail_url} onChange={e => setForm(f => ({ ...f, thumbnail_url: e.target.value }))} placeholder="অটো আসবে বা নিজে দিন" />
+              {form.thumbnail_url && (
+                <div className="mt-2 rounded-lg overflow-hidden border border-gray-200 w-full aspect-video bg-gray-50">
+                  <img src={form.thumbnail_url} alt="Preview" className="w-full h-full object-cover" />
+                </div>
+              )}
             </div>
             <div>
-              <Label className="font-bengali">থাম্বনেইল URL (ঐচ্ছিক)</Label>
-              <Input value={form.thumbnail_url} onChange={e => setForm(f => ({ ...f, thumbnail_url: e.target.value }))} placeholder="https://example.com/image.jpg" />
-              <p className="text-xs text-gray-400 mt-1 font-bengali">না দিলে Facebook আইকন দেখাবে</p>
+              <Label className="font-bengali">ক্যাপশন</Label>
+              <Textarea
+                value={form.caption}
+                onChange={e => setForm(f => ({ ...f, caption: e.target.value }))}
+                placeholder="অটো আসবে বা নিজে লিখুন"
+                rows={3}
+              />
             </div>
-            <div>
-              <Label className="font-bengali">ক্যাপশন (ঐচ্ছিক)</Label>
-              <Input value={form.caption} onChange={e => setForm(f => ({ ...f, caption: e.target.value }))} placeholder="সংক্ষিপ্ত বর্ণনা" />
+            <div className="flex gap-2">
+              {!editing && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => autoFetchOG(form.facebook_url)}
+                  disabled={fetching || !form.facebook_url.trim()}
+                  className="font-bengali"
+                >
+                  {fetching ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Sparkles className="w-4 h-4 mr-1" />}
+                  অটো ফেচ
+                </Button>
+              )}
+              <Button onClick={handleSave} disabled={saving} className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bengali">
+                {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
+                {editing ? "আপডেট করুন" : "যোগ করুন"}
+              </Button>
             </div>
-            <Button onClick={handleSave} disabled={saving} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bengali">
-              {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
-              {editing ? "আপডেট করুন" : "যোগ করুন"}
-            </Button>
           </div>
         </DialogContent>
       </Dialog>

@@ -80,8 +80,8 @@ export function useCourierCheckData(userId: string | null, skipAutoCreate: boole
           .maybeSingle();
 
         setPendingOrder(orderData as CourierCheckOrder || null);
-      } else {
-        // Create a default subscription
+      } else if (!skipAutoCreate) {
+        // Create a default subscription (only for own user, not during impersonation)
         const { data: newSub, error: insertError } = await supabase
           .from('courier_check_subscriptions')
           .insert({ user_id: userId })

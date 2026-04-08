@@ -524,7 +524,7 @@ export default function ClientDashboard() {
 
             {activeTab === "fraudguard" && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                {effectiveUserId && <FraudGuardSection userId={effectiveUserId} merchantId={merchant?.id} />}
+                {effectiveUserId && <FraudGuardSection userId={effectiveUserId} merchantId={merchant?.id} isImpersonating={isImpersonating} />}
               </motion.div>
             )}
 

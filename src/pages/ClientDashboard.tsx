@@ -530,7 +530,7 @@ export default function ClientDashboard() {
 
             {activeTab === "couriercheck" && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                {effectiveUserId && <CourierCheckSection userId={effectiveUserId} />}
+                {effectiveUserId && <CourierCheckSection userId={effectiveUserId} isImpersonating={isImpersonating} />}
               </motion.div>
             )}
 

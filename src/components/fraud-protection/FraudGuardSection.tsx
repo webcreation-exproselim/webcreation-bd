@@ -31,20 +31,10 @@ import { SubscriptionPurchaseModal } from "./SubscriptionPurchaseModal";
 interface FraudGuardSectionProps {
   userId: string;
   merchantId?: string;
+  isImpersonating?: boolean;
 }
 
-interface Merchant {
-  id: string;
-  api_key: string;
-  is_active: boolean;
-  current_plan: string | null;
-  plan_expires_at: string | null;
-  requests_used: number;
-  max_requests: number;
-  cooldown_period_minutes: number;
-}
-
-export function FraudGuardSection({ userId, merchantId: propMerchantId }: FraudGuardSectionProps) {
+export function FraudGuardSection({ userId, merchantId: propMerchantId, isImpersonating }: FraudGuardSectionProps) {
   const [merchant, setMerchant] = useState<Merchant | null>(null);
   const [logs, setLogs] = useState<{ id: string; status: string; created_at: string }[]>([]);
   const [loading, setLoading] = useState(true);

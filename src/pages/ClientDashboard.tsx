@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Loader2, Store } from "lucide-react";
+import { Loader2, Store, ShieldAlert } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAdminStatus } from "@/hooks/useAdminStatus";
 import type { User as SupabaseUser, Session } from "@supabase/supabase-js";
 import { FraudGuardSection } from "@/components/fraud-protection/FraudGuardSection";
 import { CourierCheckSection } from "@/components/courier-check/CourierCheckSection";

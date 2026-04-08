@@ -13,10 +13,11 @@ import { useToast } from "@/hooks/use-toast";
 interface CourierCheckSectionProps {
   userId: string;
   subscriptionId?: string;
+  isImpersonating?: boolean;
 }
 
-export function CourierCheckSection({ userId, subscriptionId: propSubId }: CourierCheckSectionProps) {
-  const { subscription, pendingOrder, loading, refetch } = useCourierCheckData(userId);
+export function CourierCheckSection({ userId, subscriptionId: propSubId, isImpersonating }: CourierCheckSectionProps) {
+  const { subscription, pendingOrder, loading, refetch } = useCourierCheckData(userId, isImpersonating);
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [showPlanSelection, setShowPlanSelection] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('yearly');

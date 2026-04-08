@@ -28,11 +28,6 @@ import { FraudGuardAnalytics } from "./FraudGuardAnalytics";
 import { SubscriptionPlans } from "./SubscriptionPlans";
 import { SubscriptionPurchaseModal } from "./SubscriptionPurchaseModal";
 
-interface FraudGuardSectionProps {
-  userId: string;
-  merchantId?: string;
-}
-
 interface Merchant {
   id: string;
   api_key: string;
@@ -44,7 +39,13 @@ interface Merchant {
   cooldown_period_minutes: number;
 }
 
-export function FraudGuardSection({ userId, merchantId: propMerchantId }: FraudGuardSectionProps) {
+interface FraudGuardSectionProps {
+  userId: string;
+  merchantId?: string;
+  isImpersonating?: boolean;
+}
+
+export function FraudGuardSection({ userId, merchantId: propMerchantId, isImpersonating }: FraudGuardSectionProps) {
   const [merchant, setMerchant] = useState<Merchant | null>(null);
   const [logs, setLogs] = useState<{ id: string; status: string; created_at: string }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -79,8 +80,8 @@ export function FraudGuardSection({ userId, merchantId: propMerchantId }: FraudG
             .order('created_at', { ascending: true })
             .limit(1)
             .maybeSingle();
-          if (!data && !error) {
-            // No merchant, create one (legacy single-merchant flow)
+          if (!data && !error && !isImpersonating) {
+            // No merchant, create one (legacy single-merchant flow, skip during impersonation)
             const { data: newMerchant, error: insertError } = await supabase
               .from('merchants')
               .insert({ user_id: userId })

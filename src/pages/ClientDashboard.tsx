@@ -269,7 +269,7 @@ export default function ClientDashboard() {
         },
         (payload) => {
           const updatedProfile = payload.new as any;
-          if (updatedProfile.user_id === user.id) {
+          if (updatedProfile.user_id === effectiveUserId) {
             console.log("Profile realtime update received");
             setProfile(updatedProfile);
           }

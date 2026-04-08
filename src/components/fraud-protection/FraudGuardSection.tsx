@@ -69,8 +69,8 @@ export function FraudGuardSection({ userId, merchantId: propMerchantId, isImpers
             .order('created_at', { ascending: true })
             .limit(1)
             .maybeSingle();
-          if (!data && !error) {
-            // No merchant, create one (legacy single-merchant flow)
+          if (!data && !error && !isImpersonating) {
+            // No merchant, create one (legacy single-merchant flow, skip during impersonation)
             const { data: newMerchant, error: insertError } = await supabase
               .from('merchants')
               .insert({ user_id: userId })

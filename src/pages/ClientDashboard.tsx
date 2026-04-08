@@ -191,7 +191,7 @@ export default function ClientDashboard() {
     if (!effectiveUserId) return;
 
     // Unique channel name with timestamp to avoid conflicts
-    const channelName = `dashboard-realtime-${user.id}-${Date.now()}`;
+    const channelName = `dashboard-realtime-${effectiveUserId}-${Date.now()}`;
     
     const channel = supabase
       .channel(channelName)

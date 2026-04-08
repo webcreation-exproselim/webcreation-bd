@@ -267,7 +267,7 @@ export function useMerchantData(overrideUserId?: string | null) {
 
   useEffect(() => {
     fetchMerchant();
-  }, []);
+  }, [overrideUserId]);
 
   useEffect(() => {
     if (merchant?.id) {

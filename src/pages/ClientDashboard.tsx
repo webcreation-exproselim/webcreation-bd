@@ -362,7 +362,25 @@ export default function ClientDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Admin Impersonation Banner */}
+      {isImpersonating && (
+        <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-4 py-2.5 flex items-center justify-between z-50 shadow-lg">
+          <div className="flex items-center gap-2">
+            <ShieldAlert className="w-5 h-5" />
+            <span className="font-bengali text-sm font-medium">
+              অ্যাডমিন ভিউ: <span className="font-bold">{profile?.full_name || viewAsUserId}</span> এর ড্যাশবোর্ড দেখছেন
+            </span>
+          </div>
+          <button
+            onClick={() => navigate('/admin')}
+            className="text-xs bg-white/20 hover:bg-white/30 px-3 py-1 rounded-lg font-bengali transition-colors"
+          >
+            অ্যাডমিনে ফিরুন
+          </button>
+        </div>
+      )}
+      <div className="flex flex-1">
       {/* Desktop Sidebar */}
       <DashboardSidebar
         activeTab={activeTab}

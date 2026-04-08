@@ -178,11 +178,12 @@ export function CourierCheckSection({ userId, subscriptionId: propSubId }: Couri
 
       {/* Purchase Modal */}
       {subscription && (
-        <SubscriptionPurchaseModal
+        <CourierCheckPurchaseModal
           isOpen={showPurchaseModal}
           onClose={() => setShowPurchaseModal(false)}
           planType={selectedPlan}
-          merchantId={subscription.id}
+          subscriptionId={subscription.id}
+          userId={userId}
           onSuccess={() => {
             refetch();
             setShowPurchaseModal(false);

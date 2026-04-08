@@ -89,6 +89,13 @@ export default function ClientDashboard() {
   const [selectedPlanType, setSelectedPlanType] = useState<'monthly' | 'yearly'>('monthly');
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+  const { isAdmin } = useAdminStatus();
+  
+  // Admin impersonation: view another user's dashboard
+  const viewAsUserId = searchParams.get('view_as');
+  const isImpersonating = !!(viewAsUserId && isAdmin);
+  const effectiveUserId = isImpersonating ? viewAsUserId : user?.id;
   
   // Fraud Guard merchant data
   const { merchant, merchants, selectedMerchantId, setSelectedMerchantId, refetchMerchant, updateCooldownMinutes } = useMerchantData();
@@ -119,13 +126,15 @@ export default function ClientDashboard() {
       if (!session) {
         navigate("/auth");
       } else {
-        fetchUserData(session.user.id);
+        // If impersonating, load target user's data; otherwise load own data
+        const targetUserId = viewAsUserId || session.user.id;
+        fetchUserData(targetUserId);
       }
       setLoading(false);
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, viewAsUserId]);
 
   const fetchUserData = async (userId: string) => {
     try {

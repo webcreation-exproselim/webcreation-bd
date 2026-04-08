@@ -2,8 +2,8 @@ import { useState } from "react";
 import { Search, Loader2, Download, AlertCircle, Zap, Calendar, Crown, Copy, Check, Key, Package, Lock, Code } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCourierCheckData } from "@/hooks/useCourierCheckData";
-import { SubscriptionPlans } from "@/components/fraud-protection/SubscriptionPlans";
-import { SubscriptionPurchaseModal } from "@/components/fraud-protection/SubscriptionPurchaseModal";
+import { CourierCheckPlans } from "./CourierCheckPlans";
+import { CourierCheckPurchaseModal } from "./CourierCheckPurchaseModal";
 import { CourierCheckerDashboard } from "./CourierCheckerDashboard";
 import { CourierCheckEmbedCode } from "./CourierCheckEmbedCode";
 import { COURIER_CHECK_PLUGIN_CONFIG, getCourierCheckVersionString } from "@/config/courierCheckPluginConfig";
@@ -169,7 +169,7 @@ export function CourierCheckSection({ userId, subscriptionId: propSubId }: Couri
           <h3 className="text-lg font-bold text-gray-900 font-bengali mb-4">
             🚀 Courier Check Plan নিন
           </h3>
-          <SubscriptionPlans onSelectPlan={(planType) => {
+          <CourierCheckPlans onSelectPlan={(planType) => {
             setSelectedPlan(planType);
             setShowPurchaseModal(true);
           }} />
@@ -178,11 +178,12 @@ export function CourierCheckSection({ userId, subscriptionId: propSubId }: Couri
 
       {/* Purchase Modal */}
       {subscription && (
-        <SubscriptionPurchaseModal
+        <CourierCheckPurchaseModal
           isOpen={showPurchaseModal}
           onClose={() => setShowPurchaseModal(false)}
           planType={selectedPlan}
-          merchantId={subscription.id}
+          subscriptionId={subscription.id}
+          userId={userId}
           onSuccess={() => {
             refetch();
             setShowPurchaseModal(false);

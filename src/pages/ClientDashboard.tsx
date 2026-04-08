@@ -282,7 +282,7 @@ export default function ClientDashboard() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user?.id]);
+  }, [effectiveUserId]);
 
   const fetchMessages = async (orderId: string) => {
     const { data } = await supabase

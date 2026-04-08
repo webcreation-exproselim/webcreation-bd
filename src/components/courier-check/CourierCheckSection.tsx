@@ -169,7 +169,7 @@ export function CourierCheckSection({ userId, subscriptionId: propSubId }: Couri
           <h3 className="text-lg font-bold text-gray-900 font-bengali mb-4">
             🚀 Courier Check Plan নিন
           </h3>
-          <SubscriptionPlans onSelectPlan={(planType) => {
+          <CourierCheckPlans onSelectPlan={(planType) => {
             setSelectedPlan(planType);
             setShowPurchaseModal(true);
           }} />

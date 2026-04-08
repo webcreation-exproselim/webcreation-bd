@@ -132,7 +132,7 @@ export function useMerchantData(overrideUserId?: string | null) {
         // No merchant exists — create one
         const { data: newMerchant, error: insertError } = await supabase
           .from('merchants')
-          .insert({ user_id: user.id })
+          .insert({ user_id: targetUserId })
           .select()
           .single();
 

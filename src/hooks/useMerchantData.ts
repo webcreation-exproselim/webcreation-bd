@@ -84,7 +84,7 @@ const applyMerchantDefaults = (data: any): Merchant => ({
   redx_api_token: data.redx_api_token ?? null,
 });
 
-export function useMerchantData() {
+export function useMerchantData(overrideUserId?: string | null) {
   const [merchants, setMerchants] = useState<Merchant[]>([]);
   const [selectedMerchantId, setSelectedMerchantId] = useState<string | null>(null);
   const [blacklist, setBlacklist] = useState<BlacklistEntry[]>([]);
@@ -97,17 +97,21 @@ export function useMerchantData() {
 
   const fetchMerchant = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        setLoading(false);
-        return;
+      let targetUserId = overrideUserId;
+      if (!targetUserId) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          setLoading(false);
+          return;
+        }
+        targetUserId = user.id;
       }
 
       // Fetch ALL merchants for this user
       const { data: merchantsData, error } = await supabase
         .from('merchants')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', targetUserId)
         .order('created_at', { ascending: true });
 
       if (error) {
@@ -128,7 +132,7 @@ export function useMerchantData() {
         // No merchant exists — create one
         const { data: newMerchant, error: insertError } = await supabase
           .from('merchants')
-          .insert({ user_id: user.id })
+          .insert({ user_id: targetUserId })
           .select()
           .single();
 
@@ -263,7 +267,7 @@ export function useMerchantData() {
 
   useEffect(() => {
     fetchMerchant();
-  }, []);
+  }, [overrideUserId]);
 
   useEffect(() => {
     if (merchant?.id) {

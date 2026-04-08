@@ -90,15 +90,16 @@ export default function ClientDashboard() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
-  const { isAdmin } = useAdminStatus();
+  const { isAdmin, loading: adminLoading } = useAdminStatus();
   
   // Admin impersonation: view another user's dashboard
+  // If view_as param exists, treat as impersonation immediately (don't wait for isAdmin to load)
   const viewAsUserId = searchParams.get('view_as');
-  const isImpersonating = !!(viewAsUserId && isAdmin);
+  const isImpersonating = !!viewAsUserId;
   const effectiveUserId = isImpersonating ? viewAsUserId : user?.id;
   
-  // Fraud Guard merchant data
-  const { merchant, merchants, selectedMerchantId, setSelectedMerchantId, refetchMerchant, updateCooldownMinutes } = useMerchantData(isImpersonating ? viewAsUserId : undefined);
+  // Fraud Guard merchant data - pass viewAsUserId directly to avoid race condition with isAdmin loading
+  const { merchant, merchants, selectedMerchantId, setSelectedMerchantId, refetchMerchant, updateCooldownMinutes } = useMerchantData(viewAsUserId || undefined);
   const { pendingOrder, refetch: refetchSubscription } = useSubscriptionData(merchant?.id || null);
   
   // Notifications

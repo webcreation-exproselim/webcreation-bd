@@ -524,13 +524,13 @@ export default function ClientDashboard() {
 
             {activeTab === "fraudguard" && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                {user && <FraudGuardSection userId={user.id} merchantId={merchant?.id} />}
+                {effectiveUserId && <FraudGuardSection userId={effectiveUserId} merchantId={merchant?.id} />}
               </motion.div>
             )}
 
             {activeTab === "couriercheck" && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                {user && <CourierCheckSection userId={user.id} />}
+                {effectiveUserId && <CourierCheckSection userId={effectiveUserId} />}
               </motion.div>
             )}
 

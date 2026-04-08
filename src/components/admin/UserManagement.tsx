@@ -54,7 +54,8 @@ import {
   Ban,
   ShieldCheck,
   Trash2,
-  UserX
+  UserX,
+  Eye
 } from "lucide-react";
 
 interface UserProfile {
@@ -572,6 +573,15 @@ export function UserManagement() {
                               ) : (
                                 <Ban className="w-3.5 h-3.5" />
                               )}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="border-green-200 text-green-600 hover:bg-green-50 h-8 px-2"
+                              onClick={() => window.open(`/dashboard?view_as=${user.user_id}`, '_blank')}
+                              title="View Dashboard"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
                             </Button>
                             <Button
                               size="sm"

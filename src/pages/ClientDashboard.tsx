@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Loader2, Store } from "lucide-react";
+import { Loader2, Store, ShieldAlert } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAdminStatus } from "@/hooks/useAdminStatus";
 import type { User as SupabaseUser, Session } from "@supabase/supabase-js";
 import { FraudGuardSection } from "@/components/fraud-protection/FraudGuardSection";
 import { CourierCheckSection } from "@/components/courier-check/CourierCheckSection";
@@ -88,6 +89,13 @@ export default function ClientDashboard() {
   const [selectedPlanType, setSelectedPlanType] = useState<'monthly' | 'yearly'>('monthly');
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+  const { isAdmin } = useAdminStatus();
+  
+  // Admin impersonation: view another user's dashboard
+  const viewAsUserId = searchParams.get('view_as');
+  const isImpersonating = !!(viewAsUserId && isAdmin);
+  const effectiveUserId = isImpersonating ? viewAsUserId : user?.id;
   
   // Fraud Guard merchant data
   const { merchant, merchants, selectedMerchantId, setSelectedMerchantId, refetchMerchant, updateCooldownMinutes } = useMerchantData();
@@ -118,13 +126,15 @@ export default function ClientDashboard() {
       if (!session) {
         navigate("/auth");
       } else {
-        fetchUserData(session.user.id);
+        // If impersonating, load target user's data; otherwise load own data
+        const targetUserId = viewAsUserId || session.user.id;
+        fetchUserData(targetUserId);
       }
       setLoading(false);
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, viewAsUserId]);
 
   const fetchUserData = async (userId: string) => {
     try {
@@ -136,8 +146,8 @@ export default function ClientDashboard() {
       
       if (profileData) {
         setProfile(profileData);
-        // Check if user is blocked
-        if (profileData.is_blocked) {
+        // Check if user is blocked (skip for admin impersonation)
+        if (profileData.is_blocked && !viewAsUserId) {
           await supabase.auth.signOut();
           toast({
             title: "অ্যাক্সেস বন্ধ",
@@ -178,10 +188,10 @@ export default function ClientDashboard() {
 
   // Combined Real-time subscription for all dashboard data
   useEffect(() => {
-    if (!user) return;
+    if (!effectiveUserId) return;
 
     // Unique channel name with timestamp to avoid conflicts
-    const channelName = `dashboard-realtime-${user.id}-${Date.now()}`;
+    const channelName = `dashboard-realtime-${effectiveUserId}-${Date.now()}`;
     
     const channel = supabase
       .channel(channelName)
@@ -199,7 +209,7 @@ export default function ClientDashboard() {
           if (payload.eventType === "INSERT") {
             const newOrder = payload.new as any;
             // Check if this order belongs to current user (RLS should handle this, but double-check)
-            if (newOrder.user_id === user.id) {
+            if (newOrder.user_id === effectiveUserId) {
               setOrders((prev) => [{
                 ...newOrder,
                 services: (newOrder.services as unknown) as OrderService[],
@@ -237,7 +247,7 @@ export default function ClientDashboard() {
           if (payload.eventType === "INSERT") {
             const newInvoice = payload.new as any;
             // Check if this invoice belongs to current user
-            if (newInvoice.client_id === user.id) {
+            if (newInvoice.client_id === effectiveUserId) {
               setInvoices((prev) => [newInvoice as Invoice, ...prev]);
             }
           } else if (payload.eventType === "UPDATE") {
@@ -259,7 +269,7 @@ export default function ClientDashboard() {
         },
         (payload) => {
           const updatedProfile = payload.new as any;
-          if (updatedProfile.user_id === user.id) {
+          if (updatedProfile.user_id === effectiveUserId) {
             console.log("Profile realtime update received");
             setProfile(updatedProfile);
           }
@@ -272,7 +282,7 @@ export default function ClientDashboard() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user?.id]);
+  }, [effectiveUserId]);
 
   const fetchMessages = async (orderId: string) => {
     const { data } = await supabase
@@ -352,7 +362,25 @@ export default function ClientDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Admin Impersonation Banner */}
+      {isImpersonating && (
+        <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-4 py-2.5 flex items-center justify-between z-50 shadow-lg">
+          <div className="flex items-center gap-2">
+            <ShieldAlert className="w-5 h-5" />
+            <span className="font-bengali text-sm font-medium">
+              অ্যাডমিন ভিউ: <span className="font-bold">{profile?.full_name || viewAsUserId}</span> এর ড্যাশবোর্ড দেখছেন
+            </span>
+          </div>
+          <button
+            onClick={() => navigate('/admin')}
+            className="text-xs bg-white/20 hover:bg-white/30 px-3 py-1 rounded-lg font-bengali transition-colors"
+          >
+            অ্যাডমিনে ফিরুন
+          </button>
+        </div>
+      )}
+      <div className="flex flex-1">
       {/* Desktop Sidebar */}
       <DashboardSidebar
         activeTab={activeTab}
@@ -541,6 +569,7 @@ export default function ClientDashboard() {
           }}
         />
       )}
+      </div>
     </div>
   );
 }

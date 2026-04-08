@@ -128,8 +128,8 @@ export function useMerchantData(overrideUserId?: string | null) {
           const firstActive = fullMerchants.find(m => m.is_active) || fullMerchants[0];
           setSelectedMerchantId(firstActive.id);
         }
-      } else {
-        // No merchant exists — create one
+      } else if (!overrideUserId) {
+        // No merchant exists — create one (only for own user, not during impersonation)
         const { data: newMerchant, error: insertError } = await supabase
           .from('merchants')
           .insert({ user_id: targetUserId })

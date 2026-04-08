@@ -54,7 +54,8 @@ import {
   Ban,
   ShieldCheck,
   Trash2,
-  UserX
+  UserX,
+  Eye
 } from "lucide-react";
 
 interface UserProfile {

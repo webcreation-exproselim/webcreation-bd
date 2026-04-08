@@ -28,7 +28,7 @@ interface CourierCheckOrder {
   approved_at: string | null;
 }
 
-export function useCourierCheckData(userId: string | null) {
+export function useCourierCheckData(userId: string | null, skipAutoCreate: boolean = false) {
   const [subscriptions, setSubscriptions] = useState<CourierCheckSubscription[]>([]);
   const [selectedSubscriptionId, setSelectedSubscriptionId] = useState<string | null>(null);
   const [pendingOrder, setPendingOrder] = useState<CourierCheckOrder | null>(null);

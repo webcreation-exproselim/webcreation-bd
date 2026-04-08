@@ -98,7 +98,7 @@ export default function ClientDashboard() {
   const effectiveUserId = isImpersonating ? viewAsUserId : user?.id;
   
   // Fraud Guard merchant data
-  const { merchant, merchants, selectedMerchantId, setSelectedMerchantId, refetchMerchant, updateCooldownMinutes } = useMerchantData();
+  const { merchant, merchants, selectedMerchantId, setSelectedMerchantId, refetchMerchant, updateCooldownMinutes } = useMerchantData(isImpersonating ? viewAsUserId : undefined);
   const { pendingOrder, refetch: refetchSubscription } = useSubscriptionData(merchant?.id || null);
   
   // Notifications

@@ -247,7 +247,7 @@ export default function ClientDashboard() {
           if (payload.eventType === "INSERT") {
             const newInvoice = payload.new as any;
             // Check if this invoice belongs to current user
-            if (newInvoice.client_id === user.id) {
+            if (newInvoice.client_id === effectiveUserId) {
               setInvoices((prev) => [newInvoice as Invoice, ...prev]);
             }
           } else if (payload.eventType === "UPDATE") {

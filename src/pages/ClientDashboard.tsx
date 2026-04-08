@@ -146,8 +146,8 @@ export default function ClientDashboard() {
       
       if (profileData) {
         setProfile(profileData);
-        // Check if user is blocked
-        if (profileData.is_blocked) {
+        // Check if user is blocked (skip for admin impersonation)
+        if (profileData.is_blocked && !viewAsUserId) {
           await supabase.auth.signOut();
           toast({
             title: "অ্যাক্সেস বন্ধ",

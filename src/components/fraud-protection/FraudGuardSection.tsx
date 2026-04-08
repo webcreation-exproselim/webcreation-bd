@@ -28,6 +28,17 @@ import { FraudGuardAnalytics } from "./FraudGuardAnalytics";
 import { SubscriptionPlans } from "./SubscriptionPlans";
 import { SubscriptionPurchaseModal } from "./SubscriptionPurchaseModal";
 
+interface Merchant {
+  id: string;
+  api_key: string;
+  is_active: boolean;
+  current_plan: string | null;
+  plan_expires_at: string | null;
+  requests_used: number;
+  max_requests: number;
+  cooldown_period_minutes: number;
+}
+
 interface FraudGuardSectionProps {
   userId: string;
   merchantId?: string;

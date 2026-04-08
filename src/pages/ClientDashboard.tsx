@@ -188,7 +188,7 @@ export default function ClientDashboard() {
 
   // Combined Real-time subscription for all dashboard data
   useEffect(() => {
-    if (!user) return;
+    if (!effectiveUserId) return;
 
     // Unique channel name with timestamp to avoid conflicts
     const channelName = `dashboard-realtime-${user.id}-${Date.now()}`;

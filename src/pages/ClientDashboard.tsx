@@ -209,7 +209,7 @@ export default function ClientDashboard() {
           if (payload.eventType === "INSERT") {
             const newOrder = payload.new as any;
             // Check if this order belongs to current user (RLS should handle this, but double-check)
-            if (newOrder.user_id === user.id) {
+            if (newOrder.user_id === effectiveUserId) {
               setOrders((prev) => [{
                 ...newOrder,
                 services: (newOrder.services as unknown) as OrderService[],

@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   LayoutDashboard, Package, Timer, Users, Shield, FileImage,
   FileText, MessageCircle, CreditCard, Star, PenTool,
-  ChevronLeft, ChevronRight, Search, Link2, Globe, DollarSign,
+  ChevronLeft, ChevronRight, Search, Link2, Globe, DollarSign, Headphones,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/logo.png";
 
 export type TabType = "overview" | "orders" | "projects" | "users" | "portfolio" | "invoices" | "messages" | "payments" | "reviews" | "content" | "fraudguard" | "couriercheck" | "clientlinks" | "integrations" | "dollartracker" | "stories";

@@ -270,6 +270,8 @@ export default function LiveChatWidget() {
     if (conversationId) markRead(conversationId);
   }
 
+  if (shouldHide) return null;
+
   return (
     <>
       {/* Floating button */}

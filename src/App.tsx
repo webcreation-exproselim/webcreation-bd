@@ -26,6 +26,8 @@ import AboutPage from "./pages/AboutPage";
 import PortfolioPage from "./pages/PortfolioPage";
 import ContactPage from "./pages/ContactPage";
 import OfferPage from "./pages/OfferPage";
+import LiveChatAdmin from "./pages/LiveChatAdmin";
+import LiveChatWidget from "./components/LiveChatWidget";
 
 const queryClient = new QueryClient();
 
@@ -58,9 +60,11 @@ const App = () => (
               <Route path="/portfolio" element={<PortfolioPage />} />
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/offer" element={<OfferPage />} />
+              <Route path="/admin/live-chat" element={<LiveChatAdmin />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
+            <LiveChatWidget />
           </BrowserRouter>
         </TooltipProvider>
       </EditModeProvider>

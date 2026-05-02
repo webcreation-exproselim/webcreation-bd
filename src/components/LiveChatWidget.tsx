@@ -305,6 +305,32 @@ export default function LiveChatWidget() {
         </button>
       )}
 
+      {/* Welcome bubble — auto shows briefly on first visit */}
+      {!open && welcomeShow && (
+        <div className="fixed bottom-24 right-5 z-[9998] max-w-[260px] animate-in slide-in-from-bottom-3 fade-in duration-500">
+          <div className="relative bg-white rounded-2xl shadow-2xl border border-gray-100 p-3 pr-8">
+            <button
+              onClick={() => { setWelcomeShow(false); sessionStorage.setItem("wcbd_chat_welcome_seen", "1"); }}
+              className="absolute top-1.5 right-1.5 p-1 rounded-md text-gray-400 hover:bg-gray-100"
+              aria-label="Close"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+            <div className="flex items-start gap-2">
+              <div className="h-8 w-8 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center shrink-0">
+                <MessageCircle className="h-4 w-4 text-white" />
+              </div>
+              <div>
+                <p className="text-[13px] font-semibold text-gray-900 leading-tight">আসসালামু আলাইকুম! 👋</p>
+                <p className="text-[11px] text-gray-600 mt-0.5 leading-snug">কোনো সাহায্য লাগলে আমাদের সাথে chat করুন — আমরা online আছি!</p>
+              </div>
+            </div>
+            {/* Tail pointing to chat button */}
+            <div className="absolute -bottom-1.5 right-6 w-3 h-3 bg-white border-r border-b border-gray-100 rotate-45" />
+          </div>
+        </div>
+      )}
+
       {/* Chat panel */}
       {open && (
         <div className="fixed inset-0 sm:inset-auto sm:bottom-5 sm:right-5 z-[9999] sm:w-[380px] sm:h-[560px] sm:max-h-[80vh] bg-white sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-gray-200">

@@ -1,31 +1,4 @@
 project_id = "gtjmfvwkatrorhuyrpby"
 
-[functions.website-chatbot]
-verify_jwt = false
-
-[functions.check-order-eligibility]
-verify_jwt = false
-
-[functions.track-checkout]
-verify_jwt = false
-
-[functions.courier-status]
-verify_jwt = false
-
-[functions.customer-trust-score]
-verify_jwt = false
-
-[functions.log-checkout-attempt]
-verify_jwt = false
-
-[functions.get-incomplete-orders]
-verify_jwt = false
-
-[functions.update-merchant-settings]
-verify_jwt = false
-
-[functions.scrape-courier-check]
-verify_jwt = false
-
-[functions.manage-store]
+[functions.send-chat-push]
 verify_jwt = false

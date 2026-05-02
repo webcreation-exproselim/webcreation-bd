@@ -608,3 +608,90 @@ function QuickReplyManager({ open, onOpenChange, quickReplies, userId, onChanged
     </Dialog>
   );
 }
+
+function InstallHelpDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
+  const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
+  const isIOS = /iPad|iPhone|iPod/.test(ua);
+  const isAndroid = /Android/i.test(ua);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="bg-white max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-gray-900 flex items-center gap-2">
+            <Download className="w-5 h-5 text-emerald-600" /> App Install করুন
+          </DialogTitle>
+        </DialogHeader>
+
+        {isIOS ? (
+          <div className="space-y-3">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-900">
+              <p className="font-semibold mb-1">📱 iPhone / iPad এ:</p>
+              <p className="text-xs">Safari browser ব্যবহার করুন (Chrome এ কাজ করবে না)</p>
+            </div>
+            <ol className="space-y-3 text-sm text-gray-800">
+              <li className="flex gap-3">
+                <span className="w-6 h-6 rounded-full bg-emerald-500 text-white text-xs font-bold flex items-center justify-center shrink-0">1</span>
+                <div>
+                  Safari এর নিচে <Share2 className="inline w-4 h-4 text-blue-600" /> <b>Share</b> button এ tap করুন
+                </div>
+              </li>
+              <li className="flex gap-3">
+                <span className="w-6 h-6 rounded-full bg-emerald-500 text-white text-xs font-bold flex items-center justify-center shrink-0">2</span>
+                <div>Scroll করে <b>"Add to Home Screen"</b> select করুন</div>
+              </li>
+              <li className="flex gap-3">
+                <span className="w-6 h-6 rounded-full bg-emerald-500 text-white text-xs font-bold flex items-center justify-center shrink-0">3</span>
+                <div>উপরে ডানে <b>"Add"</b> এ tap করুন</div>
+              </li>
+              <li className="flex gap-3">
+                <span className="w-6 h-6 rounded-full bg-emerald-500 text-white text-xs font-bold flex items-center justify-center shrink-0">4</span>
+                <div>✅ Home screen এ "WCBD Chat" icon দেখবেন</div>
+              </li>
+            </ol>
+          </div>
+        ) : isAndroid ? (
+          <div className="space-y-3">
+            <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 text-sm text-emerald-900">
+              <p className="font-semibold mb-1">📱 Android এ:</p>
+              <p className="text-xs">Chrome browser ব্যবহার করুন (best result এর জন্য)</p>
+            </div>
+            <ol className="space-y-3 text-sm text-gray-800">
+              <li className="flex gap-3">
+                <span className="w-6 h-6 rounded-full bg-emerald-500 text-white text-xs font-bold flex items-center justify-center shrink-0">1</span>
+                <div>Chrome এর উপরে ডানে <b>⋮ (3 dots)</b> menu এ tap করুন</div>
+              </li>
+              <li className="flex gap-3">
+                <span className="w-6 h-6 rounded-full bg-emerald-500 text-white text-xs font-bold flex items-center justify-center shrink-0">2</span>
+                <div><b>"Install app"</b> বা <b>"Add to Home screen"</b> select করুন</div>
+              </li>
+              <li className="flex gap-3">
+                <span className="w-6 h-6 rounded-full bg-emerald-500 text-white text-xs font-bold flex items-center justify-center shrink-0">3</span>
+                <div><b>"Install"</b> button এ tap করুন</div>
+              </li>
+              <li className="flex gap-3">
+                <span className="w-6 h-6 rounded-full bg-emerald-500 text-white text-xs font-bold flex items-center justify-center shrink-0">4</span>
+                <div>✅ Home screen এ "WCBD Chat" icon দেখবেন — সাধারণ app এর মত খুলবে</div>
+              </li>
+            </ol>
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-2.5 text-xs text-amber-800">
+              💡 যদি "Install app" option না দেখেন, page টা refresh করে আবার চেষ্টা করুন
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-3 text-sm text-gray-800">
+            <p>Phone থেকে এই page খুলুন (Android: Chrome / iPhone: Safari)</p>
+            <p>তারপর browser menu থেকে <b>"Install app"</b> অথবা <b>"Add to Home Screen"</b> select করুন</p>
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-xs text-gray-600">
+              💻 Desktop/Laptop এ install করার দরকার নেই — phone এ install করুন
+            </div>
+          </div>
+        )}
+
+        <Button onClick={() => onOpenChange(false)} className="w-full bg-emerald-600 hover:bg-emerald-700">
+          বুঝেছি
+        </Button>
+      </DialogContent>
+    </Dialog>
+  );
+}

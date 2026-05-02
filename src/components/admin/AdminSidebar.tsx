@@ -38,6 +38,23 @@ interface AdminSidebarProps {
 
 export function AdminSidebar({ activeTab, onTabChange }: AdminSidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
+  const [liveUnread, setLiveUnread] = useState(0);
+
+  useEffect(() => {
+    const load = async () => {
+      const { data } = await supabase
+        .from("live_chat_conversations")
+        .select("unread_admin_count");
+      const total = (data || []).reduce((s: number, c: any) => s + (c.unread_admin_count || 0), 0);
+      setLiveUnread(total);
+    };
+    load();
+    const ch = supabase
+      .channel("sidebar_live_chat_unread")
+      .on("postgres_changes", { event: "*", schema: "public", table: "live_chat_conversations" }, load)
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, []);
 
   return (
     <aside

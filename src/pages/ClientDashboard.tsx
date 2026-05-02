@@ -500,6 +500,8 @@ export default function ClientDashboard() {
                 hasPendingOrder={!!pendingOrder}
                 onFraudGuardClick={() => setActiveTab("fraudguard")}
                 onCourierCheckClick={() => setActiveTab("couriercheck")}
+                sitesCount={merchants.length}
+                activeSitesCount={merchants.filter(m => m.is_active).length}
               />
             )}
 

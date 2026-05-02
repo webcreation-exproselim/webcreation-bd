@@ -98,6 +98,43 @@ export default function ChatApp() {
     }
   }, [isAdmin]);
 
+  // PWA install prompt detection
+  useEffect(() => {
+    // Detect if already installed (running as PWA)
+    const standalone = window.matchMedia("(display-mode: standalone)").matches ||
+      (window.navigator as any).standalone === true;
+    setIsInstalled(standalone);
+
+    const onPrompt = (e: Event) => {
+      e.preventDefault();
+      setInstallEvent(e);
+    };
+    window.addEventListener("beforeinstallprompt", onPrompt);
+    window.addEventListener("appinstalled", () => {
+      setIsInstalled(true);
+      setInstallEvent(null);
+      toast.success("✅ App install হয়ে গেছে!");
+    });
+    return () => window.removeEventListener("beforeinstallprompt", onPrompt);
+  }, []);
+
+  const handleInstall = async () => {
+    if (installEvent) {
+      try {
+        installEvent.prompt();
+        const { outcome } = await installEvent.userChoice;
+        if (outcome === "accepted") {
+          setInstallEvent(null);
+        }
+      } catch {
+        setShowInstallHelp(true);
+      }
+    } else {
+      // No native prompt — show manual instructions (iOS Safari, etc.)
+      setShowInstallHelp(true);
+    }
+  };
+
   const enablePush = async () => {
     try {
       if (!("Notification" in window) || !("serviceWorker" in navigator)) {

@@ -484,21 +484,13 @@ export default function ClientDashboard() {
                       <Store className="w-5 h-5 text-blue-600 flex-shrink-0" />
                       <span className="text-sm font-medium text-gray-700 font-bengali flex-shrink-0">Store:</span>
                       <Select value={selectedMerchantId || ''} onValueChange={(val) => setSelectedMerchantId(val)}>
-                        <SelectTrigger className="flex-1 max-w-xs border-gray-200">
-                          <SelectValue>
-                            <span className="flex items-center gap-1.5">
-                              <span className="truncate">{currentLabel}</span>
-                              {merchant?.is_active && <span className="text-emerald-600">✅</span>}
-                            </span>
-                          </SelectValue>
+                        <SelectTrigger className="flex-1 max-w-xs border-gray-200 text-gray-900">
+                          <SelectValue placeholder="Store নির্বাচন করুন" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-white">
                           {merchants.map((m, idx) => (
-                            <SelectItem key={m.id} value={m.id}>
-                              <span className="flex items-center gap-1.5">
-                                {getStoreLabel(m, idx)}
-                                {m.is_active && <span className="text-emerald-600">✅</span>}
-                              </span>
+                            <SelectItem key={m.id} value={m.id} className="text-gray-900">
+                              {getStoreLabel(m, idx)}{m.is_active ? ' ✅' : ''}
                             </SelectItem>
                           ))}
                         </SelectContent>

@@ -60,9 +60,11 @@ const App = () => (
               <Route path="/portfolio" element={<PortfolioPage />} />
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/offer" element={<OfferPage />} />
+              <Route path="/admin/live-chat" element={<LiveChatAdmin />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
+            <LiveChatWidget />
           </BrowserRouter>
         </TooltipProvider>
       </EditModeProvider>

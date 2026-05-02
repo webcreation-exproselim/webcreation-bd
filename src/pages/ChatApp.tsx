@@ -98,6 +98,19 @@ export default function ChatApp() {
     }
   }, [isAdmin]);
 
+  // Swap manifest to chat-only manifest so install opens /chat-app, not /
+  useEffect(() => {
+    const link = document.querySelector('link[rel="manifest"]') as HTMLLinkElement | null;
+    const prev = link?.getAttribute("href") || "/manifest.json";
+    if (link) link.setAttribute("href", "/chat-manifest.json");
+    const prevTitle = document.title;
+    document.title = "WCBD Chat";
+    return () => {
+      if (link) link.setAttribute("href", prev);
+      document.title = prevTitle;
+    };
+  }, []);
+
   // PWA install prompt detection
   useEffect(() => {
     // Detect if already installed (running as PWA)

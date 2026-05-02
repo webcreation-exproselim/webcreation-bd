@@ -58,6 +58,19 @@ export default function LiveChatWidget() {
     return () => sub.subscription.unsubscribe();
   }, []);
 
+  // Welcome bubble — shows once per session, auto hides after 8s
+  useEffect(() => {
+    if (shouldHide) return;
+    const seen = sessionStorage.getItem("wcbd_chat_welcome_seen");
+    if (seen) return;
+    const showT = setTimeout(() => setWelcomeShow(true), 2500);
+    const hideT = setTimeout(() => {
+      setWelcomeShow(false);
+      sessionStorage.setItem("wcbd_chat_welcome_seen", "1");
+    }, 10500);
+    return () => { clearTimeout(showT); clearTimeout(hideT); };
+  }, [shouldHide]);
+
   // Init or load conversation when opened
   useEffect(() => {
     if (!open) return;

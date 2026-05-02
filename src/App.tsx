@@ -37,6 +37,7 @@ const ConditionalGlobals = () => {
   if (pathname.startsWith("/chat-app")) return null;
   return (
     <>
+      <EditModeToggle />
       <LiveChatWidget />
       <PWAInstallPrompt />
     </>
@@ -54,7 +55,6 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <ScrollToTop />
-            <EditModeToggle />
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/facebook-ads" element={<FacebookAdsPage />} />

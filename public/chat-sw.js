@@ -1,4 +1,6 @@
 // Service worker for Live Chat Admin App push notifications
+const CACHE_VERSION = "wcbd-chat-push-v2";
+
 self.addEventListener("install", (e) => self.skipWaiting());
 self.addEventListener("activate", (e) => e.waitUntil(self.clients.claim()));
 
@@ -12,9 +14,11 @@ self.addEventListener("push", (event) => {
     badge: "/logo.png",
     tag: data.tag || "chat",
     renotify: true,
-    requireInteraction: false,
+    requireInteraction: true,
+    silent: false,
+    timestamp: Date.now(),
     vibrate: [200, 100, 200],
-    data: { url: data.url || "/chat-app" },
+    data: { url: data.url || "/chat-app", cache: CACHE_VERSION },
   };
   event.waitUntil(self.registration.showNotification(title, options));
 });

@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { MultiStoreManager, getStoreLabel } from "@/components/client/MultiStoreManager";
 
 // Refactored components
 import { DashboardSidebar } from "@/components/client/DashboardSidebar";
@@ -424,82 +425,41 @@ export default function ClientDashboard() {
         {/* Scrollable Content */}
         <main className="flex-1 overflow-y-auto pb-24 lg:pb-6">
           <div className="max-w-7xl mx-auto px-4 lg:px-6 py-4 lg:py-6">
-            {(() => {
-              const getStoreLabel = (m: any, idx: number) => {
-                if (m.store_name) return m.store_name;
-                if (m.website_url) {
-                  try {
-                    return new URL(m.website_url.startsWith('http') ? m.website_url : `https://${m.website_url}`).hostname.replace(/^www\./, '');
-                  } catch {
-                    return m.website_url;
-                  }
-                }
-                return `Store ${idx + 1} (Domain যোগ করুন)`;
-              };
-              const currentIdx = merchants.findIndex(m => m.id === (selectedMerchantId || merchant?.id));
-              const currentLabel = merchant ? getStoreLabel(merchant, currentIdx >= 0 ? currentIdx : 0) : 'Default Store';
+            {/* Multi-Site Manager — full UI on Fraud Guard tab */}
+            {activeTab === "fraudguard" && effectiveUserId && (
+              <div className="mb-6">
+                <MultiStoreManager
+                  merchants={merchants}
+                  selectedMerchantId={selectedMerchantId}
+                  onSelectMerchant={(id) => setSelectedMerchantId(id)}
+                  onMerchantsChanged={() => refetchMerchant()}
+                  userId={effectiveUserId}
+                />
+              </div>
+            )}
 
-              return (
-                <>
-                  {activeTab === "fraudguard" && (
-                    <div className="mb-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border border-blue-200 p-4 shadow-sm">
-                      <div className="flex items-center gap-3 flex-wrap">
-                        <Store className="w-5 h-5 text-blue-600 flex-shrink-0" />
-                        <span className="text-sm font-semibold text-gray-800 font-bengali flex-shrink-0">
-                          {merchants.length > 1 ? 'আপনার Store:' : 'Store:'}
-                        </span>
-                        {merchants.length > 1 ? (
-                          <Select value={selectedMerchantId || ''} onValueChange={(val) => setSelectedMerchantId(val)}>
-                            <SelectTrigger className="flex-1 max-w-xs border-blue-200 bg-white text-gray-900">
-                              <SelectValue placeholder="Store নির্বাচন করুন" />
-                            </SelectTrigger>
-                            <SelectContent className="bg-white">
-                              {merchants.map((m, idx) => (
-                                <SelectItem key={m.id} value={m.id} className="text-gray-900">
-                                  {getStoreLabel(m, idx)}{m.is_active ? ' ✅' : ''}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        ) : (
-                          <span className="text-sm text-gray-700 font-medium truncate">
-                            {currentLabel}
-                            {merchant?.is_active && <span className="text-emerald-600 ml-1">✅</span>}
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-xs text-gray-600 font-bengali mt-2.5 leading-relaxed">
-                        💡 <strong>একাধিক Website?</strong> আপনি চাইলে প্রতিটি আলাদা ডোমেইনের জন্য আলাদা Subscription কিনে এখান থেকেই manage করতে পারবেন। প্রতি subscription = ১টি domain. নতুন domain যোগ করতে নিচে নতুন Plan কিনুন।
-                      </p>
-                      {merchant && !merchant.website_url && !merchant.store_name && (
-                        <p className="text-xs text-amber-700 font-bengali mt-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                          ⚠️ আপনার Store এর Domain/URL এখনো সেট করা নেই। নিচের <strong>Settings</strong> ট্যাব থেকে আপনার website URL যোগ করুন।
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-                  {activeTab !== "fraudguard" && merchants.length > 1 && (
-                    <div className="mb-4 flex items-center gap-3 bg-white rounded-xl border border-gray-200 p-3 shadow-sm">
-                      <Store className="w-5 h-5 text-blue-600 flex-shrink-0" />
-                      <span className="text-sm font-medium text-gray-700 font-bengali flex-shrink-0">Store:</span>
-                      <Select value={selectedMerchantId || ''} onValueChange={(val) => setSelectedMerchantId(val)}>
-                        <SelectTrigger className="flex-1 max-w-xs border-gray-200 text-gray-900">
-                          <SelectValue placeholder="Store নির্বাচন করুন" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white">
-                          {merchants.map((m, idx) => (
-                            <SelectItem key={m.id} value={m.id} className="text-gray-900">
-                              {getStoreLabel(m, idx)}{m.is_active ? ' ✅' : ''}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-                </>
-              );
-            })()}
+            {/* Compact Site Switcher - all other tabs (only when 2+ sites) */}
+            {activeTab !== "fraudguard" && merchants.length > 1 && (
+              <div className="mb-4 flex items-center gap-3 bg-white rounded-xl border border-gray-200 p-3 shadow-sm">
+                <Store className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                <span className="text-sm font-medium text-gray-700 font-bengali flex-shrink-0">আপনার Site:</span>
+                <Select value={selectedMerchantId || ''} onValueChange={(val) => setSelectedMerchantId(val)}>
+                  <SelectTrigger className="flex-1 max-w-xs border-gray-200 text-gray-900">
+                    <SelectValue placeholder="Site নির্বাচন করুন" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white">
+                    {merchants.map((m, idx) => (
+                      <SelectItem key={m.id} value={m.id} className="text-gray-900">
+                        {getStoreLabel(m as any, idx)}{m.is_active ? ' ✅' : ''}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <span className="text-xs text-gray-500 font-bengali">
+                  মোট {merchants.length}টি
+                </span>
+              </div>
+            )}
 
             {/* Welcome Section - Only show on orders tab */}
             {activeTab === "orders" && (
@@ -540,6 +500,8 @@ export default function ClientDashboard() {
                 hasPendingOrder={!!pendingOrder}
                 onFraudGuardClick={() => setActiveTab("fraudguard")}
                 onCourierCheckClick={() => setActiveTab("couriercheck")}
+                sitesCount={merchants.length}
+                activeSitesCount={merchants.filter(m => m.is_active).length}
               />
             )}
 

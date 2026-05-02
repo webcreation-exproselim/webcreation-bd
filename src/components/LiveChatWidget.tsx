@@ -212,12 +212,14 @@ export default function LiveChatWidget() {
   async function sendMessage(payload: { content?: string; type?: "text" | "image" | "voice"; url?: string }) {
     if (!conversationId) return;
     setSending(true);
+    const messageType = payload.type ?? "text";
+    const messageContent = payload.content ?? null;
     const { error } = await supabase.from("live_chat_messages").insert({
       conversation_id: conversationId,
       sender_type: "user",
       sender_id: user?.id ?? null,
-      content: payload.content ?? null,
-      message_type: payload.type ?? "text",
+      content: messageContent,
+      message_type: messageType,
       attachment_url: payload.url ?? null,
     });
     setSending(false);
@@ -225,6 +227,14 @@ export default function LiveChatWidget() {
       toast.error("পাঠাতে সমস্যা হয়েছে");
       return;
     }
+    void supabase.functions.invoke("send-chat-push", {
+      body: {
+        conversation_id: conversationId,
+        sender_name: user?.user_metadata?.full_name || guestName.trim() || "Customer",
+        message_type: messageType,
+        content: messageContent || "",
+      },
+    });
   }
 
   async function handleSendText() {

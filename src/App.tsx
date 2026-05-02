@@ -66,6 +66,7 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
             <LiveChatWidget />
+            <PWAInstallPrompt />
           </BrowserRouter>
         </TooltipProvider>
       </EditModeProvider>

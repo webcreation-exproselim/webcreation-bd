@@ -28,6 +28,7 @@ import ContactPage from "./pages/ContactPage";
 import OfferPage from "./pages/OfferPage";
 import LiveChatAdmin from "./pages/LiveChatAdmin";
 import LiveChatWidget from "./components/LiveChatWidget";
+import PWAInstallPrompt from "./components/PWAInstallPrompt";
 
 const queryClient = new QueryClient();
 
@@ -65,6 +66,7 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
             <LiveChatWidget />
+            <PWAInstallPrompt />
           </BrowserRouter>
         </TooltipProvider>
       </EditModeProvider>

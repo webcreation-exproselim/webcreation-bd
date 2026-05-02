@@ -29,6 +29,10 @@ function getOrCreateGuestId() {
 }
 
 export default function LiveChatWidget() {
+  const location = useLocation();
+  const hideOn = ["/admin", "/admin/live-chat", "/admin-login", "/checkout"];
+  const shouldHide = hideOn.some((p) => location.pathname.startsWith(p));
+
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [conversationId, setConversationId] = useState<string | null>(null);

@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft, Send, Image as ImageIcon, Mic, StopCircle, Loader2, Search,
-  Smile, Bell, BellOff, Zap, Plus, Trash2, X, Check, MessageCircle,
+  Smile, Bell, BellOff, Zap, Plus, Trash2, X, Check, MessageCircle, Download, Share2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,6 +63,9 @@ export default function ChatApp() {
   const [showQRManager, setShowQRManager] = useState(false);
   const [quickReplies, setQuickReplies] = useState<QuickReply[]>([]);
   const [pushEnabled, setPushEnabled] = useState(false);
+  const [installEvent, setInstallEvent] = useState<any>(null);
+  const [showInstallHelp, setShowInstallHelp] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const mediaRecRef = useRef<MediaRecorder | null>(null);

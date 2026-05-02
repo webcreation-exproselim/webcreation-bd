@@ -34,6 +34,7 @@ export default function LiveChatWidget() {
   const shouldHide = hideOn.some((p) => location.pathname.startsWith(p));
 
   const [open, setOpen] = useState(false);
+  const [welcomeShow, setWelcomeShow] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Msg[]>([]);

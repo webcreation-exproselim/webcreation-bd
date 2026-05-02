@@ -37,6 +37,7 @@ const ConditionalGlobals = () => {
   if (pathname.startsWith("/chat-app")) return null;
   return (
     <>
+      <EditModeToggle />
       <LiveChatWidget />
       <PWAInstallPrompt />
     </>

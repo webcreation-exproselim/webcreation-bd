@@ -121,6 +121,23 @@ export function AdminSidebar({ activeTab, onTabChange }: AdminSidebarProps) {
             </motion.button>
           );
         })}
+
+        {/* Live Chat — opens dedicated page */}
+        <Link
+          to="/admin/live-chat"
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bengali text-white bg-gradient-to-r from-cyan-500 via-blue-600 to-purple-600 shadow-lg hover:opacity-90 transition relative mt-2"
+          title={collapsed ? "Live Chat" : undefined}
+        >
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/20 shrink-0">
+            <Headphones className="w-4 h-4 text-white" />
+          </div>
+          {!collapsed && <span className="truncate">Live Chat</span>}
+          {liveUnread > 0 && (
+            <span className="absolute top-1.5 right-1.5 h-5 min-w-5 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center border-2 border-white">
+              {liveUnread}
+            </span>
+          )}
+        </Link>
       </nav>
 
       {/* Collapse Toggle */}

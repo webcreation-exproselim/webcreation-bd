@@ -122,127 +122,64 @@ export function MultiStoreManager({
 
   return (
     <>
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-        {/* ============ HEADER ============ */}
-        <div className="bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 px-5 py-5 relative overflow-hidden">
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute top-0 right-0 w-40 h-40 bg-white rounded-full -translate-y-1/2 translate-x-1/2" />
-            <div className="absolute bottom-0 left-1/3 w-32 h-32 bg-white rounded-full translate-y-1/2" />
-          </div>
-
-          <div className="relative flex items-center justify-between gap-3 flex-wrap">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30">
-                <Layers className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-white font-bengali">আপনার Sites</h3>
-                <p className="text-xs text-white/80 font-bengali">
-                  সবগুলো Site একসাথে manage করুন
-                </p>
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        {/* ============ COMPACT HEADER ============ */}
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 px-4 py-3 flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+              <Layers className="w-4 h-4 text-white" />
+            </div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-bold text-white font-bengali">আপনার Sites</h3>
+              <div className="flex items-center gap-1 text-[11px] text-white/90">
+                <span className="bg-white/15 px-1.5 py-0.5 rounded font-bold">{merchants.length}</span>
+                <span className="text-emerald-200">●{activeCount}</span>
+                {inactiveCount > 0 && <span className="text-amber-200">●{inactiveCount}</span>}
               </div>
             </div>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => setShowHelp(!showHelp)}
+              className="text-white/80 hover:text-white hover:bg-white/15 rounded-lg p-1.5 transition"
+              title="Help"
+            >
+              <HelpCircle className="w-4 h-4" />
+            </button>
             <Button
               onClick={handleAddNewSite}
               disabled={creating}
               size="sm"
-              className="bg-white text-blue-700 hover:bg-white/95 gap-2 rounded-xl font-bengali font-bold shadow-lg px-4"
+              className="bg-white text-blue-700 hover:bg-white/95 gap-1 rounded-lg font-bengali font-bold h-8 px-3 text-xs"
             >
-              <Plus className="w-4 h-4" />
-              নতুন Site যোগ করুন
+              <Plus className="w-3.5 h-3.5" />
+              নতুন Site
             </Button>
-          </div>
-
-          {/* Stats Row */}
-          <div className="relative grid grid-cols-3 gap-2 mt-4">
-            <div className="bg-white/15 backdrop-blur-sm rounded-xl px-3 py-2 border border-white/20">
-              <div className="flex items-center gap-1.5">
-                <Globe className="w-3.5 h-3.5 text-white" />
-                <span className="text-[10px] text-white/80 font-bengali uppercase tracking-wide">মোট Site</span>
-              </div>
-              <p className="text-xl font-bold text-white mt-0.5">{merchants.length}</p>
-            </div>
-            <div className="bg-emerald-500/30 backdrop-blur-sm rounded-xl px-3 py-2 border border-emerald-300/40">
-              <div className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-100" />
-                <span className="text-[10px] text-white/90 font-bengali uppercase tracking-wide">Active</span>
-              </div>
-              <p className="text-xl font-bold text-white mt-0.5">{activeCount}</p>
-            </div>
-            <div className="bg-amber-500/30 backdrop-blur-sm rounded-xl px-3 py-2 border border-amber-300/40">
-              <div className="flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-amber-100" />
-                <span className="text-[10px] text-white/90 font-bengali uppercase tracking-wide">অপেক্ষায়</span>
-              </div>
-              <p className="text-xl font-bold text-white mt-0.5">{inactiveCount}</p>
-            </div>
           </div>
         </div>
 
-        {/* ============ HELP ACCORDION ============ */}
-        <button
-          onClick={() => setShowHelp(!showHelp)}
-          className="w-full flex items-center justify-between gap-2 px-5 py-3 bg-blue-50 border-b border-blue-100 hover:bg-blue-100/70 transition"
-        >
-          <div className="flex items-center gap-2">
-            <HelpCircle className="w-4 h-4 text-blue-600" />
-            <span className="text-sm font-semibold text-blue-900 font-bengali">
-              কিভাবে কাজ করে? (পড়ুন)
-            </span>
-          </div>
-          <span className={`text-blue-600 transition-transform ${showHelp ? "rotate-180" : ""}`}>▼</span>
-        </button>
-
+        {/* ============ HELP (collapsed by default) ============ */}
         {showHelp && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
-            className="bg-blue-50/50 border-b border-blue-100 px-5 py-4 space-y-3"
+            className="bg-blue-50 border-b border-blue-100 px-4 py-3 text-xs text-blue-900 font-bengali space-y-1.5"
           >
-            <div className="flex gap-3">
-              <div className="w-7 h-7 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">1</div>
-              <div>
-                <p className="text-sm font-semibold text-gray-900 font-bengali">নতুন Site যোগ করুন</p>
-                <p className="text-xs text-gray-600 font-bengali">উপরের নীল বাটনে ক্লিক করে Plan কিনুন</p>
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <div className="w-7 h-7 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">2</div>
-              <div>
-                <p className="text-sm font-semibold text-gray-900 font-bengali">Site নির্বাচন করুন</p>
-                <p className="text-xs text-gray-600 font-bengali">নিচের list থেকে যেকোনো Site এ ক্লিক করুন - সেটা Active হবে</p>
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <div className="w-7 h-7 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">3</div>
-              <div>
-                <p className="text-sm font-semibold text-gray-900 font-bengali">Settings ও Plugin Setup</p>
-                <p className="text-xs text-gray-600 font-bengali">নির্বাচিত Site এর Domain, API Key ও Plugin install করুন</p>
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <div className="w-7 h-7 rounded-full bg-amber-500 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">!</div>
-              <div>
-                <p className="text-sm font-semibold text-amber-900 font-bengali">গুরুত্বপূর্ণ নিয়ম</p>
-                <p className="text-xs text-amber-800 font-bengali">
-                  ১টি Subscription = ১টি Domain. একই Plan দিয়ে একাধিক Site protect করা যাবে না।
-                </p>
-              </div>
-            </div>
+            <p>• <strong>নতুন Site:</strong> উপরের বাটনে ক্লিক করে Plan কিনুন</p>
+            <p>• <strong>নির্বাচন করুন:</strong> নিচের যেকোনো Site কার্ডে ক্লিক করুন</p>
+            <p>• <strong>Setup:</strong> Settings ও Plugin install করুন</p>
+            <p className="text-amber-800 pt-1 border-t border-blue-200">⚠️ ১টি Subscription = ১টি Domain</p>
           </motion.div>
         )}
 
         {/* ============ SITES LIST ============ */}
-        <div className="p-4 space-y-3 bg-gray-50/50">
+        <div className="p-3 grid grid-cols-1 sm:grid-cols-2 gap-2 bg-gray-50/40">
           {merchants.length === 0 ? (
-            <div className="text-center py-12 bg-white rounded-xl border-2 border-dashed border-gray-300">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center mx-auto mb-3">
-                <Globe className="w-8 h-8 text-blue-500" />
-              </div>
-              <p className="text-base font-bold text-gray-900 font-bengali mb-1">কোনো Site যোগ করা নেই</p>
-              <p className="text-xs text-gray-500 font-bengali mb-4">প্রথম Site যোগ করে শুরু করুন</p>
-              <Button onClick={handleAddNewSite} disabled={creating} className="bg-blue-600 hover:bg-blue-700 text-white font-bengali rounded-xl gap-2">
-                <Plus className="w-4 h-4" />
+            <div className="col-span-full text-center py-8 bg-white rounded-lg border-2 border-dashed border-gray-300">
+              <Globe className="w-8 h-8 text-blue-400 mx-auto mb-2" />
+              <p className="text-sm font-bold text-gray-900 font-bengali mb-2">কোনো Site নেই</p>
+              <Button onClick={handleAddNewSite} disabled={creating} size="sm" className="bg-blue-600 hover:bg-blue-700 text-white font-bengali rounded-lg gap-1 text-xs h-8">
+                <Plus className="w-3.5 h-3.5" />
                 প্রথম Site যোগ করুন
               </Button>
             </div>

@@ -46,6 +46,16 @@ function urlB64ToUint8Array(b64: string) {
   return out;
 }
 
+async function registerChatServiceWorker() {
+  if (!("serviceWorker" in navigator)) return null;
+  const reg = await navigator.serviceWorker.register("/chat-sw.js", {
+    scope: "/",
+    updateViaCache: "none",
+  });
+  await reg.update().catch(() => {});
+  return reg;
+}
+
 export default function ChatApp() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
@@ -89,13 +99,15 @@ export default function ChatApp() {
   // Service worker registration & push state
   useEffect(() => {
     if (!isAdmin) return;
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/chat-sw.js").catch(() => {});
-      navigator.serviceWorker.ready.then(async (reg) => {
+    let cancelled = false;
+    registerChatServiceWorker()
+      .then(async (reg) => {
+        if (!reg || cancelled) return;
         const sub = await reg.pushManager.getSubscription();
-        setPushEnabled(!!sub);
-      });
-    }
+        if (!cancelled) setPushEnabled(Notification.permission === "granted" && !!sub);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
   }, [isAdmin]);
 
   // Swap manifest to chat-only manifest so install opens /chat-app, not /
@@ -150,13 +162,22 @@ export default function ChatApp() {
 
   const enablePush = async () => {
     try {
+      if (!userId) {
+        toast.error("Admin login দরকার");
+        return;
+      }
       if (!("Notification" in window) || !("serviceWorker" in navigator)) {
         toast.error("এই ব্রাউজার সাপোর্ট করে না");
         return;
       }
+      if (Notification.permission === "denied") {
+        toast.error("Browser settings থেকে notification allow করুন");
+        return;
+      }
       const perm = await Notification.requestPermission();
       if (perm !== "granted") { toast.error("Notification permission দিন"); return; }
-      const reg = await navigator.serviceWorker.ready;
+      const reg = await registerChatServiceWorker();
+      if (!reg) throw new Error("Service worker unavailable");
       let sub = await reg.pushManager.getSubscription();
       if (!sub) {
         sub = await reg.pushManager.subscribe({
@@ -165,14 +186,24 @@ export default function ChatApp() {
         });
       }
       const json = sub.toJSON() as any;
-      await supabase.from("admin_push_subscriptions").upsert({
+      if (!json.keys?.p256dh || !json.keys?.auth) throw new Error("Push key missing");
+      const { error } = await supabase.from("admin_push_subscriptions").upsert({
         user_id: userId,
         endpoint: sub.endpoint,
         p256dh: json.keys.p256dh,
         auth: json.keys.auth,
         user_agent: navigator.userAgent,
       }, { onConflict: "endpoint" });
+      if (error) throw error;
+      await supabase.from("admin_push_subscriptions").delete().eq("user_id", userId).neq("endpoint", sub.endpoint);
       setPushEnabled(true);
+      await reg.showNotification("✅ Chat notification চালু", {
+        body: "App বন্ধ থাকলেও নতুন message alert আসবে",
+        icon: "/logo.png",
+        badge: "/logo.png",
+        tag: "chat-push-enabled",
+        data: { url: "/chat-app" },
+      }).catch(() => {});
       toast.success("✅ Background notification চালু");
     } catch (e: any) {
       toast.error("ব্যর্থ: " + (e?.message || ""));
@@ -181,7 +212,8 @@ export default function ChatApp() {
 
   const disablePush = async () => {
     try {
-      const reg = await navigator.serviceWorker.ready;
+      const reg = await registerChatServiceWorker();
+      if (!reg) return;
       const sub = await reg.pushManager.getSubscription();
       if (sub) {
         await supabase.from("admin_push_subscriptions").delete().eq("endpoint", sub.endpoint);

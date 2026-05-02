@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
           await webpush.sendNotification(
             { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
             payload,
-            { TTL: 60 },
+            { TTL: 86400, urgency: "high", topic: `chat-${conversation_id}`.slice(0, 32) },
           );
           sent++;
         } catch (e: any) {

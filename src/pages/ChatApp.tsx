@@ -416,6 +416,7 @@ export default function ChatApp() {
           open={showQRManager} onOpenChange={setShowQRManager}
           quickReplies={quickReplies} userId={userId} onChanged={loadQuickReplies}
         />
+        <InstallHelpDialog open={showInstallHelp} onOpenChange={setShowInstallHelp} />
       </div>
     );
   }

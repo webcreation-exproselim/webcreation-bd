@@ -26,6 +26,8 @@ import AboutPage from "./pages/AboutPage";
 import PortfolioPage from "./pages/PortfolioPage";
 import ContactPage from "./pages/ContactPage";
 import OfferPage from "./pages/OfferPage";
+import LiveChatAdmin from "./pages/LiveChatAdmin";
+import LiveChatWidget from "./components/LiveChatWidget";
 
 const queryClient = new QueryClient();
 

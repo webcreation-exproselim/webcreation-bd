@@ -424,8 +424,45 @@ export default function ClientDashboard() {
         {/* Scrollable Content */}
         <main className="flex-1 overflow-y-auto pb-24 lg:pb-6">
           <div className="max-w-7xl mx-auto px-4 lg:px-6 py-4 lg:py-6">
-            {/* Store Switcher - show when user has multiple stores */}
-            {merchants.length > 1 && (
+            {/* Store Switcher / Multi-Domain Info - show on fraudguard tab */}
+            {activeTab === "fraudguard" && (
+              <div className="mb-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border border-blue-200 p-4 shadow-sm">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <Store className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                  <span className="text-sm font-semibold text-gray-800 font-bengali flex-shrink-0">
+                    {merchants.length > 1 ? 'আপনার Store:' : 'Store:'}
+                  </span>
+                  {merchants.length > 1 ? (
+                    <Select
+                      value={selectedMerchantId || ''}
+                      onValueChange={(val) => setSelectedMerchantId(val)}
+                    >
+                      <SelectTrigger className="flex-1 max-w-xs border-blue-200 bg-white">
+                        <SelectValue placeholder="Store নির্বাচন করুন" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {merchants.map((m) => (
+                          <SelectItem key={m.id} value={m.id}>
+                            {m.store_name || m.website_url || 'Default Store'}
+                            {m.is_active && ' ✅'}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <span className="text-sm text-gray-700 font-medium">
+                      {merchant?.store_name || merchant?.website_url || 'Default Store'}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-gray-600 font-bengali mt-2.5 leading-relaxed">
+                  💡 <strong>একাধিক Website?</strong> আপনি চাইলে প্রতিটি আলাদা ডোমেইনের জন্য আলাদা Subscription কিনে এখান থেকেই manage করতে পারবেন। প্রতি subscription = ১টি domain. নতুন domain যোগ করতে নিচে নতুন Plan কিনুন।
+                </p>
+              </div>
+            )}
+
+            {/* Compact Store Switcher - other tabs (only if multiple) */}
+            {activeTab !== "fraudguard" && merchants.length > 1 && (
               <div className="mb-4 flex items-center gap-3 bg-white rounded-xl border border-gray-200 p-3 shadow-sm">
                 <Store className="w-5 h-5 text-blue-600 flex-shrink-0" />
                 <span className="text-sm font-medium text-gray-700 font-bengali flex-shrink-0">Store:</span>

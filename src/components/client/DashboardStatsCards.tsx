@@ -57,6 +57,8 @@ export function DashboardStatsCards({
   onFraudGuardClick,
   onCourierCheckClick,
   courierCheckActive,
+  sitesCount,
+  activeSitesCount,
 }: DashboardStatsCardsProps) {
   const completedOrders = orders.filter((o) => o.status === "completed").length;
 
@@ -75,6 +77,36 @@ export function DashboardStatsCards({
 
   return (
     <div className="space-y-4 mb-6">
+      {/* Multi-Site Highlight Bar */}
+      {sitesCount !== undefined && sitesCount > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          onClick={onFraudGuardClick}
+          className="cursor-pointer bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-600 rounded-2xl p-4 shadow-lg shadow-indigo-500/20 hover:shadow-xl transition-all"
+        >
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                <Globe className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <p className="text-white font-bold text-lg font-bengali">
+                  আপনি {sitesCount}টি Site চালাচ্ছেন
+                </p>
+                <p className="text-white/80 text-xs font-bengali">
+                  {activeSitesCount || 0}টি Active • {sitesCount - (activeSitesCount || 0)}টি অপেক্ষায় • Click করে manage করুন
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full">
+              <span className="text-xs text-white font-bengali font-semibold">+ নতুন Site যোগ করুন</span>
+              <ArrowUpRight className="w-4 h-4 text-white" />
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         {statCards.map((stat, idx) => {
           const Icon = stat.icon;

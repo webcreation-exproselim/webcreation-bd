@@ -106,6 +106,28 @@ export function AdminMobileNav({ activeTab, onTabChange }: AdminMobileNavProps) 
                     </button>
                   );
                 })}
+
+                {/* Live Chat */}
+                <Link
+                  to="/admin/live-chat"
+                  onClick={() => setIsOpen(false)}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bengali text-white bg-gradient-to-r from-cyan-500 via-blue-600 to-purple-600 shadow-lg mt-2"
+                >
+                  <Headphones className="w-5 h-5 shrink-0 text-white" />
+                  <span className="flex-1 text-left">Live Chat</span>
+                  <ChevronRight className="w-4 h-4 text-white/70" />
+                </Link>
+
+                {/* Chat App — mobile PWA */}
+                <Link
+                  to="/chat-app"
+                  onClick={() => setIsOpen(false)}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bengali text-white bg-gradient-to-r from-emerald-500 to-teal-600 shadow-lg mt-1.5"
+                >
+                  <MessageCircle className="w-5 h-5 shrink-0 text-white" />
+                  <span className="flex-1 text-left">📱 Chat App</span>
+                  <ChevronRight className="w-4 h-4 text-white/70" />
+                </Link>
               </nav>
             </motion.div>
           </>

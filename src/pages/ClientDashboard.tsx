@@ -444,18 +444,18 @@ export default function ClientDashboard() {
                 <Store className="w-5 h-5 text-blue-600 flex-shrink-0" />
                 <span className="text-sm font-medium text-gray-700 font-bengali flex-shrink-0">আপনার Site:</span>
                 <Select value={selectedMerchantId || ''} onValueChange={(val) => setSelectedMerchantId(val)}>
-                  <SelectTrigger className="flex-1 max-w-xs border-gray-200 text-gray-900">
-                    <SelectValue placeholder="Site নির্বাচন করুন" />
+                  <SelectTrigger className="flex-1 max-w-xs !bg-white !text-gray-900 border-gray-300 [&>span]:!text-gray-900 [&_svg]:!text-gray-600">
+                    <SelectValue placeholder="Site নির্বাচন করুন" className="!text-gray-900" />
                   </SelectTrigger>
-                  <SelectContent className="bg-white">
+                  <SelectContent className="!bg-white !text-gray-900 border-gray-200 z-50">
                     {merchants.map((m, idx) => (
-                      <SelectItem key={m.id} value={m.id} className="text-gray-900">
-                        {getStoreLabel(m as any, idx)}{m.is_active ? ' ✅' : ''}
+                      <SelectItem key={m.id} value={m.id} className="!text-gray-900 hover:!bg-gray-100 focus:!bg-gray-100 cursor-pointer">
+                        <span className="text-gray-900">{getStoreLabel(m as any, idx)}{m.is_active ? ' ✅' : ''}</span>
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                <span className="text-xs text-gray-500 font-bengali">
+                <span className="text-xs text-gray-500 font-bengali flex-shrink-0">
                   মোট {merchants.length}টি
                 </span>
               </div>

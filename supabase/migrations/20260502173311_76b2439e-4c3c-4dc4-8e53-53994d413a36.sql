@@ -1,0 +1,2 @@
+DELETE FROM public.live_chat_messages WHERE conversation_id IN (SELECT id FROM public.live_chat_conversations WHERE guest_id LIKE 'test-debug-%');
+DELETE FROM public.live_chat_conversations WHERE guest_id LIKE 'test-debug-%';

@@ -535,7 +535,7 @@ export default function ChatApp() {
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSendText(); } }}
               placeholder="Reply..."
               rows={1}
-              className="flex-1 min-h-[36px] max-h-24 resize-none rounded-2xl text-sm bg-gray-50 border-gray-200"
+              className="flex-1 min-h-[36px] max-h-24 resize-none rounded-2xl text-sm bg-gray-100 border-gray-300 text-gray-900 placeholder:text-gray-500"
             />
             {text.trim() ? (
               <Button size="icon" className="h-9 w-9 rounded-full bg-blue-600 hover:bg-blue-700 shrink-0"

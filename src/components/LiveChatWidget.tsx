@@ -288,46 +288,47 @@ export default function LiveChatWidget() {
 
   return (
     <>
-      {/* Floating button */}
+      {/* Floating button — clean professional design */}
       {!open && (
-        <button
-          onClick={handleOpen}
-          className="fixed bottom-5 right-5 z-[9998] h-14 w-14 rounded-full bg-gradient-to-br from-cyan-500 via-blue-600 to-purple-600 shadow-2xl shadow-blue-500/40 flex items-center justify-center text-white hover:scale-110 transition-transform"
-          aria-label="Live chat"
-        >
-          <MessageCircle className="h-6 w-6" />
-          {unread > 0 && (
-            <span className="absolute -top-1 -right-1 h-6 min-w-6 px-1.5 rounded-full bg-red-500 text-white text-xs font-bold flex items-center justify-center border-2 border-white animate-pulse">
-              {unread}
-            </span>
-          )}
-          <span className="absolute inset-0 rounded-full bg-blue-400/40 animate-ping pointer-events-none" />
-        </button>
-      )}
-
-      {/* Welcome bubble — auto shows briefly on first visit */}
-      {!open && welcomeShow && (
-        <div className="fixed bottom-24 right-5 z-[9998] max-w-[260px] animate-in slide-in-from-bottom-3 fade-in duration-500">
-          <div className="relative bg-white rounded-2xl shadow-2xl border border-gray-100 p-3 pr-8">
-            <button
-              onClick={() => { setWelcomeShow(false); sessionStorage.setItem("wcbd_chat_welcome_seen", "1"); }}
-              className="absolute top-1.5 right-1.5 p-1 rounded-md text-gray-400 hover:bg-gray-100"
-              aria-label="Close"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-            <div className="flex items-start gap-2">
-              <div className="h-8 w-8 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center shrink-0">
-                <MessageCircle className="h-4 w-4 text-white" />
-              </div>
-              <div>
-                <p className="text-[13px] font-semibold text-gray-900 leading-tight">আসসালামু আলাইকুম! 👋</p>
-                <p className="text-[11px] text-gray-600 mt-0.5 leading-snug">কোনো সাহায্য লাগলে আমাদের সাথে chat করুন — আমরা online আছি!</p>
+        <div className="fixed bottom-6 right-6 z-[9998] flex flex-col items-end gap-2.5">
+          {/* Welcome bubble */}
+          {welcomeShow && (
+            <div className="max-w-[280px] animate-in slide-in-from-bottom-2 fade-in duration-300">
+              <div className="relative bg-white rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.2)] border border-gray-100 p-3.5 pr-9">
+                <button
+                  onClick={() => { setWelcomeShow(false); sessionStorage.setItem("wcbd_chat_welcome_seen", "1"); }}
+                  className="absolute top-2 right-2 p-1 rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition"
+                  aria-label="Close"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-[10px] font-semibold text-emerald-600 uppercase tracking-wider">Online</span>
+                </div>
+                <p className="text-[13.5px] font-semibold text-gray-900 leading-snug">কোনো সাহায্য লাগবে?</p>
+                <p className="text-[11.5px] text-gray-500 mt-0.5 leading-snug">এখনই আমাদের সাথে chat করুন — দ্রুত reply পাবেন।</p>
+                <div className="absolute -bottom-1.5 right-7 w-3 h-3 bg-white border-r border-b border-gray-100 rotate-45" />
               </div>
             </div>
-            {/* Tail pointing to chat button */}
-            <div className="absolute -bottom-1.5 right-6 w-3 h-3 bg-white border-r border-b border-gray-100 rotate-45" />
-          </div>
+          )}
+
+          {/* Button */}
+          <button
+            onClick={handleOpen}
+            className="group relative h-[58px] w-[58px] rounded-full bg-blue-600 hover:bg-blue-700 shadow-[0_8px_24px_-4px_rgba(37,99,235,0.5)] flex items-center justify-center text-white transition-all duration-200 hover:scale-105 active:scale-95"
+            aria-label="Live chat"
+          >
+            <MessageCircle className="h-[26px] w-[26px]" strokeWidth={2.2} />
+            {/* Online dot */}
+            <span className="absolute bottom-0.5 right-0.5 h-3.5 w-3.5 rounded-full bg-emerald-500 border-[2.5px] border-white" />
+            {/* Unread badge */}
+            {unread > 0 && (
+              <span className="absolute -top-1 -right-1 h-[22px] min-w-[22px] px-1.5 rounded-full bg-red-500 text-white text-[11px] font-bold flex items-center justify-center border-2 border-white shadow-md">
+                {unread > 9 ? "9+" : unread}
+              </span>
+            )}
+          </button>
         </div>
       )}
 

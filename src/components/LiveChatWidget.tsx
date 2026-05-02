@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { MessageCircle, X, Send, Image as ImageIcon, Mic, StopCircle, Loader2, User } from "lucide-react";
 import { Button } from "@/components/ui/button";

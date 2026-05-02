@@ -529,6 +529,92 @@ export type Database = {
         }
         Relationships: []
       }
+      live_chat_conversations: {
+        Row: {
+          created_at: string
+          guest_id: string | null
+          guest_name: string | null
+          guest_phone: string | null
+          id: string
+          last_message_at: string
+          status: string
+          unread_admin_count: number
+          unread_user_count: number
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          guest_id?: string | null
+          guest_name?: string | null
+          guest_phone?: string | null
+          id?: string
+          last_message_at?: string
+          status?: string
+          unread_admin_count?: number
+          unread_user_count?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          guest_id?: string | null
+          guest_name?: string | null
+          guest_phone?: string | null
+          id?: string
+          last_message_at?: string
+          status?: string
+          unread_admin_count?: number
+          unread_user_count?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      live_chat_messages: {
+        Row: {
+          attachment_url: string | null
+          content: string | null
+          conversation_id: string
+          created_at: string
+          id: string
+          is_read: boolean
+          message_type: string
+          sender_id: string | null
+          sender_type: string
+        }
+        Insert: {
+          attachment_url?: string | null
+          content?: string | null
+          conversation_id: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message_type?: string
+          sender_id?: string | null
+          sender_type?: string
+        }
+        Update: {
+          attachment_url?: string | null
+          content?: string | null
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message_type?: string
+          sender_id?: string | null
+          sender_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_chat_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "live_chat_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       merchants: {
         Row: {
           abandoned_timeout_minutes: number | null

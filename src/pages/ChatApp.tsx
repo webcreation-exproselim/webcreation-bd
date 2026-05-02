@@ -195,7 +195,6 @@ export default function ChatApp() {
         user_agent: navigator.userAgent,
       }, { onConflict: "endpoint" });
       if (error) throw error;
-      await supabase.from("admin_push_subscriptions").delete().eq("user_id", userId).neq("endpoint", sub.endpoint);
       setPushEnabled(true);
       await reg.showNotification("✅ Chat notification চালু", {
         body: "App বন্ধ থাকলেও নতুন message alert আসবে",

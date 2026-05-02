@@ -138,6 +138,19 @@ export function AdminSidebar({ activeTab, onTabChange }: AdminSidebarProps) {
             </span>
           )}
         </Link>
+
+        {/* Chat App — mobile PWA */}
+        <Link
+          to="/chat-app"
+          target="_blank"
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bengali text-white bg-gradient-to-r from-emerald-500 to-teal-600 shadow-lg hover:opacity-90 transition mt-1.5"
+          title={collapsed ? "Chat App (Mobile)" : undefined}
+        >
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/20 shrink-0">
+            <MessageCircle className="w-4 h-4 text-white" />
+          </div>
+          {!collapsed && <span className="truncate">📱 Chat App</span>}
+        </Link>
       </nav>
 
       {/* Collapse Toggle */}

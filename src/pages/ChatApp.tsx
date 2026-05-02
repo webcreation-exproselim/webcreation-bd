@@ -322,6 +322,12 @@ export default function ChatApp() {
               <h1 className="text-lg font-bold">Live Chat</h1>
             </div>
             <div className="flex items-center gap-1">
+              {!isInstalled && (
+                <Button size="icon" variant="ghost" className="text-white hover:bg-white/20 h-9 w-9"
+                  onClick={handleInstall} title="Install App">
+                  <Download className="w-5 h-5" />
+                </Button>
+              )}
               <Button size="icon" variant="ghost" className="text-white hover:bg-white/20 h-9 w-9"
                 onClick={pushEnabled ? disablePush : enablePush} title="Notifications">
                 {pushEnabled ? <Bell className="w-5 h-5" /> : <BellOff className="w-5 h-5" />}
@@ -342,6 +348,23 @@ export default function ChatApp() {
             />
           </div>
         </div>
+
+        {/* Install App banner — top priority */}
+        {!isInstalled && (
+          <div className="m-3 mb-0 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl p-3 flex items-start gap-3 shadow-lg">
+            <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+              <Download className="w-5 h-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold">📱 Phone এ App হিসেবে Install করুন</p>
+              <p className="text-xs text-white/90 mt-0.5">Home screen থেকে এক tap এ খুলবে — full screen, fast</p>
+              <Button size="sm" className="mt-2 bg-white text-emerald-700 hover:bg-white/90 h-8 font-semibold"
+                onClick={handleInstall}>
+                <Download className="w-3.5 h-3.5 mr-1" /> Install App
+              </Button>
+            </div>
+          </div>
+        )}
 
         {!pushEnabled && (
           <div className="m-3 bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start gap-2">

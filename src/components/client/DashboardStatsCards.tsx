@@ -18,6 +18,8 @@ interface DashboardStatsCardsProps {
   onFraudGuardClick: () => void;
   onCourierCheckClick?: () => void;
   courierCheckActive?: boolean;
+  sitesCount?: number;
+  activeSitesCount?: number;
 }
 
 const statCards = [

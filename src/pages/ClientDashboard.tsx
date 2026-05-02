@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { MultiStoreManager, getStoreLabel } from "@/components/client/MultiStoreManager";
 
 // Refactored components
 import { DashboardSidebar } from "@/components/client/DashboardSidebar";

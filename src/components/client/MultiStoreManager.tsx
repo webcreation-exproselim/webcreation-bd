@@ -204,155 +204,94 @@ export function MultiStoreManager({
               return (
                 <motion.div
                   key={m.id}
-                  initial={{ opacity: 0, y: 8 }}
+                  initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.04 }}
+                  transition={{ delay: idx * 0.03 }}
                 >
                   <button
                     onClick={() => onSelectMerchant(m.id)}
-                    className={`w-full text-left rounded-2xl border-2 transition-all duration-200 overflow-hidden ${
+                    className={`w-full text-left rounded-lg border transition-all duration-150 p-2.5 ${
                       isSelected
-                        ? "border-blue-500 bg-white shadow-lg ring-4 ring-blue-100"
-                        : "border-gray-200 bg-white hover:border-blue-300 hover:shadow-md"
+                        ? "border-blue-500 bg-blue-50/50 ring-2 ring-blue-200"
+                        : "border-gray-200 bg-white hover:border-blue-300"
                     }`}
                   >
-                    {/* Top section */}
-                    <div className="p-4">
-                      <div className="flex items-start gap-3">
-                        {/* Site number badge + status */}
-                        <div className="flex-shrink-0 relative">
-                          <div
-                            className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-base ${
-                              m.is_active
-                                ? "bg-gradient-to-br from-emerald-500 to-green-600 text-white shadow-md"
-                                : "bg-gradient-to-br from-gray-200 to-gray-300 text-gray-500"
-                            }`}
-                          >
-                            {m.is_active ? <Shield className="w-6 h-6" /> : <Globe className="w-6 h-6" />}
-                          </div>
-                          <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-white border-2 border-gray-100 flex items-center justify-center text-[10px] font-bold text-gray-700">
-                            {idx + 1}
-                          </div>
+                    <div className="flex items-center gap-2.5">
+                      {/* Compact status icon */}
+                      <div className="relative flex-shrink-0">
+                        <div
+                          className={`w-9 h-9 rounded-lg flex items-center justify-center ${
+                            m.is_active
+                              ? "bg-gradient-to-br from-emerald-500 to-green-600 text-white"
+                              : "bg-gray-100 text-gray-400"
+                          }`}
+                        >
+                          {m.is_active ? <Shield className="w-4 h-4" /> : <Globe className="w-4 h-4" />}
+                        </div>
+                        <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-white border border-gray-200 flex items-center justify-center text-[9px] font-bold text-gray-700">
+                          {idx + 1}
+                        </div>
+                      </div>
+
+                      {/* Info column */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 mb-0.5">
+                          <p className="text-sm font-bold text-gray-900 truncate">{label}</p>
+                          {isSelected && (
+                            <span className="text-[9px] font-bold bg-blue-600 text-white px-1.5 py-0.5 rounded uppercase">
+                              ✓
+                            </span>
+                          )}
                         </div>
 
-                        {/* Main Info */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap mb-1">
-                            <p className="text-base font-bold text-gray-900 truncate">{label}</p>
-                            {isSelected && (
-                              <span className="text-[10px] font-bold uppercase tracking-wider bg-blue-600 text-white px-2 py-0.5 rounded-md">
-                                ✓ নির্বাচিত
-                              </span>
-                            )}
-                          </div>
+                        {hasUrl ? (
+                          <p className="text-[11px] text-gray-500 truncate">{cleanDomain}</p>
+                        ) : (
+                          <p className="text-[11px] text-amber-700 font-bengali truncate">⚠ Domain যোগ করুন</p>
+                        )}
 
-                          {/* Domain row */}
-                          {hasUrl ? (
-                            <div className="flex items-center gap-1.5 text-xs text-gray-600 mb-2">
-                              <Globe className="w-3 h-3 text-blue-500 flex-shrink-0" />
-                              <span className="truncate font-medium">{cleanDomain}</span>
-                            </div>
+                        {/* Inline status row */}
+                        <div className="flex items-center gap-1 mt-1 flex-wrap">
+                          {m.is_active ? (
+                            <span className="text-[10px] font-bold bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded border border-emerald-200">
+                              Active
+                            </span>
                           ) : (
-                            <div className="flex items-center gap-1.5 text-xs text-amber-700 mb-2 bg-amber-50 px-2 py-1 rounded-md border border-amber-200">
-                              <AlertTriangle className="w-3 h-3 flex-shrink-0" />
-                              <span className="font-bengali font-medium">Domain যোগ করা হয়নি - Settings এ যান</span>
-                            </div>
+                            <span className="text-[10px] font-bold bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded border border-amber-300 font-bengali">
+                              Plan কিনুন
+                            </span>
                           )}
-
-                          {/* Status badges row */}
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            {m.is_active ? (
-                              <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-emerald-50 text-emerald-700 px-2 py-1 rounded-md border border-emerald-200">
-                                <CheckCircle2 className="w-3 h-3" />
-                                Active
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-gray-100 text-gray-600 px-2 py-1 rounded-md border border-gray-200 font-bengali">
-                                <Clock className="w-3 h-3" />
-                                Inactive
-                              </span>
-                            )}
-
-                            {m.current_plan && (
-                              <span
-                                className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-1 rounded-md border ${
-                                  m.current_plan === "yearly"
-                                    ? "bg-purple-50 text-purple-700 border-purple-200"
-                                    : "bg-blue-50 text-blue-700 border-blue-200"
-                                }`}
-                              >
-                                {m.current_plan === "yearly" ? (
-                                  <Crown className="w-3 h-3" />
-                                ) : (
-                                  <Zap className="w-3 h-3" />
-                                )}
-                                {m.current_plan === "yearly" ? "Yearly" : "Monthly"}
-                              </span>
-                            )}
-
-                            {!m.is_active && (
-                              <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-amber-100 text-amber-800 px-2 py-1 rounded-md border border-amber-300 font-bengali">
-                                Plan কিনুন
-                              </span>
-                            )}
-
-                            {!isFullyConfigured && m.is_active && (
-                              <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-orange-100 text-orange-800 px-2 py-1 rounded-md border border-orange-300 font-bengali">
-                                <SettingsIcon className="w-3 h-3" />
-                                Setup বাকি
-                              </span>
-                            )}
-                          </div>
+                          {m.current_plan && (
+                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border inline-flex items-center gap-0.5 ${
+                              m.current_plan === "yearly"
+                                ? "bg-purple-50 text-purple-700 border-purple-200"
+                                : "bg-blue-50 text-blue-700 border-blue-200"
+                            }`}>
+                              {m.current_plan === "yearly" ? <Crown className="w-2.5 h-2.5" /> : <Zap className="w-2.5 h-2.5" />}
+                              {m.current_plan === "yearly" ? "Yearly" : "Monthly"}
+                            </span>
+                          )}
+                          {daysLeft !== null && daysLeft > 0 && (
+                            <span className={`text-[10px] font-bold font-bengali px-1.5 py-0.5 rounded border ${
+                              isExpiringSoon
+                                ? "bg-amber-50 text-amber-700 border-amber-200"
+                                : "bg-gray-50 text-gray-600 border-gray-200"
+                            }`}>
+                              {daysLeft} দিন
+                            </span>
+                          )}
+                          {daysLeft !== null && daysLeft <= 0 && m.is_active && (
+                            <span className="text-[10px] font-bold bg-red-50 text-red-700 px-1.5 py-0.5 rounded border border-red-200 font-bengali">
+                              Expired
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
-
-                    {/* Bottom: expiry progress bar */}
-                    {m.is_active && daysLeft !== null && daysLeft > 0 && (
-                      <div className={`px-4 py-2.5 border-t ${isExpiringSoon ? "bg-amber-50 border-amber-200" : "bg-gray-50 border-gray-100"}`}>
-                        <div className="flex items-center justify-between text-[11px] mb-1">
-                          <span className={`font-bengali font-semibold ${isExpiringSoon ? "text-amber-800" : "text-gray-600"}`}>
-                            {isExpiringSoon ? "⚠️ শীঘ্রই Expire হবে" : "Subscription বাকি"}
-                          </span>
-                          <span className={`font-bold font-bengali ${isExpiringSoon ? "text-amber-700" : "text-gray-700"}`}>
-                            {daysLeft} দিন
-                          </span>
-                        </div>
-                        <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-all ${
-                              isExpiringSoon
-                                ? "bg-gradient-to-r from-amber-400 to-orange-500"
-                                : "bg-gradient-to-r from-emerald-400 to-green-500"
-                            }`}
-                            style={{ width: `${progressPct}%` }}
-                          />
-                        </div>
-                      </div>
-                    )}
-
-                    {m.is_active && daysLeft !== null && daysLeft <= 0 && (
-                      <div className="px-4 py-2.5 bg-red-50 border-t border-red-200">
-                        <p className="text-[11px] font-bold text-red-700 font-bengali flex items-center gap-1">
-                          <AlertTriangle className="w-3 h-3" />
-                          Subscription Expired - Renew করুন
-                        </p>
-                      </div>
-                    )}
                   </button>
                 </motion.div>
               );
             })
-          )}
-
-          {/* Pro tip footer */}
-          {merchants.length > 0 && (
-            <div className="mt-3 flex items-start gap-2 bg-gradient-to-r from-indigo-50 via-blue-50 to-cyan-50 border border-blue-200 rounded-xl p-3">
-              <Sparkles className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-blue-900 font-bengali leading-relaxed">
-                <strong>Tip:</strong> উপরের list থেকে যেকোনো Site এ ক্লিক করে সেটা নির্বাচন করুন। এরপর Settings, Orders, Setup সব নির্বাচিত Site এর জন্য কাজ করবে।
-              </p>
-            </div>
           )}
         </div>
       </div>

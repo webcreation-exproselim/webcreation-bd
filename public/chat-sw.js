@@ -1,5 +1,5 @@
 // Service worker for Live Chat Admin App push notifications
-const CACHE_VERSION = "wcbd-chat-push-v2";
+const CACHE_VERSION = "wcbd-chat-push-v3";
 
 self.addEventListener("install", (e) => self.skipWaiting());
 self.addEventListener("activate", (e) => e.waitUntil(self.clients.claim()));

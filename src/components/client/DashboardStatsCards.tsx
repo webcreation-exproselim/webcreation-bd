@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Package, FileText, CheckCircle, Shield, Search, ArrowUpRight } from "lucide-react";
+import { Package, FileText, CheckCircle, Shield, Search, ArrowUpRight, Globe } from "lucide-react";
 
 interface Order {
   id: string;

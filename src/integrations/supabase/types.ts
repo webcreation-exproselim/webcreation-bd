@@ -67,6 +67,39 @@ export type Database = {
           },
         ]
       }
+      admin_push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          p256dh: string
+          updated_at: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          p256dh: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       blacklist: {
         Row: {
           block_type: string
@@ -614,6 +647,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      live_chat_quick_replies: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          message: string
+          sort_order: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label: string
+          message: string
+          sort_order?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          message?: string
+          sort_order?: number
+          user_id?: string
+        }
+        Relationships: []
       }
       merchants: {
         Row: {

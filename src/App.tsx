@@ -29,7 +29,6 @@ import OfferPage from "./pages/OfferPage";
 import LiveChatAdmin from "./pages/LiveChatAdmin";
 import ChatApp from "./pages/ChatApp";
 import LiveChatWidget from "./components/LiveChatWidget";
-import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import { useLocation } from "react-router-dom";
 
 const ConditionalGlobals = () => {
@@ -39,7 +38,6 @@ const ConditionalGlobals = () => {
     <>
       <EditModeToggle />
       <LiveChatWidget />
-      <PWAInstallPrompt />
     </>
   );
 };

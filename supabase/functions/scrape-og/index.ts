@@ -96,6 +96,14 @@ Deno.serve(async (req) => {
 
     const uploadRemoteImage = async (imageUrl: string | null) => {
       if (!imageUrl) return null;
+      // SSRF guard: only allow http(s) and reject internal hosts.
+      try {
+        const ip = new URL(imageUrl);
+        if (ip.protocol !== 'http:' && ip.protocol !== 'https:') return null;
+        if (isBlockedHostname(ip.hostname)) return null;
+      } catch {
+        return null;
+      }
 
       try {
         console.log('Downloading image:', imageUrl);

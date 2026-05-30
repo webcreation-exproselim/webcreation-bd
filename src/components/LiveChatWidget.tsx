@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { createClient } from "@supabase/supabase-js";
 import { MessageCircle, X, Send, Image as ImageIcon, Mic, StopCircle, Loader2, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +9,17 @@ import { toast } from "sonner";
 
 const GUEST_KEY = "wcbd_live_chat_guest_id";
 const CONV_KEY = "wcbd_live_chat_conv_id";
+
+// Guest-scoped Supabase client that forwards the guest_id header so RLS can
+// match the current visitor to their own conversation only.
+function guestDb() {
+  const guestId = (typeof window !== "undefined" && localStorage.getItem(GUEST_KEY)) || "";
+  return createClient(
+    import.meta.env.VITE_SUPABASE_URL as string,
+    import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string,
+    { global: { headers: { "x-guest-id": guestId } }, auth: { persistSession: false } }
+  );
+}
 
 interface Msg {
   id: string;

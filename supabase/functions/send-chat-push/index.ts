@@ -7,10 +7,21 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Shared secret guard — only the DB trigger (which knows this value) may invoke this function.
+// Stored only in server-side code (edge function + Postgres trigger), never sent to clients.
+const SHARED_PUSH_SECRET = "wcbd_push_2026_8f7e3a92b1c4d5e6f7a8b9c0d1e2f3a4";
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    const provided = req.headers.get("x-internal-secret") || "";
+    if (provided !== SHARED_PUSH_SECRET) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const PUB = Deno.env.get("VAPID_PUBLIC_KEY")!;
     const PRIV = Deno.env.get("VAPID_PRIVATE_KEY")!;
     const SUB = Deno.env.get("VAPID_SUBJECT") || "mailto:webcreationbd99@gmail.com";

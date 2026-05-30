@@ -158,8 +158,9 @@ export default function LiveChatWidget() {
       await loadMessages(convId!);
     } else {
       const guestId = getOrCreateGuestId();
+      const gdb = guestDb();
       // Try existing conversation by guest_id
-      const { data: existing } = await supabase
+      const { data: existing } = await gdb
         .from("live_chat_conversations")
         .select("*")
         .eq("guest_id", guestId)

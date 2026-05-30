@@ -114,7 +114,8 @@ export default function LiveChatWidget() {
   useEffect(() => {
     if (!conversationId || open) return;
     const t = setInterval(async () => {
-      const { data } = await supabase
+      const client = user ? supabase : guestDb();
+      const { data } = await client
         .from("live_chat_conversations")
         .select("unread_user_count")
         .eq("id", conversationId)
@@ -122,7 +123,7 @@ export default function LiveChatWidget() {
       if (data) setUnread(data.unread_user_count || 0);
     }, 8000);
     return () => clearInterval(t);
-  }, [conversationId, open]);
+  }, [conversationId, open, user]);
 
   // Auto-scroll
   useEffect(() => {

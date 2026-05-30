@@ -59,15 +59,55 @@ const WEBSITE_INFO = `
 গ্রাহকদের সাথে বন্ধুত্বপূর্ণ এবং সহায়ক আচরণ করুন। সংক্ষিপ্ত এবং স্পষ্ট উত্তর দিন।
 `;
 
+// Simple in-memory per-IP rate limiter (resets on function cold start).
+// Caps abusive traffic without breaking legitimate users.
+const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
+const RATE_LIMIT_MAX = 12;           // 12 messages / minute / IP
+const ipHits = new Map<string, { count: number; resetAt: number }>();
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const entry = ipHits.get(ip);
+  if (!entry || entry.resetAt < now) {
+    ipHits.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return true;
+  }
+  entry.count += 1;
+  return entry.count <= RATE_LIMIT_MAX;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   try {
+    const ip =
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      req.headers.get("cf-connecting-ip") ||
+      "unknown";
+    if (!checkRateLimit(ip)) {
+      return new Response(
+        JSON.stringify({ error: "অনেক বেশি রিকোয়েস্ট হয়ে গেছে। একটু পরে আবার চেষ্টা করুন।" }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const { message, conversationHistory = [] } = await req.json();
+
+    // Validate input size to prevent prompt-stuffing abuse
+    if (typeof message !== "string" || message.length === 0 || message.length > 2000) {
+      return new Response(
+        JSON.stringify({ error: "মেসেজটি সঠিক নয়।" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    const safeHistory = Array.isArray(conversationHistory)
+      ? conversationHistory.slice(-20)
+      : [];
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    
+
     if (!LOVABLE_API_KEY) {
       console.error("LOVABLE_API_KEY is not configured");
       throw new Error("AI service not configured");
@@ -78,7 +118,7 @@ Deno.serve(async (req) => {
 
     const messages = [
       { role: "system", content: WEBSITE_INFO },
-      ...conversationHistory,
+      ...safeHistory,
       { role: "user", content: message },
     ];
 

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { createClient } from "@supabase/supabase-js";
 import { MessageCircle, X, Send, Image as ImageIcon, Mic, StopCircle, Loader2, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +9,17 @@ import { toast } from "sonner";
 
 const GUEST_KEY = "wcbd_live_chat_guest_id";
 const CONV_KEY = "wcbd_live_chat_conv_id";
+
+// Guest-scoped Supabase client that forwards the guest_id header so RLS can
+// match the current visitor to their own conversation only.
+function guestDb() {
+  const guestId = (typeof window !== "undefined" && localStorage.getItem(GUEST_KEY)) || "";
+  return createClient(
+    import.meta.env.VITE_SUPABASE_URL as string,
+    import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string,
+    { global: { headers: { "x-guest-id": guestId } }, auth: { persistSession: false } }
+  );
+}
 
 interface Msg {
   id: string;
@@ -102,7 +114,8 @@ export default function LiveChatWidget() {
   useEffect(() => {
     if (!conversationId || open) return;
     const t = setInterval(async () => {
-      const { data } = await supabase
+      const client = user ? supabase : guestDb();
+      const { data } = await client
         .from("live_chat_conversations")
         .select("unread_user_count")
         .eq("id", conversationId)
@@ -110,7 +123,7 @@ export default function LiveChatWidget() {
       if (data) setUnread(data.unread_user_count || 0);
     }, 8000);
     return () => clearInterval(t);
-  }, [conversationId, open]);
+  }, [conversationId, open, user]);
 
   // Auto-scroll
   useEffect(() => {
@@ -145,8 +158,9 @@ export default function LiveChatWidget() {
       await loadMessages(convId!);
     } else {
       const guestId = getOrCreateGuestId();
+      const gdb = guestDb();
       // Try existing conversation by guest_id
-      const { data: existing } = await supabase
+      const { data: existing } = await gdb
         .from("live_chat_conversations")
         .select("*")
         .eq("guest_id", guestId)
@@ -172,7 +186,7 @@ export default function LiveChatWidget() {
       return;
     }
     const guestId = getOrCreateGuestId();
-    const { data, error } = await supabase
+    const { data, error } = await guestDb()
       .from("live_chat_conversations")
       .insert({
         guest_id: guestId,
@@ -193,7 +207,8 @@ export default function LiveChatWidget() {
   }
 
   async function loadMessages(cid: string) {
-    const { data } = await supabase
+    const client = user ? supabase : guestDb();
+    const { data } = await client
       .from("live_chat_messages")
       .select("*")
       .eq("conversation_id", cid)
@@ -203,7 +218,8 @@ export default function LiveChatWidget() {
 
   async function markRead(cid: string) {
     setUnread(0);
-    await supabase
+    const client = user ? supabase : guestDb();
+    await client
       .from("live_chat_conversations")
       .update({ unread_user_count: 0 })
       .eq("id", cid);
@@ -214,7 +230,8 @@ export default function LiveChatWidget() {
     setSending(true);
     const messageType = payload.type ?? "text";
     const messageContent = payload.content ?? null;
-    const { error } = await supabase.from("live_chat_messages").insert({
+    const insertClient = user ? supabase : guestDb();
+    const { error } = await insertClient.from("live_chat_messages").insert({
       conversation_id: conversationId,
       sender_type: "user",
       sender_id: user?.id ?? null,

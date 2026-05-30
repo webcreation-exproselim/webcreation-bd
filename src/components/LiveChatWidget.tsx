@@ -230,7 +230,8 @@ export default function LiveChatWidget() {
     setSending(true);
     const messageType = payload.type ?? "text";
     const messageContent = payload.content ?? null;
-    const { error } = await supabase.from("live_chat_messages").insert({
+    const insertClient = user ? supabase : guestDb();
+    const { error } = await insertClient.from("live_chat_messages").insert({
       conversation_id: conversationId,
       sender_type: "user",
       sender_id: user?.id ?? null,

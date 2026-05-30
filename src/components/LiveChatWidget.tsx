@@ -186,7 +186,7 @@ export default function LiveChatWidget() {
       return;
     }
     const guestId = getOrCreateGuestId();
-    const { data, error } = await supabase
+    const { data, error } = await guestDb()
       .from("live_chat_conversations")
       .insert({
         guest_id: guestId,
@@ -207,7 +207,8 @@ export default function LiveChatWidget() {
   }
 
   async function loadMessages(cid: string) {
-    const { data } = await supabase
+    const client = user ? supabase : guestDb();
+    const { data } = await client
       .from("live_chat_messages")
       .select("*")
       .eq("conversation_id", cid)
@@ -217,7 +218,8 @@ export default function LiveChatWidget() {
 
   async function markRead(cid: string) {
     setUnread(0);
-    await supabase
+    const client = user ? supabase : guestDb();
+    await client
       .from("live_chat_conversations")
       .update({ unread_user_count: 0 })
       .eq("id", cid);

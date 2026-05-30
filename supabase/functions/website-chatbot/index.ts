@@ -118,7 +118,7 @@ Deno.serve(async (req) => {
 
     const messages = [
       { role: "system", content: WEBSITE_INFO },
-      ...conversationHistory,
+      ...safeHistory,
       { role: "user", content: message },
     ];
 

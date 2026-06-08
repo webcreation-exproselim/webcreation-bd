@@ -414,7 +414,7 @@ var selectors=[
 '#billing_phone','#phone','#billing-phone','#mobile','#contact_phone','#customer_phone',
 'input[name="billing_phone"]','input[name="phone"]','input[name="mobile"]','input[name="contact"]','input[name="contact_phone"]','input[name="customer_phone"]','input[name="phone_number"]','input[name="tel"]',
 'input[id*="phone" i]','input[id*="mobile" i]','input[name*="phone" i]','input[name*="mobile" i]',
-'.wc-block-components-text-input input[type="tel"]','input[autocomplete="tel"]','input[autocomplete="tel-national"]','input[type="tel"]'
+'.wc-block-components-text-input input[type="tel"]','input[autocomplete="tel"]','input[autocomplete="tel-national"]','input[type="tel"]','input[inputmode="tel"]','input[inputmode="numeric"]'
 ];
 for(var i=0;i<selectors.length;i++){
 try{
@@ -425,8 +425,23 @@ if(el&&el.value&&(''+el.value).trim().length>=5&&el.offsetParent!==null)return (
 }
 }catch(e){}
 }
+// Placeholder/aria-label heuristic for custom React/Next themes (no name/id/type)
+var phRe=/(01[\s0-9xX*-]{4,}|phone|mobile|tel|whatsapp|মোবাইল|ফোন|নাম্বার|নম্বর)/i;
+var allInputs=document.querySelectorAll('input,textarea');
+for(var k=0;k<allInputs.length;k++){
+try{
+var inp=allInputs[k];
+if(!inp.value||inp.offsetParent===null)continue;
+var v=(''+inp.value).trim();
+if(v.length<5)continue;
+var meta=((inp.getAttribute&&(inp.getAttribute('placeholder')||''))+' '+(inp.getAttribute&&(inp.getAttribute('aria-label')||''))).toLowerCase();
+// Match if placeholder/label looks phone-like OR value itself matches BD phone
+if(phRe.test(meta)||/^(\+?880)?0?1[0-9]{9}$/.test(v.replace(/[\s\-+]/g,''))) return v;
+}catch(e){}
+}
 return '';
 },
+
 
 validateLicense:function(callback){
 console.log('[WCBD] Validating license...');

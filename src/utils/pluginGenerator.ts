@@ -375,37 +375,11 @@ btn.click();
 return;
 }
 
-console.log('[WCBD] Block checkout validating phone:',ph);
-var origText=btn.textContent;
-btn.textContent=self.lang==='bn'?'চেক করা হচ্ছে...':'Checking...';
-btn.disabled=true;
-
-jQ.ajax({
-url:self.endpoint,method:'POST',contentType:'application/json',timeout:12000,
-data:JSON.stringify({api_key:self.apiKey,phone:ph,device_id:self.deviceId,domain:window.location.hostname,check_type:'order'}),
-success:function(r){
-console.log('[WCBD] Block checkout API response:',r);
-if(r.popup_settings)self.applyRemoteSettings(r.popup_settings);
-if(r.allowed){
+console.log('[WCBD] Block checkout prechecking phone:',ph);
+self.doPrecheck(ph,jQ(btn),function(allowed){
+self.blockCheckoutValidating=false;
+if(allowed){
 self.blockCheckoutAllowed=true;
-self.blockCheckoutValidating=false;
-btn.textContent=origText;
-btn.disabled=false;
-btn.click();
-}else{
-self.blockCheckoutValidating=false;
-btn.textContent=origText;
-btn.disabled=false;
-var customMsg=r.reason==='blacklist'?self.msgBlacklist:self.msgCooldown;
-self.popup(r.reason,customMsg,r.minutes_remaining);
-}
-},
-error:function(xhr,status,err){
-console.error('[WCBD] Block checkout API error:',err);
-self.blockCheckoutAllowed=true;
-self.blockCheckoutValidating=false;
-btn.textContent=origText;
-btn.disabled=false;
 btn.click();
 }
 });
@@ -650,11 +624,10 @@ var self=this;
 var origText=btnEl.length?btnEl.text():'';
 if(btnEl.length){btnEl.prop('disabled',true).text(self.lang==='bn'?'চেক করা হচ্ছে...':'Checking...');}
 
-// Use check_type:'order' here — universal interceptor is the FINAL gate on custom themes
-// (no PHP hook backup). This logs to fraud_logs and enforces cooldown / same-device blocking.
+var checkType=arguments.length>3&&arguments[3]?arguments[3]:'precheck';
 jQ.ajax({
 url:self.endpoint,method:'POST',contentType:'application/json',timeout:12000,
-data:JSON.stringify({api_key:self.apiKey,phone:phone,device_id:self.deviceId,domain:window.location.hostname,check_type:'order'}),
+data:JSON.stringify({api_key:self.apiKey,phone:phone,device_id:self.deviceId,domain:window.location.hostname,check_type:checkType}),
 success:function(r){
 console.log('[WCBD] Precheck response:',r);
 if(r.popup_settings)self.applyRemoteSettings(r.popup_settings);

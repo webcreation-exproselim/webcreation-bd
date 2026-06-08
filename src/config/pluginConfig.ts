@@ -4,7 +4,7 @@
 
 export const PLUGIN_CONFIG = {
   // Current version - UPDATE THIS WHEN RELEASING NEW VERSIONS
-  version: "9.3.1",
+  version: "9.3.2",
   
   // Plugin metadata
   name: "WCBD Fraud Guard",
@@ -16,10 +16,11 @@ export const PLUGIN_CONFIG = {
   badgeLabel: "STABLE",
   
   // Current version highlights (for banners and feature lists)
-  versionHighlight: "Custom Theme Checkout Loader Fix",
+  versionHighlight: "Same Device & Cooldown Block Fix (Custom Checkout)",
   
   // What's new in this version (for feature list)
   whatsNew: [
+    { icon: "🚫", title: "Same Device Block Fix", description: "Custom theme checkout এ এখন একই device/phone থেকে cooldown এর মধ্যে ২য় অর্ডার ব্লক হবে (আগে log হতো না)" },
     { icon: "🎯", title: "Loader Fix", description: "Custom theme checkout (choloman style) এও plugin এখন লোড হবে - phone/mobile field detect করেই active হয়" },
     { icon: "🌐", title: "Universal Checkout Support", description: "CartFlows, Elementor, WPForms, Custom Theme সব checkout এ কাজ করবে" },
     { icon: "🖱️", title: "Button Click Interception", description: "AJAX checkout এর Place Order বাটন ক্লিকেও ফ্রড চেক হবে - form submit লাগবে না" },

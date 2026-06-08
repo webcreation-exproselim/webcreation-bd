@@ -270,9 +270,8 @@ blockCheckoutValidating:false,
 blockCheckoutAllowed:false,
 universalValidating:false,
 universalAllowed:false,
-ajaxOrderAllowed:false,
 ajaxOrderValidating:false,
-ajaxOrderBypassUntil:0,
+ajaxOrderReplaying:false,
 
 init:function(){
 var self=this;
@@ -346,13 +345,19 @@ jQ(document).on('click','.wc-block-components-checkout-place-order-button',funct
 if(!self.licenseValid)return;
 if(self.blockCheckoutAllowed)return;
 if(self.blockCheckoutValidating)return;
+var btn=this;
 if(!this.dataset.wcbdHooked){
 this.dataset.wcbdHooked='true';
 e.preventDefault();
 e.stopImmediatePropagation();
 var ph=self.getBlockCheckoutPhone();
 if(!ph||ph.length<5)return;
-self.doPrecheck(ph,jQ(this));
+self.doPrecheck(ph,jQ(btn),function(allowed){
+if(allowed){
+self.blockCheckoutAllowed=true;
+btn.click();
+}
+});
 }
 });
 },
@@ -375,37 +380,11 @@ btn.click();
 return;
 }
 
-console.log('[WCBD] Block checkout validating phone:',ph);
-var origText=btn.textContent;
-btn.textContent=self.lang==='bn'?'চেক করা হচ্ছে...':'Checking...';
-btn.disabled=true;
-
-jQ.ajax({
-url:self.endpoint,method:'POST',contentType:'application/json',timeout:12000,
-data:JSON.stringify({api_key:self.apiKey,phone:ph,device_id:self.deviceId,domain:window.location.hostname,check_type:'order'}),
-success:function(r){
-console.log('[WCBD] Block checkout API response:',r);
-if(r.popup_settings)self.applyRemoteSettings(r.popup_settings);
-if(r.allowed){
+console.log('[WCBD] Block checkout prechecking phone:',ph);
+self.doPrecheck(ph,jQ(btn),function(allowed){
+self.blockCheckoutValidating=false;
+if(allowed){
 self.blockCheckoutAllowed=true;
-self.blockCheckoutValidating=false;
-btn.textContent=origText;
-btn.disabled=false;
-btn.click();
-}else{
-self.blockCheckoutValidating=false;
-btn.textContent=origText;
-btn.disabled=false;
-var customMsg=r.reason==='blacklist'?self.msgBlacklist:self.msgCooldown;
-self.popup(r.reason,customMsg,r.minutes_remaining);
-}
-},
-error:function(xhr,status,err){
-console.error('[WCBD] Block checkout API error:',err);
-self.blockCheckoutAllowed=true;
-self.blockCheckoutValidating=false;
-btn.textContent=origText;
-btn.disabled=false;
 btn.click();
 }
 });
@@ -503,8 +482,6 @@ self.doPrecheck(ph,form.find('button[type="submit"],input[type="submit"]'),funct
 self.universalValidating=false;
 if(allowed){
 self.universalAllowed=true;
-self.ajaxOrderAllowed=true;
-self.ajaxOrderBypassUntil=Date.now()+10000;
 try{form[0].submit();}catch(e){form.trigger('submit');}
 }
 });
@@ -550,8 +527,6 @@ self.doPrecheck(ph,jQ(btn),function(allowed){
 self.universalValidating=false;
 if(allowed){
 self.universalAllowed=true;
-self.ajaxOrderAllowed=true;
-self.ajaxOrderBypassUntil=Date.now()+10000;
 btn.dataset.wcbdClickHooked='1';
 // Replay the click so the site's own handler runs
 setTimeout(function(){try{btn.click();}catch(e){}},10);
@@ -594,7 +569,8 @@ function normalizePhone(v){return (''+(v||'')).replace(/[^0-9]/g,'').replace(/^0
 function ajaxLooksLikeOrder(url,data){
 var hay=((url||'')+' '+dataToString(data)).toLowerCase();
 if(hay.indexOf('check-order-eligibility')!==-1||hay.indexOf('log-checkout-attempt')!==-1)return false;
-if(/wc-ajax=checkout|woocommerce_checkout|place_order|place-order|choloman_place_order|checkout_place_order|submit_order|confirm_order/i.test(hay))return true;
+if(/wc-ajax=checkout|woocommerce_checkout/i.test(hay))return false;
+if(/choloman_place_order|custom_place_order|place_order|place-order|submit_order|confirm_order/i.test(hay))return true;
 if(/admin-ajax\.php/i.test(hay)&&/action=.*(order|checkout|place)/i.test(hay)&&/(phone|mobile|billing_phone|address|product_id)/i.test(hay))return true;
 return false;
 }
@@ -609,7 +585,7 @@ function guardedAjax(args,runner,settings){
 var url=(settings&&settings.url)||'';
 var data=settings&&settings.data;
 if(!ajaxLooksLikeOrder(url,data))return runner();
-if(self.ajaxOrderAllowed&&Date.now()<self.ajaxOrderBypassUntil){self.ajaxOrderAllowed=false;return runner();}
+if(self.ajaxOrderReplaying)return runner();
 if(self.ajaxOrderValidating)return runner();
 var ph=phoneFromAjax(data);
 if(!ph||(''+ph).length<5)return runner();
@@ -621,13 +597,14 @@ self.ajaxOrderValidating=true;
 self.doPrecheck(ph,btn,function(allowed){
 self.ajaxOrderValidating=false;
 if(allowed){
-self.ajaxOrderAllowed=true;
-self.ajaxOrderBypassUntil=Date.now()+10000;
-runner().done(function(){dfd.resolveWith(this,arguments);}).fail(function(){dfd.rejectWith(this,arguments);}).always(function(){dfd.notifyWith&&dfd.notifyWith(this,arguments);});
+self.ajaxOrderReplaying=true;
+var req=runner();
+self.ajaxOrderReplaying=false;
+req.done(function(){dfd.resolveWith(this,arguments);}).fail(function(){dfd.rejectWith(this,arguments);}).always(function(){dfd.notifyWith&&dfd.notifyWith(this,arguments);});
 }else{
 dfd.rejectWith(settings||this,[{status:403,responseJSON:{success:false,data:{message:'Blocked by WCBD Fraud Guard'}}},'wcbd_blocked','Blocked by WCBD Fraud Guard']);
 }
-});
+},'order');
 return dfd.promise({abort:function(){dfd.reject();}});
 }
 
@@ -650,11 +627,10 @@ var self=this;
 var origText=btnEl.length?btnEl.text():'';
 if(btnEl.length){btnEl.prop('disabled',true).text(self.lang==='bn'?'চেক করা হচ্ছে...':'Checking...');}
 
-// Use check_type:'order' here — universal interceptor is the FINAL gate on custom themes
-// (no PHP hook backup). This logs to fraud_logs and enforces cooldown / same-device blocking.
+var checkType=arguments.length>3&&arguments[3]?arguments[3]:'precheck';
 jQ.ajax({
 url:self.endpoint,method:'POST',contentType:'application/json',timeout:12000,
-data:JSON.stringify({api_key:self.apiKey,phone:phone,device_id:self.deviceId,domain:window.location.hostname,check_type:'order'}),
+data:JSON.stringify({api_key:self.apiKey,phone:phone,device_id:self.deviceId,domain:window.location.hostname,check_type:checkType}),
 success:function(r){
 console.log('[WCBD] Precheck response:',r);
 if(r.popup_settings)self.applyRemoteSettings(r.popup_settings);

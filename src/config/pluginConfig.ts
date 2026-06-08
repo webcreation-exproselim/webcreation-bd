@@ -4,7 +4,7 @@
 
 export const PLUGIN_CONFIG = {
   // Current version - UPDATE THIS WHEN RELEASING NEW VERSIONS
-  version: "9.3.2",
+  version: "9.3.3",
   
   // Plugin metadata
   name: "WCBD Fraud Guard",
@@ -16,19 +16,20 @@ export const PLUGIN_CONFIG = {
   badgeLabel: "STABLE",
   
   // Current version highlights (for banners and feature lists)
-  versionHighlight: "Same Device & Cooldown Block Fix (Custom Checkout)",
+  versionHighlight: "Universal Custom Checkout Block + Incomplete Tracking",
   
   // What's new in this version (for feature list)
   whatsNew: [
-    { icon: "🚫", title: "Same Device Block Fix", description: "Custom theme checkout এ এখন একই device/phone থেকে cooldown এর মধ্যে ২য় অর্ডার ব্লক হবে (আগে log হতো না)" },
-    { icon: "🎯", title: "Loader Fix", description: "Custom theme checkout (choloman style) এও plugin এখন লোড হবে - phone/mobile field detect করেই active হয়" },
+    { icon: "🛑", title: "Custom Checkout Block Fix", description: "যেকোনো React/Next/Custom checkout (choloman style) এ Place Order বাটন ব্লক হবে এবং popup আসার পর অর্ডার যাবে না" },
+    { icon: "📝", title: "Universal Incomplete Tracking", description: "Custom theme এর placeholder/label থেকে phone, name, address, email detect করে Incomplete Orders এ save হবে" },
+    { icon: "🔍", title: "Placeholder-Based Detection", description: "name/id না থাকলেও placeholder ('017XXXXXXXX', 'মোবাইল নাম্বার' ইত্যাদি) দেখে phone field খুঁজে বের করবে" },
+    { icon: "🚫", title: "Same Device Block (Custom)", description: "Custom theme checkout এ একই device/phone থেকে cooldown এর মধ্যে ২য় অর্ডার ব্লক হবে" },
     { icon: "🌐", title: "Universal Checkout Support", description: "CartFlows, Elementor, WPForms, Custom Theme সব checkout এ কাজ করবে" },
     { icon: "🖱️", title: "Button Click Interception", description: "AJAX checkout এর Place Order বাটন ক্লিকেও ফ্রড চেক হবে - form submit লাগবে না" },
-    { icon: "📱", title: "Smarter Phone Detection", description: "যেকোনো নামের phone field খুঁজে বের করবে (#phone, mobile, contact, tel ইত্যাদি)" },
-    { icon: "🎨", title: "CheckoutGuard Style UI", description: "Clean White/Gray ডিজাইন - Details Modal সহ প্রফেশনাল Dashboard" },
     { icon: "⚡", title: "800ms Real-time Tracking", description: "ফিল্ড টাইপ করার ৮০০ms পর অটো-সেভ" },
     { icon: "📧", title: "Email Field Tracking", description: "Name, Phone, Email, Address সব ক্যাপচার" },
   ],
+
   
   // All features list
   features: [

@@ -1,39 +1,64 @@
 
+## সমস্যা
 
-## Plan: Facebook Post Links — Story Style UI
+choloman.shop এর order form একটা **custom theme-built form** — WooCommerce এর default checkout না। তাই Fraud Guard plugin এর tiny "loader script" এর `wcbdCheckout()` gate এ false return হয় এবং পুরো Fraud Guard সিস্টেম (FingerprintJS, validator, popup, universal interceptor) কখনোই লোড হয় না।
 
-### Summary
-Admin Dashboard থেকে Facebook পোস্টের লিংক দিবেন, হোমপেজে সেগুলো Instagram/Facebook Story-র মতো সুন্দর circular cards হিসেবে সবসময় দেখাবে। ক্লিক করলে নতুন ট্যাবে Facebook পোস্ট ওপেন হবে।
+প্রমাণ (live site থেকে):
+- Network requests এ কোনো `wcbd` / `fingerprintjs` script নেই
+- Console এ কোনো `[WCBD]` log নেই
+- form এর phone input এ `name="billing_phone"`, `autocomplete="tel"`, বা `type="tel"` কিছুই নেই — শুধু placeholder `017XXXXXXXX`
 
-### Database
-- New table: **`stories`** — `id` (uuid), `title` (text), `facebook_url` (text), `thumbnail_url` (text, nullable), `caption` (text, nullable), `is_active` (boolean, default true), `sort_order` (int), `created_at` (timestamptz), `created_by` (uuid)
-- RLS: Public SELECT for active stories, admin-only INSERT/UPDATE/DELETE
+## কী ঠিক করব
 
-### New Components
+শুধু **loader gate** (`wcbdCheckout()` function in `src/utils/pluginGenerator.ts`, line ~163) broaden করব। এটাই একমাত্র পরিবর্তন — interceptor logic আগের turn এ ঠিক হয়েই আছে, কিন্তু loader আগেই থামিয়ে দিচ্ছে তাই সেটা চালু হচ্ছে না।
 
-**1. `src/components/StoriesSection.tsx`** (Homepage)
-- Header এর নিচে সবসময় visible থাকবে
-- Horizontal scrollable row of circular cards with gradient ring (Instagram style)
-- প্রতিটি card এ thumbnail দেখাবে (admin যদি thumbnail দেয়), না দিলে Facebook icon + title দেখাবে
-- Click করলে সরাসরি Facebook post link নতুন ট্যাবে ওপেন হবে
-- Dark theme (`bg-black`) matching homepage
-- Mobile-friendly touch scroll
+### File: `src/utils/pluginGenerator.ts`
 
-**2. `src/components/admin/StoriesManagement.tsx`** (Admin Dashboard)
-- Facebook post URL paste করার ইনপুট
-- Title ও optional thumbnail URL দেওয়ার ফিল্ড
-- Active/inactive toggle
-- Edit, delete, reorder functionality
-- List view with preview
+`wcbdCheckout()` এ নতুন detection rules যোগ:
+- `input[type="tel"]`
+- `input[id*="phone" i]`, `input[name*="phone" i]`
+- `input[id*="mobile" i]`, `input[name*="mobile" i]`
+- `input[id*="contact" i]`, `input[name*="contact" i]`
+- Known builder containers: `.cartflows-form-container`, `.cf-step`, `.elementor-form`, `.wpforms-form`, `.gform_wrapper`, `.fluentform`
+- Heuristic fallback: যেকোনো `<form>` যার ভিতরে phone-like input আছে + একটা submit button "অর্ডার / order / checkout / buy / pay" keyword এ match করে
 
-### Integration Points
-- **`Index.tsx`**: Add `<StoriesSection />` after `<Header />`, before `<HeroSection />`
-- **`AdminSidebar.tsx`** + **`AdminMobileNav.tsx`**: Add "স্টোরি" tab (`id: "stories"`)
-- **`AdminDashboard.tsx`**: Register stories tab with `<StoriesManagement />`
-- **TabType**: Add `"stories"` to the type union
+```js
+function wcbdCheckout(){
+  var selectors=[
+    'form.checkout','.wc-block-checkout','.woocommerce-checkout','#payment','#order_review',
+    '#billing_phone','input[name="billing_phone"]','.wc-block-components-text-input input[type="tel"]','input[autocomplete="tel"]',
+    'input[type="tel"]',
+    'input[id*="phone" i]','input[name*="phone" i]',
+    'input[id*="mobile" i]','input[name*="mobile" i]',
+    'input[id*="contact" i]','input[name*="contact" i]',
+    '.cartflows-form-container','.cf-step','.elementor-form','.wpforms-form','.gform_wrapper','.fluentform'
+  ];
+  for(var i=0;i<selectors.length;i++){if(document.querySelector(selectors[i]))return true;}
+  // Heuristic: any form with phone-like input
+  var forms=document.querySelectorAll('form');
+  for(var k=0;k<forms.length;k++){
+    var f=forms[k];
+    if(f.querySelector('input[type="tel"], [name*="phone" i], [name*="mobile" i], [id*="phone" i], [id*="mobile" i]')) return true;
+  }
+  return false;
+}
+```
 
-### Technical Details
-- No Facebook API or embed needed — just stores URLs and opens them on click
-- Thumbnail can be manually provided by admin (paste image URL) or show a default Facebook-style placeholder
-- Framer Motion animations for smooth scroll and hover effects
+### File: `src/config/pluginConfig.ts`
 
+Version bump → `9.3.1` সাথে whatsNew এ যোগ:
+- "🎯 Loader Fix: Custom theme checkout এও plugin এখন লোড হবে (choloman style sites)"
+
+## Client কে কী করতে হবে
+
+1. Dashboard থেকে নতুন **v9.3.1** plugin ZIP download করতে হবে
+2. choloman.shop এ পুরোনো `wcbd-fraud-guard` plugin deactivate → delete → নতুনটা upload + activate
+3. Settings এ গিয়ে API key ও domain যাচাই (auto pre-configured থাকবে domain-specific build হলে)
+4. Order form এ একটা test phone দিয়ে verify — console এ `[WCBD v9.3.1] Checkout detected - loading Fraud Guard...` log আসবে
+
+## কী পরিবর্তন হচ্ছে না (safety)
+
+- বাকি running sites (vesoj.store, organiccare.com.bd ইত্যাদি WooCommerce sites) এ কোনো প্রভাব নেই — gate শুধু আরও বেশি match করছে, কম না
+- License check, domain binding, blacklist, cooldown, fraud_logs — সব unchanged
+- Block checkout + classic WooCommerce interceptor — unchanged
+- Edge function (`check-order-eligibility`) — কোনো পরিবর্তন না

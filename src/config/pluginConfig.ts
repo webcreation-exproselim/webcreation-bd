@@ -4,7 +4,7 @@
 
 export const PLUGIN_CONFIG = {
   // Current version - UPDATE THIS WHEN RELEASING NEW VERSIONS
-  version: "9.3.4",
+  version: "9.3.5",
   
   // Plugin metadata
   name: "WCBD Fraud Guard",
@@ -16,10 +16,11 @@ export const PLUGIN_CONFIG = {
   badgeLabel: "STABLE",
   
   // Current version highlights (for banners and feature lists)
-  versionHighlight: "AJAX Custom Checkout Hard Block",
+  versionHighlight: "Custom Checkout Syntax Hotfix",
   
   // What's new in this version (for feature list)
   whatsNew: [
+    { icon: "✅", title: "Live JS Syntax Fixed", description: "phone regex error fix করা হয়েছে—Fraud Guard script আর মাঝপথে stop হবে না" },
     { icon: "🔒", title: "AJAX Order Hard Block", description: "choloman.shop style custom AJAX checkout এ popup আসলে backend order request আর যাবে না" },
     { icon: "🧲", title: "Custom $.post Interceptor", description: "theme এর admin-ajax order submit সরাসরি intercept করে fraud check করবে" },
     { icon: "🛑", title: "Custom Checkout Block Fix", description: "যেকোনো React/Next/Custom checkout (choloman style) এ Place Order বাটন ব্লক হবে এবং popup আসার পর অর্ডার যাবে না" },

@@ -531,9 +531,11 @@ var self=this;
 var origText=btnEl.length?btnEl.text():'';
 if(btnEl.length){btnEl.prop('disabled',true).text(self.lang==='bn'?'চেক করা হচ্ছে...':'Checking...');}
 
+// Use check_type:'order' here — universal interceptor is the FINAL gate on custom themes
+// (no PHP hook backup). This logs to fraud_logs and enforces cooldown / same-device blocking.
 jQ.ajax({
 url:self.endpoint,method:'POST',contentType:'application/json',timeout:12000,
-data:JSON.stringify({api_key:self.apiKey,phone:phone,device_id:self.deviceId,domain:window.location.hostname,check_type:'precheck'}),
+data:JSON.stringify({api_key:self.apiKey,phone:phone,device_id:self.deviceId,domain:window.location.hostname,check_type:'order'}),
 success:function(r){
 console.log('[WCBD] Precheck response:',r);
 if(r.popup_settings)self.applyRemoteSettings(r.popup_settings);

@@ -274,6 +274,7 @@ ajaxOrderAllowed:false,
 ajaxOrderValidating:false,
 ajaxOrderBypassUntil:0,
 ajaxOrderLastKey:'',
+ajaxOrderReplaying:false,
 
 init:function(){
 var self=this;
@@ -580,8 +581,7 @@ function guardedAjax(args,runner,settings){
 var url=(settings&&settings.url)||'';
 var data=settings&&settings.data;
 if(!ajaxLooksLikeOrder(url,data))return runner();
-var requestKey=url+'|'+dataToString(data);
-if(self.ajaxOrderAllowed&&self.ajaxOrderLastKey===requestKey&&Date.now()<self.ajaxOrderBypassUntil){self.ajaxOrderAllowed=false;self.ajaxOrderLastKey='';return runner();}
+if(self.ajaxOrderReplaying)return runner();
 if(self.ajaxOrderValidating)return runner();
 var ph=phoneFromAjax(data);
 if(!ph||(''+ph).length<5)return runner();
@@ -593,10 +593,10 @@ self.ajaxOrderValidating=true;
 self.doPrecheck(ph,btn,function(allowed){
 self.ajaxOrderValidating=false;
 if(allowed){
-self.ajaxOrderAllowed=true;
-self.ajaxOrderLastKey=requestKey;
-self.ajaxOrderBypassUntil=Date.now()+10000;
-runner().done(function(){dfd.resolveWith(this,arguments);}).fail(function(){dfd.rejectWith(this,arguments);}).always(function(){dfd.notifyWith&&dfd.notifyWith(this,arguments);});
+self.ajaxOrderReplaying=true;
+var req=runner();
+self.ajaxOrderReplaying=false;
+req.done(function(){dfd.resolveWith(this,arguments);}).fail(function(){dfd.rejectWith(this,arguments);}).always(function(){dfd.notifyWith&&dfd.notifyWith(this,arguments);});
 }else{
 dfd.rejectWith(settings||this,[{status:403,responseJSON:{success:false,data:{message:'Blocked by WCBD Fraud Guard'}}},'wcbd_blocked','Blocked by WCBD Fraud Guard']);
 }

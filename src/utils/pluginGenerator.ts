@@ -440,7 +440,7 @@ var v=(''+inp.value).trim();
 if(v.length<5)continue;
 var meta=((inp.getAttribute&&(inp.getAttribute('placeholder')||''))+' '+(inp.getAttribute&&(inp.getAttribute('aria-label')||''))).toLowerCase();
 // Match if placeholder/label looks phone-like OR value itself matches BD phone
-if(phRe.test(meta)||/^(\+?880)?0?1[0-9]{9}$/.test(v.replace(/[\s\-+]/g,''))) return v;
+if(phRe.test(meta)||/^(\\+?880)?0?1[0-9]{9}$/.test(v.replace(/[\\s\\-+]/g,''))) return v;
 }catch(e){}
 }
 return '';
@@ -585,7 +585,7 @@ if(!data)return '';
 if(typeof data==='object'&&!(data instanceof FormData))return data[key]||'';
 if(data instanceof FormData)return data.get(key)||'';
 var m=('&'+dataToString(data)).match(new RegExp('[&?]'+key+'=([^&]+)','i'));
-return m?decodeURIComponent((''+m[1]).replace(/\+/g,' ')):'';
+return m?decodeURIComponent((''+m[1]).replace(/\\+/g,' ')):'';
 }catch(e){return '';}
 }
 

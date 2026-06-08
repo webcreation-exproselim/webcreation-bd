@@ -270,10 +270,7 @@ blockCheckoutValidating:false,
 blockCheckoutAllowed:false,
 universalValidating:false,
 universalAllowed:false,
-ajaxOrderAllowed:false,
 ajaxOrderValidating:false,
-ajaxOrderBypassUntil:0,
-ajaxOrderLastKey:'',
 ajaxOrderReplaying:false,
 
 init:function(){
@@ -348,13 +345,19 @@ jQ(document).on('click','.wc-block-components-checkout-place-order-button',funct
 if(!self.licenseValid)return;
 if(self.blockCheckoutAllowed)return;
 if(self.blockCheckoutValidating)return;
+var btn=this;
 if(!this.dataset.wcbdHooked){
 this.dataset.wcbdHooked='true';
 e.preventDefault();
 e.stopImmediatePropagation();
 var ph=self.getBlockCheckoutPhone();
 if(!ph||ph.length<5)return;
-self.doPrecheck(ph,jQ(this));
+self.doPrecheck(ph,jQ(btn),function(allowed){
+if(allowed){
+self.blockCheckoutAllowed=true;
+btn.click();
+}
+});
 }
 });
 },

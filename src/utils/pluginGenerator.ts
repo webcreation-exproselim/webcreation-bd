@@ -272,6 +272,7 @@ universalValidating:false,
 universalAllowed:false,
 ajaxOrderAllowed:false,
 ajaxOrderValidating:false,
+ajaxOrderBypassUntil:0,
 
 init:function(){
 var self=this;
@@ -502,6 +503,8 @@ self.doPrecheck(ph,form.find('button[type="submit"],input[type="submit"]'),funct
 self.universalValidating=false;
 if(allowed){
 self.universalAllowed=true;
+self.ajaxOrderAllowed=true;
+self.ajaxOrderBypassUntil=Date.now()+10000;
 try{form[0].submit();}catch(e){form.trigger('submit');}
 }
 });
@@ -547,12 +550,99 @@ self.doPrecheck(ph,jQ(btn),function(allowed){
 self.universalValidating=false;
 if(allowed){
 self.universalAllowed=true;
+self.ajaxOrderAllowed=true;
+self.ajaxOrderBypassUntil=Date.now()+10000;
 btn.dataset.wcbdClickHooked='1';
 // Replay the click so the site's own handler runs
 setTimeout(function(){try{btn.click();}catch(e){}},10);
 }
 });
 },true);
+},
+
+setupAjaxOrderInterceptor:function(){
+var self=this;
+if(!this.licenseValid||!window.jQuery||window.__wcbdAjaxOrderHooked)return;
+window.__wcbdAjaxOrderHooked=true;
+console.log('[WCBD] Setting up AJAX order interceptor for custom checkouts...');
+
+var originalAjax=jQ.ajax;
+var originalPost=jQ.post;
+
+function dataToString(data){
+try{
+if(!data)return '';
+if(typeof data==='string')return data;
+if(data instanceof FormData){var arr=[];data.forEach(function(v,k){arr.push(k+'='+v);});return arr.join('&');}
+if(typeof data==='object')return Object.keys(data).map(function(k){return k+'='+data[k];}).join('&');
+return ''+data;
+}catch(e){return '';}
+}
+
+function dataValue(data,key){
+try{
+if(!data)return '';
+if(typeof data==='object'&&!(data instanceof FormData))return data[key]||'';
+if(data instanceof FormData)return data.get(key)||'';
+var m=('&'+dataToString(data)).match(new RegExp('[&?]'+key+'=([^&]+)','i'));
+return m?decodeURIComponent((''+m[1]).replace(/\+/g,' ')):'';
+}catch(e){return '';}
+}
+
+function normalizePhone(v){return (''+(v||'')).replace(/[\s\-\+]/g,'').replace(/^0088/,'0').replace(/^880/,'0');}
+
+function ajaxLooksLikeOrder(url,data){
+var hay=((url||'')+' '+dataToString(data)).toLowerCase();
+if(hay.indexOf('check-order-eligibility')!==-1||hay.indexOf('log-checkout-attempt')!==-1)return false;
+if(/wc-ajax=checkout|woocommerce_checkout|place_order|place-order|choloman_place_order|checkout_place_order|submit_order|confirm_order/i.test(hay))return true;
+if(/admin-ajax\.php/i.test(hay)&&/action=.*(order|checkout|place)/i.test(hay)&&/(phone|mobile|billing_phone|address|product_id)/i.test(hay))return true;
+return false;
+}
+
+function phoneFromAjax(data){
+var ph=dataValue(data,'billing_phone')||dataValue(data,'phone')||dataValue(data,'mobile')||dataValue(data,'customer_phone')||self.getBlockCheckoutPhone();
+var normalized=normalizePhone(ph);
+return /^01[0-9]{9}$/.test(normalized)?normalized:ph;
+}
+
+function guardedAjax(args,runner,settings){
+var url=(settings&&settings.url)||'';
+var data=settings&&settings.data;
+if(!ajaxLooksLikeOrder(url,data))return runner();
+if(self.ajaxOrderAllowed&&Date.now()<self.ajaxOrderBypassUntil){self.ajaxOrderAllowed=false;return runner();}
+if(self.ajaxOrderValidating)return runner();
+var ph=phoneFromAjax(data);
+if(!ph||(''+ph).length<5)return runner();
+
+console.log('[WCBD] AJAX order intercepted, phone:',ph);
+var dfd=jQ.Deferred();
+var btn=jQ('button[type="submit"]:visible,input[type="submit"]:visible').last();
+self.ajaxOrderValidating=true;
+self.doPrecheck(ph,btn,function(allowed){
+self.ajaxOrderValidating=false;
+if(allowed){
+self.ajaxOrderAllowed=true;
+self.ajaxOrderBypassUntil=Date.now()+10000;
+runner().done(function(){dfd.resolveWith(this,arguments);}).fail(function(){dfd.rejectWith(this,arguments);}).always(function(){dfd.notifyWith&&dfd.notifyWith(this,arguments);});
+}else{
+dfd.rejectWith(settings||this,[{status:403,responseJSON:{success:false,data:{message:'Blocked by WCBD Fraud Guard'}}},'wcbd_blocked','Blocked by WCBD Fraud Guard']);
+}
+});
+return dfd.promise({abort:function(){dfd.reject();}});
+}
+
+jQ.ajax=function(url,options){
+var args=arguments;
+var settings=typeof url==='object'?url:(options||{});
+if(typeof url==='string')settings=Object.assign({},settings,{url:url});
+return guardedAjax(args,function(){return originalAjax.apply(jQ,args);},settings);
+};
+
+jQ.post=function(url,data,success,dataType){
+var args=arguments;
+var settings={url:url,data:data,type:'POST'};
+return guardedAjax(args,function(){return originalPost.apply(jQ,args);},settings);
+};
 },
 
 doPrecheck:function(phone,btnEl,callback){

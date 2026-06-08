@@ -161,8 +161,21 @@ for(var i=0;i<tySelectors.length;i++){if(document.querySelector(tySelectors[i]))
 return false;
 }
 function wcbdCheckout(){
-var selectors=['form.checkout','.wc-block-checkout','#billing_phone','input[name="billing_phone"]','.wc-block-components-text-input input[type="tel"]','input[autocomplete="tel"]','.woocommerce-checkout','#payment','#order_review'];
-for(var i=0;i<selectors.length;i++){if(document.querySelector(selectors[i]))return true;}
+var selectors=[
+'form.checkout','.wc-block-checkout','.woocommerce-checkout','#payment','#order_review',
+'#billing_phone','input[name="billing_phone"]','.wc-block-components-text-input input[type="tel"]','input[autocomplete="tel"]',
+'input[type="tel"]',
+'input[id*="phone" i]','input[name*="phone" i]',
+'input[id*="mobile" i]','input[name*="mobile" i]',
+'input[id*="contact" i]','input[name*="contact" i]',
+'.cartflows-form-container','.cf-step','.elementor-form','.wpforms-form','.gform_wrapper','.fluentform'
+];
+for(var i=0;i<selectors.length;i++){try{if(document.querySelector(selectors[i]))return true;}catch(e){}}
+// Heuristic: any form with a phone-like input
+var forms=document.querySelectorAll('form');
+for(var k=0;k<forms.length;k++){
+try{if(forms[k].querySelector('input[type="tel"], [name*="phone" i], [name*="mobile" i], [id*="phone" i], [id*="mobile" i]'))return true;}catch(e){}
+}
 return false;
 }
 function wcbdCleanupCompleted(){

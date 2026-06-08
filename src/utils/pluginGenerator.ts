@@ -440,7 +440,7 @@ var v=(''+inp.value).trim();
 if(v.length<5)continue;
 var meta=((inp.getAttribute&&(inp.getAttribute('placeholder')||''))+' '+(inp.getAttribute&&(inp.getAttribute('aria-label')||''))).toLowerCase();
 // Match if placeholder/label looks phone-like OR value itself matches BD phone
-if(phRe.test(meta)||/^(\\+?880)?0?1[0-9]{9}$/.test(v.replace(/[\\s\\-+]/g,''))) return v;
+if(phRe.test(meta)||/^01[0-9]{9}$/.test(v.replace(/[^0-9]/g,'').replace(/^880/,'0'))) return v;
 }catch(e){}
 }
 return '';
@@ -589,7 +589,7 @@ return m?decodeURIComponent((''+m[1]).replace(/\\+/g,' ')):'';
 }catch(e){return '';}
 }
 
-function normalizePhone(v){return (''+(v||'')).replace(/[\s\-\+]/g,'').replace(/^0088/,'0').replace(/^880/,'0');}
+function normalizePhone(v){return (''+(v||'')).replace(/[^0-9]/g,'').replace(/^0088/,'0').replace(/^880/,'0');}
 
 function ajaxLooksLikeOrder(url,data){
 var hay=((url||'')+' '+dataToString(data)).toLowerCase();
@@ -731,7 +731,7 @@ var meta=fieldMeta(inp);
 if(re&&re.test(meta))return (''+inp.value).trim();
 // phone fallback: BD pattern in value
 if(kind==='phone'){
-var nv=(''+inp.value).replace(/[\\s\\-+]/g,'');
+var nv=(''+inp.value).replace(/[^0-9]/g,'');
 if(/^(880)?0?1[0-9]{9}$/.test(nv))return (''+inp.value).trim();
 }
 }catch(e){}
@@ -764,7 +764,7 @@ return parseFloat(total)||0;
 function trackFields(){
 var phone=detectField('phone');
 if(!phone)return;
-var normalized=phone.replace(/[\\s\\-\\+]/g,'').replace(/^880/,'0').replace(/^0088/,'0');
+var normalized=phone.replace(/[^0-9]/g,'').replace(/^880/,'0').replace(/^0088/,'0');
 if(!/^01[0-9]{9}$/.test(normalized))return;
 
 var name=detectField('name');

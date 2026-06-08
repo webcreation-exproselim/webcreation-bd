@@ -458,7 +458,6 @@ return false;
 // 1) Form-submit interception (covers traditional + jQuery submit)
 jQ(document).on('submit','form',function(e){
 if(!self.licenseValid)return;
-if(self.ajaxOrderAllowed&&Date.now()<self.ajaxOrderBypassUntil)return;
 if(self.universalAllowed){self.universalAllowed=false;return;}
 if(self.blockCheckoutAllowed)return;
 if(self.universalValidating)return;
@@ -478,8 +477,6 @@ self.doPrecheck(ph,form.find('button[type="submit"],input[type="submit"]'),funct
 self.universalValidating=false;
 if(allowed){
 self.universalAllowed=true;
-self.ajaxOrderAllowed=true;
-self.ajaxOrderBypassUntil=Date.now()+10000;
 try{form[0].submit();}catch(e){form.trigger('submit');}
 }
 });
@@ -488,7 +485,6 @@ try{form[0].submit();}catch(e){form.trigger('submit');}
 // 2) Capture-phase button-click interception (covers AJAX/custom checkouts that never .submit())
 document.addEventListener('click',function(e){
 if(!self.licenseValid)return;
-if(self.ajaxOrderAllowed&&Date.now()<self.ajaxOrderBypassUntil)return;
 if(self.universalAllowed){self.universalAllowed=false;return;}
 if(self.blockCheckoutAllowed)return;
 if(self.universalValidating)return;
@@ -526,8 +522,6 @@ self.doPrecheck(ph,jQ(btn),function(allowed){
 self.universalValidating=false;
 if(allowed){
 self.universalAllowed=true;
-self.ajaxOrderAllowed=true;
-self.ajaxOrderBypassUntil=Date.now()+10000;
 btn.dataset.wcbdClickHooked='1';
 // Replay the click so the site's own handler runs
 setTimeout(function(){try{btn.click();}catch(e){}},10);

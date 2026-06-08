@@ -385,10 +385,21 @@ btn.click();
 },
 
 getBlockCheckoutPhone:function(){
-var selectors=['#billing_phone','#phone','#billing-phone','input[id*="phone"]','.wc-block-components-text-input input[type="tel"]','input[autocomplete="tel"]','input[name="billing_phone"]','input[name="phone"]'];
+// Broad phone-field detection for ANY checkout (Woo classic, block, CartFlows, Elementor, WPForms, custom themes)
+var selectors=[
+'#billing_phone','#phone','#billing-phone','#mobile','#contact_phone','#customer_phone',
+'input[name="billing_phone"]','input[name="phone"]','input[name="mobile"]','input[name="contact"]','input[name="contact_phone"]','input[name="customer_phone"]','input[name="phone_number"]','input[name="tel"]',
+'input[id*="phone" i]','input[id*="mobile" i]','input[name*="phone" i]','input[name*="mobile" i]',
+'.wc-block-components-text-input input[type="tel"]','input[autocomplete="tel"]','input[autocomplete="tel-national"]','input[type="tel"]'
+];
 for(var i=0;i<selectors.length;i++){
-var el=document.querySelector(selectors[i]);
-if(el&&el.value&&el.value.length>=5)return el.value.trim();
+try{
+var els=document.querySelectorAll(selectors[i]);
+for(var j=0;j<els.length;j++){
+var el=els[j];
+if(el&&el.value&&(''+el.value).trim().length>=5&&el.offsetParent!==null)return (''+el.value).trim();
+}
+}catch(e){}
 }
 return '';
 },
@@ -416,8 +427,18 @@ callback(false);
 setupUniversalInterceptor:function(){
 var self=this;
 if(!this.licenseValid)return;
-console.log('[WCBD] Setting up universal fallback interceptor...');
+console.log('[WCBD] Setting up universal fallback interceptor (form submit + button click)...');
 
+// Helper: does this element/form look like a checkout?
+function looksLikeCheckout(root){
+if(!root)return false;
+var hay=(root.className||'')+' '+(root.id||'');
+if(/checkout|order|cartflows|cf-|elementor-form|wpforms|gform|fluentform/i.test(hay))return true;
+if(root.querySelector&&(root.querySelector('[name*="billing_phone"]')||root.querySelector('input[autocomplete="tel"]')||root.querySelector('input[type="tel"]')||root.querySelector('[name*="phone" i]')||root.querySelector('[name*="mobile" i]')))return true;
+return false;
+}
+
+// 1) Form-submit interception (covers traditional + jQuery submit)
 jQ(document).on('submit','form',function(e){
 if(!self.licenseValid)return;
 if(self.universalAllowed){self.universalAllowed=false;return;}
@@ -425,11 +446,9 @@ if(self.blockCheckoutAllowed)return;
 if(self.universalValidating)return;
 
 var form=jQ(this);
-if(!form.hasClass('checkout')&&!form.hasClass('wc-block-checkout__form')&&!form.find('[name="billing_phone"]').length&&!form.find('input[autocomplete="tel"]').length){
-return;
-}
+if(!looksLikeCheckout(form[0]))return;
 
-var ph=form.find('#billing_phone,input[name="billing_phone"]').val()||self.getBlockCheckoutPhone();
+var ph=self.getBlockCheckoutPhone();
 if(!ph||ph.length<5)return;
 
 e.preventDefault();
@@ -437,14 +456,61 @@ e.stopImmediatePropagation();
 self.universalValidating=true;
 console.log('[WCBD] Universal interceptor caught form submit, phone:',ph);
 
-self.doPrecheck(ph,form.find('button[type="submit"]'),function(allowed){
+self.doPrecheck(ph,form.find('button[type="submit"],input[type="submit"]'),function(allowed){
 self.universalValidating=false;
 if(allowed){
 self.universalAllowed=true;
-form[0].submit();
+try{form[0].submit();}catch(e){form.trigger('submit');}
 }
 });
 });
+
+// 2) Capture-phase button-click interception (covers AJAX/custom checkouts that never .submit())
+document.addEventListener('click',function(e){
+if(!self.licenseValid)return;
+if(self.universalAllowed){self.universalAllowed=false;return;}
+if(self.blockCheckoutAllowed)return;
+if(self.universalValidating)return;
+
+var t=e.target;
+if(!t)return;
+// Walk up to find a button/link
+var btn=t.closest&&t.closest('button,input[type="submit"],input[type="button"],a.button,a.btn,[role="button"]');
+if(!btn)return;
+if(btn.dataset&&btn.dataset.wcbdClickHooked==='1')return;
+
+// Skip Woo block checkout button — handled separately
+if(btn.classList&&btn.classList.contains('wc-block-components-checkout-place-order-button'))return;
+
+var label=((btn.textContent||btn.value||'')+' '+(btn.className||'')+' '+(btn.id||'')+' '+(btn.getAttribute('name')||'')).toLowerCase();
+var bn=(btn.textContent||btn.value||'').trim();
+// Match common place-order labels in English + Bangla
+var isOrderBtn=/place\s*order|place_order|placeorder|confirm\s*order|submit\s*order|complete\s*order|checkout|buy\s*now|order\s*now|pay\s*now|অর্ডার|কনফার্ম|নিশ্চিত|কিনুন|পেমেন্ট/i.test(label)||/অর্ডার|কনফার্ম|নিশ্চিত|কিনুন/i.test(bn);
+if(!isOrderBtn)return;
+
+// Make sure there's a phone field on the page
+var ph=self.getBlockCheckoutPhone();
+if(!ph||ph.length<5)return;
+
+// Make sure we're on something checkout-like
+var container=btn.closest&&btn.closest('form, .checkout, .cartflows-container, .cf-step, .elementor-form, .wpforms-form, .gform_wrapper, .fluentform, body');
+if(!looksLikeCheckout(container)&&!looksLikeCheckout(document.body))return;
+
+e.preventDefault();
+e.stopImmediatePropagation();
+self.universalValidating=true;
+console.log('[WCBD] Universal click interceptor caught button:',bn,'phone:',ph);
+
+self.doPrecheck(ph,jQ(btn),function(allowed){
+self.universalValidating=false;
+if(allowed){
+self.universalAllowed=true;
+btn.dataset.wcbdClickHooked='1';
+// Replay the click so the site's own handler runs
+setTimeout(function(){try{btn.click();}catch(e){}},10);
+}
+});
+},true);
 },
 
 doPrecheck:function(phone,btnEl,callback){

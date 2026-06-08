@@ -569,7 +569,8 @@ function normalizePhone(v){return (''+(v||'')).replace(/[^0-9]/g,'').replace(/^0
 function ajaxLooksLikeOrder(url,data){
 var hay=((url||'')+' '+dataToString(data)).toLowerCase();
 if(hay.indexOf('check-order-eligibility')!==-1||hay.indexOf('log-checkout-attempt')!==-1)return false;
-if(/wc-ajax=checkout|woocommerce_checkout|place_order|place-order|choloman_place_order|checkout_place_order|submit_order|confirm_order/i.test(hay))return true;
+if(/wc-ajax=checkout|woocommerce_checkout/i.test(hay))return false;
+if(/choloman_place_order|custom_place_order|place_order|place-order|submit_order|confirm_order/i.test(hay))return true;
 if(/admin-ajax\.php/i.test(hay)&&/action=.*(order|checkout|place)/i.test(hay)&&/(phone|mobile|billing_phone|address|product_id)/i.test(hay))return true;
 return false;
 }

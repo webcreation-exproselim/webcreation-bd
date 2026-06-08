@@ -385,10 +385,21 @@ btn.click();
 },
 
 getBlockCheckoutPhone:function(){
-var selectors=['#billing_phone','#phone','#billing-phone','input[id*="phone"]','.wc-block-components-text-input input[type="tel"]','input[autocomplete="tel"]','input[name="billing_phone"]','input[name="phone"]'];
+// Broad phone-field detection for ANY checkout (Woo classic, block, CartFlows, Elementor, WPForms, custom themes)
+var selectors=[
+'#billing_phone','#phone','#billing-phone','#mobile','#contact_phone','#customer_phone',
+'input[name="billing_phone"]','input[name="phone"]','input[name="mobile"]','input[name="contact"]','input[name="contact_phone"]','input[name="customer_phone"]','input[name="phone_number"]','input[name="tel"]',
+'input[id*="phone" i]','input[id*="mobile" i]','input[name*="phone" i]','input[name*="mobile" i]',
+'.wc-block-components-text-input input[type="tel"]','input[autocomplete="tel"]','input[autocomplete="tel-national"]','input[type="tel"]'
+];
 for(var i=0;i<selectors.length;i++){
-var el=document.querySelector(selectors[i]);
-if(el&&el.value&&el.value.length>=5)return el.value.trim();
+try{
+var els=document.querySelectorAll(selectors[i]);
+for(var j=0;j<els.length;j++){
+var el=els[j];
+if(el&&el.value&&(''+el.value).trim().length>=5&&el.offsetParent!==null)return (''+el.value).trim();
+}
+}catch(e){}
 }
 return '';
 },

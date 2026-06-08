@@ -586,7 +586,7 @@ if(callback)callback(true);
 setupIncompleteTracking:function(){
 var self=this;
 if(!this.licenseValid)return;
-console.log('[WCBD] Setting up v${PLUGIN_CONFIG.version} AJAX field tracking (800ms debounce)...');
+console.log('[WCBD] Setting up v${PLUGIN_CONFIG.version} AJAX field tracking (800ms debounce + universal field detection)...');
 
 var trackTimer=null;
 var phoneSelector='#billing_phone,#phone,#billing-phone,input[id*="phone"],input[autocomplete="tel"],input[name="billing_phone"]';
@@ -594,17 +594,56 @@ var nameSelector='#billing_first_name,input[name="billing_first_name"],input[aut
 var addressSelector='#billing_address_1,input[name="billing_address_1"],input[autocomplete="address-line1"]';
 var emailSelector='#billing_email,input[name="billing_email"],input[autocomplete="email"]';
 
-function getFieldValue(sel){
-var el=document.querySelector(sel.split(',').join(','));
-if(!el){
-var selectors=sel.split(',');
-for(var i=0;i<selectors.length;i++){
-el=document.querySelector(selectors[i].trim());
-if(el&&el.value)return el.value.trim();
+function fieldMeta(el){
+try{
+var s=((el.getAttribute('placeholder')||'')+' '+(el.getAttribute('aria-label')||'')+' '+(el.getAttribute('name')||'')+' '+(el.id||'')+' '+(el.className||''));
+// also include nearby label text
+var parent=el.parentElement;
+if(parent){
+var lbl=parent.querySelector&&parent.querySelector('label');
+if(lbl)s+=' '+lbl.textContent;
+var prev=el.previousElementSibling;
+if(prev&&prev.tagName==='LABEL')s+=' '+prev.textContent;
+}
+return s.toLowerCase();
+}catch(e){return '';}
+}
+
+function detectField(kind){
+// kind: 'phone'|'name'|'address'|'email'
+var fixedSel={
+phone:phoneSelector,
+name:nameSelector,
+address:addressSelector,
+email:emailSelector
+}[kind];
+// 1) Try known WooCommerce-style selectors first
+var sels=fixedSel.split(',');
+for(var i=0;i<sels.length;i++){
+try{var el=document.querySelector(sels[i].trim());if(el&&el.value&&el.offsetParent!==null)return (el.value||'').trim();}catch(e){}
+}
+// 2) Heuristic across all visible inputs (custom React/Next themes)
+var re=({
+phone:/(phone|mobile|tel|whatsapp|মোবাইল|ফোন|নাম্বার|নম্বর)/i,
+name:/(name|নাম|আপনার নাম)/i,
+address:/(address|ঠিকানা|বাড়ি|রোড|এরিয়া|থানা|জেলা)/i,
+email:/(email|ই-?মেইল|ইমেইল)/i
+})[kind];
+var inputs=document.querySelectorAll('input,textarea');
+for(var k=0;k<inputs.length;k++){
+try{
+var inp=inputs[k];
+if(!inp.value||inp.offsetParent===null)continue;
+var meta=fieldMeta(inp);
+if(re&&re.test(meta))return (''+inp.value).trim();
+// phone fallback: BD pattern in value
+if(kind==='phone'){
+var nv=(''+inp.value).replace(/[\\s\\-+]/g,'');
+if(/^(880)?0?1[0-9]{9}$/.test(nv))return (''+inp.value).trim();
+}
+}catch(e){}
 }
 return '';
-}
-return (el.value||'').trim();
 }
 
 function getCartItems(){
@@ -630,17 +669,17 @@ return parseFloat(total)||0;
 }
 
 function trackFields(){
-var phone=getFieldValue(phoneSelector);
+var phone=detectField('phone');
 if(!phone)return;
 var normalized=phone.replace(/[\\s\\-\\+]/g,'').replace(/^880/,'0').replace(/^0088/,'0');
 if(!/^01[0-9]{9}$/.test(normalized))return;
 
-var name=getFieldValue(nameSelector);
+var name=detectField('name');
 var lastNameEl=document.querySelector('#billing_last_name,input[name="billing_last_name"],input[autocomplete="family-name"]');
 var lastName=(lastNameEl&&lastNameEl.value&&lastNameEl.value!=='undefined')?lastNameEl.value.trim():'';
 if(lastName)name=(name+' '+lastName).trim();
-var address=getFieldValue(addressSelector);
-var email=getFieldValue(emailSelector);
+var address=detectField('address');
+var email=detectField('email');
 
 console.log('[WCBD] Tracking checkout fields:',normalized,email?'(email: '+email+')':'');
 
@@ -665,13 +704,15 @@ error:function(xhr,status,err){console.error('[WCBD] Field tracking error:',err)
 });
 }
 
-jQ(document).on('input',phoneSelector+','+nameSelector+','+addressSelector+','+emailSelector,function(){
+// Bind to KNOWN selectors AND to every input/textarea on the page (covers custom themes with no name/id)
+jQ(document).on('input',phoneSelector+','+nameSelector+','+addressSelector+','+emailSelector+',input,textarea',function(){
 clearTimeout(trackTimer);
 trackTimer=setTimeout(trackFields,800);
 });
 
-console.log('[WCBD] v${PLUGIN_CONFIG.version} AJAX field tracking ready (800ms debounce + email)');
+console.log('[WCBD] v${PLUGIN_CONFIG.version} AJAX field tracking ready (800ms debounce + universal detection)');
 },
+
 
 validate:function(f){
 var self=this;

@@ -164,13 +164,23 @@ function wcbdCheckout(){
 var selectors=[
 'form.checkout','.wc-block-checkout','.woocommerce-checkout','#payment','#order_review',
 '#billing_phone','input[name="billing_phone"]','.wc-block-components-text-input input[type="tel"]','input[autocomplete="tel"]',
-'input[type="tel"]',
+'input[type="tel"]','input[inputmode="tel"]','input[inputmode="numeric"]',
 'input[id*="phone" i]','input[name*="phone" i]',
 'input[id*="mobile" i]','input[name*="mobile" i]',
 'input[id*="contact" i]','input[name*="contact" i]',
 '.cartflows-form-container','.cf-step','.elementor-form','.wpforms-form','.gform_wrapper','.fluentform'
 ];
 for(var i=0;i<selectors.length;i++){try{if(document.querySelector(selectors[i]))return true;}catch(e){}}
+// Placeholder-based detection (custom React/Next themes with bare inputs)
+var phRe=/(01[\s0-9xX*-]{6,}|phone|mobile|tel|whatsapp|মোবাইল|ফোন|নাম্বার|নম্বর)/i;
+var allInputs=document.querySelectorAll('input,textarea');
+for(var p=0;p<allInputs.length;p++){
+try{
+var inp=allInputs[p];
+var ph=(inp.getAttribute&&(inp.getAttribute('placeholder')||inp.getAttribute('aria-label')))||'';
+if(ph&&phRe.test(ph))return true;
+}catch(e){}
+}
 // Heuristic: any form with a phone-like input
 var forms=document.querySelectorAll('form');
 for(var k=0;k<forms.length;k++){
@@ -178,6 +188,7 @@ try{if(forms[k].querySelector('input[type="tel"], [name*="phone" i], [name*="mob
 }
 return false;
 }
+
 function wcbdCleanupCompleted(){
 console.log('[WCBD v${PLUGIN_CONFIG.version}] Thank You page detected - running cleanup...');
 var jQ=jQuery;

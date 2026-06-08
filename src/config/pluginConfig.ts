@@ -4,7 +4,7 @@
 
 export const PLUGIN_CONFIG = {
   // Current version - UPDATE THIS WHEN RELEASING NEW VERSIONS
-  version: "9.2.0",
+  version: "9.3.0",
   
   // Plugin metadata
   name: "WCBD Fraud Guard",
@@ -16,16 +16,16 @@ export const PLUGIN_CONFIG = {
   badgeLabel: "STABLE",
   
   // Current version highlights (for banners and feature lists)
-  versionHighlight: "CheckoutGuard Style Dashboard",
+  versionHighlight: "Universal Custom Checkout Support",
   
   // What's new in this version (for feature list)
   whatsNew: [
-    { icon: "🎨", title: "CheckoutGuard Style UI", description: "সম্পূর্ণ নতুন Clean White/Gray ডিজাইন - Details Modal সহ প্রফেশনাল Dashboard" },
-    { icon: "📊", title: "Smart Stats Cards", description: "Last 24h Carts, Cart Value, Total Count - এক নজরে সব তথ্য" },
-    { icon: "🔍", title: "Details Modal", description: "Customer Info, Cart Items, Checkout Info - সব ডিটেইলস এক ক্লিকে" },
-    { icon: "⚡", title: "800ms Real-time Tracking", description: "ফিল্ড টাইপ করার ৮০০ms পর অটো-সেভ - আগের চেয়ে ২.৫x দ্রুত" },
-    { icon: "📧", title: "Email Field Tracking", description: "Email ফিল্ডও এখন ট্র্যাক হবে - Name, Phone, Email, Address সব ক্যাপচার" },
-    { icon: "❌", title: "Quick Cancel", description: "এক ক্লিকে রেকর্ড ডিলিট - টেবিল থেকে সরাসরি Cancel বাটন" },
+    { icon: "🌐", title: "Universal Checkout Support", description: "যেকোনো Custom Checkout এ কাজ করবে - CartFlows, Elementor, WPForms, Custom Theme সব" },
+    { icon: "🖱️", title: "Button Click Interception", description: "AJAX checkout এর Place Order বাটন ক্লিকেও ফ্রড চেক হবে - form submit লাগবে না" },
+    { icon: "📱", title: "Smarter Phone Detection", description: "যেকোনো নামের phone field খুঁজে বের করবে (#phone, mobile, contact, tel ইত্যাদি)" },
+    { icon: "🎨", title: "CheckoutGuard Style UI", description: "Clean White/Gray ডিজাইন - Details Modal সহ প্রফেশনাল Dashboard" },
+    { icon: "⚡", title: "800ms Real-time Tracking", description: "ফিল্ড টাইপ করার ৮০০ms পর অটো-সেভ" },
+    { icon: "📧", title: "Email Field Tracking", description: "Name, Phone, Email, Address সব ক্যাপচার" },
   ],
   
   // All features list

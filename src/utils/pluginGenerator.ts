@@ -600,7 +600,7 @@ runner().done(function(){dfd.resolveWith(this,arguments);}).fail(function(){dfd.
 }else{
 dfd.rejectWith(settings||this,[{status:403,responseJSON:{success:false,data:{message:'Blocked by WCBD Fraud Guard'}}},'wcbd_blocked','Blocked by WCBD Fraud Guard']);
 }
-});
+},'order');
 return dfd.promise({abort:function(){dfd.reject();}});
 }
 

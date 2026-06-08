@@ -270,6 +270,8 @@ blockCheckoutValidating:false,
 blockCheckoutAllowed:false,
 universalValidating:false,
 universalAllowed:false,
+ajaxOrderAllowed:false,
+ajaxOrderValidating:false,
 
 init:function(){
 var self=this;
@@ -306,6 +308,7 @@ jQ('form.checkout').on('checkout_place_order',function(){return self.validate(jQ
 }
 
 self.setupUniversalInterceptor();
+self.setupAjaxOrderInterceptor();
 self.setupIncompleteTracking();
 console.log('[WCBD Fraud Guard v${PLUGIN_CONFIG.version}] Ready');
 });
@@ -378,7 +381,7 @@ btn.disabled=true;
 
 jQ.ajax({
 url:self.endpoint,method:'POST',contentType:'application/json',timeout:12000,
-data:JSON.stringify({api_key:self.apiKey,phone:ph,device_id:self.deviceId,domain:window.location.hostname,check_type:'precheck'}),
+data:JSON.stringify({api_key:self.apiKey,phone:ph,device_id:self.deviceId,domain:window.location.hostname,check_type:'order'}),
 success:function(r){
 console.log('[WCBD] Block checkout API response:',r);
 if(r.popup_settings)self.applyRemoteSettings(r.popup_settings);

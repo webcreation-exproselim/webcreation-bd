@@ -368,6 +368,14 @@ export function MerchantManagement() {
             <UserPlus className="w-4 h-4" />
             Plan Assign
           </Button>
+          <Button
+            onClick={() => setBulkTransferOpen(true)}
+            variant="outline"
+            className="gap-2 border-blue-200 text-blue-700 hover:bg-blue-50"
+          >
+            <ArrowRightLeft className="w-4 h-4" />
+            Bulk Transfer
+          </Button>
         </div>
       </div>
 

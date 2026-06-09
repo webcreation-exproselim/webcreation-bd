@@ -345,7 +345,7 @@ export function MerchantManagement() {
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <Input
-            placeholder="Merchant খুঁজুন..."
+            placeholder="নাম / ডোমেইন / ফোন দিয়ে খুঁজুন..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-11 font-bengali bg-white border-gray-100 rounded-xl h-11"

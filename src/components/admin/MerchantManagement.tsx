@@ -20,9 +20,10 @@ import {
 } from "@/components/ui/select";
 import { 
   Search, Edit2, Power, PowerOff, Shield, 
-  User, Globe, Key, Loader2, RefreshCw, UserPlus, Trash2, History
+  User, Globe, Key, Loader2, RefreshCw, UserPlus, Trash2, History, ArrowRightLeft
 } from "lucide-react";
 import { AssignPlanModal } from "./AssignPlanModal";
+import { TransferMerchantModal } from "./TransferMerchantModal";
 interface Merchant {
   id: string;
   user_id: string;
@@ -63,6 +64,7 @@ export function MerchantManagement() {
   const [assignPlanModalOpen, setAssignPlanModalOpen] = useState(false);
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [deleteConfirmModalOpen, setDeleteConfirmModalOpen] = useState(false);
+  const [transferModalOpen, setTransferModalOpen] = useState(false);
   const [subscriptionOrders, setSubscriptionOrders] = useState<SubscriptionOrder[]>([]);
   const [orderToDelete, setOrderToDelete] = useState<SubscriptionOrder | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('monthly');
@@ -448,6 +450,18 @@ export function MerchantManagement() {
                         <Button
                           size="sm"
                           variant="ghost"
+                          title="Transfer to another user"
+                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          onClick={() => {
+                            setSelectedMerchant(merchant);
+                            setTransferModalOpen(true);
+                          }}
+                        >
+                          <ArrowRightLeft className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
                           onClick={() => {
                             setSelectedMerchant(merchant);
                             setEditModalOpen(true);
@@ -725,6 +739,13 @@ export function MerchantManagement() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <TransferMerchantModal
+        open={transferModalOpen}
+        onClose={() => setTransferModalOpen(false)}
+        merchant={selectedMerchant}
+        onSuccess={fetchMerchants}
+      />
     </div>
   );
 }

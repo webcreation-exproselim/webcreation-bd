@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { AssignPlanModal } from "./AssignPlanModal";
 import { TransferMerchantModal } from "./TransferMerchantModal";
+import { BulkTransferModal } from "./BulkTransferModal";
 interface Merchant {
   id: string;
   user_id: string;
@@ -65,6 +66,7 @@ export function MerchantManagement() {
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [deleteConfirmModalOpen, setDeleteConfirmModalOpen] = useState(false);
   const [transferModalOpen, setTransferModalOpen] = useState(false);
+  const [bulkTransferOpen, setBulkTransferOpen] = useState(false);
   const [subscriptionOrders, setSubscriptionOrders] = useState<SubscriptionOrder[]>([]);
   const [orderToDelete, setOrderToDelete] = useState<SubscriptionOrder | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('monthly');
@@ -365,6 +367,14 @@ export function MerchantManagement() {
           >
             <UserPlus className="w-4 h-4" />
             Plan Assign
+          </Button>
+          <Button
+            onClick={() => setBulkTransferOpen(true)}
+            variant="outline"
+            className="gap-2 border-blue-200 text-blue-700 hover:bg-blue-50"
+          >
+            <ArrowRightLeft className="w-4 h-4" />
+            Bulk Transfer
           </Button>
         </div>
       </div>
@@ -744,6 +754,12 @@ export function MerchantManagement() {
         open={transferModalOpen}
         onClose={() => setTransferModalOpen(false)}
         merchant={selectedMerchant}
+        onSuccess={fetchMerchants}
+      />
+
+      <BulkTransferModal
+        open={bulkTransferOpen}
+        onClose={() => setBulkTransferOpen(false)}
         onSuccess={fetchMerchants}
       />
     </div>

@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { AssignPlanModal } from "./AssignPlanModal";
 import { TransferMerchantModal } from "./TransferMerchantModal";
+import { BulkTransferModal } from "./BulkTransferModal";
 interface Merchant {
   id: string;
   user_id: string;

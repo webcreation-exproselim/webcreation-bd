@@ -450,6 +450,18 @@ export function MerchantManagement() {
                         <Button
                           size="sm"
                           variant="ghost"
+                          title="Transfer to another user"
+                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          onClick={() => {
+                            setSelectedMerchant(merchant);
+                            setTransferModalOpen(true);
+                          }}
+                        >
+                          <ArrowRightLeft className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
                           onClick={() => {
                             setSelectedMerchant(merchant);
                             setEditModalOpen(true);

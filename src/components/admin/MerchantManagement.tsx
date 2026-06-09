@@ -20,9 +20,10 @@ import {
 } from "@/components/ui/select";
 import { 
   Search, Edit2, Power, PowerOff, Shield, 
-  User, Globe, Key, Loader2, RefreshCw, UserPlus, Trash2, History
+  User, Globe, Key, Loader2, RefreshCw, UserPlus, Trash2, History, ArrowRightLeft
 } from "lucide-react";
 import { AssignPlanModal } from "./AssignPlanModal";
+import { TransferMerchantModal } from "./TransferMerchantModal";
 interface Merchant {
   id: string;
   user_id: string;

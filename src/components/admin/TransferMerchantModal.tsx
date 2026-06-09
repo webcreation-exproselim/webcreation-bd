@@ -93,12 +93,6 @@ export function TransferMerchantModal({ open, onClose, merchant, onSuccess }: Tr
         return;
       }
 
-      // Move related subscription_orders' user_id too if column exists (best-effort)
-      await supabase
-        .from("subscription_orders")
-        .update({ user_id: selectedUser.user_id })
-        .eq("merchant_id", merchant.id);
-
       toast({ title: "✅ Transfer সম্পন্ন", description: `Merchant ${selectedUser.email || selectedUser.full_name}-এ স্থানান্তর হয়েছে` });
       onSuccess();
       onClose();

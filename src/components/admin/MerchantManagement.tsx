@@ -739,6 +739,13 @@ export function MerchantManagement() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <TransferMerchantModal
+        open={transferModalOpen}
+        onClose={() => setTransferModalOpen(false)}
+        merchant={selectedMerchant}
+        onSuccess={fetchMerchants}
+      />
     </div>
   );
 }

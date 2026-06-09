@@ -756,6 +756,12 @@ export function MerchantManagement() {
         merchant={selectedMerchant}
         onSuccess={fetchMerchants}
       />
+
+      <BulkTransferModal
+        open={bulkTransferOpen}
+        onClose={() => setBulkTransferOpen(false)}
+        onSuccess={fetchMerchants}
+      />
     </div>
   );
 }

@@ -64,6 +64,7 @@ export function MerchantManagement() {
   const [assignPlanModalOpen, setAssignPlanModalOpen] = useState(false);
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [deleteConfirmModalOpen, setDeleteConfirmModalOpen] = useState(false);
+  const [transferModalOpen, setTransferModalOpen] = useState(false);
   const [subscriptionOrders, setSubscriptionOrders] = useState<SubscriptionOrder[]>([]);
   const [orderToDelete, setOrderToDelete] = useState<SubscriptionOrder | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('monthly');

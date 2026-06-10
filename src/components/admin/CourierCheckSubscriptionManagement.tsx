@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { CheckCircle, XCircle, Clock, Eye, Loader2, RefreshCw, UserPlus } from "lucide-react";
+import { CheckCircle, XCircle, Clock, Eye, Loader2, RefreshCw, UserPlus, History, ShieldCheck } from "lucide-react";
 import { AssignCourierCheckPlanModal } from "./AssignCourierCheckPlanModal";
 import { CourierCheckActiveSubscriptions } from "./CourierCheckActiveSubscriptions";
 import { Button } from "@/components/ui/button";
@@ -25,12 +25,15 @@ interface CourierCheckOrder {
   approved_at: string | null;
 }
 
+type CcTab = "subscriptions" | "pending" | "history";
+
 export function CourierCheckSubscriptionManagement() {
   const [orders, setOrders] = useState<CourierCheckOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState<string | null>(null);
   const [selectedScreenshot, setSelectedScreenshot] = useState<string | null>(null);
   const [assignModalOpen, setAssignModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<CcTab>("subscriptions");
   const { toast } = useToast();
 
   const fetchOrders = async () => {
@@ -57,10 +60,9 @@ export function CourierCheckSubscriptionManagement() {
 
     try {
       const now = new Date();
-      const daysToAdd = 365; // Yearly by default for courier check orders
+      const daysToAdd = 365;
       const expiresAt = new Date(now.getTime() + daysToAdd * 24 * 60 * 60 * 1000);
 
-      // Activate courier check subscription
       const { error: subError } = await supabase
         .from('courier_check_subscriptions')
         .update({
@@ -74,7 +76,6 @@ export function CourierCheckSubscriptionManagement() {
 
       if (subError) throw subError;
 
-      // Also activate Fraud Guard merchant for the same user
       const { data: existingMerchant } = await supabase
         .from('merchants')
         .select('id')
@@ -106,7 +107,6 @@ export function CourierCheckSubscriptionManagement() {
           });
       }
 
-      // Update order status
       const { error: orderError } = await supabase
         .from('courier_check_orders')
         .update({
@@ -182,15 +182,23 @@ export function CourierCheckSubscriptionManagement() {
     );
   }
 
+  const tabs: { id: CcTab; label: string; icon: any; badge?: number }[] = [
+    { id: "subscriptions", label: "Active / Renew", icon: ShieldCheck },
+    { id: "pending", label: "Pending Approvals", icon: Clock, badge: pendingOrders.length },
+    { id: "history", label: "Order History", icon: History },
+  ];
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-xl font-bold text-gray-900 font-bengali">
             Courier Check Subscriptions
           </h2>
-          <p className="text-sm text-gray-500 font-bengali">Courier Check অর্ডার ম্যানেজ করুন</p>
+          <p className="text-sm text-gray-500 font-bengali">
+            Renew, Assign এবং Order ম্যানেজ করুন
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <Button onClick={() => setAssignModalOpen(true)} size="sm" className="bg-cyan-600 hover:bg-cyan-700 text-white font-bengali">
@@ -204,126 +212,148 @@ export function CourierCheckSubscriptionManagement() {
         </div>
       </div>
 
-      {/* Active / Expired Subscriptions Manager */}
-      <CourierCheckActiveSubscriptions />
+      {/* Sub-tabs */}
+      <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-2">
+        {tabs.map((t) => {
+          const Icon = t.icon;
+          const isActive = activeTab === t.id;
+          return (
+            <button
+              key={t.id}
+              onClick={() => setActiveTab(t.id)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                isActive
+                  ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-md"
+                  : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+              }`}
+            >
+              <Icon className="w-4 h-4" />
+              {t.label}
+              {typeof t.badge === "number" && t.badge > 0 && (
+                <span className={`text-xs px-2 py-0.5 rounded-full ${isActive ? "bg-white/20" : "bg-amber-100 text-amber-700"}`}>
+                  {t.badge}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Active / Renew */}
+      {activeTab === "subscriptions" && <CourierCheckActiveSubscriptions />}
 
       {/* Pending Orders */}
-      <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <Clock className="w-5 h-5 text-yellow-500" />
-          Pending Approvals ({pendingOrders.length})
-        </h3>
-
-        {pendingOrders.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center text-gray-500 font-bengali">
-            কোনো পেন্ডিং অর্ডার নেই
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {pendingOrders.map((order) => (
-              <div
-                key={order.id}
-                className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-300"
-              >
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="font-semibold text-gray-900">📆 Yearly Plan</span>
-                      <span className="text-lg font-bold text-cyan-600">৳{order.amount}</span>
-                      {getStatusBadge(order.status)}
+      {activeTab === "pending" && (
+        <div>
+          {pendingOrders.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center text-gray-500 font-bengali">
+              কোনো পেন্ডিং অর্ডার নেই
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {pendingOrders.map((order) => (
+                <div
+                  key={order.id}
+                  className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-300"
+                >
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="font-semibold text-gray-900">📆 Yearly Plan</span>
+                        <span className="text-lg font-bold text-cyan-600">৳{order.amount}</span>
+                        {getStatusBadge(order.status)}
+                      </div>
+                      <div className="text-sm text-gray-700 space-y-1">
+                        <p><strong className="text-gray-900">Payment:</strong> {order.payment_method}</p>
+                        <p><strong className="text-gray-900">Sender:</strong> {order.sender_number}</p>
+                        <p><strong className="text-gray-900">Date:</strong> {new Date(order.created_at).toLocaleString('bn-BD')}</p>
+                      </div>
                     </div>
-                    <div className="text-sm text-gray-700 space-y-1">
-                      <p><strong className="text-gray-900">Payment:</strong> {order.payment_method}</p>
-                      <p><strong className="text-gray-900">Sender:</strong> {order.sender_number}</p>
-                      <p><strong className="text-gray-900">Date:</strong> {new Date(order.created_at).toLocaleString('bn-BD')}</p>
-                    </div>
-                  </div>
 
-                  <div className="flex flex-col gap-2">
-                    {order.payment_screenshot_url && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setSelectedScreenshot(order.payment_screenshot_url)}
-                        className="border-gray-200 text-gray-700 hover:bg-gray-50"
-                      >
-                        <Eye className="w-4 h-4 mr-1" />
-                        Screenshot
-                      </Button>
-                    )}
-                    <Button
-                      onClick={() => approveOrder(order)}
-                      disabled={processing === order.id}
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                      size="sm"
-                    >
-                      {processing === order.id ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <>
-                          <CheckCircle className="w-4 h-4 mr-1" />
-                          Approve
-                        </>
+                    <div className="flex flex-col gap-2">
+                      {order.payment_screenshot_url && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSelectedScreenshot(order.payment_screenshot_url)}
+                          className="border-gray-200 text-gray-700 hover:bg-gray-50"
+                        >
+                          <Eye className="w-4 h-4 mr-1" />
+                          Screenshot
+                        </Button>
                       )}
-                    </Button>
-                    <Button
-                      onClick={() => rejectOrder(order.id)}
-                      disabled={processing === order.id}
-                      variant="destructive"
-                      size="sm"
-                    >
-                      <XCircle className="w-4 h-4 mr-1" />
-                      Reject
-                    </Button>
+                      <Button
+                        onClick={() => approveOrder(order)}
+                        disabled={processing === order.id}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                        size="sm"
+                      >
+                        {processing === order.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <>
+                            <CheckCircle className="w-4 h-4 mr-1" />
+                            Approve
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        onClick={() => rejectOrder(order.id)}
+                        disabled={processing === order.id}
+                        variant="destructive"
+                        size="sm"
+                      >
+                        <XCircle className="w-4 h-4 mr-1" />
+                        Reject
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Processed Orders */}
-      <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Order History ({processedOrders.length})
-        </h3>
-
-        {processedOrders.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center text-gray-500 font-bengali">
-            কোনো অর্ডার হিস্ট্রি নেই
-          </div>
-        ) : (
-          <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-100">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Plan</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Amount</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Payment</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Sender</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {processedOrders.map((order) => (
-                    <tr key={order.id} className="hover:bg-gray-50/50 transition-colors">
-                      <td className="px-4 py-3 font-medium text-gray-900">Yearly</td>
-                      <td className="px-4 py-3 text-gray-900 font-bold">৳{order.amount}</td>
-                      <td className="px-4 py-3 capitalize text-gray-700">{order.payment_method}</td>
-                      <td className="px-4 py-3 font-mono text-sm text-gray-600">{order.sender_number}</td>
-                      <td className="px-4 py-3">{getStatusBadge(order.status)}</td>
-                      <td className="px-4 py-3 text-gray-600">{new Date(order.created_at).toLocaleDateString()}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              ))}
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
+
+      {/* History */}
+      {activeTab === "history" && (
+        <div>
+          {processedOrders.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center text-gray-500 font-bengali">
+              কোনো অর্ডার হিস্ট্রি নেই
+            </div>
+          ) : (
+            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b border-gray-100">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Plan</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Amount</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Payment</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Sender</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {processedOrders.map((order) => (
+                      <tr key={order.id} className="hover:bg-gray-50/50 transition-colors">
+                        <td className="px-4 py-3 font-medium text-gray-900">Yearly</td>
+                        <td className="px-4 py-3 text-gray-900 font-bold">৳{order.amount}</td>
+                        <td className="px-4 py-3 capitalize text-gray-700">{order.payment_method}</td>
+                        <td className="px-4 py-3 font-mono text-sm text-gray-600">{order.sender_number}</td>
+                        <td className="px-4 py-3">{getStatusBadge(order.status)}</td>
+                        <td className="px-4 py-3 text-gray-600">{new Date(order.created_at).toLocaleDateString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Screenshot Modal */}
       <Dialog open={!!selectedScreenshot} onOpenChange={() => setSelectedScreenshot(null)}>

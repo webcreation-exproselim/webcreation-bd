@@ -204,6 +204,9 @@ export function CourierCheckSubscriptionManagement() {
         </div>
       </div>
 
+      {/* Active / Expired Subscriptions Manager */}
+      <CourierCheckActiveSubscriptions />
+
       {/* Pending Orders */}
       <div>
         <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">

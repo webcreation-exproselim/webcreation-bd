@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { CheckCircle, XCircle, Clock, Eye, Loader2, RefreshCw, UserPlus } from "lucide-react";
 import { AssignCourierCheckPlanModal } from "./AssignCourierCheckPlanModal";
+import { CourierCheckActiveSubscriptions } from "./CourierCheckActiveSubscriptions";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -202,6 +203,9 @@ export function CourierCheckSubscriptionManagement() {
           </Button>
         </div>
       </div>
+
+      {/* Active / Expired Subscriptions Manager */}
+      <CourierCheckActiveSubscriptions />
 
       {/* Pending Orders */}
       <div>

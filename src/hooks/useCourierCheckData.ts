@@ -64,8 +64,15 @@ export function useCourierCheckData(userId: string | null, skipAutoCreate: boole
         })) as CourierCheckSubscription[];
         setSubscriptions(typed);
         if (!selectedSubscriptionId || !typed.find(s => s.id === selectedSubscriptionId)) {
-          const firstActive = typed.find(s => s.is_active) || typed[0];
-          setSelectedSubscriptionId(firstActive.id);
+          const now = Date.now();
+          const isLive = (s: CourierCheckSubscription) =>
+            s.is_active && (!s.plan_expires_at || new Date(s.plan_expires_at).getTime() > now);
+          // Prefer: active & not expired → active (any) → newest
+          const best =
+            typed.find(isLive) ||
+            typed.find(s => s.is_active) ||
+            [...typed].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+          setSelectedSubscriptionId(best.id);
         }
 
         // Fetch pending order for first/selected subscription

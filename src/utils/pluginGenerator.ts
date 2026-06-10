@@ -468,7 +468,14 @@ if(self.blockCheckoutAllowed)return;
 if(self.universalValidating)return;
 
 var form=jQ(this);
-if(!looksLikeCheckout(form[0]))return;
+var formEl=form[0];
+// SKIP: standard WooCommerce classic checkout — handled by checkout_place_order event
+if(formEl&&formEl.classList&&(formEl.classList.contains('checkout')||formEl.classList.contains('woocommerce-checkout')))return;
+// SKIP: WooCommerce block checkout — handled by attachBlockInterceptor
+if(self.isBlockCheckout)return;
+if(formEl&&formEl.closest&&formEl.closest('.wc-block-checkout, .wp-block-woocommerce-checkout'))return;
+
+if(!looksLikeCheckout(formEl))return;
 
 var ph=self.getBlockCheckoutPhone();
 if(!ph||ph.length<5)return;
@@ -482,7 +489,7 @@ self.doPrecheck(ph,form.find('button[type="submit"],input[type="submit"]'),funct
 self.universalValidating=false;
 if(allowed){
 self.universalAllowed=true;
-try{form[0].submit();}catch(e){form.trigger('submit');}
+try{formEl.submit();}catch(e){form.trigger('submit');}
 }
 });
 });
@@ -503,11 +510,14 @@ if(btn.dataset&&btn.dataset.wcbdClickHooked==='1')return;
 
 // Skip Woo block checkout button — handled separately
 if(btn.classList&&btn.classList.contains('wc-block-components-checkout-place-order-button'))return;
+// SKIP: button inside standard WooCommerce classic/block checkout — let WC handle it
+if(btn.closest&&btn.closest('form.checkout, form.woocommerce-checkout, .wc-block-checkout, .wp-block-woocommerce-checkout'))return;
+if(self.isBlockCheckout)return;
 
 var label=((btn.textContent||btn.value||'')+' '+(btn.className||'')+' '+(btn.id||'')+' '+(btn.getAttribute('name')||'')).toLowerCase();
 var bn=(btn.textContent||btn.value||'').trim();
-// Match common place-order labels in English + Bangla
-var isOrderBtn=/place\s*order|place_order|placeorder|confirm\s*order|submit\s*order|complete\s*order|checkout|buy\s*now|order\s*now|pay\s*now|অর্ডার|কনফার্ম|নিশ্চিত|কিনুন|পেমেন্ট/i.test(label)||/অর্ডার|কনফার্ম|নিশ্চিত|কিনুন/i.test(bn);
+// Match common place-order labels in English + Bangla (removed bare "checkout" — too broad)
+var isOrderBtn=/place\s*order|place_order|placeorder|confirm\s*order|submit\s*order|complete\s*order|buy\s*now|order\s*now|pay\s*now|অর্ডার|কনফার্ম|নিশ্চিত|কিনুন|পেমেন্ট/i.test(label)||/অর্ডার|কনফার্ম|নিশ্চিত|কিনুন/i.test(bn);
 if(!isOrderBtn)return;
 
 // Make sure there's a phone field on the page

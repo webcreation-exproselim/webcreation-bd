@@ -101,21 +101,16 @@ export function CourierOrders({ merchantId, apiKey, initialCredentials }: Courie
   const handleSaveCredentials = async () => {
     setSavingCreds(true);
     try {
-      const { error } = await supabase
-        .from('merchants')
-        .update({
-          steadfast_api_key: credentials.steadfast_api_key || null,
-          steadfast_secret_key: credentials.steadfast_secret_key || null,
-          pathao_client_id: credentials.pathao_client_id || null,
-          pathao_client_secret: credentials.pathao_client_secret || null,
-          pathao_username: credentials.pathao_username || null,
-          pathao_password: credentials.pathao_password || null,
-          redx_api_token: credentials.redx_api_token || null,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', merchantId);
+      const { data, error } = await supabase.functions.invoke('courier-status', {
+        body: {
+          api_key: apiKey,
+          action: 'save_credentials',
+          credentials
+        }
+      });
 
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
       toast({ title: "সফল!", description: "Courier credentials সেভ হয়েছে" });
     } catch (error) {

@@ -675,6 +675,50 @@ export type Database = {
         }
         Relationships: []
       }
+      merchant_courier_credentials: {
+        Row: {
+          merchant_id: string
+          pathao_client_id: string | null
+          pathao_client_secret: string | null
+          pathao_password: string | null
+          pathao_username: string | null
+          redx_api_token: string | null
+          steadfast_api_key: string | null
+          steadfast_secret_key: string | null
+          updated_at: string
+        }
+        Insert: {
+          merchant_id: string
+          pathao_client_id?: string | null
+          pathao_client_secret?: string | null
+          pathao_password?: string | null
+          pathao_username?: string | null
+          redx_api_token?: string | null
+          steadfast_api_key?: string | null
+          steadfast_secret_key?: string | null
+          updated_at?: string
+        }
+        Update: {
+          merchant_id?: string
+          pathao_client_id?: string | null
+          pathao_client_secret?: string | null
+          pathao_password?: string | null
+          pathao_username?: string | null
+          redx_api_token?: string | null
+          steadfast_api_key?: string | null
+          steadfast_secret_key?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merchant_courier_credentials_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: true
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       merchants: {
         Row: {
           abandoned_timeout_minutes: number | null
@@ -692,19 +736,12 @@ export type Database = {
           max_requests: number
           msg_blacklist: string | null
           msg_cooldown: string | null
-          pathao_client_id: string | null
-          pathao_client_secret: string | null
-          pathao_password: string | null
-          pathao_username: string | null
           phone_number: string | null
           plan_expires_at: string | null
           popup_language: string | null
           popup_timer_seconds: number | null
-          redx_api_token: string | null
           requests_used: number
           show_contact_buttons: boolean | null
-          steadfast_api_key: string | null
-          steadfast_secret_key: string | null
           store_name: string | null
           updated_at: string
           user_id: string
@@ -727,19 +764,12 @@ export type Database = {
           max_requests?: number
           msg_blacklist?: string | null
           msg_cooldown?: string | null
-          pathao_client_id?: string | null
-          pathao_client_secret?: string | null
-          pathao_password?: string | null
-          pathao_username?: string | null
           phone_number?: string | null
           plan_expires_at?: string | null
           popup_language?: string | null
           popup_timer_seconds?: number | null
-          redx_api_token?: string | null
           requests_used?: number
           show_contact_buttons?: boolean | null
-          steadfast_api_key?: string | null
-          steadfast_secret_key?: string | null
           store_name?: string | null
           updated_at?: string
           user_id: string
@@ -762,19 +792,12 @@ export type Database = {
           max_requests?: number
           msg_blacklist?: string | null
           msg_cooldown?: string | null
-          pathao_client_id?: string | null
-          pathao_client_secret?: string | null
-          pathao_password?: string | null
-          pathao_username?: string | null
           phone_number?: string | null
           plan_expires_at?: string | null
           popup_language?: string | null
           popup_timer_seconds?: number | null
-          redx_api_token?: string | null
           requests_used?: number
           show_contact_buttons?: boolean | null
-          steadfast_api_key?: string | null
-          steadfast_secret_key?: string | null
           store_name?: string | null
           updated_at?: string
           user_id?: string

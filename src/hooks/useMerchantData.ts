@@ -67,13 +67,6 @@ const applyMerchantDefaults = (data: any): Merchant => ({
   show_contact_buttons: data.show_contact_buttons ?? true,
   enable_abandoned_tracking: data.enable_abandoned_tracking ?? false,
   abandoned_timeout_minutes: data.abandoned_timeout_minutes ?? 5,
-  steadfast_api_key: data.steadfast_api_key ?? null,
-  steadfast_secret_key: data.steadfast_secret_key ?? null,
-  pathao_client_id: data.pathao_client_id ?? null,
-  pathao_client_secret: data.pathao_client_secret ?? null,
-  pathao_username: data.pathao_username ?? null,
-  pathao_password: data.pathao_password ?? null,
-  redx_api_token: data.redx_api_token ?? null,
 });
 
 export function useMerchantData(overrideUserId?: string | null) {

@@ -146,19 +146,7 @@ export default function FraudProtectionPage() {
         return merchant ? <IncompleteOrders merchantId={merchant.id} /> : null;
       case "courier":
         return merchant ? (
-          <CourierOrders
-            merchantId={merchant.id}
-            apiKey={merchant.api_key}
-            initialCredentials={{
-              steadfast_api_key: merchant.steadfast_api_key || "",
-              steadfast_secret_key: merchant.steadfast_secret_key || "",
-              pathao_client_id: merchant.pathao_client_id || "",
-              pathao_client_secret: merchant.pathao_client_secret || "",
-              pathao_username: merchant.pathao_username || "",
-              pathao_password: merchant.pathao_password || "",
-              redx_api_token: merchant.redx_api_token || "",
-            }}
-          />
+          <CourierOrders merchantId={merchant.id} apiKey={merchant.api_key} />
         ) : null;
       case "trust-score":
         return merchant ? <CustomerTrustLookup apiKey={merchant.api_key} /> : null;

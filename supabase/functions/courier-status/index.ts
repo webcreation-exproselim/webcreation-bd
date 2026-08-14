@@ -131,21 +131,21 @@ Deno.serve(async (req) => {
     }
 
     // Validate API Key and get merchant data
-    const { data: merchant, error: merchantError } = await supabase
+    const { data: merchantRow, error: merchantError } = await supabase
       .from('merchants')
-      .select('id, steadfast_api_key, steadfast_secret_key, pathao_client_id, pathao_client_secret, pathao_username, pathao_password, redx_api_token')
+      .select('id')
       .eq('api_key', api_key)
       .single()
 
-    if (merchantError || !merchant) {
-      console.log('Invalid API key:', api_key)
+    if (merchantError || !merchantRow) {
+      console.log('Invalid API key')
       return new Response(
         JSON.stringify({ error: 'Invalid API key' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    // Action: Save credentials
+    // Action: Save credentials (stored in a server-only table)
     if (action === 'save_credentials') {
       if (!credentials) {
         return new Response(
@@ -154,19 +154,15 @@ Deno.serve(async (req) => {
         )
       }
 
-      const updateData: Record<string, string> = {}
-      if (credentials.steadfast_api_key !== undefined) updateData.steadfast_api_key = credentials.steadfast_api_key
-      if (credentials.steadfast_secret_key !== undefined) updateData.steadfast_secret_key = credentials.steadfast_secret_key
-      if (credentials.pathao_client_id !== undefined) updateData.pathao_client_id = credentials.pathao_client_id
-      if (credentials.pathao_client_secret !== undefined) updateData.pathao_client_secret = credentials.pathao_client_secret
-      if (credentials.pathao_username !== undefined) updateData.pathao_username = credentials.pathao_username
-      if (credentials.pathao_password !== undefined) updateData.pathao_password = credentials.pathao_password
-      if (credentials.redx_api_token !== undefined) updateData.redx_api_token = credentials.redx_api_token
+      const updateData: Record<string, unknown> = { merchant_id: merchantRow.id, updated_at: new Date().toISOString() }
+      for (const key of ['steadfast_api_key','steadfast_secret_key','pathao_client_id','pathao_client_secret','pathao_username','pathao_password','redx_api_token'] as const) {
+        const value = (credentials as Record<string, string | undefined>)[key]
+        if (value !== undefined) updateData[key] = value || null
+      }
 
       const { error: updateError } = await supabase
-        .from('merchants')
-        .update(updateData)
-        .eq('id', merchant.id)
+        .from('merchant_courier_credentials')
+        .upsert(updateData, { onConflict: 'merchant_id' })
 
       if (updateError) {
         console.error('Failed to save credentials:', updateError)
@@ -181,6 +177,14 @@ Deno.serve(async (req) => {
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
+
+    const { data: credsRow } = await supabase
+      .from('merchant_courier_credentials')
+      .select('*')
+      .eq('merchant_id', merchantRow.id)
+      .maybeSingle()
+
+    const merchant = { id: merchantRow.id, ...(credsRow || {}) } as Record<string, string> & { id: string }
 
     // Action: Check status
     if (action === 'check_status') {

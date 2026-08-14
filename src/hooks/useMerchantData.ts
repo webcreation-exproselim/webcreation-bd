@@ -28,14 +28,6 @@ export interface Merchant {
   // Abandoned cart tracking
   enable_abandoned_tracking: boolean;
   abandoned_timeout_minutes: number;
-  // Courier credentials
-  steadfast_api_key: string | null;
-  steadfast_secret_key: string | null;
-  pathao_client_id: string | null;
-  pathao_client_secret: string | null;
-  pathao_username: string | null;
-  pathao_password: string | null;
-  redx_api_token: string | null;
 }
 
 interface BlacklistEntry {

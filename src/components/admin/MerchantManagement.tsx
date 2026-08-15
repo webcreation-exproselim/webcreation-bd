@@ -59,6 +59,9 @@ export function MerchantManagement() {
   const [merchants, setMerchants] = useState<Merchant[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'expiring' | 'expired' | 'inactive'>('all');
+  const [sortBy, setSortBy] = useState<'expiry' | 'newest' | 'name' | 'domain'>('expiry');
+
   const [selectedMerchant, setSelectedMerchant] = useState<Merchant | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [activateModalOpen, setActivateModalOpen] = useState(false);

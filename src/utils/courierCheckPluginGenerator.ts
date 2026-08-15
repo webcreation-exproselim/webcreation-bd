@@ -134,11 +134,11 @@ class WCBD_Courier_Check {
             
         add_meta_box(
             'wcbd_courier_check_box',
-            '📊 Courier Check',
+            '📊 Order Success Ratio',
             array($this, 'render_order_meta_box'),
             $screen,
-            'side',
-            'default'
+            'normal',
+            'high'
         );
     }
     
@@ -152,8 +152,8 @@ class WCBD_Courier_Check {
             return;
         }
         
-        echo '<div id="wcbd-cc-metabox-result" style="min-height:60px">';
-        echo '<button class="wcbd-cc-btn wcbd-cc-btn-full" data-phone="' . esc_attr($phone) . '">📊 Check Courier History</button>';
+        echo '<div class="wcbd-cc-panel" data-phone="' . esc_attr($phone) . '">';
+        echo '<div class="wcbd-cc-loading"><div class="spinner"></div><p>Loading courier history...</p></div>';
         echo '</div>';
     }
     
@@ -174,6 +174,16 @@ class WCBD_Courier_Check {
             $phone = '0' . $phone;
         }
         
+        $force = isset($_POST['force']) && $_POST['force'] === '1';
+        $cache_key = 'wcbd_cc_' . md5($phone);
+        
+        if (!$force) {
+            $cached = get_transient($cache_key);
+            if ($cached !== false) {
+                wp_send_json($cached);
+            }
+        }
+        
         $response = wp_remote_post($this->endpoint, array(
             'timeout' => 30,
             'body' => json_encode(array(
@@ -188,8 +198,12 @@ class WCBD_Courier_Check {
         }
         
         $body = json_decode(wp_remote_retrieve_body($response), true);
+        if (is_array($body) && !empty($body['success'])) {
+            set_transient($cache_key, $body, 12 * HOUR_IN_SECONDS);
+        }
         wp_send_json($body);
     }
+
     
     private function get_admin_css() {
         return <<<'CSSBLOCK'

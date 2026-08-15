@@ -1,11 +1,12 @@
 export const COURIER_CHECK_PLUGIN_CONFIG = {
-  version: "1.4.2",
+  version: "1.4.3",
   name: "WCBD Courier Check",
   slug: "wcbd-courier-check",
   fileName: "wcbd-courier-check.zip",
   fileSize: "~15KB",
   badgeLabel: "UPDATE",
-  versionHighlight: "All Couriers (BD Courier Style Graph) — Plugin + Website",
+  versionHighlight: "Saved Results (Order Meta Cache) — একবার লোড হলে আর বারবার লোড নেবে না",
+
   pricing: {
     monthly: 399,
     yearly: 999,

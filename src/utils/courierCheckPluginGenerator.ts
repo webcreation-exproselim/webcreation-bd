@@ -341,7 +341,28 @@ class WCBD_Courier_Check {
 .wcbd-cc-panel .plogo{height:22px;max-width:90px;object-fit:contain}
 .wcbd-cc-pbar{background:#e5e7eb;border-radius:999px;height:8px;width:140px;overflow:hidden;display:inline-block;vertical-align:middle;margin-left:8px}
 .wcbd-cc-pbar span{display:block;height:100%;border-radius:999px}
-@media (max-width:782px){.wcbd-cc-cards{grid-template-columns:repeat(2,1fr)}}
+
+/* ===== BD Courier style graph ===== */
+.wcbd-cc-graph{display:flex;gap:18px;align-items:center;border:1px solid #e2e8f0;border-radius:10px;padding:16px;margin-bottom:16px;background:#fff;flex-wrap:wrap}
+.wcbd-cc-donut{width:132px;height:132px;border-radius:50%;flex:0 0 132px;display:flex;align-items:center;justify-content:center;position:relative}
+.wcbd-cc-donut:after{content:'';position:absolute;width:96px;height:96px;background:#fff;border-radius:50%}
+.wcbd-cc-donut .dv{position:relative;z-index:1;text-align:center}
+.wcbd-cc-donut .dv b{display:block;font-size:22px;font-weight:800;color:#0f172a;line-height:1.1}
+.wcbd-cc-donut .dv small{font-size:10px;color:#64748b}
+.wcbd-cc-bars{flex:1;min-width:260px}
+.wcbd-cc-brow{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.wcbd-cc-brow .bname{width:88px;font-size:12px;font-weight:700;color:#334155;flex:0 0 88px}
+.wcbd-cc-btrack{flex:1;height:16px;border-radius:999px;background:#f1f5f9;overflow:hidden;display:flex}
+.wcbd-cc-btrack i{display:block;height:100%}
+.wcbd-cc-btrack i.s{background:linear-gradient(90deg,#22c55e,#16a34a)}
+.wcbd-cc-btrack i.c{background:linear-gradient(90deg,#f87171,#ef4444)}
+.wcbd-cc-brow .bval{width:104px;flex:0 0 104px;text-align:right;font-size:11px;color:#475569;font-weight:600}
+.wcbd-cc-legend{display:flex;gap:14px;font-size:11px;color:#64748b;margin-top:6px}
+.wcbd-cc-legend span:before{content:'';display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px}
+.wcbd-cc-legend .lg-s:before{background:#22c55e}
+.wcbd-cc-legend .lg-c:before{background:#ef4444}
+@media (max-width:782px){.wcbd-cc-cards{grid-template-columns:repeat(2,1fr)}.wcbd-cc-graph{flex-direction:column;align-items:stretch}.wcbd-cc-donut{margin:0 auto}}
+
 CSSBLOCK;
 
     }

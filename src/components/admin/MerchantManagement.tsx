@@ -464,6 +464,8 @@ export function MerchantManagement() {
             <SelectItem value="domain" className="font-bengali">ডোমেইন (A→Z)</SelectItem>
           </SelectContent>
         </Select>
+      </div>
+
 
 
       {/* Merchants Table */}

@@ -587,6 +587,27 @@ jQuery(document).ready(function($){
         h += '<div class="wcbd-cc-card cancel"><p class="lbl">Cancelled</p><p class="val">' + t.cancel + '</p></div>';
         h += '<div class="wcbd-cc-card ratio"><p class="lbl">Success Ratio</p><p class="val">' + t.ratio + '%</p></div>';
         h += '</div>';
+        // BD Courier style graph: donut + per-courier stacked bars
+        var dcolor = t.ratio >= 80 ? '#22c55e' : (t.ratio >= 50 ? '#f59e0b' : '#ef4444');
+        h += '<div class="wcbd-cc-graph">';
+        h += '<div class="wcbd-cc-donut" style="background:conic-gradient(' + dcolor + ' 0% ' + t.ratio + '%, #e5e7eb ' + t.ratio + '% 100%)"><div class="dv"><b>' + t.ratio + '%</b><small>Success Ratio</small></div></div>';
+        h += '<div class="wcbd-cc-bars">';
+        for(var g = 0; g < list.length; g++){
+            var gc = list[g];
+            var gt = gc.orders || 0;
+            var gs = gc.delivered || 0;
+            var gcn = gc.returned || 0;
+            var sw = gt > 0 ? (gs / gt) * 100 : 0;
+            var cw = gt > 0 ? (gcn / gt) * 100 : 0;
+            h += '<div class="wcbd-cc-brow">';
+            h += '<span class="bname">' + gc.name + '</span>';
+            h += '<span class="wcbd-cc-btrack"><i class="s" style="width:' + sw + '%"></i><i class="c" style="width:' + cw + '%"></i></span>';
+            h += '<span class="bval">' + gs + '/' + gt + ' (' + (gt > 0 ? Math.round(sw) : 0) + '%)</span>';
+            h += '</div>';
+        }
+        h += '<div class="wcbd-cc-legend"><span class="lg-s">Success</span><span class="lg-c">Cancelled</span></div>';
+        h += '</div></div>';
+
         h += '<table><thead><tr><th>Logo</th><th>Courier</th><th>Total</th><th>Success</th><th>Cancelled</th><th>Success Ratio</th></tr></thead><tbody>';
         for(var i = 0; i < list.length; i++){
             var c = list[i];

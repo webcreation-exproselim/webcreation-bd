@@ -106,7 +106,7 @@ class WCBD_Courier_Check {
         if ($column !== 'wcbd_courier_check') return;
         $order = wc_get_order($post_id);
         if (!$order) return;
-        echo $this->inline_widget_html($order->get_billing_phone());
+        echo $this->inline_widget_html($order);
     }
     
     public function render_courier_check_column_hpos($column, $order) {
@@ -116,15 +116,23 @@ class WCBD_Courier_Check {
             $order = wc_get_order($order);
         }
         if (!$order) return;
-        echo $this->inline_widget_html($order->get_billing_phone());
+        echo $this->inline_widget_html($order);
     }
     
-    private function inline_widget_html($phone) {
+    private function inline_widget_html($order) {
+        $phone = $order ? $order->get_billing_phone() : '';
         if (!$phone) return '<span class="wcbd-cc-no-phone">—</span>';
-        return '<div class="wcbd-cc-inline" data-phone="' . esc_attr($phone) . '">'
+        $order_id = $order->get_id();
+        $saved = $order->get_meta('_wcbd_cc_data');
+        $cached_attr = '';
+        if (!empty($saved) && is_array($saved)) {
+            $cached_attr = ' data-cached="' . esc_attr(wp_json_encode($saved)) . '"';
+        }
+        return '<div class="wcbd-cc-inline" data-phone="' . esc_attr($phone) . '" data-order="' . esc_attr($order_id) . '"' . $cached_attr . '>'
             . '<div class="wcbd-cc-inline-loading">Loading…</div>'
             . '</div>';
     }
+
 
     
     public function add_order_meta_box() {

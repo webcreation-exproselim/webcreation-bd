@@ -386,24 +386,12 @@ jQuery(document).ready(function($){
         'carry bee': 'https://carrybee.com.bd/wp-content/uploads/2024/01/Carrybee-Logo-04.png'
     };
     
-    // Always show these 4 couriers in results
-    var defaultCouriers = [
-        { name: 'Pathao', key: 'pathao' },
-        { name: 'Steadfast', key: 'steadfast' },
-        { name: 'CarryBee', key: 'carrybee' },
-        { name: 'RedX', key: 'redx' }
-    ];
-    
-    function findCourierData(couriers, key) {
-        if (!couriers || !couriers.length) return null;
-        for (var i = 0; i < couriers.length; i++) {
-            var lower = couriers[i].name.toLowerCase();
-            if (lower.indexOf(key) !== -1) return couriers[i];
-            if (key === 'carrybee' && lower.indexOf('carry bee') !== -1) return couriers[i];
-            if (key === 'redx' && (lower.indexOf('red x') !== -1 || lower.indexOf('redx') !== -1)) return couriers[i];
-        }
+    function getCourierLogo(name) {
+        var lower = String(name || '').toLowerCase();
+        for (var key in courierLogos) { if (lower.indexOf(key) !== -1) return courierLogos[key]; }
         return null;
     }
+
 
     $(document).on('click','.wcbd-cc-btn',function(e){
         e.preventDefault();
@@ -431,17 +419,17 @@ jQuery(document).ready(function($){
                 if(res.success&&res.data){
                     var d=res.data;
                     
-                    // Calculate totals from default 4 couriers
-                    var totalOrders = 0, totalDelivered = 0, totalReturned = 0;
-                    for (var i = 0; i < defaultCouriers.length; i++) {
-                        var match = findCourierData(d.couriers, defaultCouriers[i].key);
-                        if (match) {
-                            totalOrders += match.orders || 0;
-                            totalDelivered += match.delivered || 0;
-                            totalReturned += match.returned || 0;
+                    // Totals across ALL couriers returned by API
+                    var list = d.couriers || [];
+                    var totalOrders = d.total_orders || 0, totalDelivered = d.total_delivered || 0, totalReturned = d.total_returned || 0;
+                    if (!totalOrders) {
+                        for (var i = 0; i < list.length; i++) {
+                            totalOrders += list[i].orders || 0;
+                            totalDelivered += list[i].delivered || 0;
+                            totalReturned += list[i].returned || 0;
                         }
                     }
-                    var successRate = totalOrders > 0 ? Math.round((totalDelivered / totalOrders) * 100) : 0;
+                    var successRate = totalOrders > 0 ? Math.round((totalDelivered / totalOrders) * 1000) / 10 : 0;
                     
                     // Determine risk
                     var riskClass = 'new_customer';
@@ -472,31 +460,47 @@ jQuery(document).ready(function($){
                     html += '<div class="wcbd-cc-stat"><p class="wcbd-cc-stat-value delivered">' + totalDelivered + '</p><p class="wcbd-cc-stat-label">মোট ডেলিভারি</p></div>';
                     html += '<div class="wcbd-cc-stat"><p class="wcbd-cc-stat-value returned">' + totalReturned + '</p><p class="wcbd-cc-stat-label">মোট বাতিল</p></div>';
                     html += '</div>';
+
+                    // BD Courier style graph: donut + per courier bars
+                    var dcolor = successRate >= 80 ? '#22c55e' : (successRate >= 50 ? '#f59e0b' : '#ef4444');
+                    html += '<div class="wcbd-cc-graph">';
+                    html += '<div class="wcbd-cc-donut" style="background:conic-gradient(' + dcolor + ' 0% ' + successRate + '%, #e5e7eb ' + successRate + '% 100%)"><div class="dv"><b>' + successRate + '%</b><small>Success Ratio</small></div></div>';
+                    html += '<div class="wcbd-cc-bars">';
+                    for (var g = 0; g < list.length; g++) {
+                        var gc = list[g];
+                        var gt = gc.orders || 0, gs = gc.delivered || 0, gcn = gc.returned || 0;
+                        var sw = gt > 0 ? (gs / gt) * 100 : 0;
+                        var cw = gt > 0 ? (gcn / gt) * 100 : 0;
+                        html += '<div class="wcbd-cc-brow"><span class="bname">' + gc.name + '</span>';
+                        html += '<span class="wcbd-cc-btrack"><i class="s" style="width:' + sw + '%"></i><i class="c" style="width:' + cw + '%"></i></span>';
+                        html += '<span class="bval">' + gs + '/' + gt + ' (' + (gt > 0 ? Math.round(sw) : 0) + '%)</span></div>';
+                    }
+                    html += '<div class="wcbd-cc-legend"><span class="lg-s">Success</span><span class="lg-c">Cancelled</span></div>';
+                    html += '</div></div>';
                     
-                    // Courier table - always show all 4 couriers
+                    // Courier table - all couriers from API
                     html += '<div class="wcbd-cc-table-wrap">';
-                    html += '<table class="wcbd-cc-table"><thead><tr><th>কুরিয়ার</th><th>মোট</th><th>সফল</th></tr></thead><tbody>';
+                    html += '<table class="wcbd-cc-table"><thead><tr><th>কুরিয়ার</th><th>মোট</th><th>সফল</th><th>বাতিল</th></tr></thead><tbody>';
                     
-                    for (var k = 0; k < defaultCouriers.length; k++) {
-                        var dc = defaultCouriers[k];
-                        var match = findCourierData(d.couriers, dc.key);
-                        var orders = match ? (match.orders || 0) : 0;
-                        var delivered = match ? (match.delivered || 0) : 0;
-                        var logo = courierLogos[dc.key];
+                    for (var k = 0; k < list.length; k++) {
+                        var c2 = list[k];
+                        var logo = c2.logo || getCourierLogo(c2.name);
                         var courierCell = logo
-                            ? '<img src="' + logo + '" alt="' + dc.name + '" class="wcbd-cc-courier-logo" onerror="this.style.display=\\'none\\';this.nextSibling.style.display=\\'inline\\'"><span class="wcbd-cc-courier-name" style="display:none">' + dc.name + '</span>'
-                            : '<span class="wcbd-cc-courier-name">' + dc.name + '</span>';
+                            ? '<img src="' + logo + '" alt="' + c2.name + '" class="wcbd-cc-courier-logo" onerror="this.style.display=\\'none\\';this.nextSibling.style.display=\\'inline\\'"><span class="wcbd-cc-courier-name" style="display:none">' + c2.name + '</span>'
+                            : '<span class="wcbd-cc-courier-name">' + c2.name + '</span>';
                         
                         html += '<tr>';
                         html += '<td>' + courierCell + '</td>';
-                        html += '<td class="wcbd-cc-orders">' + orders + '</td>';
-                        html += '<td class="wcbd-cc-delivered">' + delivered + '</td>';
+                        html += '<td class="wcbd-cc-orders">' + (c2.orders || 0) + '</td>';
+                        html += '<td class="wcbd-cc-delivered">' + (c2.delivered || 0) + '</td>';
+                        html += '<td class="wcbd-cc-returned">' + (c2.returned || 0) + '</td>';
                         html += '</tr>';
                     }
                     
                     html += '</tbody>';
-                    html += '<tfoot><tr><td>মোট</td><td>' + totalOrders + '</td><td>' + totalDelivered + '</td></tr></tfoot>';
+                    html += '<tfoot><tr><td>মোট</td><td>' + totalOrders + '</td><td>' + totalDelivered + '</td><td>' + totalReturned + '</td></tr></tfoot>';
                     html += '</table></div>';
+
                     
                     // Branding
                     html += '<div class="wcbd-cc-branding"><p class="wcbd-cc-branding-text">Powered by <a href="https://www.webcreationbd.online" target="_blank">WebCreation BD</a></p></div>';

@@ -22,6 +22,7 @@ const COURIER_LOGOS: Record<string, string> = {
 
 interface CourierData {
   name: string;
+  logo?: string;
   orders: number;
   delivered: number;
   returned: number;
@@ -43,15 +44,14 @@ interface CourierCheckerDashboardProps {
   apiKey: string;
 }
 
-const ALLOWED_COURIERS = ["pathao", "steadfast", "carrybee", "carry bee", "redx", "red x", "redx logistics", "red x logistics"];
+const getLocalLogo = (name: string) => {
+  const lower = name.toLowerCase();
+  for (const key of Object.keys(COURIER_LOGOS)) {
+    if (lower.includes(key)) return COURIER_LOGOS[key];
+  }
+  return null;
+};
 
-// Always show these 4 couriers in results, even if data is 0
-const DEFAULT_COURIERS: { name: string; logoKey: string }[] = [
-  { name: "Pathao", logoKey: "pathao" },
-  { name: "Steadfast", logoKey: "steadfast" },
-  { name: "CarryBee", logoKey: "carrybee" },
-  { name: "RedX", logoKey: "redx" },
-];
 
 const RISK_STYLES: Record<string, { bg: string; text: string; label: string }> = {
   trusted: { bg: "bg-emerald-500", text: "text-white", label: "✅ বিশ্বস্ত কাস্টমার" },
@@ -187,6 +187,44 @@ export function CourierCheckerDashboard({ apiKey }: CourierCheckerDashboardProps
             </div>
           </div>
 
+          {/* BD Courier style graph */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm flex flex-col md:flex-row gap-6 items-center">
+            <div
+              className="relative w-36 h-36 rounded-full shrink-0"
+              style={{
+                background: `conic-gradient(${result.success_rate >= 80 ? '#22c55e' : result.success_rate >= 50 ? '#f59e0b' : '#ef4444'} 0% ${result.success_rate}%, #e5e7eb ${result.success_rate}% 100%)`,
+              }}
+            >
+              <div className="absolute inset-[14px] bg-white rounded-full flex flex-col items-center justify-center">
+                <b className="text-2xl text-gray-900">{result.success_rate}%</b>
+                <small className="text-[11px] text-gray-500">Success Ratio</small>
+              </div>
+            </div>
+            <div className="flex-1 w-full space-y-2">
+              {result.couriers.map((c, i) => {
+                const total = c.orders || 0;
+                const sw = total > 0 ? (c.delivered / total) * 100 : 0;
+                const cw = total > 0 ? (c.returned / total) * 100 : 0;
+                return (
+                  <div key={i} className="flex items-center gap-3">
+                    <span className="w-28 shrink-0 text-xs font-semibold text-gray-700 truncate">{c.name}</span>
+                    <span className="flex-1 h-3 rounded-full bg-gray-100 overflow-hidden flex">
+                      <i className="h-full bg-emerald-500" style={{ width: `${sw}%` }} />
+                      <i className="h-full bg-red-400" style={{ width: `${cw}%` }} />
+                    </span>
+                    <span className="w-24 shrink-0 text-right text-xs text-gray-600">
+                      {c.delivered}/{total} ({total > 0 ? Math.round(sw) : 0}%)
+                    </span>
+                  </div>
+                );
+              })}
+              <div className="flex gap-4 pt-1 text-[11px] text-gray-500">
+                <span className="flex items-center gap-1"><i className="w-3 h-3 rounded-sm bg-emerald-500 inline-block" /> Success</span>
+                <span className="flex items-center gap-1"><i className="w-3 h-3 rounded-sm bg-red-400 inline-block" /> Cancelled</span>
+              </div>
+            </div>
+          </div>
+
           {/* Courier Details Card */}
           <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
             {/* Header */}
@@ -211,35 +249,37 @@ export function CourierCheckerDashboard({ apiKey }: CourierCheckerDashboardProps
                     <th className="px-5 py-3 text-left text-sm font-bold text-white font-bengali">কুরিয়ার</th>
                     <th className="px-5 py-3 text-center text-sm font-bold text-white font-bengali">মোট</th>
                     <th className="px-5 py-3 text-center text-sm font-bold text-white font-bengali">সফল</th>
+                    <th className="px-5 py-3 text-center text-sm font-bold text-white font-bengali">বাতিল</th>
+                    <th className="px-5 py-3 text-center text-sm font-bold text-white font-bengali">রেশিও</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {DEFAULT_COURIERS.map((dc, i) => {
-                    // Find matching courier data from results
-                    const matched = result.couriers.find(c =>
-                      c.name.toLowerCase().includes(dc.logoKey) ||
-                      (dc.logoKey === "carrybee" && c.name.toLowerCase().includes("carry bee")) ||
-                      (dc.logoKey === "redx" && (c.name.toLowerCase().includes("red x") || c.name.toLowerCase().includes("redx")))
-                    );
-                    const orders = matched?.orders || 0;
-                    const delivered = matched?.delivered || 0;
-                    const logo = COURIER_LOGOS[dc.logoKey];
+                  {result.couriers.map((c, i) => {
+                    const logo = getLocalLogo(c.name) || c.logo;
+                    const rate = c.rate || (c.orders > 0 ? Math.round((c.delivered / c.orders) * 1000) / 10 : 0);
                     return (
                       <tr key={i} className="hover:bg-gray-50/50 transition-colors">
                         <td className="px-5 py-4">
-                          {logo ? (
-                            <img src={logo} alt={dc.name} className="h-8 w-auto max-w-[120px] object-contain" />
-                          ) : (
-                            <span className="font-semibold text-gray-900 text-sm">{dc.name}</span>
-                          )}
+                          <div className="flex items-center gap-2">
+                            {logo && <img src={logo} alt={c.name} className="h-7 w-auto max-w-[90px] object-contain" />}
+                            <span className="font-semibold text-gray-900 text-sm">{c.name}</span>
+                          </div>
                         </td>
                         <td className="px-5 py-4 text-center">
-                          <span className="font-bold text-gray-700 text-sm">{orders}</span>
+                          <span className="font-bold text-gray-700 text-sm">{c.orders || 0}</span>
                         </td>
                         <td className="px-5 py-4 text-center">
-                          <span className={`font-bold text-sm ${delivered > 0 ? 'text-emerald-600' : 'text-gray-400'}`}>
-                            {delivered}
+                          <span className={`font-bold text-sm ${c.delivered > 0 ? 'text-emerald-600' : 'text-gray-400'}`}>
+                            {c.delivered || 0}
                           </span>
+                        </td>
+                        <td className="px-5 py-4 text-center">
+                          <span className={`font-bold text-sm ${c.returned > 0 ? 'text-red-500' : 'text-gray-400'}`}>
+                            {c.returned || 0}
+                          </span>
+                        </td>
+                        <td className="px-5 py-4 text-center">
+                          <span className="font-bold text-sm text-gray-700">{rate}%</span>
                         </td>
                       </tr>
                     );
@@ -251,11 +291,14 @@ export function CourierCheckerDashboard({ apiKey }: CourierCheckerDashboardProps
                     <td className="px-5 py-3 text-left text-sm font-bold text-white font-bengali">মোট</td>
                     <td className="px-5 py-3 text-center text-sm font-bold text-white">{result.total_orders}</td>
                     <td className="px-5 py-3 text-center text-sm font-bold text-white">{result.total_delivered}</td>
+                    <td className="px-5 py-3 text-center text-sm font-bold text-white">{result.total_returned}</td>
+                    <td className="px-5 py-3 text-center text-sm font-bold text-white">{result.success_rate}%</td>
                   </tr>
                 </tfoot>
               </table>
             </div>
           </div>
+
 
           {/* No data message */}
           {result.total_orders === 0 && (

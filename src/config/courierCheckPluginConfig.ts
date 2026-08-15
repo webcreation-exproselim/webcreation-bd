@@ -1,11 +1,11 @@
 export const COURIER_CHECK_PLUGIN_CONFIG = {
-  version: "1.4.1",
+  version: "1.4.2",
   name: "WCBD Courier Check",
   slug: "wcbd-courier-check",
   fileName: "wcbd-courier-check.zip",
   fileSize: "~15KB",
   badgeLabel: "UPDATE",
-  versionHighlight: "BD Courier Style Graph + Auto Load in Order List",
+  versionHighlight: "All Couriers (BD Courier Style Graph) — Plugin + Website",
   pricing: {
     monthly: 399,
     yearly: 999,
@@ -15,7 +15,7 @@ export const COURIER_CHECK_PLUGIN_CONFIG = {
     "📊 Courier Delivery History Check",
     "🔍 Phone Number Based Lookup",
     "📈 Success Rate Visualization",
-    "🚚 Pathao, Steadfast, CarryBee, RedX Support",
+    "🚚 সব কুরিয়ার সাপোর্ট (Pathao, Steadfast, RedX, CarryBee, Paperfly সহ সব)",
     "🏷️ Trust Label (Green/Yellow/Red)",
     "📦 WooCommerce Order List Integration",
     "💼 Single Order View Analytics",

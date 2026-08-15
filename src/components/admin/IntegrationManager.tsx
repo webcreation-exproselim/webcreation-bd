@@ -376,7 +376,6 @@ export function IntegrationManager() {
 (function(){
   var WCBD_API_KEY='${record.api_key}';
   var WCBD_ENDPOINT='${getEndpointUrl("couriercheck")}';
-  var defaultCouriers=[{name:'Pathao',key:'pathao'},{name:'Steadfast',key:'steadfast'},{name:'CarryBee',key:'carrybee'},{name:'RedX',key:'redx'}];
 
   window.wcbdCourierCheck=function(phone){
     if(!phone)return;
@@ -394,8 +393,8 @@ export function IntegrationManager() {
     .then(function(r){return r.json()})
     .then(function(res){
       if(!res.success||!res.data){ov.querySelector('.wcbd-cc-popup-body').innerHTML='<p style="color:#ef4444;text-align:center;padding:20px">'+( res.error||'No data found')+'</p>';return;}
-      var d=res.data,tO=0,tD=0,tR=0;
-      for(var i=0;i<defaultCouriers.length;i++){var m=findMatch(d.couriers,defaultCouriers[i].key);if(m){tO+=m.orders||0;tD+=m.delivered||0;tR+=m.returned||0;}}
+      var d=res.data,list=d.couriers||[],tO=d.total_orders||0,tD=d.total_delivered||0,tR=d.total_returned||0;
+      if(!tO){for(var i=0;i<list.length;i++){tO+=list[i].orders||0;tD+=list[i].delivered||0;tR+=list[i].returned||0;}}
       var sr=tO>0?Math.round((tD/tO)*100):0;
       var rc='new_customer',rl='🆕 New Customer';
       if(tO>0){if(sr>=80){rc='trusted';rl='✅ Trusted'}else if(sr>=50){rc='moderate';rl='⚠️ Moderate'}else{rc='risky';rl='🚫 High Risk'}}
@@ -408,9 +407,9 @@ export function IntegrationManager() {
       h+='<div class="wcbd-cc-popup-stat">✅ <strong class="success">'+tD+'</strong></div>';
       h+='<div class="wcbd-cc-popup-stat">📦 <strong class="returned">'+tR+'</strong></div>';
       h+='</div>';
-      h+='<table class="wcbd-cc-popup-table"><thead><tr><th>Courier</th><th>Orders</th><th>Delivered</th></tr></thead><tbody>';
-      for(var j=0;j<defaultCouriers.length;j++){var cm=findMatch(d.couriers,defaultCouriers[j].key);h+='<tr><td>'+defaultCouriers[j].name+'</td><td>'+(cm?cm.orders:0)+'</td><td style="color:'+(cm&&cm.delivered>0?'#10b981':'#94a3b8')+';font-weight:700">'+(cm?cm.delivered:0)+'</td></tr>';}
-      h+='</tbody><tfoot><tr><td>Total</td><td>'+tO+'</td><td>'+tD+'</td></tr></tfoot></table>';
+      h+='<table class="wcbd-cc-popup-table"><thead><tr><th>Courier</th><th>Orders</th><th>Delivered</th><th>Cancelled</th></tr></thead><tbody>';
+      for(var j=0;j<list.length;j++){var cm=list[j];h+='<tr><td>'+cm.name+'</td><td>'+(cm.orders||0)+'</td><td style="color:'+((cm.delivered||0)>0?'#10b981':'#94a3b8')+';font-weight:700">'+(cm.delivered||0)+'</td><td style="color:#ef4444;font-weight:700">'+(cm.returned||0)+'</td></tr>';}
+      h+='</tbody><tfoot><tr><td>Total</td><td>'+tO+'</td><td>'+tD+'</td><td>'+tR+'</td></tr></tfoot></table>';
       h+='<div class="wcbd-cc-popup-branding">Powered by <a href="https://www.webcreationbd.online" target="_blank">WebCreation BD</a></div>';
       h+='</div>';
       ov.querySelector('.wcbd-cc-popup').innerHTML=h;

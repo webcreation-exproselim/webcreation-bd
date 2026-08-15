@@ -696,7 +696,12 @@ jQuery(document).ready(function($){
         var el = $(this);
         var cached = wcbdCached(el);
         if(cached) renderPanel(el, cached);
-        else loadPanel(el, false);
+        else el.html('<div style="padding:16px;text-align:center"><button type="button" class="wcbd-cc-refresh-btn wcbd-cc-panel-check">&#128269; কুরিয়ার হিস্ট্রি চেক করুন</button></div>');
+    });
+
+    $(document).on('click', '.wcbd-cc-panel-check', function(e){
+        e.preventDefault();
+        loadPanel($(this).closest('.wcbd-cc-panel'), false);
     });
 
     $(document).on('click', '.wcbd-cc-panel-refresh', function(e){

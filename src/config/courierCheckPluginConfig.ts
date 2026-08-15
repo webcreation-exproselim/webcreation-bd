@@ -1,5 +1,5 @@
 export const COURIER_CHECK_PLUGIN_CONFIG = {
-  version: "1.4.4",
+  version: "1.4.5",
   name: "WCBD Courier Check",
   slug: "wcbd-courier-check",
   fileName: "wcbd-courier-check.zip",

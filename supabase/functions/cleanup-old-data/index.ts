@@ -65,13 +65,23 @@ Deno.serve(async (req) => {
 
     if (error) throw error;
 
+    const { data: incData, error: incError } = await supabase
+      .from("incomplete_orders")
+      .delete()
+      .lt("created_at", sevenDaysAgo.toISOString())
+      .select("id");
+
+    if (incError) throw incError;
+
     const deletedCount = data?.length || 0;
-    console.log(`Cleanup complete: deleted ${deletedCount} fraud logs older than 7 days`);
+    const deletedIncomplete = incData?.length || 0;
+    console.log(`Cleanup complete: ${deletedCount} fraud logs, ${deletedIncomplete} incomplete orders older than 7 days`);
 
     return new Response(
-      JSON.stringify({ success: true, deleted_fraud_logs: deletedCount }),
+      JSON.stringify({ success: true, deleted_fraud_logs: deletedCount, deleted_incomplete_orders: deletedIncomplete }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
+
   } catch (error) {
     console.error("Cleanup error:", error);
     return new Response(

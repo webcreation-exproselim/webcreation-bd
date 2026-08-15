@@ -106,7 +106,7 @@ class WCBD_Courier_Check {
         if ($column !== 'wcbd_courier_check') return;
         $order = wc_get_order($post_id);
         if (!$order) return;
-        echo $this->inline_widget_html($order->get_billing_phone());
+        echo $this->inline_widget_html($order);
     }
     
     public function render_courier_check_column_hpos($column, $order) {
@@ -116,15 +116,23 @@ class WCBD_Courier_Check {
             $order = wc_get_order($order);
         }
         if (!$order) return;
-        echo $this->inline_widget_html($order->get_billing_phone());
+        echo $this->inline_widget_html($order);
     }
     
-    private function inline_widget_html($phone) {
+    private function inline_widget_html($order) {
+        $phone = $order ? $order->get_billing_phone() : '';
         if (!$phone) return '<span class="wcbd-cc-no-phone">—</span>';
-        return '<div class="wcbd-cc-inline" data-phone="' . esc_attr($phone) . '">'
+        $order_id = $order->get_id();
+        $saved = $order->get_meta('_wcbd_cc_data');
+        $cached_attr = '';
+        if (!empty($saved) && is_array($saved)) {
+            $cached_attr = ' data-cached="' . esc_attr(wp_json_encode($saved)) . '"';
+        }
+        return '<div class="wcbd-cc-inline" data-phone="' . esc_attr($phone) . '" data-order="' . esc_attr($order_id) . '"' . $cached_attr . '>'
             . '<div class="wcbd-cc-inline-loading">Loading…</div>'
             . '</div>';
     }
+
 
     
     public function add_order_meta_box() {
@@ -152,7 +160,12 @@ class WCBD_Courier_Check {
             return;
         }
         
-        echo '<div class="wcbd-cc-panel" data-phone="' . esc_attr($phone) . '">';
+        $saved = $order->get_meta('_wcbd_cc_data');
+        $cached_attr = '';
+        if (!empty($saved) && is_array($saved)) {
+            $cached_attr = ' data-cached="' . esc_attr(wp_json_encode($saved)) . '"';
+        }
+        echo '<div class="wcbd-cc-panel" data-phone="' . esc_attr($phone) . '" data-order="' . esc_attr($order->get_id()) . '"' . $cached_attr . '>';
         echo '<div class="wcbd-cc-loading"><div class="spinner"></div><p>Loading courier history...</p></div>';
         echo '</div>';
     }
@@ -175,11 +188,13 @@ class WCBD_Courier_Check {
         }
         
         $force = isset($_POST['force']) && $_POST['force'] === '1';
+        $order_id = isset($_POST['order_id']) ? absint($_POST['order_id']) : 0;
         $cache_key = 'wcbd_cc_' . md5($phone);
         
         if (!$force) {
             $cached = get_transient($cache_key);
             if ($cached !== false) {
+                $this->save_order_cache($order_id, $cached);
                 wp_send_json($cached);
             }
         }
@@ -200,9 +215,20 @@ class WCBD_Courier_Check {
         $body = json_decode(wp_remote_retrieve_body($response), true);
         if (is_array($body) && !empty($body['success'])) {
             set_transient($cache_key, $body, 12 * HOUR_IN_SECONDS);
+            $this->save_order_cache($order_id, $body);
         }
         wp_send_json($body);
     }
+    
+    private function save_order_cache($order_id, $body) {
+        if (!$order_id || !is_array($body) || empty($body['data'])) return;
+        $order = wc_get_order($order_id);
+        if (!$order) return;
+        $order->update_meta_data('_wcbd_cc_data', $body['data']);
+        $order->update_meta_data('_wcbd_cc_checked_at', time());
+        $order->save();
+    }
+
 
     
     private function get_admin_css() {
@@ -520,14 +546,20 @@ jQuery(document).ready(function($){
     });
 
     // ===== Shared fetch =====
-    function wcbdFetch(phone, force, cb){
+    function wcbdFetch(phone, force, cb, orderId){
         $.ajax({
             url: wcbdCc.ajaxUrl,
             method: 'POST',
-            data: { action:'wcbd_courier_check', phone: phone, nonce: wcbdCc.nonce, force: force ? '1' : '0' },
+            data: { action:'wcbd_courier_check', phone: phone, nonce: wcbdCc.nonce, force: force ? '1' : '0', order_id: orderId || 0 },
             success: function(res){ cb(res && res.success ? res.data : null, res && res.error ? res.error : 'No data'); },
             error: function(){ cb(null, 'Connection failed'); }
         });
+    }
+
+    function wcbdCached(el){
+        var raw = el.attr('data-cached');
+        if(!raw) return null;
+        try { var d = JSON.parse(raw); return (d && typeof d === 'object') ? d : null; } catch(e){ return null; }
     }
 
     function wcbdTotals(d){
@@ -555,24 +587,30 @@ jQuery(document).ready(function($){
         if(!phone) return;
         el.html('<div class="wcbd-cc-inline-loading">Loading…</div>');
         wcbdFetch(phone, force, function(d, err){
-            if(d) renderInline(el, d);
+            if(d){ el.attr('data-cached', JSON.stringify(d)); renderInline(el, d); }
             else el.html('<span class="wcbd-cc-inline-loading" style="color:#ef4444">' + err + '</span>');
-        });
+        }, el.data('order'));
     }
 
-    // Sequential auto-load to avoid hammering the API
-    var queue = $('.wcbd-cc-inline').toArray();
+    // Render saved (order meta) results instantly; only fetch the ones never checked
+    var queue = [];
+    $('.wcbd-cc-inline').each(function(){
+        var el = $(this);
+        var cached = wcbdCached(el);
+        if(cached) renderInline(el, cached);
+        else if(el.data('phone')) queue.push(this);
+        else el.html('<span class="wcbd-cc-no-phone">—</span>');
+    });
     (function next(){
         if(!queue.length) return;
         var el = $(queue.shift());
-        var phone = el.data('phone');
-        if(!phone) return next();
-        wcbdFetch(phone, false, function(d, err){
-            if(d) renderInline(el, d);
+        wcbdFetch(el.data('phone'), false, function(d, err){
+            if(d){ el.attr('data-cached', JSON.stringify(d)); renderInline(el, d); }
             else el.html('<span class="wcbd-cc-inline-loading" style="color:#ef4444">' + err + '</span>');
             setTimeout(next, 250);
-        });
+        }, el.data('order'));
     })();
+
 
     $(document).on('click', '.wcbd-cc-reload', function(e){
         e.preventDefault();
@@ -636,12 +674,18 @@ jQuery(document).ready(function($){
         if(!phone) return;
         el.html('<div class="wcbd-cc-loading"><div class="spinner"></div><p>Loading courier history...</p></div>');
         wcbdFetch(phone, force, function(d, err){
-            if(d) renderPanel(el, d);
+            if(d){ el.attr('data-cached', JSON.stringify(d)); renderPanel(el, d); }
             else el.html('<p style="color:#ef4444">' + err + '</p>');
-        });
+        }, el.data('order'));
     }
 
-    $('.wcbd-cc-panel').each(function(){ loadPanel($(this), false); });
+    $('.wcbd-cc-panel').each(function(){
+        var el = $(this);
+        var cached = wcbdCached(el);
+        if(cached) renderPanel(el, cached);
+        else loadPanel(el, false);
+    });
+
     $(document).on('click', '.wcbd-cc-panel-refresh', function(e){
         e.preventDefault();
         loadPanel($(this).closest('.wcbd-cc-panel'), true);

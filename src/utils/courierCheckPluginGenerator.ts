@@ -104,19 +104,9 @@ class WCBD_Courier_Check {
     
     public function render_courier_check_column($column, $post_id) {
         if ($column !== 'wcbd_courier_check') return;
-        
         $order = wc_get_order($post_id);
         if (!$order) return;
-        
-        $phone = $order->get_billing_phone();
-        if ($phone) {
-            echo '<button class="wcbd-cc-btn" data-phone="' . esc_attr($phone) . '" title="Check Courier History">
-                <span class="wcbd-cc-btn-icon">📊</span>
-                <span class="wcbd-cc-btn-text">Check</span>
-            </button>';
-        } else {
-            echo '<span class="wcbd-cc-no-phone">—</span>';
-        }
+        echo $this->inline_widget_html($order->get_billing_phone());
     }
     
     public function render_courier_check_column_hpos($column, $order) {
@@ -126,17 +116,16 @@ class WCBD_Courier_Check {
             $order = wc_get_order($order);
         }
         if (!$order) return;
-        
-        $phone = $order->get_billing_phone();
-        if ($phone) {
-            echo '<button class="wcbd-cc-btn" data-phone="' . esc_attr($phone) . '" title="Check Courier History">
-                <span class="wcbd-cc-btn-icon">📊</span>
-                <span class="wcbd-cc-btn-text">Check</span>
-            </button>';
-        } else {
-            echo '<span class="wcbd-cc-no-phone">—</span>';
-        }
+        echo $this->inline_widget_html($order->get_billing_phone());
     }
+    
+    private function inline_widget_html($phone) {
+        if (!$phone) return '<span class="wcbd-cc-no-phone">—</span>';
+        return '<div class="wcbd-cc-inline" data-phone="' . esc_attr($phone) . '">'
+            . '<div class="wcbd-cc-inline-loading">Loading…</div>'
+            . '</div>';
+    }
+
     
     public function add_order_meta_box() {
         $screen = class_exists('\\Automattic\\WooCommerce\\Internal\\DataStores\\Orders\\CustomOrdersTableController')

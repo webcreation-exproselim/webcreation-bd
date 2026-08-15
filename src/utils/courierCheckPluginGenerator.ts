@@ -214,7 +214,7 @@ class WCBD_Courier_Check {
         
         $body = json_decode(wp_remote_retrieve_body($response), true);
         if (is_array($body) && !empty($body['success'])) {
-            set_transient($cache_key, $body, 12 * HOUR_IN_SECONDS);
+            set_transient($cache_key, $body, 7 * DAY_IN_SECONDS);
             $this->save_order_cache($order_id, $body);
         }
         wp_send_json($body);
@@ -556,10 +556,28 @@ jQuery(document).ready(function($){
         });
     }
 
+    // Browser-side persistent cache (7 days) so revisiting the Orders tab never re-fetches
+    var WCBD_TTL = 7 * 24 * 60 * 60 * 1000;
+    function wcbdKey(phone){ return 'wcbd_cc_' + String(phone).replace(/[^0-9]/g, ''); }
+    function wcbdLocalGet(phone){
+        try {
+            var raw = window.localStorage.getItem(wcbdKey(phone));
+            if(!raw) return null;
+            var o = JSON.parse(raw);
+            if(!o || !o.t || (Date.now() - o.t) > WCBD_TTL) return null;
+            return o.d || null;
+        } catch(e){ return null; }
+    }
+    function wcbdLocalSet(phone, d){
+        try { window.localStorage.setItem(wcbdKey(phone), JSON.stringify({ t: Date.now(), d: d })); } catch(e){}
+    }
+
     function wcbdCached(el){
         var raw = el.attr('data-cached');
-        if(!raw) return null;
-        try { var d = JSON.parse(raw); return (d && typeof d === 'object') ? d : null; } catch(e){ return null; }
+        if(raw){
+            try { var d = JSON.parse(raw); if(d && typeof d === 'object'){ wcbdLocalSet(el.data('phone'), d); return d; } } catch(e){}
+        }
+        return wcbdLocalGet(el.data('phone'));
     }
 
     function wcbdTotals(d){
@@ -587,7 +605,7 @@ jQuery(document).ready(function($){
         if(!phone) return;
         el.html('<div class="wcbd-cc-inline-loading">Loading…</div>');
         wcbdFetch(phone, force, function(d, err){
-            if(d){ el.attr('data-cached', JSON.stringify(d)); renderInline(el, d); }
+            if(d){ el.attr('data-cached', JSON.stringify(d)); wcbdLocalSet(phone, d); renderInline(el, d); }
             else el.html('<span class="wcbd-cc-inline-loading" style="color:#ef4444">' + err + '</span>');
         }, el.data('order'));
     }
@@ -604,8 +622,11 @@ jQuery(document).ready(function($){
     (function next(){
         if(!queue.length) return;
         var el = $(queue.shift());
-        wcbdFetch(el.data('phone'), false, function(d, err){
-            if(d){ el.attr('data-cached', JSON.stringify(d)); renderInline(el, d); }
+        var ph = el.data('phone');
+        var local = wcbdLocalGet(ph);
+        if(local){ renderInline(el, local); return next(); }
+        wcbdFetch(ph, false, function(d, err){
+            if(d){ el.attr('data-cached', JSON.stringify(d)); wcbdLocalSet(ph, d); renderInline(el, d); }
             else el.html('<span class="wcbd-cc-inline-loading" style="color:#ef4444">' + err + '</span>');
             setTimeout(next, 250);
         }, el.data('order'));
@@ -674,7 +695,7 @@ jQuery(document).ready(function($){
         if(!phone) return;
         el.html('<div class="wcbd-cc-loading"><div class="spinner"></div><p>Loading courier history...</p></div>');
         wcbdFetch(phone, force, function(d, err){
-            if(d){ el.attr('data-cached', JSON.stringify(d)); renderPanel(el, d); }
+            if(d){ el.attr('data-cached', JSON.stringify(d)); wcbdLocalSet(phone, d); renderPanel(el, d); }
             else el.html('<p style="color:#ef4444">' + err + '</p>');
         }, el.data('order'));
     }

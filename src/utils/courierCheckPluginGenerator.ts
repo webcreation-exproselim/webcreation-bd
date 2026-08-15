@@ -386,24 +386,12 @@ jQuery(document).ready(function($){
         'carry bee': 'https://carrybee.com.bd/wp-content/uploads/2024/01/Carrybee-Logo-04.png'
     };
     
-    // Always show these 4 couriers in results
-    var defaultCouriers = [
-        { name: 'Pathao', key: 'pathao' },
-        { name: 'Steadfast', key: 'steadfast' },
-        { name: 'CarryBee', key: 'carrybee' },
-        { name: 'RedX', key: 'redx' }
-    ];
-    
-    function findCourierData(couriers, key) {
-        if (!couriers || !couriers.length) return null;
-        for (var i = 0; i < couriers.length; i++) {
-            var lower = couriers[i].name.toLowerCase();
-            if (lower.indexOf(key) !== -1) return couriers[i];
-            if (key === 'carrybee' && lower.indexOf('carry bee') !== -1) return couriers[i];
-            if (key === 'redx' && (lower.indexOf('red x') !== -1 || lower.indexOf('redx') !== -1)) return couriers[i];
-        }
+    function getCourierLogo(name) {
+        var lower = String(name || '').toLowerCase();
+        for (var key in courierLogos) { if (lower.indexOf(key) !== -1) return courierLogos[key]; }
         return null;
     }
+
 
     $(document).on('click','.wcbd-cc-btn',function(e){
         e.preventDefault();

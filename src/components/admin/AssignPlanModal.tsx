@@ -40,6 +40,8 @@ export function AssignPlanModal({ open, onOpenChange, onSuccess }: AssignPlanMod
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [storeName, setStoreName] = useState("");
   const [planType, setPlanType] = useState<'monthly' | 'yearly'>('monthly');
+  const [giveFraudGuard, setGiveFraudGuard] = useState(true);
+  const [giveCourierCheck, setGiveCourierCheck] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -51,10 +53,13 @@ export function AssignPlanModal({ open, onOpenChange, onSuccess }: AssignPlanMod
       setWebsiteUrl("");
       setStoreName("");
       setPlanType('monthly');
+      setGiveFraudGuard(true);
+      setGiveCourierCheck(true);
       setSearch("");
       setError(null);
     }
   }, [open]);
+
 
   const fetchUsers = async () => {
     setLoading(true);

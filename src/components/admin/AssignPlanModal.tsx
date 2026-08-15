@@ -117,6 +117,11 @@ export function AssignPlanModal({ open, onOpenChange, onSuccess }: AssignPlanMod
       return;
     }
 
+    if (!giveFraudGuard && !giveCourierCheck) {
+      setError("অন্তত একটি সার্ভিস নির্বাচন করুন");
+      return;
+    }
+
     setSaving(true);
     try {
       // Calculate expiration date
@@ -128,44 +133,56 @@ export function AssignPlanModal({ open, onOpenChange, onSuccess }: AssignPlanMod
 
       const storeLabel = storeName.trim() || normalizedUrl;
 
-      // Always INSERT a new merchant (each domain = new record)
-      const { error: insertError } = await supabase
-        .from('merchants')
-        .insert({
-          user_id: selectedUser.user_id,
-          website_url: normalizedUrl,
-          store_name: storeLabel,
-          is_active: true,
-          current_plan: planType,
-          plan_expires_at: expiresAt.toISOString(),
-          max_requests: planType === 'yearly' ? 15000 : 1000,
-          requests_used: 0,
-        });
+      if (giveFraudGuard) {
+        // Always INSERT a new merchant (each domain = new record)
+        const { error: insertError } = await supabase
+          .from('merchants')
+          .insert({
+            user_id: selectedUser.user_id,
+            website_url: normalizedUrl,
+            store_name: storeLabel,
+            is_active: true,
+            current_plan: planType,
+            plan_expires_at: expiresAt.toISOString(),
+            max_requests: planType === 'yearly' ? 15000 : 1000,
+            requests_used: 0,
+          });
 
-      if (insertError) throw insertError;
+        if (insertError) throw insertError;
+      }
 
-      // Always INSERT a new courier check subscription for this domain
-      const courierMaxRequests = planType === 'yearly' ? 5000 : 500;
-      await supabase
-        .from('courier_check_subscriptions')
-        .insert({
-          user_id: selectedUser.user_id,
-          is_active: true,
-          plan_expires_at: expiresAt.toISOString(),
-          max_requests: courierMaxRequests,
-          website_url: normalizedUrl,
-          store_name: storeLabel,
-        });
+      if (giveCourierCheck) {
+        // Always INSERT a new courier check subscription for this domain
+        const courierMaxRequests = planType === 'yearly' ? 5000 : 500;
+        const { error: ccError } = await supabase
+          .from('courier_check_subscriptions')
+          .insert({
+            user_id: selectedUser.user_id,
+            is_active: true,
+            plan_expires_at: expiresAt.toISOString(),
+            max_requests: courierMaxRequests,
+            website_url: normalizedUrl,
+            store_name: storeLabel,
+          });
+
+        if (ccError) throw ccError;
+      }
+
+      const services = [
+        giveFraudGuard ? 'Fraud Guard' : null,
+        giveCourierCheck ? 'Courier Check' : null,
+      ].filter(Boolean).join(' + ');
 
       toast({
         title: "✅ Plan Assigned Successfully",
-        description: `${planType === 'yearly' ? 'Yearly' : 'Monthly'} plan assigned to ${selectedUser.full_name || 'User'} for ${normalizedUrl}`,
+        description: `${services} — ${planType === 'yearly' ? 'Yearly' : 'Monthly'} plan assigned to ${selectedUser.full_name || 'User'} for ${normalizedUrl}`,
       });
 
       onOpenChange(false);
       onSuccess();
     } catch (err: any) {
       console.error('Error assigning plan:', err);
+
       const errorMessage = err?.message || 'Unknown error';
       setError(`Plan assign করতে সমস্যা: ${errorMessage}`);
       toast({

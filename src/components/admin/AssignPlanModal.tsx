@@ -409,7 +409,7 @@ export function AssignPlanModal({ open, onOpenChange, onSuccess }: AssignPlanMod
             <Button
               className="flex-1 bg-blue-600 hover:bg-blue-700 font-bengali"
               onClick={handleAssignPlan}
-              disabled={saving || !selectedUser || !websiteUrl.trim()}
+              disabled={saving || !selectedUser || !websiteUrl.trim() || (!giveFraudGuard && !giveCourierCheck)}
             >
               {saving ? (
                 <>

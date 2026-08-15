@@ -526,12 +526,31 @@ export function MerchantManagement() {
                         <span className="text-gray-400"> / {merchant.max_requests}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {merchant.plan_expires_at 
-                        ? new Date(merchant.plan_expires_at).toLocaleDateString('bn-BD')
-                        : "—"
-                      }
+                    <td className="px-6 py-4">
+                      {merchant.plan_expires_at ? (
+                        <div className="text-sm">
+                          <p className="font-medium text-gray-900">
+                            {new Date(merchant.plan_expires_at).toLocaleDateString('en-GB')}
+                          </p>
+                          {(() => {
+                            const dl = daysLeft(merchant.plan_expires_at)!;
+                            const cls = dl < 0
+                              ? 'text-red-600'
+                              : dl <= 7
+                                ? 'text-amber-600'
+                                : 'text-emerald-600';
+                            return (
+                              <p className={`text-xs font-bengali ${cls}`}>
+                                {dl < 0 ? `${Math.abs(dl)} দিন আগে শেষ` : dl === 0 ? 'আজ শেষ' : `${dl} দিন বাকি`}
+                              </p>
+                            );
+                          })()}
+                        </div>
+                      ) : (
+                        <span className="text-sm text-gray-400">—</span>
+                      )}
                     </td>
+
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
                         <Button

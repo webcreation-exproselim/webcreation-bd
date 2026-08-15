@@ -138,10 +138,9 @@ export function CourierCheckEmbedCode({ apiKey }: CourierCheckEmbedCodeProps) {
         success: function(res) {
           if (res.success && res.data) {
             var d = res.data;
-            var filtered = [];
-            if (d.couriers) { for (var i = 0; i < d.couriers.length; i++) { if (isAllowed(d.couriers[i].name)) filtered.push(d.couriers[i]); } }
-            var tO=0,tD=0,tR=0;
-            for (var j=0;j<filtered.length;j++){tO+=filtered[j].orders||0;tD+=filtered[j].delivered||0;tR+=filtered[j].returned||0;}
+            var filtered = d.couriers || [];
+            var tO=d.total_orders||0,tD=d.total_delivered||0,tR=d.total_returned||0;
+            if(!tO){for (var j=0;j<filtered.length;j++){tO+=filtered[j].orders||0;tD+=filtered[j].delivered||0;tR+=filtered[j].returned||0;}}
             var sr=tO>0?Math.round((tD/tO)*100):0;
             var rc='new_customer',rl='🆕 New Customer';
             if(tO>0){if(sr>=80){rc='trusted';rl='✅ Trusted Customer'}else if(sr>=50){rc='moderate';rl='⚠️ Moderate Risk'}else{rc='risky';rl='🚫 High Risk'}}

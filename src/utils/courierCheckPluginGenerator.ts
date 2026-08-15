@@ -303,7 +303,47 @@ class WCBD_Courier_Check {
     .wcbd-cc-courier-logo{height:22px;max-width:80px}
     .wcbd-cc-close{top:12px;right:12px;width:28px;height:28px;font-size:16px}
 }
+
+/* ===== Inline Order List Widget ===== */
+.wcbd-cc-inline{min-width:190px;font-size:12px;line-height:1.5}
+.wcbd-cc-inline-loading{color:#94a3b8;font-size:12px}
+.wcbd-cc-inline-row{margin-bottom:4px;color:#334155}
+.wcbd-cc-inline-row b{font-weight:700}
+.wcbd-cc-inline .all{color:#2563eb}
+.wcbd-cc-inline .ok{color:#16a34a}
+.wcbd-cc-inline .bad{color:#dc2626}
+.wcbd-cc-inline-bottom{display:flex;align-items:center;gap:6px;margin-top:4px}
+.wcbd-cc-bar{flex:1;display:flex;height:22px;border-radius:4px;overflow:hidden;background:#e5e7eb;min-width:110px}
+.wcbd-cc-bar-ok{background:#22c55e;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.wcbd-cc-bar-bad{background:#ef4444}
+.wcbd-cc-reload{background:#0d6efd;border:none;color:#fff;border-radius:4px;width:26px;height:22px;cursor:pointer;font-size:12px;line-height:1}
+.wcbd-cc-reload:hover{background:#0b5ed7}
+
+/* ===== Order Details Panel ===== */
+.wcbd-cc-panel{padding:4px 0}
+.wcbd-cc-panel-phone{display:inline-flex;align-items:center;gap:6px;border:1px solid #c7d2fe;color:#4f46e5;background:#eef2ff;border-radius:999px;padding:4px 12px;font-size:12px;font-weight:600;margin-bottom:14px}
+.wcbd-cc-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.wcbd-cc-card{border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px;background:#f8fafc}
+.wcbd-cc-card .lbl{font-size:11px;color:#64748b;margin:0 0 4px}
+.wcbd-cc-card .val{font-size:22px;font-weight:800;margin:0}
+.wcbd-cc-card.total{background:#eff6ff;border-color:#bfdbfe}.wcbd-cc-card.total .val{color:#1d4ed8}
+.wcbd-cc-card.success{background:#f0fdf4;border-color:#bbf7d0}.wcbd-cc-card.success .val{color:#16a34a}
+.wcbd-cc-card.cancel{background:#fef2f2;border-color:#fecaca}.wcbd-cc-card.cancel .val{color:#dc2626}
+.wcbd-cc-card.ratio{background:#ecfeff;border-color:#a5f3fc}.wcbd-cc-card.ratio .val{color:#0891b2}
+.wcbd-cc-panel table{width:100%;border-collapse:collapse;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden}
+.wcbd-cc-panel thead tr{background:linear-gradient(90deg,#7c3aed,#db2777)}
+.wcbd-cc-panel th{color:#fff;font-size:12px;font-weight:700;padding:9px 12px;text-align:left}
+.wcbd-cc-panel td{padding:10px 12px;border-bottom:1px solid #f1f5f9;font-size:13px;vertical-align:middle}
+.wcbd-cc-panel tbody tr:last-child td{border-bottom:none}
+.wcbd-cc-panel td.cname{font-weight:700;color:#7c3aed}
+.wcbd-cc-panel td.ok{color:#16a34a;font-weight:700}
+.wcbd-cc-panel td.bad{color:#dc2626;font-weight:700}
+.wcbd-cc-panel .plogo{height:22px;max-width:90px;object-fit:contain}
+.wcbd-cc-pbar{background:#e5e7eb;border-radius:999px;height:8px;width:140px;overflow:hidden;display:inline-block;vertical-align:middle;margin-left:8px}
+.wcbd-cc-pbar span{display:block;height:100%;border-radius:999px}
+@media (max-width:782px){.wcbd-cc-cards{grid-template-columns:repeat(2,1fr)}}
 CSSBLOCK;
+
     }
     
     private function get_admin_js() {

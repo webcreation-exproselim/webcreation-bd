@@ -546,14 +546,20 @@ jQuery(document).ready(function($){
     });
 
     // ===== Shared fetch =====
-    function wcbdFetch(phone, force, cb){
+    function wcbdFetch(phone, force, cb, orderId){
         $.ajax({
             url: wcbdCc.ajaxUrl,
             method: 'POST',
-            data: { action:'wcbd_courier_check', phone: phone, nonce: wcbdCc.nonce, force: force ? '1' : '0' },
+            data: { action:'wcbd_courier_check', phone: phone, nonce: wcbdCc.nonce, force: force ? '1' : '0', order_id: orderId || 0 },
             success: function(res){ cb(res && res.success ? res.data : null, res && res.error ? res.error : 'No data'); },
             error: function(){ cb(null, 'Connection failed'); }
         });
+    }
+
+    function wcbdCached(el){
+        var raw = el.attr('data-cached');
+        if(!raw) return null;
+        try { var d = JSON.parse(raw); return (d && typeof d === 'object') ? d : null; } catch(e){ return null; }
     }
 
     function wcbdTotals(d){
@@ -581,24 +587,30 @@ jQuery(document).ready(function($){
         if(!phone) return;
         el.html('<div class="wcbd-cc-inline-loading">Loading…</div>');
         wcbdFetch(phone, force, function(d, err){
-            if(d) renderInline(el, d);
+            if(d){ el.attr('data-cached', JSON.stringify(d)); renderInline(el, d); }
             else el.html('<span class="wcbd-cc-inline-loading" style="color:#ef4444">' + err + '</span>');
-        });
+        }, el.data('order'));
     }
 
-    // Sequential auto-load to avoid hammering the API
-    var queue = $('.wcbd-cc-inline').toArray();
+    // Render saved (order meta) results instantly; only fetch the ones never checked
+    var queue = [];
+    $('.wcbd-cc-inline').each(function(){
+        var el = $(this);
+        var cached = wcbdCached(el);
+        if(cached) renderInline(el, cached);
+        else if(el.data('phone')) queue.push(this);
+        else el.html('<span class="wcbd-cc-no-phone">—</span>');
+    });
     (function next(){
         if(!queue.length) return;
         var el = $(queue.shift());
-        var phone = el.data('phone');
-        if(!phone) return next();
-        wcbdFetch(phone, false, function(d, err){
-            if(d) renderInline(el, d);
+        wcbdFetch(el.data('phone'), false, function(d, err){
+            if(d){ el.attr('data-cached', JSON.stringify(d)); renderInline(el, d); }
             else el.html('<span class="wcbd-cc-inline-loading" style="color:#ef4444">' + err + '</span>');
             setTimeout(next, 250);
-        });
+        }, el.data('order'));
     })();
+
 
     $(document).on('click', '.wcbd-cc-reload', function(e){
         e.preventDefault();

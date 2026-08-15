@@ -143,101 +143,36 @@ Deno.serve(async (req) => {
   }
 });
 
-function parseElitemartHTML(html: string, phone: string) {
-  // Extract total orders, delivered, returned from courier table data
-  let totalOrders = 0;
-  let totalDelivered = 0;
-  let totalReturned = 0;
+function mapBdCourier(payload: any, phone: string) {
+  const data = payload?.data || {};
+  const couriers: { name: string; logo: string; orders: number; delivered: number; returned: number; rate: number }[] = [];
 
-  // Extract courier breakdown from .courier_table tbody tr FIRST
-  // so we can calculate totals from courier data (most reliable)
-  const couriers: { name: string; orders: number; delivered: number; returned: number; rate: number }[] = [];
-  
-  const tableMatch = html.match(/<table[^>]*class=["'][^"']*courier_table[^"']*["'][^>]*>([\s\S]*?)<\/table>/i);
-  if (tableMatch) {
-    const tbodyMatch = tableMatch[1].match(/<tbody[^>]*>([\s\S]*?)<\/tbody>/i);
-    if (tbodyMatch) {
-      const rows = tbodyMatch[1].match(/<tr[^>]*>([\s\S]*?)<\/tr>/gi);
-      if (rows) {
-        for (const row of rows) {
-          const cells = row.match(/<td[^>]*>([\s\S]*?)<\/td>/gi);
-          if (cells && cells.length >= 5) {
-            const cellValues = cells.map(c => {
-              const text = c.replace(/<[^>]*>/g, '').trim();
-              return text;
-            });
-            const courierOrders = parseInt(cellValues[1], 10) || 0;
-            const courierDelivered = parseInt(cellValues[2], 10) || 0;
-            const courierReturned = parseInt(cellValues[3], 10) || 0;
-            const courierRate = parseFloat(cellValues[4]) || 0;
-            
-            couriers.push({
-              name: cellValues[0],
-              orders: courierOrders,
-              delivered: courierDelivered,
-              returned: courierReturned,
-              rate: courierRate,
-            });
-            
-            totalOrders += courierOrders;
-            totalDelivered += courierDelivered;
-            totalReturned += courierReturned;
-          }
-        }
-      }
-    }
+  for (const [key, val] of Object.entries<any>(data)) {
+    if (key === 'summary' || !val || typeof val !== 'object') continue;
+    couriers.push({
+      name: val.name || key,
+      logo: val.logo || '',
+      orders: Number(val.total_parcel) || 0,
+      delivered: Number(val.success_parcel) || 0,
+      returned: Number(val.cancelled_parcel) || 0,
+      rate: Number(val.success_ratio) || 0,
+    });
   }
 
-  // Fallback: try grid stats if courier table gave 0
-  if (totalOrders === 0) {
-    // Look for bold numbers in the stats grid (text-info, text-success, text-danger)
-    const allInfoMatches = [...html.matchAll(/text-info[^>]*>(\d+)</gi)];
-    const allSuccessMatches = [...html.matchAll(/text-success[^>]*>(\d+)</gi)];
-    const allDangerMatches = [...html.matchAll(/text-danger[^>]*>(\d+)</gi)];
-    
-    if (allInfoMatches.length > 0) totalOrders = parseInt(allInfoMatches[0][1], 10);
-    if (allSuccessMatches.length > 0) totalDelivered = parseInt(allSuccessMatches[0][1], 10);
-    if (allDangerMatches.length > 0) totalReturned = parseInt(allDangerMatches[0][1], 10);
-  }
+  const summary = data.summary || {};
+  const totalOrders = Number(summary.total_parcel) || couriers.reduce((a, c) => a + c.orders, 0);
+  const totalDelivered = Number(summary.success_parcel) || couriers.reduce((a, c) => a + c.delivered, 0);
+  const totalReturned = Number(summary.cancelled_parcel) || couriers.reduce((a, c) => a + c.returned, 0);
+  const successRate = summary.success_ratio !== undefined
+    ? Math.round(Number(summary.success_ratio))
+    : (totalOrders > 0 ? Math.round((totalDelivered / totalOrders) * 100) : 0);
 
-  // Calculate success rate from actual data
-  let successRate = 0;
-  if (totalOrders > 0) {
-    successRate = Math.round((totalDelivered / totalOrders) * 100);
-  }
-  
-  // Also try to extract from HTML as backup
-  if (successRate === 0 && totalOrders > 0) {
-    const progressMatch = html.match(/data-percentage=["'](\d+)%?["']/i);
-    if (progressMatch) {
-      const parsed = parseInt(progressMatch[1], 10);
-      if (parsed > 0) successRate = parsed;
-    }
-  }
-
-  // Extract risk label from #risk-container
+  const verdict = payload?.risk_verdict || {};
   let riskLabel = 'new_customer';
-  let riskMessage = '';
-  const riskMatch = html.match(/id=["']risk-container["'][^>]*>([\s\S]*?)<\/div>\s*<\/div>/i);
-  if (riskMatch) {
-    const riskText = riskMatch[1].replace(/<[^>]*>/g, '').trim().toLowerCase();
-    riskMessage = riskMatch[1].replace(/<[^>]*>/g, '').trim();
-    
-    if (riskText.includes('trusted') || riskText.includes('বিশ্বস্ত') || riskText.includes('reliable')) {
-      riskLabel = 'trusted';
-    } else if (riskText.includes('moderate') || riskText.includes('মাঝারি') || riskText.includes('warning')) {
-      riskLabel = 'moderate';
-    } else if (riskText.includes('risky') || riskText.includes('ঝুঁকি') || riskText.includes('risk') || riskText.includes('suspicious') || riskText.includes('নিম্ন')) {
-      riskLabel = 'risky';
-    } else if (riskText.includes('new') || riskText.includes('নতুন')) {
-      riskLabel = 'new_customer';
-    }
-  }
-
-  // Determine risk from success rate if label not found from HTML
-  if (riskLabel === 'new_customer' && totalOrders > 0) {
-    if (successRate >= 80) riskLabel = 'trusted';
-    else if (successRate >= 50) riskLabel = 'moderate';
+  if (totalOrders > 0) {
+    const level = String(verdict.level || '').toLowerCase();
+    if (level === 'safe' || successRate >= 80) riskLabel = 'trusted';
+    else if (level === 'review' || successRate >= 50) riskLabel = 'moderate';
     else riskLabel = 'risky';
   }
 
@@ -248,7 +183,7 @@ function parseElitemartHTML(html: string, phone: string) {
     total_delivered: totalDelivered,
     total_returned: totalReturned,
     risk_label: riskLabel,
-    risk_message: riskMessage,
+    risk_message: Array.isArray(verdict.reasons) ? verdict.reasons.join(' ') : (verdict.action || ''),
     couriers,
   };
 }

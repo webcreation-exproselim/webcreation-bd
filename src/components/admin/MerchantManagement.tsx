@@ -332,11 +332,52 @@ export function MerchantManagement() {
     }
   };
 
-  const filteredMerchants = merchants.filter(m => 
+  const daysLeft = (d: string | null) => {
+    if (!d) return null;
+    return Math.ceil((new Date(d).getTime() - Date.now()) / 86400000);
+  };
+
+  const statusOf = (m: Merchant): 'inactive' | 'expired' | 'expiring' | 'active' => {
+    if (!m.is_active) return 'inactive';
+    const dl = daysLeft(m.plan_expires_at);
+    if (dl === null) return 'active';
+    if (dl < 0) return 'expired';
+    if (dl <= 7) return 'expiring';
+    return 'active';
+  };
+
+  const searched = merchants.filter(m =>
     m.profile?.full_name?.toLowerCase().includes(search.toLowerCase()) ||
     m.website_url?.toLowerCase().includes(search.toLowerCase()) ||
     m.profile?.phone?.includes(search)
   );
+
+  const counts = {
+    all: merchants.length,
+    active: merchants.filter(m => statusOf(m) === 'active').length,
+    expiring: merchants.filter(m => statusOf(m) === 'expiring').length,
+    expired: merchants.filter(m => statusOf(m) === 'expired').length,
+    inactive: merchants.filter(m => statusOf(m) === 'inactive').length,
+  };
+
+  const filteredMerchants = searched
+    .filter(m => statusFilter === 'all' || statusOf(m) === statusFilter)
+    .sort((a, b) => {
+      if (sortBy === 'name') {
+        return (a.profile?.full_name || 'zzz').localeCompare(b.profile?.full_name || 'zzz');
+      }
+      if (sortBy === 'domain') {
+        return (a.website_url || 'zzz').localeCompare(b.website_url || 'zzz');
+      }
+      if (sortBy === 'newest') {
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+      // expiry: soonest first, nulls last
+      const av = a.plan_expires_at ? new Date(a.plan_expires_at).getTime() : Infinity;
+      const bv = b.plan_expires_at ? new Date(b.plan_expires_at).getTime() : Infinity;
+      return av - bv;
+    });
+
 
   return (
     <div className="space-y-4">

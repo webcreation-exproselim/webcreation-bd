@@ -22,6 +22,7 @@ const COURIER_LOGOS: Record<string, string> = {
 
 interface CourierData {
   name: string;
+  logo?: string;
   orders: number;
   delivered: number;
   returned: number;
@@ -43,15 +44,14 @@ interface CourierCheckerDashboardProps {
   apiKey: string;
 }
 
-const ALLOWED_COURIERS = ["pathao", "steadfast", "carrybee", "carry bee", "redx", "red x", "redx logistics", "red x logistics"];
+const getLocalLogo = (name: string) => {
+  const lower = name.toLowerCase();
+  for (const key of Object.keys(COURIER_LOGOS)) {
+    if (lower.includes(key)) return COURIER_LOGOS[key];
+  }
+  return null;
+};
 
-// Always show these 4 couriers in results, even if data is 0
-const DEFAULT_COURIERS: { name: string; logoKey: string }[] = [
-  { name: "Pathao", logoKey: "pathao" },
-  { name: "Steadfast", logoKey: "steadfast" },
-  { name: "CarryBee", logoKey: "carrybee" },
-  { name: "RedX", logoKey: "redx" },
-];
 
 const RISK_STYLES: Record<string, { bg: string; text: string; label: string }> = {
   trusted: { bg: "bg-emerald-500", text: "text-white", label: "✅ বিশ্বস্ত কাস্টমার" },

@@ -674,12 +674,18 @@ jQuery(document).ready(function($){
         if(!phone) return;
         el.html('<div class="wcbd-cc-loading"><div class="spinner"></div><p>Loading courier history...</p></div>');
         wcbdFetch(phone, force, function(d, err){
-            if(d) renderPanel(el, d);
+            if(d){ el.attr('data-cached', JSON.stringify(d)); renderPanel(el, d); }
             else el.html('<p style="color:#ef4444">' + err + '</p>');
-        });
+        }, el.data('order'));
     }
 
-    $('.wcbd-cc-panel').each(function(){ loadPanel($(this), false); });
+    $('.wcbd-cc-panel').each(function(){
+        var el = $(this);
+        var cached = wcbdCached(el);
+        if(cached) renderPanel(el, cached);
+        else loadPanel(el, false);
+    });
+
     $(document).on('click', '.wcbd-cc-panel-refresh', function(e){
         e.preventDefault();
         loadPanel($(this).closest('.wcbd-cc-panel'), true);

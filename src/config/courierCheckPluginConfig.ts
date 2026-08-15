@@ -5,7 +5,7 @@ export const COURIER_CHECK_PLUGIN_CONFIG = {
   fileName: "wcbd-courier-check.zip",
   fileSize: "~15KB",
   badgeLabel: "UPDATE",
-  versionHighlight: "Saved Results (Order Meta Cache) — একবার লোড হলে আর বারবার লোড নেবে না",
+  versionHighlight: "Auto-load বন্ধ — ম্যানুয়াল 'চেক করুন' বাটন + ৭ দিনের সেভড রেজাল্ট ক্যাশ",
 
   pricing: {
     monthly: 399,

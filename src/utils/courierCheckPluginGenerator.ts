@@ -610,33 +610,25 @@ jQuery(document).ready(function($){
         }, el.data('order'));
     }
 
-    // Render saved (order meta) results instantly; only fetch the ones never checked
-    var queue = [];
+    // Auto-load OFF: only show saved results; otherwise show a manual Check button
     $('.wcbd-cc-inline').each(function(){
         var el = $(this);
         var cached = wcbdCached(el);
         if(cached) renderInline(el, cached);
-        else if(el.data('phone')) queue.push(this);
+        else if(el.data('phone')) el.html('<button type="button" class="wcbd-cc-check-btn button button-small">চেক করুন</button>');
         else el.html('<span class="wcbd-cc-no-phone">—</span>');
     });
-    (function next(){
-        if(!queue.length) return;
-        var el = $(queue.shift());
-        var ph = el.data('phone');
-        var local = wcbdLocalGet(ph);
-        if(local){ renderInline(el, local); return next(); }
-        wcbdFetch(ph, false, function(d, err){
-            if(d){ el.attr('data-cached', JSON.stringify(d)); wcbdLocalSet(ph, d); renderInline(el, d); }
-            else el.html('<span class="wcbd-cc-inline-loading" style="color:#ef4444">' + err + '</span>');
-            setTimeout(next, 250);
-        }, el.data('order'));
-    })();
 
+    $(document).on('click', '.wcbd-cc-check-btn', function(e){
+        e.preventDefault();
+        loadInline($(this).closest('.wcbd-cc-inline'), false);
+    });
 
     $(document).on('click', '.wcbd-cc-reload', function(e){
         e.preventDefault();
         loadInline($(this).closest('.wcbd-cc-inline'), true);
     });
+
 
     // ===== Single order details panel =====
     function renderPanel(el, d){

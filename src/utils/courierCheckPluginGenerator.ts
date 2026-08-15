@@ -160,7 +160,12 @@ class WCBD_Courier_Check {
             return;
         }
         
-        echo '<div class="wcbd-cc-panel" data-phone="' . esc_attr($phone) . '">';
+        $saved = $order->get_meta('_wcbd_cc_data');
+        $cached_attr = '';
+        if (!empty($saved) && is_array($saved)) {
+            $cached_attr = ' data-cached="' . esc_attr(wp_json_encode($saved)) . '"';
+        }
+        echo '<div class="wcbd-cc-panel" data-phone="' . esc_attr($phone) . '" data-order="' . esc_attr($order->get_id()) . '"' . $cached_attr . '>';
         echo '<div class="wcbd-cc-loading"><div class="spinner"></div><p>Loading courier history...</p></div>';
         echo '</div>';
     }
@@ -183,11 +188,13 @@ class WCBD_Courier_Check {
         }
         
         $force = isset($_POST['force']) && $_POST['force'] === '1';
+        $order_id = isset($_POST['order_id']) ? absint($_POST['order_id']) : 0;
         $cache_key = 'wcbd_cc_' . md5($phone);
         
         if (!$force) {
             $cached = get_transient($cache_key);
             if ($cached !== false) {
+                $this->save_order_cache($order_id, $cached);
                 wp_send_json($cached);
             }
         }
@@ -208,9 +215,20 @@ class WCBD_Courier_Check {
         $body = json_decode(wp_remote_retrieve_body($response), true);
         if (is_array($body) && !empty($body['success'])) {
             set_transient($cache_key, $body, 12 * HOUR_IN_SECONDS);
+            $this->save_order_cache($order_id, $body);
         }
         wp_send_json($body);
     }
+    
+    private function save_order_cache($order_id, $body) {
+        if (!$order_id || !is_array($body) || empty($body['data'])) return;
+        $order = wc_get_order($order_id);
+        if (!$order) return;
+        $order->update_meta_data('_wcbd_cc_data', $body['data']);
+        $order->update_meta_data('_wcbd_cc_checked_at', time());
+        $order->save();
+    }
+
 
     
     private function get_admin_css() {

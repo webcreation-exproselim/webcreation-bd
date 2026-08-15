@@ -104,19 +104,9 @@ class WCBD_Courier_Check {
     
     public function render_courier_check_column($column, $post_id) {
         if ($column !== 'wcbd_courier_check') return;
-        
         $order = wc_get_order($post_id);
         if (!$order) return;
-        
-        $phone = $order->get_billing_phone();
-        if ($phone) {
-            echo '<button class="wcbd-cc-btn" data-phone="' . esc_attr($phone) . '" title="Check Courier History">
-                <span class="wcbd-cc-btn-icon">📊</span>
-                <span class="wcbd-cc-btn-text">Check</span>
-            </button>';
-        } else {
-            echo '<span class="wcbd-cc-no-phone">—</span>';
-        }
+        echo $this->inline_widget_html($order->get_billing_phone());
     }
     
     public function render_courier_check_column_hpos($column, $order) {
@@ -126,17 +116,16 @@ class WCBD_Courier_Check {
             $order = wc_get_order($order);
         }
         if (!$order) return;
-        
-        $phone = $order->get_billing_phone();
-        if ($phone) {
-            echo '<button class="wcbd-cc-btn" data-phone="' . esc_attr($phone) . '" title="Check Courier History">
-                <span class="wcbd-cc-btn-icon">📊</span>
-                <span class="wcbd-cc-btn-text">Check</span>
-            </button>';
-        } else {
-            echo '<span class="wcbd-cc-no-phone">—</span>';
-        }
+        echo $this->inline_widget_html($order->get_billing_phone());
     }
+    
+    private function inline_widget_html($phone) {
+        if (!$phone) return '<span class="wcbd-cc-no-phone">—</span>';
+        return '<div class="wcbd-cc-inline" data-phone="' . esc_attr($phone) . '">'
+            . '<div class="wcbd-cc-inline-loading">Loading…</div>'
+            . '</div>';
+    }
+
     
     public function add_order_meta_box() {
         $screen = class_exists('\\Automattic\\WooCommerce\\Internal\\DataStores\\Orders\\CustomOrdersTableController')
@@ -145,11 +134,11 @@ class WCBD_Courier_Check {
             
         add_meta_box(
             'wcbd_courier_check_box',
-            '📊 Courier Check',
+            '📊 Order Success Ratio',
             array($this, 'render_order_meta_box'),
             $screen,
-            'side',
-            'default'
+            'normal',
+            'high'
         );
     }
     
@@ -163,8 +152,8 @@ class WCBD_Courier_Check {
             return;
         }
         
-        echo '<div id="wcbd-cc-metabox-result" style="min-height:60px">';
-        echo '<button class="wcbd-cc-btn wcbd-cc-btn-full" data-phone="' . esc_attr($phone) . '">📊 Check Courier History</button>';
+        echo '<div class="wcbd-cc-panel" data-phone="' . esc_attr($phone) . '">';
+        echo '<div class="wcbd-cc-loading"><div class="spinner"></div><p>Loading courier history...</p></div>';
         echo '</div>';
     }
     
@@ -185,6 +174,16 @@ class WCBD_Courier_Check {
             $phone = '0' . $phone;
         }
         
+        $force = isset($_POST['force']) && $_POST['force'] === '1';
+        $cache_key = 'wcbd_cc_' . md5($phone);
+        
+        if (!$force) {
+            $cached = get_transient($cache_key);
+            if ($cached !== false) {
+                wp_send_json($cached);
+            }
+        }
+        
         $response = wp_remote_post($this->endpoint, array(
             'timeout' => 30,
             'body' => json_encode(array(
@@ -199,8 +198,12 @@ class WCBD_Courier_Check {
         }
         
         $body = json_decode(wp_remote_retrieve_body($response), true);
+        if (is_array($body) && !empty($body['success'])) {
+            set_transient($cache_key, $body, 12 * HOUR_IN_SECONDS);
+        }
         wp_send_json($body);
     }
+
     
     private function get_admin_css() {
         return <<<'CSSBLOCK'
@@ -300,7 +303,47 @@ class WCBD_Courier_Check {
     .wcbd-cc-courier-logo{height:22px;max-width:80px}
     .wcbd-cc-close{top:12px;right:12px;width:28px;height:28px;font-size:16px}
 }
+
+/* ===== Inline Order List Widget ===== */
+.wcbd-cc-inline{min-width:190px;font-size:12px;line-height:1.5}
+.wcbd-cc-inline-loading{color:#94a3b8;font-size:12px}
+.wcbd-cc-inline-row{margin-bottom:4px;color:#334155}
+.wcbd-cc-inline-row b{font-weight:700}
+.wcbd-cc-inline .all{color:#2563eb}
+.wcbd-cc-inline .ok{color:#16a34a}
+.wcbd-cc-inline .bad{color:#dc2626}
+.wcbd-cc-inline-bottom{display:flex;align-items:center;gap:6px;margin-top:4px}
+.wcbd-cc-bar{flex:1;display:flex;height:22px;border-radius:4px;overflow:hidden;background:#e5e7eb;min-width:110px}
+.wcbd-cc-bar-ok{background:#22c55e;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.wcbd-cc-bar-bad{background:#ef4444}
+.wcbd-cc-reload{background:#0d6efd;border:none;color:#fff;border-radius:4px;width:26px;height:22px;cursor:pointer;font-size:12px;line-height:1}
+.wcbd-cc-reload:hover{background:#0b5ed7}
+
+/* ===== Order Details Panel ===== */
+.wcbd-cc-panel{padding:4px 0}
+.wcbd-cc-panel-phone{display:inline-flex;align-items:center;gap:6px;border:1px solid #c7d2fe;color:#4f46e5;background:#eef2ff;border-radius:999px;padding:4px 12px;font-size:12px;font-weight:600;margin-bottom:14px}
+.wcbd-cc-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.wcbd-cc-card{border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px;background:#f8fafc}
+.wcbd-cc-card .lbl{font-size:11px;color:#64748b;margin:0 0 4px}
+.wcbd-cc-card .val{font-size:22px;font-weight:800;margin:0}
+.wcbd-cc-card.total{background:#eff6ff;border-color:#bfdbfe}.wcbd-cc-card.total .val{color:#1d4ed8}
+.wcbd-cc-card.success{background:#f0fdf4;border-color:#bbf7d0}.wcbd-cc-card.success .val{color:#16a34a}
+.wcbd-cc-card.cancel{background:#fef2f2;border-color:#fecaca}.wcbd-cc-card.cancel .val{color:#dc2626}
+.wcbd-cc-card.ratio{background:#ecfeff;border-color:#a5f3fc}.wcbd-cc-card.ratio .val{color:#0891b2}
+.wcbd-cc-panel table{width:100%;border-collapse:collapse;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden}
+.wcbd-cc-panel thead tr{background:linear-gradient(90deg,#7c3aed,#db2777)}
+.wcbd-cc-panel th{color:#fff;font-size:12px;font-weight:700;padding:9px 12px;text-align:left}
+.wcbd-cc-panel td{padding:10px 12px;border-bottom:1px solid #f1f5f9;font-size:13px;vertical-align:middle}
+.wcbd-cc-panel tbody tr:last-child td{border-bottom:none}
+.wcbd-cc-panel td.cname{font-weight:700;color:#7c3aed}
+.wcbd-cc-panel td.ok{color:#16a34a;font-weight:700}
+.wcbd-cc-panel td.bad{color:#dc2626;font-weight:700}
+.wcbd-cc-panel .plogo{height:22px;max-width:90px;object-fit:contain}
+.wcbd-cc-pbar{background:#e5e7eb;border-radius:999px;height:8px;width:140px;overflow:hidden;display:inline-block;vertical-align:middle;margin-left:8px}
+.wcbd-cc-pbar span{display:block;height:100%;border-radius:999px}
+@media (max-width:782px){.wcbd-cc-cards{grid-template-columns:repeat(2,1fr)}}
 CSSBLOCK;
+
     }
     
     private function get_admin_js() {
@@ -450,7 +493,115 @@ jQuery(document).ready(function($){
             }
         });
     });
+
+    // ===== Shared fetch =====
+    function wcbdFetch(phone, force, cb){
+        $.ajax({
+            url: wcbdCc.ajaxUrl,
+            method: 'POST',
+            data: { action:'wcbd_courier_check', phone: phone, nonce: wcbdCc.nonce, force: force ? '1' : '0' },
+            success: function(res){ cb(res && res.success ? res.data : null, res && res.error ? res.error : 'No data'); },
+            error: function(){ cb(null, 'Connection failed'); }
+        });
+    }
+
+    function wcbdTotals(d){
+        var t = d.total_orders || 0, s = d.total_delivered || 0, c = d.total_returned || 0;
+        var r = t > 0 ? Math.round((s / t) * 1000) / 10 : 0;
+        return { total: t, success: s, cancel: c, ratio: r };
+    }
+
+    // ===== Order list inline widget =====
+    function renderInline(el, d){
+        var t = wcbdTotals(d);
+        var okw = t.total > 0 ? t.ratio : 0;
+        var h = '';
+        h += '<div class="wcbd-cc-inline-row">All: <b class="all">' + t.total + '</b> &nbsp;Success: <b class="ok">' + t.success + '</b></div>';
+        h += '<div class="wcbd-cc-inline-row">Cancel: <b class="bad">' + t.cancel + '</b></div>';
+        h += '<div class="wcbd-cc-inline-bottom">';
+        h += '<div class="wcbd-cc-bar"><div class="wcbd-cc-bar-ok" style="width:' + okw + '%">' + t.ratio + '%</div><div class="wcbd-cc-bar-bad" style="width:' + (100 - okw) + '%"></div></div>';
+        h += '<button type="button" class="wcbd-cc-reload" title="Refresh">&#8635;</button>';
+        h += '</div>';
+        el.html(h);
+    }
+
+    function loadInline(el, force){
+        var phone = el.data('phone');
+        if(!phone) return;
+        el.html('<div class="wcbd-cc-inline-loading">Loading…</div>');
+        wcbdFetch(phone, force, function(d, err){
+            if(d) renderInline(el, d);
+            else el.html('<span class="wcbd-cc-inline-loading" style="color:#ef4444">' + err + '</span>');
+        });
+    }
+
+    // Sequential auto-load to avoid hammering the API
+    var queue = $('.wcbd-cc-inline').toArray();
+    (function next(){
+        if(!queue.length) return;
+        var el = $(queue.shift());
+        var phone = el.data('phone');
+        if(!phone) return next();
+        wcbdFetch(phone, false, function(d, err){
+            if(d) renderInline(el, d);
+            else el.html('<span class="wcbd-cc-inline-loading" style="color:#ef4444">' + err + '</span>');
+            setTimeout(next, 250);
+        });
+    })();
+
+    $(document).on('click', '.wcbd-cc-reload', function(e){
+        e.preventDefault();
+        loadInline($(this).closest('.wcbd-cc-inline'), true);
+    });
+
+    // ===== Single order details panel =====
+    function renderPanel(el, d){
+        var t = wcbdTotals(d);
+        var list = d.couriers || [];
+        var h = '';
+        h += '<div class="wcbd-cc-panel-phone">&#128222; ' + (d.phone || '') + '</div>';
+        h += '<div class="wcbd-cc-cards">';
+        h += '<div class="wcbd-cc-card total"><p class="lbl">Total Parcels</p><p class="val">' + t.total + '</p></div>';
+        h += '<div class="wcbd-cc-card success"><p class="lbl">Success</p><p class="val">' + t.success + '</p></div>';
+        h += '<div class="wcbd-cc-card cancel"><p class="lbl">Cancelled</p><p class="val">' + t.cancel + '</p></div>';
+        h += '<div class="wcbd-cc-card ratio"><p class="lbl">Success Ratio</p><p class="val">' + t.ratio + '%</p></div>';
+        h += '</div>';
+        h += '<table><thead><tr><th>Logo</th><th>Courier</th><th>Total</th><th>Success</th><th>Cancelled</th><th>Success Ratio</th></tr></thead><tbody>';
+        for(var i = 0; i < list.length; i++){
+            var c = list[i];
+            var rate = c.rate || (c.orders > 0 ? Math.round((c.delivered / c.orders) * 1000) / 10 : 0);
+            var color = rate >= 80 ? '#22c55e' : (rate >= 50 ? '#f59e0b' : '#ef4444');
+            h += '<tr>';
+            h += '<td>' + (c.logo ? '<img class="plogo" src="' + c.logo + '" alt="' + c.name + '">' : c.name) + '</td>';
+            h += '<td class="cname">' + c.name + '</td>';
+            h += '<td>' + (c.orders || 0) + '</td>';
+            h += '<td class="ok">' + (c.delivered || 0) + '</td>';
+            h += '<td class="bad">' + (c.returned || 0) + '</td>';
+            h += '<td>' + rate + '%<span class="wcbd-cc-pbar"><span style="width:' + Math.min(rate, 100) + '%;background:' + color + '"></span></span></td>';
+            h += '</tr>';
+        }
+        h += '</tbody></table>';
+        h += '<div class="wcbd-cc-branding"><button type="button" class="wcbd-cc-refresh-btn wcbd-cc-panel-refresh">&#8635; রিফ্রেশ করুন</button><p class="wcbd-cc-branding-text">Powered by <a href="https://www.webcreationbd.online" target="_blank">WebCreation BD</a></p></div>';
+        el.html(h);
+    }
+
+    function loadPanel(el, force){
+        var phone = el.data('phone');
+        if(!phone) return;
+        el.html('<div class="wcbd-cc-loading"><div class="spinner"></div><p>Loading courier history...</p></div>');
+        wcbdFetch(phone, force, function(d, err){
+            if(d) renderPanel(el, d);
+            else el.html('<p style="color:#ef4444">' + err + '</p>');
+        });
+    }
+
+    $('.wcbd-cc-panel').each(function(){ loadPanel($(this), false); });
+    $(document).on('click', '.wcbd-cc-panel-refresh', function(e){
+        e.preventDefault();
+        loadPanel($(this).closest('.wcbd-cc-panel'), true);
+    });
 });
+
 JSBLOCK;
         return $js;
     }

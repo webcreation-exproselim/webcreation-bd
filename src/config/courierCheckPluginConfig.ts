@@ -1,11 +1,11 @@
 export const COURIER_CHECK_PLUGIN_CONFIG = {
-  version: "1.3.1",
+  version: "1.4.0",
   name: "WCBD Courier Check",
   slug: "wcbd-courier-check",
   fileName: "wcbd-courier-check.zip",
   fileSize: "~15KB",
   badgeLabel: "UPDATE",
-  versionHighlight: "RedX Support + Enhanced Dashboard",
+  versionHighlight: "BD Courier Data + Order List Success Ratio",
   pricing: {
     monthly: 399,
     yearly: 999,

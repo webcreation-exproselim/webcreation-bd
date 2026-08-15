@@ -311,6 +311,54 @@ export function AssignPlanModal({ open, onOpenChange, onSuccess }: AssignPlanMod
             </Select>
           </div>
 
+          {/* Step 5: Select services */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 font-bengali">
+              ৫. কোন সার্ভিস দেবেন?
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setGiveFraudGuard(v => !v)}
+                className={`p-3 rounded-xl border text-left transition-all ${
+                  giveFraudGuard ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <div className={`w-4 h-4 rounded border flex items-center justify-center ${
+                    giveFraudGuard ? 'bg-blue-600 border-blue-600' : 'border-gray-300'
+                  }`}>
+                    {giveFraudGuard && <Check className="w-3 h-3 text-white" />}
+                  </div>
+                  <span className="text-sm font-medium text-gray-900">Fraud Guard</span>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  {planType === 'yearly' ? '15,000' : '1,000'} requests
+                </p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setGiveCourierCheck(v => !v)}
+                className={`p-3 rounded-xl border text-left transition-all ${
+                  giveCourierCheck ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <div className={`w-4 h-4 rounded border flex items-center justify-center ${
+                    giveCourierCheck ? 'bg-blue-600 border-blue-600' : 'border-gray-300'
+                  }`}>
+                    {giveCourierCheck && <Check className="w-3 h-3 text-white" />}
+                  </div>
+                  <span className="text-sm font-medium text-gray-900">Courier Check</span>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  {planType === 'yearly' ? '5,000' : '500'} requests
+                </p>
+              </button>
+            </div>
+          </div>
+
           {/* Error Display */}
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start gap-2">
@@ -326,6 +374,11 @@ export function AssignPlanModal({ open, onOpenChange, onSuccess }: AssignPlanMod
                 <strong>{selectedUser.full_name || 'User'}</strong> কে{' '}
                 <strong>{planType === 'yearly' ? 'Yearly (৳999)' : 'Monthly (৳399)'}</strong>{' '}
                 plan assign করা হবে।
+                <span className="block mt-1 text-xs text-blue-600">
+                  🧩 সার্ভিস:{' '}
+                  {[giveFraudGuard && 'Fraud Guard', giveCourierCheck && 'Courier Check']
+                    .filter(Boolean).join(' + ') || 'কিছু নির্বাচন করা হয়নি'}
+                </span>
                 {websiteUrl.trim() && (
                   <span className="block mt-1 text-xs text-blue-600">
                     📍 Domain: <code className="bg-blue-100 px-1 rounded">{normalizeUrl(websiteUrl)}</code>
@@ -334,6 +387,7 @@ export function AssignPlanModal({ open, onOpenChange, onSuccess }: AssignPlanMod
               </p>
             </div>
           )}
+
 
           {/* URL Format Help */}
           <div className="text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded-lg p-2 font-bengali">

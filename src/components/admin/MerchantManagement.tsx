@@ -423,6 +423,49 @@ export function MerchantManagement() {
         </div>
       </div>
 
+      {/* Summary cards */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        {([
+          { key: 'all', label: 'মোট ডোমেইন', value: counts.all, cls: 'text-gray-900', dot: 'bg-gray-400' },
+          { key: 'active', label: 'একটিভ', value: counts.active, cls: 'text-emerald-700', dot: 'bg-emerald-500' },
+          { key: 'expiring', label: '৭ দিনে শেষ', value: counts.expiring, cls: 'text-amber-700', dot: 'bg-amber-500' },
+          { key: 'expired', label: 'মেয়াদ শেষ', value: counts.expired, cls: 'text-red-700', dot: 'bg-red-500' },
+          { key: 'inactive', label: 'ইনএকটিভ', value: counts.inactive, cls: 'text-gray-600', dot: 'bg-gray-300' },
+        ] as const).map(card => (
+          <button
+            key={card.key}
+            onClick={() => setStatusFilter(card.key as typeof statusFilter)}
+            className={`text-left bg-white rounded-2xl border p-4 transition-all ${
+              statusFilter === card.key ? 'border-blue-400 ring-2 ring-blue-100' : 'border-gray-100 hover:border-gray-200'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <span className={`w-2 h-2 rounded-full ${card.dot}`} />
+              <span className="text-xs font-bengali text-gray-500">{card.label}</span>
+            </div>
+            <p className={`text-2xl font-bold mt-1 ${card.cls}`}>{card.value}</p>
+          </button>
+        ))}
+      </div>
+
+      {/* Sort */}
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm text-gray-500 font-bengali">
+          {filteredMerchants.length} টি দেখাচ্ছে
+        </p>
+        <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
+          <SelectTrigger className="w-56 bg-white border-gray-100 rounded-xl h-10 font-bengali text-gray-900">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="bg-white text-gray-900">
+            <SelectItem value="expiry" className="font-bengali">মেয়াদ (আগে শেষ হবে আগে)</SelectItem>
+            <SelectItem value="newest" className="font-bengali">নতুন যোগ হয়েছে আগে</SelectItem>
+            <SelectItem value="name" className="font-bengali">নাম (A→Z)</SelectItem>
+            <SelectItem value="domain" className="font-bengali">ডোমেইন (A→Z)</SelectItem>
+          </SelectContent>
+        </Select>
+
+
       {/* Merchants Table */}
       <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
         {loading ? (

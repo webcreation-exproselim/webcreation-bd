@@ -380,6 +380,8 @@ btn.click();
 return;
 }
 
+if(!self.phoneOk(ph)){self.blockCheckoutValidating=false;self.phoneError();return;}
+
 console.log('[WCBD] Block checkout prechecking phone:',ph);
 self.doPrecheck(ph,jQ(btn),function(allowed){
 self.blockCheckoutValidating=false;
@@ -480,6 +482,8 @@ if(!looksLikeCheckout(formEl))return;
 var ph=self.getBlockCheckoutPhone();
 if(!ph||ph.length<5)return;
 
+if(!self.phoneOk(ph)){e.preventDefault();e.stopImmediatePropagation();self.phoneError();return;}
+
 e.preventDefault();
 e.stopImmediatePropagation();
 self.universalValidating=true;
@@ -527,6 +531,8 @@ if(!ph||ph.length<5)return;
 // Make sure we're on something checkout-like
 var container=btn.closest&&btn.closest('form, .checkout, .cartflows-container, .cf-step, .elementor-form, .wpforms-form, .gform_wrapper, .fluentform, body');
 if(!looksLikeCheckout(container)&&!looksLikeCheckout(document.body))return;
+
+if(!self.phoneOk(ph)){e.preventDefault();e.stopImmediatePropagation();self.phoneError();return;}
 
 e.preventDefault();
 e.stopImmediatePropagation();
@@ -599,6 +605,12 @@ if(self.ajaxOrderReplaying)return runner();
 if(self.ajaxOrderValidating)return runner();
 var ph=phoneFromAjax(data);
 if(!ph||(''+ph).length<5)return runner();
+if(!self.phoneOk(ph)){
+self.phoneError();
+var d0=jQ.Deferred();
+d0.rejectWith(settings||this,[{status:400,responseJSON:{success:false,data:{message:'Invalid phone number'}}},'wcbd_invalid_phone','Invalid phone number']);
+return d0.promise({abort:function(){d0.reject();}});
+}
 
 console.log('[WCBD] AJAX order intercepted, phone:',ph);
 var dfd=jQ.Deferred();
@@ -630,6 +642,36 @@ var args=arguments;
 var settings={url:url,data:data,type:'POST'};
 return guardedAjax(args,function(){return originalPost.apply(jQ,args);},settings);
 };
+},
+
+normalizeBdPhone:function(v){return (''+(v||'')).replace(/[^0-9]/g,'').replace(/^0088/,'0').replace(/^880/,'0');},
+
+phoneOk:function(v){return /^01[0-9]{9}$/.test(this.normalizeBdPhone(v));},
+
+phoneError:function(){
+var msg=this.lang==='bn'?'অনুগ্রহ করে সঠিক ১১ ডিজিটের মোবাইল নম্বর দিন (যেমন: 01XXXXXXXXX)':'Please enter a valid 11-digit mobile number (e.g. 01XXXXXXXXX)';
+try{
+var el=document.querySelector('#billing_phone,#phone,#billing-phone,input[type="tel"],input[name*="phone" i],input[name*="mobile" i],input[id*="phone" i],input[id*="mobile" i]');
+var box=document.getElementById('wcbd-phone-error');
+if(!box){
+box=document.createElement('div');
+box.id='wcbd-phone-error';
+box.style.cssText='color:#e11d48;font-size:14px;font-weight:600;margin:6px 0;line-height:1.4;';
+if(el&&el.parentElement)el.parentElement.appendChild(box);else document.body.appendChild(box);
+}
+box.textContent=msg;
+if(el){
+try{el.style.borderColor='#e11d48';}catch(e){}
+try{el.focus();el.scrollIntoView({behavior:'smooth',block:'center'});}catch(e){}
+if(!el.dataset.wcbdPhoneWatch){
+el.dataset.wcbdPhoneWatch='1';
+el.addEventListener('input',function(){
+var b=document.getElementById('wcbd-phone-error');
+if(b&&/^01[0-9]{9}$/.test((el.value||'').replace(/[^0-9]/g,'').replace(/^0088/,'0').replace(/^880/,'0'))){b.textContent='';try{el.style.borderColor='';}catch(e){}}
+});
+}
+}else{alert(msg);}
+}catch(e){try{alert(msg);}catch(e2){}}
 },
 
 doPrecheck:function(phone,btnEl,callback){
@@ -799,7 +841,8 @@ if(!this.licenseValid){
 console.warn('[WCBD] License invalid - skipping validation');
 return true;
 }
-var ph=jQ('#billing_phone').val();
+var ph=jQ('#billing_phone').val()||this.getBlockCheckoutPhone();
+if(!this.phoneOk(ph)){this.phoneError();return false;}
 var btn=f.find('button[type=submit]');
 btn.prop('disabled',true).data('txt',btn.text()).html(this.lang==='bn'?'চেক করা হচ্ছে...':'Checking...');
 console.log('[WCBD] Validating order...');

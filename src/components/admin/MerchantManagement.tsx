@@ -59,6 +59,9 @@ export function MerchantManagement() {
   const [merchants, setMerchants] = useState<Merchant[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'expiring' | 'expired' | 'inactive'>('all');
+  const [sortBy, setSortBy] = useState<'expiry' | 'newest' | 'name' | 'domain'>('expiry');
+
   const [selectedMerchant, setSelectedMerchant] = useState<Merchant | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [activateModalOpen, setActivateModalOpen] = useState(false);
@@ -332,11 +335,52 @@ export function MerchantManagement() {
     }
   };
 
-  const filteredMerchants = merchants.filter(m => 
+  const daysLeft = (d: string | null) => {
+    if (!d) return null;
+    return Math.ceil((new Date(d).getTime() - Date.now()) / 86400000);
+  };
+
+  const statusOf = (m: Merchant): 'inactive' | 'expired' | 'expiring' | 'active' => {
+    if (!m.is_active) return 'inactive';
+    const dl = daysLeft(m.plan_expires_at);
+    if (dl === null) return 'active';
+    if (dl < 0) return 'expired';
+    if (dl <= 7) return 'expiring';
+    return 'active';
+  };
+
+  const searched = merchants.filter(m =>
     m.profile?.full_name?.toLowerCase().includes(search.toLowerCase()) ||
     m.website_url?.toLowerCase().includes(search.toLowerCase()) ||
     m.profile?.phone?.includes(search)
   );
+
+  const counts = {
+    all: merchants.length,
+    active: merchants.filter(m => statusOf(m) === 'active').length,
+    expiring: merchants.filter(m => statusOf(m) === 'expiring').length,
+    expired: merchants.filter(m => statusOf(m) === 'expired').length,
+    inactive: merchants.filter(m => statusOf(m) === 'inactive').length,
+  };
+
+  const filteredMerchants = searched
+    .filter(m => statusFilter === 'all' || statusOf(m) === statusFilter)
+    .sort((a, b) => {
+      if (sortBy === 'name') {
+        return (a.profile?.full_name || 'zzz').localeCompare(b.profile?.full_name || 'zzz');
+      }
+      if (sortBy === 'domain') {
+        return (a.website_url || 'zzz').localeCompare(b.website_url || 'zzz');
+      }
+      if (sortBy === 'newest') {
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+      // expiry: soonest first, nulls last
+      const av = a.plan_expires_at ? new Date(a.plan_expires_at).getTime() : Infinity;
+      const bv = b.plan_expires_at ? new Date(b.plan_expires_at).getTime() : Infinity;
+      return av - bv;
+    });
+
 
   return (
     <div className="space-y-4">
@@ -378,6 +422,51 @@ export function MerchantManagement() {
           </Button>
         </div>
       </div>
+
+      {/* Summary cards */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        {([
+          { key: 'all', label: 'মোট ডোমেইন', value: counts.all, cls: 'text-gray-900', dot: 'bg-gray-400' },
+          { key: 'active', label: 'একটিভ', value: counts.active, cls: 'text-emerald-700', dot: 'bg-emerald-500' },
+          { key: 'expiring', label: '৭ দিনে শেষ', value: counts.expiring, cls: 'text-amber-700', dot: 'bg-amber-500' },
+          { key: 'expired', label: 'মেয়াদ শেষ', value: counts.expired, cls: 'text-red-700', dot: 'bg-red-500' },
+          { key: 'inactive', label: 'ইনএকটিভ', value: counts.inactive, cls: 'text-gray-600', dot: 'bg-gray-300' },
+        ] as const).map(card => (
+          <button
+            key={card.key}
+            onClick={() => setStatusFilter(card.key as typeof statusFilter)}
+            className={`text-left bg-white rounded-2xl border p-4 transition-all ${
+              statusFilter === card.key ? 'border-blue-400 ring-2 ring-blue-100' : 'border-gray-100 hover:border-gray-200'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <span className={`w-2 h-2 rounded-full ${card.dot}`} />
+              <span className="text-xs font-bengali text-gray-500">{card.label}</span>
+            </div>
+            <p className={`text-2xl font-bold mt-1 ${card.cls}`}>{card.value}</p>
+          </button>
+        ))}
+      </div>
+
+      {/* Sort */}
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm text-gray-500 font-bengali">
+          {filteredMerchants.length} টি দেখাচ্ছে
+        </p>
+        <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
+          <SelectTrigger className="w-56 bg-white border-gray-100 rounded-xl h-10 font-bengali text-gray-900">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="bg-white text-gray-900">
+            <SelectItem value="expiry" className="font-bengali">মেয়াদ (আগে শেষ হবে আগে)</SelectItem>
+            <SelectItem value="newest" className="font-bengali">নতুন যোগ হয়েছে আগে</SelectItem>
+            <SelectItem value="name" className="font-bengali">নাম (A→Z)</SelectItem>
+            <SelectItem value="domain" className="font-bengali">ডোমেইন (A→Z)</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+
 
       {/* Merchants Table */}
       <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
@@ -437,12 +526,31 @@ export function MerchantManagement() {
                         <span className="text-gray-400"> / {merchant.max_requests}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {merchant.plan_expires_at 
-                        ? new Date(merchant.plan_expires_at).toLocaleDateString('bn-BD')
-                        : "—"
-                      }
+                    <td className="px-6 py-4">
+                      {merchant.plan_expires_at ? (
+                        <div className="text-sm">
+                          <p className="font-medium text-gray-900">
+                            {new Date(merchant.plan_expires_at).toLocaleDateString('en-GB')}
+                          </p>
+                          {(() => {
+                            const dl = daysLeft(merchant.plan_expires_at)!;
+                            const cls = dl < 0
+                              ? 'text-red-600'
+                              : dl <= 7
+                                ? 'text-amber-600'
+                                : 'text-emerald-600';
+                            return (
+                              <p className={`text-xs font-bengali ${cls}`}>
+                                {dl < 0 ? `${Math.abs(dl)} দিন আগে শেষ` : dl === 0 ? 'আজ শেষ' : `${dl} দিন বাকি`}
+                              </p>
+                            );
+                          })()}
+                        </div>
+                      ) : (
+                        <span className="text-sm text-gray-400">—</span>
+                      )}
                     </td>
+
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
                         <Button

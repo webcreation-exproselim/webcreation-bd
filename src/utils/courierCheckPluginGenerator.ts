@@ -493,7 +493,115 @@ jQuery(document).ready(function($){
             }
         });
     });
+
+    // ===== Shared fetch =====
+    function wcbdFetch(phone, force, cb){
+        $.ajax({
+            url: wcbdCc.ajaxUrl,
+            method: 'POST',
+            data: { action:'wcbd_courier_check', phone: phone, nonce: wcbdCc.nonce, force: force ? '1' : '0' },
+            success: function(res){ cb(res && res.success ? res.data : null, res && res.error ? res.error : 'No data'); },
+            error: function(){ cb(null, 'Connection failed'); }
+        });
+    }
+
+    function wcbdTotals(d){
+        var t = d.total_orders || 0, s = d.total_delivered || 0, c = d.total_returned || 0;
+        var r = t > 0 ? Math.round((s / t) * 1000) / 10 : 0;
+        return { total: t, success: s, cancel: c, ratio: r };
+    }
+
+    // ===== Order list inline widget =====
+    function renderInline(el, d){
+        var t = wcbdTotals(d);
+        var okw = t.total > 0 ? t.ratio : 0;
+        var h = '';
+        h += '<div class="wcbd-cc-inline-row">All: <b class="all">' + t.total + '</b> &nbsp;Success: <b class="ok">' + t.success + '</b></div>';
+        h += '<div class="wcbd-cc-inline-row">Cancel: <b class="bad">' + t.cancel + '</b></div>';
+        h += '<div class="wcbd-cc-inline-bottom">';
+        h += '<div class="wcbd-cc-bar"><div class="wcbd-cc-bar-ok" style="width:' + okw + '%">' + t.ratio + '%</div><div class="wcbd-cc-bar-bad" style="width:' + (100 - okw) + '%"></div></div>';
+        h += '<button type="button" class="wcbd-cc-reload" title="Refresh">&#8635;</button>';
+        h += '</div>';
+        el.html(h);
+    }
+
+    function loadInline(el, force){
+        var phone = el.data('phone');
+        if(!phone) return;
+        el.html('<div class="wcbd-cc-inline-loading">Loading…</div>');
+        wcbdFetch(phone, force, function(d, err){
+            if(d) renderInline(el, d);
+            else el.html('<span class="wcbd-cc-inline-loading" style="color:#ef4444">' + err + '</span>');
+        });
+    }
+
+    // Sequential auto-load to avoid hammering the API
+    var queue = $('.wcbd-cc-inline').toArray();
+    (function next(){
+        if(!queue.length) return;
+        var el = $(queue.shift());
+        var phone = el.data('phone');
+        if(!phone) return next();
+        wcbdFetch(phone, false, function(d, err){
+            if(d) renderInline(el, d);
+            else el.html('<span class="wcbd-cc-inline-loading" style="color:#ef4444">' + err + '</span>');
+            setTimeout(next, 250);
+        });
+    })();
+
+    $(document).on('click', '.wcbd-cc-reload', function(e){
+        e.preventDefault();
+        loadInline($(this).closest('.wcbd-cc-inline'), true);
+    });
+
+    // ===== Single order details panel =====
+    function renderPanel(el, d){
+        var t = wcbdTotals(d);
+        var list = d.couriers || [];
+        var h = '';
+        h += '<div class="wcbd-cc-panel-phone">&#128222; ' + (d.phone || '') + '</div>';
+        h += '<div class="wcbd-cc-cards">';
+        h += '<div class="wcbd-cc-card total"><p class="lbl">Total Parcels</p><p class="val">' + t.total + '</p></div>';
+        h += '<div class="wcbd-cc-card success"><p class="lbl">Success</p><p class="val">' + t.success + '</p></div>';
+        h += '<div class="wcbd-cc-card cancel"><p class="lbl">Cancelled</p><p class="val">' + t.cancel + '</p></div>';
+        h += '<div class="wcbd-cc-card ratio"><p class="lbl">Success Ratio</p><p class="val">' + t.ratio + '%</p></div>';
+        h += '</div>';
+        h += '<table><thead><tr><th>Logo</th><th>Courier</th><th>Total</th><th>Success</th><th>Cancelled</th><th>Success Ratio</th></tr></thead><tbody>';
+        for(var i = 0; i < list.length; i++){
+            var c = list[i];
+            var rate = c.rate || (c.orders > 0 ? Math.round((c.delivered / c.orders) * 1000) / 10 : 0);
+            var color = rate >= 80 ? '#22c55e' : (rate >= 50 ? '#f59e0b' : '#ef4444');
+            h += '<tr>';
+            h += '<td>' + (c.logo ? '<img class="plogo" src="' + c.logo + '" alt="' + c.name + '">' : c.name) + '</td>';
+            h += '<td class="cname">' + c.name + '</td>';
+            h += '<td>' + (c.orders || 0) + '</td>';
+            h += '<td class="ok">' + (c.delivered || 0) + '</td>';
+            h += '<td class="bad">' + (c.returned || 0) + '</td>';
+            h += '<td>' + rate + '%<span class="wcbd-cc-pbar"><span style="width:' + Math.min(rate, 100) + '%;background:' + color + '"></span></span></td>';
+            h += '</tr>';
+        }
+        h += '</tbody></table>';
+        h += '<div class="wcbd-cc-branding"><button type="button" class="wcbd-cc-refresh-btn wcbd-cc-panel-refresh">&#8635; রিফ্রেশ করুন</button><p class="wcbd-cc-branding-text">Powered by <a href="https://www.webcreationbd.online" target="_blank">WebCreation BD</a></p></div>';
+        el.html(h);
+    }
+
+    function loadPanel(el, force){
+        var phone = el.data('phone');
+        if(!phone) return;
+        el.html('<div class="wcbd-cc-loading"><div class="spinner"></div><p>Loading courier history...</p></div>');
+        wcbdFetch(phone, force, function(d, err){
+            if(d) renderPanel(el, d);
+            else el.html('<p style="color:#ef4444">' + err + '</p>');
+        });
+    }
+
+    $('.wcbd-cc-panel').each(function(){ loadPanel($(this), false); });
+    $(document).on('click', '.wcbd-cc-panel-refresh', function(e){
+        e.preventDefault();
+        loadPanel($(this).closest('.wcbd-cc-panel'), true);
+    });
 });
+
 JSBLOCK;
         return $js;
     }

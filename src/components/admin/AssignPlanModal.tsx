@@ -40,6 +40,8 @@ export function AssignPlanModal({ open, onOpenChange, onSuccess }: AssignPlanMod
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [storeName, setStoreName] = useState("");
   const [planType, setPlanType] = useState<'monthly' | 'yearly'>('monthly');
+  const [giveFraudGuard, setGiveFraudGuard] = useState(true);
+  const [giveCourierCheck, setGiveCourierCheck] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -51,10 +53,13 @@ export function AssignPlanModal({ open, onOpenChange, onSuccess }: AssignPlanMod
       setWebsiteUrl("");
       setStoreName("");
       setPlanType('monthly');
+      setGiveFraudGuard(true);
+      setGiveCourierCheck(true);
       setSearch("");
       setError(null);
     }
   }, [open]);
+
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -112,6 +117,11 @@ export function AssignPlanModal({ open, onOpenChange, onSuccess }: AssignPlanMod
       return;
     }
 
+    if (!giveFraudGuard && !giveCourierCheck) {
+      setError("অন্তত একটি সার্ভিস নির্বাচন করুন");
+      return;
+    }
+
     setSaving(true);
     try {
       // Calculate expiration date
@@ -123,44 +133,56 @@ export function AssignPlanModal({ open, onOpenChange, onSuccess }: AssignPlanMod
 
       const storeLabel = storeName.trim() || normalizedUrl;
 
-      // Always INSERT a new merchant (each domain = new record)
-      const { error: insertError } = await supabase
-        .from('merchants')
-        .insert({
-          user_id: selectedUser.user_id,
-          website_url: normalizedUrl,
-          store_name: storeLabel,
-          is_active: true,
-          current_plan: planType,
-          plan_expires_at: expiresAt.toISOString(),
-          max_requests: planType === 'yearly' ? 15000 : 1000,
-          requests_used: 0,
-        });
+      if (giveFraudGuard) {
+        // Always INSERT a new merchant (each domain = new record)
+        const { error: insertError } = await supabase
+          .from('merchants')
+          .insert({
+            user_id: selectedUser.user_id,
+            website_url: normalizedUrl,
+            store_name: storeLabel,
+            is_active: true,
+            current_plan: planType,
+            plan_expires_at: expiresAt.toISOString(),
+            max_requests: planType === 'yearly' ? 15000 : 1000,
+            requests_used: 0,
+          });
 
-      if (insertError) throw insertError;
+        if (insertError) throw insertError;
+      }
 
-      // Always INSERT a new courier check subscription for this domain
-      const courierMaxRequests = planType === 'yearly' ? 5000 : 500;
-      await supabase
-        .from('courier_check_subscriptions')
-        .insert({
-          user_id: selectedUser.user_id,
-          is_active: true,
-          plan_expires_at: expiresAt.toISOString(),
-          max_requests: courierMaxRequests,
-          website_url: normalizedUrl,
-          store_name: storeLabel,
-        });
+      if (giveCourierCheck) {
+        // Always INSERT a new courier check subscription for this domain
+        const courierMaxRequests = planType === 'yearly' ? 5000 : 500;
+        const { error: ccError } = await supabase
+          .from('courier_check_subscriptions')
+          .insert({
+            user_id: selectedUser.user_id,
+            is_active: true,
+            plan_expires_at: expiresAt.toISOString(),
+            max_requests: courierMaxRequests,
+            website_url: normalizedUrl,
+            store_name: storeLabel,
+          });
+
+        if (ccError) throw ccError;
+      }
+
+      const services = [
+        giveFraudGuard ? 'Fraud Guard' : null,
+        giveCourierCheck ? 'Courier Check' : null,
+      ].filter(Boolean).join(' + ');
 
       toast({
         title: "✅ Plan Assigned Successfully",
-        description: `${planType === 'yearly' ? 'Yearly' : 'Monthly'} plan assigned to ${selectedUser.full_name || 'User'} for ${normalizedUrl}`,
+        description: `${services} — ${planType === 'yearly' ? 'Yearly' : 'Monthly'} plan assigned to ${selectedUser.full_name || 'User'} for ${normalizedUrl}`,
       });
 
       onOpenChange(false);
       onSuccess();
     } catch (err: any) {
       console.error('Error assigning plan:', err);
+
       const errorMessage = err?.message || 'Unknown error';
       setError(`Plan assign করতে সমস্যা: ${errorMessage}`);
       toast({
@@ -289,6 +311,54 @@ export function AssignPlanModal({ open, onOpenChange, onSuccess }: AssignPlanMod
             </Select>
           </div>
 
+          {/* Step 5: Select services */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 font-bengali">
+              ৫. কোন সার্ভিস দেবেন?
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setGiveFraudGuard(v => !v)}
+                className={`p-3 rounded-xl border text-left transition-all ${
+                  giveFraudGuard ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <div className={`w-4 h-4 rounded border flex items-center justify-center ${
+                    giveFraudGuard ? 'bg-blue-600 border-blue-600' : 'border-gray-300'
+                  }`}>
+                    {giveFraudGuard && <Check className="w-3 h-3 text-white" />}
+                  </div>
+                  <span className="text-sm font-medium text-gray-900">Fraud Guard</span>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  {planType === 'yearly' ? '15,000' : '1,000'} requests
+                </p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setGiveCourierCheck(v => !v)}
+                className={`p-3 rounded-xl border text-left transition-all ${
+                  giveCourierCheck ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <div className={`w-4 h-4 rounded border flex items-center justify-center ${
+                    giveCourierCheck ? 'bg-blue-600 border-blue-600' : 'border-gray-300'
+                  }`}>
+                    {giveCourierCheck && <Check className="w-3 h-3 text-white" />}
+                  </div>
+                  <span className="text-sm font-medium text-gray-900">Courier Check</span>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  {planType === 'yearly' ? '5,000' : '500'} requests
+                </p>
+              </button>
+            </div>
+          </div>
+
           {/* Error Display */}
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start gap-2">
@@ -304,6 +374,11 @@ export function AssignPlanModal({ open, onOpenChange, onSuccess }: AssignPlanMod
                 <strong>{selectedUser.full_name || 'User'}</strong> কে{' '}
                 <strong>{planType === 'yearly' ? 'Yearly (৳999)' : 'Monthly (৳399)'}</strong>{' '}
                 plan assign করা হবে।
+                <span className="block mt-1 text-xs text-blue-600">
+                  🧩 সার্ভিস:{' '}
+                  {[giveFraudGuard && 'Fraud Guard', giveCourierCheck && 'Courier Check']
+                    .filter(Boolean).join(' + ') || 'কিছু নির্বাচন করা হয়নি'}
+                </span>
                 {websiteUrl.trim() && (
                   <span className="block mt-1 text-xs text-blue-600">
                     📍 Domain: <code className="bg-blue-100 px-1 rounded">{normalizeUrl(websiteUrl)}</code>
@@ -312,6 +387,7 @@ export function AssignPlanModal({ open, onOpenChange, onSuccess }: AssignPlanMod
               </p>
             </div>
           )}
+
 
           {/* URL Format Help */}
           <div className="text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded-lg p-2 font-bengali">
@@ -333,7 +409,7 @@ export function AssignPlanModal({ open, onOpenChange, onSuccess }: AssignPlanMod
             <Button
               className="flex-1 bg-blue-600 hover:bg-blue-700 font-bengali"
               onClick={handleAssignPlan}
-              disabled={saving || !selectedUser || !websiteUrl.trim()}
+              disabled={saving || !selectedUser || !websiteUrl.trim() || (!giveFraudGuard && !giveCourierCheck)}
             >
               {saving ? (
                 <>

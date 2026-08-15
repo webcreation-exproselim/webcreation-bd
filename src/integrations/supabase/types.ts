@@ -1256,6 +1256,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_old_incomplete_orders: { Args: never; Returns: undefined }
       get_admin_users: {
         Args: never
         Returns: {

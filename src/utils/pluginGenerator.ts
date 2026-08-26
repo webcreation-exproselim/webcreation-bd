@@ -1861,6 +1861,20 @@ ADMINJSTEMPLATE;
         echo '</div>';
         echo '</div>';
         
+        // Tab 4: IP Blocks (manual permanent block)
+        echo '<div id="wcbd-tab-ipblocks" class="wcbd-tab-content">';
+        echo '<div class="fraud-card">';
+        echo '<h2>🚫 Permanent IP Block</h2>';
+        echo '<p style="color:#64748b;font-size:13px;margin:0 0 15px">এখানে যেকোনো IP ম্যানুয়ালি ব্লক করতে পারবেন। ব্লক করা IP থেকে কেউ ওয়েবসাইটেই ঢুকতে পারবে না। Orders লিস্টে প্রতিটি অর্ডারের পাশে IP এবং "Block IP" বাটন আছে।</p>';
+        echo '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:20px">';
+        echo '<div class="fraud-form-group" style="margin:0"><label>IP Address</label><input type="text" id="wcbd-add-ip" class="fraud-input" placeholder="103.xx.xx.xx"></div>';
+        echo '<div class="fraud-form-group" style="margin:0"><label>Note (optional)</label><input type="text" id="wcbd-add-ip-note" class="fraud-input" placeholder="Fake order"></div>';
+        echo '<button type="button" id="wcbd-add-ip-btn" class="fraud-btn fraud-btn-primary">🚫 Block করুন</button>';
+        echo '</div>';
+        echo '<div id="wcbd-blocked-list"></div>';
+        echo '</div>';
+        echo '</div>';
+        
         // Features
         echo '<div class="fraud-card" style="margin-top:25px">';
         echo '<h2>✨ v' . WCBD_FRAUD_GUARD_VERSION . ' Features</h2>';

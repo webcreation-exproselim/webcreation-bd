@@ -1167,15 +1167,9 @@ LOADERJS;
         $js_template = <<<'ADMINJSTEMPLATE'
 (function(jQ){
 jQ(document).ready(function(){
-jQ(".wcbd-tab-btn").on("click",function(){
-var tab=jQ(this).data("tab");
-jQ(".wcbd-tab-btn").removeClass("active");
-jQ(this).addClass("active");
-jQ(".wcbd-tab-content").removeClass("active");
-jQ("#wcbd-tab-"+tab).addClass("active");
-if(tab==="incomplete"){loadIncompleteOrders();}
-if(tab==="cooldown"){loadCooldown();}
-});
+var wcbdActiveTab=jQ(".fraud-wrap").data("active-tab")||"settings";
+if(wcbdActiveTab==="incomplete"){loadIncompleteOrders();}
+if(wcbdActiveTab==="cooldown"){loadCooldown();}
 
 jQ("#wcbd-test-api").on("click",function(){
 var btn=jQ(this);

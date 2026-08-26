@@ -4,7 +4,7 @@
 
 export const PLUGIN_CONFIG = {
   // Current version - UPDATE THIS WHEN RELEASING NEW VERSIONS
-  version: "9.5.1",
+  version: "9.6.0",
   
   // Plugin metadata
   name: "WCBD Fraud Guard",
@@ -16,11 +16,15 @@ export const PLUGIN_CONFIG = {
   badgeLabel: "STABLE",
   
   // Current version highlights (for banners and feature lists)
-  versionHighlight: "WordPress Sidebar Menu + IP Block",
+  versionHighlight: "Block System ON/OFF Control",
   
   // What's new in this version (for feature list)
   whatsNew: [
+    { icon: "🎚️", title: "Cooldown Block ON/OFF", description: "Fraud Guard → Settings থেকে টাইমার/cooldown ব্লক সিস্টেম চালু বা বন্ধ করা যাবে" },
+    { icon: "📵", title: "Phone Block ON/OFF", description: "ব্লক করা নম্বর (blacklist) ব্লক করা হবে কিনা — এক ক্লিকে ON/OFF" },
+    { icon: "🛡️", title: "Front + Server Both", description: "OFF করলে popup ও আসবে না, server-side checkout block ও হবে না" },
     { icon: "📂", title: "WP Sidebar Submenu", description: "Settings, Cooldown, Incomplete Orders, IP Blocks — সব WordPress সাইডবারে আলাদা মেনু হিসেবে দেখাবে" },
+
     { icon: "🌐", title: "Order-এ IP দেখা যাবে", description: "WooCommerce Orders লিস্টে প্রতিটি অর্ডারের পাশে কাস্টমারের IP address দেখাবে" },
     { icon: "🚫", title: "Permanent IP Block", description: "এক ক্লিকে IP ব্লক — ব্লক হলে সে আর ওয়েবসাইটেই ঢুকতে পারবে না (403 page)" },
     { icon: "✍️", title: "Manual IP Block", description: "Fraud Guard → IP Blocks tab থেকে যেকোনো IP হাতে লিখে ব্লক/আনব্লক করা যাবে" },

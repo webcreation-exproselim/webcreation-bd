@@ -1764,6 +1764,7 @@ ADMINJSTEMPLATE;
         echo '<button class="wcbd-tab-btn active" data-tab="settings">⚙️ Settings</button>';
         echo '<button class="wcbd-tab-btn" data-tab="cooldown">⏱️ Cooldown</button>';
         echo '<button class="wcbd-tab-btn" data-tab="incomplete">📦 Incomplete Orders</button>';
+        echo '<button class="wcbd-tab-btn" data-tab="ipblocks">🚫 IP Blocks</button>';
         echo '</div>';
         
         // Tab 1: Settings

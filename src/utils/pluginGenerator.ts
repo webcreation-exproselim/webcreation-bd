@@ -1842,6 +1842,26 @@ ADMINJSTEMPLATE;
         
         echo '</div>';
         
+        echo '<div class="fraud-grid fraud-grid-2">';
+
+        echo '<div class="fraud-form-group">';
+        echo '<label>⏱️ Cooldown Block System</label>';
+        echo '<select name="block_cooldown" class="fraud-select" style="width:100%">';
+        echo '<option value="1"' . ($block_cooldown === '1' ? ' selected' : '') . '>✅ ON (একই কাস্টমার বারবার অর্ডার করলে ব্লক)</option>';
+        echo '<option value="0"' . ($block_cooldown !== '1' ? ' selected' : '') . '>❌ OFF (টাইমার ব্লক বন্ধ)</option>';
+        echo '</select>';
+        echo '</div>';
+
+        echo '<div class="fraud-form-group">';
+        echo '<label>🚫 Phone / Blacklist Block System</label>';
+        echo '<select name="block_phone" class="fraud-select" style="width:100%">';
+        echo '<option value="1"' . ($block_phone === '1' ? ' selected' : '') . '>✅ ON (ব্লক করা নম্বর অর্ডার করতে পারবে না)</option>';
+        echo '<option value="0"' . ($block_phone !== '1' ? ' selected' : '') . '>❌ OFF (নম্বর ব্লক বন্ধ)</option>';
+        echo '</select>';
+        echo '</div>';
+
+        echo '</div>';
+
         echo '<div class="fraud-form-group">';
         echo '<label>⏳ Cooldown Message</label>';
         echo '<textarea name="msg_cooldown" class="fraud-input fraud-textarea">' . esc_textarea($msg_cooldown) . '</textarea>';
@@ -1851,6 +1871,7 @@ ADMINJSTEMPLATE;
         echo '<label>🚫 Blacklist Message</label>';
         echo '<textarea name="msg_blacklist" class="fraud-input fraud-textarea">' . esc_textarea($msg_blacklist) . '</textarea>';
         echo '</div>';
+
         
         echo '</div>';
         

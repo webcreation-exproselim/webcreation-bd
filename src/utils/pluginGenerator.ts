@@ -42,6 +42,7 @@ class WCBD_Fraud_Guard {
         
         add_action('admin_init', array($this, 'check_woocommerce'));
         add_action('admin_menu', array($this, 'add_admin_menu'));
+        add_filter('parent_file', array($this, 'wcbd_highlight_submenu'));
         add_action('wp_enqueue_scripts', array($this, 'enqueue_frontend_scripts'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
         add_action('admin_post_wcbd_fraud_guard_save_settings', array($this, 'save_settings'));

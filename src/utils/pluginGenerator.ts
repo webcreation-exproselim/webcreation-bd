@@ -101,6 +101,33 @@ class WCBD_Fraud_Guard {
             'dashicons-shield',
             56
         );
+        
+        // Submenu items (WP sidebar menu instead of only in-page tabs)
+        add_submenu_page(
+            'wcbd-fraud-guard',
+            'Fraud Guard Settings',
+            '⚙️ Settings',
+            'manage_options',
+            'wcbd-fraud-guard',
+            array($this, 'render_settings_page')
+        );
+        add_submenu_page('wcbd-fraud-guard', 'Cooldown', '⏱️ Cooldown', 'manage_options', 'admin.php?page=wcbd-fraud-guard&tab=cooldown');
+        add_submenu_page('wcbd-fraud-guard', 'Incomplete Orders', '📦 Incomplete Orders', 'manage_options', 'admin.php?page=wcbd-fraud-guard&tab=incomplete');
+        add_submenu_page('wcbd-fraud-guard', 'IP Blocks', '🚫 IP Blocks', 'manage_options', 'admin.php?page=wcbd-fraud-guard&tab=ipblocks');
+    }
+    
+    /**
+     * Highlight the correct submenu item when a tab is open
+     */
+    public function wcbd_highlight_submenu($parent_file) {
+        global $plugin_page, $submenu_file;
+        if ($plugin_page === 'wcbd-fraud-guard' && !empty($_GET['tab'])) {
+            $tab = sanitize_key($_GET['tab']);
+            if (in_array($tab, array('cooldown', 'incomplete', 'ipblocks'), true)) {
+                $submenu_file = 'admin.php?page=wcbd-fraud-guard&tab=' . $tab;
+            }
+        }
+        return $parent_file;
     }
     
     /**

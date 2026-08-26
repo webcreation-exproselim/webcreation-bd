@@ -2129,8 +2129,21 @@ ADMINJSTEMPLATE;
     private function validate_order_server_side($phone, $is_block = false) {
         if (empty($phone)) return;
         
+        // Manual permanent phone block (local list)
+        if ($this->wcbd_is_phone_blocked($phone) && get_option('wcbd_fraud_guard_block_phone', '1') === '1') {
+            $msg = get_option('wcbd_fraud_guard_msg_blacklist', '');
+            if (empty($msg)) $msg = 'আপনার নম্বর ব্লক করা হয়েছে। অর্ডার করা সম্ভব নয়। সমস্যা হলে যোগাযোগ করুন।';
+            if ($is_block) {
+                throw new \\Exception($msg);
+            } else {
+                wc_add_notice($msg, 'error');
+                return;
+            }
+        }
+        
         if (defined('WCBD_FRAUD_CHECKED')) return;
         define('WCBD_FRAUD_CHECKED', true);
+
         
         $api_key = $this->api_key;
         if (empty($api_key)) return;

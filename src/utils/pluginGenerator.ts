@@ -1752,41 +1752,71 @@ ADMINJSTEMPLATE;
         foreach ($columns as $key => $label) {
             $new[$key] = $label;
             if ($key === 'order_status' || $key === 'status') {
-                $new['wcbd_ip'] = '🛡️ IP / Block';
+                $new['wcbd_ip'] = '🛡️ IP / Phone Block';
             }
         }
-        if (!isset($new['wcbd_ip'])) $new['wcbd_ip'] = '🛡️ IP / Block';
+        if (!isset($new['wcbd_ip'])) $new['wcbd_ip'] = '🛡️ IP / Phone Block';
         return $new;
     }
     
-    public function wcbd_render_ip_cell($ip) {
+    public function wcbd_render_ip_cell($ip, $phone = '') {
+        echo '<div style="min-width:150px">';
+        
+        // ---- IP part ----
         if (empty($ip)) {
-            echo '<span style="color:#94a3b8;font-size:12px">—</span>';
-            return;
-        }
-        $blocked = $this->wcbd_is_ip_blocked($ip);
-        echo '<div class="wcbd-ip-cell" data-ip="' . esc_attr($ip) . '">';
-        echo '<code style="font-size:12px;background:#f1f5f9;padding:2px 6px;border-radius:5px;display:inline-block;margin-bottom:4px">' . esc_html($ip) . '</code><br>';
-        if ($blocked) {
-            echo '<span style="color:#dc2626;font-size:11px;font-weight:600">🚫 Blocked</span> ';
-            echo '<button type="button" class="button button-small wcbd-ip-btn" data-ip="' . esc_attr($ip) . '" data-mode="unblock">Unblock</button>';
+            echo '<div style="color:#94a3b8;font-size:12px">IP: —</div>';
         } else {
-            echo '<button type="button" class="button button-small wcbd-ip-btn" data-ip="' . esc_attr($ip) . '" data-mode="block" style="color:#dc2626;border-color:#fca5a5">Block IP</button>';
+            $blocked = $this->wcbd_is_ip_blocked($ip);
+            echo '<div class="wcbd-ip-cell" data-ip="' . esc_attr($ip) . '" style="margin-bottom:6px">';
+            echo '<code style="font-size:12px;background:#f1f5f9;padding:2px 6px;border-radius:5px;display:inline-block;margin-bottom:4px">' . esc_html($ip) . '</code><br>';
+            if ($blocked) {
+                echo '<span style="color:#dc2626;font-size:11px;font-weight:600">🚫 IP Blocked</span> ';
+                echo '<button type="button" class="button button-small wcbd-ip-btn" data-ip="' . esc_attr($ip) . '" data-mode="unblock">Unblock</button>';
+            } else {
+                echo '<button type="button" class="button button-small wcbd-ip-btn" data-ip="' . esc_attr($ip) . '" data-mode="block" style="color:#dc2626;border-color:#fca5a5">Block IP</button>';
+            }
+            echo '</div>';
         }
+        
+        // ---- Phone part ----
+        $p = $this->wcbd_norm_phone($phone);
+        if (empty($p)) {
+            echo '<div style="color:#94a3b8;font-size:12px">Phone: —</div>';
+        } else {
+            $pblocked = $this->wcbd_is_phone_blocked($p);
+            echo '<div class="wcbd-phone-cell" data-phone="' . esc_attr($p) . '">';
+            echo '<code style="font-size:12px;background:#fef3c7;padding:2px 6px;border-radius:5px;display:inline-block;margin-bottom:4px">' . esc_html($p) . '</code><br>';
+            if ($pblocked) {
+                echo '<span style="color:#dc2626;font-size:11px;font-weight:600">🚫 Phone Blocked</span> ';
+                echo '<button type="button" class="button button-small wcbd-phone-btn" data-phone="' . esc_attr($p) . '" data-mode="unblock">Unblock</button>';
+            } else {
+                echo '<button type="button" class="button button-small wcbd-phone-btn" data-phone="' . esc_attr($p) . '" data-mode="block" style="color:#b45309;border-color:#fcd34d">Block Number</button>';
+            }
+            echo '</div>';
+        }
+        
         echo '</div>';
+    }
+    
+    public function wcbd_order_phone_value($order) {
+        if (!$order) return '';
+        $phone = $order->get_billing_phone();
+        if (empty($phone)) $phone = $order->get_meta('_billing_phone');
+        return $phone ? $phone : '';
     }
     
     public function wcbd_ip_column_legacy($column, $post_id) {
         if ($column !== 'wcbd_ip') return;
         $order = wc_get_order($post_id);
-        $this->wcbd_render_ip_cell($this->wcbd_order_ip_value($order));
+        $this->wcbd_render_ip_cell($this->wcbd_order_ip_value($order), $this->wcbd_order_phone_value($order));
     }
     
     public function wcbd_ip_column_hpos($column, $order) {
         if ($column !== 'wcbd_ip') return;
         if (is_numeric($order)) $order = wc_get_order($order);
-        $this->wcbd_render_ip_cell($this->wcbd_order_ip_value($order));
+        $this->wcbd_render_ip_cell($this->wcbd_order_ip_value($order), $this->wcbd_order_phone_value($order));
     }
+
     
     public function ajax_toggle_ip() {
         check_ajax_referer('wcbd_fraud_guard_ip', 'nonce');

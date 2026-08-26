@@ -2055,6 +2055,17 @@ ADMINJSTEMPLATE;
         echo '</div>';
         echo '<div id="wcbd-blocked-list"></div>';
         echo '</div>';
+        
+        echo '<div class="fraud-card">';
+        echo '<h2>📵 Permanent Phone Block</h2>';
+        echo '<p style="color:#64748b;font-size:13px;margin:0 0 15px">যেকোনো ফোন নম্বর ম্যানুয়ালি ব্লক করুন। ব্লক করা নম্বর দিয়ে আর অর্ডার করা যাবে না। Orders লিস্টে প্রতিটি অর্ডারের পাশে নম্বর এবং "Block Number" বাটন আছে।</p>';
+        echo '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:20px">';
+        echo '<div class="fraud-form-group" style="margin:0"><label>Phone Number</label><input type="text" id="wcbd-add-phone" class="fraud-input" placeholder="01XXXXXXXXX"></div>';
+        echo '<div class="fraud-form-group" style="margin:0"><label>Note (optional)</label><input type="text" id="wcbd-add-phone-note" class="fraud-input" placeholder="Fake order"></div>';
+        echo '<button type="button" id="wcbd-add-phone-btn" class="fraud-btn fraud-btn-primary">📵 Block করুন</button>';
+        echo '</div>';
+        echo '<div id="wcbd-blocked-phones"></div>';
+        echo '</div>';
         echo '</div>';
         
         // Features

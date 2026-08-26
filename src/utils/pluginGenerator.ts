@@ -1884,23 +1884,23 @@ ADMINJSTEMPLATE;
         echo '</div>'; // End settings tab
         
         // Tab 2: Cooldown
-        echo '<div id="wcbd-tab-cooldown" class="wcbd-tab-content">';
+        echo '<div id="wcbd-tab-cooldown" class="wcbd-tab-content' . ($current_tab === 'cooldown' ? ' active' : '') . '">';
         echo '<div class="fraud-card dark">';
         echo '<h2>⏱️ Cooldown Period Control</h2>';
-        echo '<div id="cooldown-container"><div style="text-align:center;padding:40px;color:#94a3b8"><p>Click the Cooldown tab to load settings</p></div></div>';
+        echo '<div id="cooldown-container"><div style="text-align:center;padding:40px;color:#94a3b8"><p>Loading...</p></div></div>';
         echo '</div>';
         echo '</div>';
         
         // Tab 3: Incomplete Orders
-        echo '<div id="wcbd-tab-incomplete" class="wcbd-tab-content">';
+        echo '<div id="wcbd-tab-incomplete" class="wcbd-tab-content' . ($current_tab === 'incomplete' ? ' active' : '') . '">';
         echo '<div class="fraud-card">';
         echo '<h2>📦 Incomplete Order Tracking <button id="refresh-incomplete" class="fraud-btn fraud-btn-secondary" style="margin-left:auto;padding:8px 16px;font-size:12px">🔄 Refresh</button></h2>';
-        echo '<div id="incomplete-orders-container"><div style="text-align:center;padding:40px;color:#6b7280"><p>Click the Incomplete Orders tab to load data</p></div></div>';
+        echo '<div id="incomplete-orders-container"><div style="text-align:center;padding:40px;color:#6b7280"><p>Loading...</p></div></div>';
         echo '</div>';
         echo '</div>';
         
         // Tab 4: IP Blocks (manual permanent block)
-        echo '<div id="wcbd-tab-ipblocks" class="wcbd-tab-content">';
+        echo '<div id="wcbd-tab-ipblocks" class="wcbd-tab-content' . ($current_tab === 'ipblocks' ? ' active' : '') . '">';
         echo '<div class="fraud-card">';
         echo '<h2>🚫 Permanent IP Block</h2>';
         echo '<p style="color:#64748b;font-size:13px;margin:0 0 15px">এখানে যেকোনো IP ম্যানুয়ালি ব্লক করতে পারবেন। ব্লক করা IP থেকে কেউ ওয়েবসাইটেই ঢুকতে পারবে না। Orders লিস্টে প্রতিটি অর্ডারের পাশে IP এবং "Block IP" বাটন আছে।</p>';

@@ -1,5 +1,8 @@
 # Web Creation BD
 
+GitHub sync test: connected to `webcreation-exposelim/webcreation-bd` at 2026-08-26.
+
+
 Create a professional agency website header inspired by the background color, hover behavior, and subtle effects of bnp.blue9.org.
 
 HEADER BACKGROUND & BEHAVIOR:

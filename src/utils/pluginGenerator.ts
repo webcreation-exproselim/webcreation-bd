@@ -1764,6 +1764,8 @@ ADMINJSTEMPLATE;
         $popup_timer = get_option('wcbd_fraud_guard_popup_timer', '30');
         $msg_cooldown = get_option('wcbd_fraud_guard_msg_cooldown', '');
         $msg_blacklist = get_option('wcbd_fraud_guard_msg_blacklist', '');
+        $block_cooldown = get_option('wcbd_fraud_guard_block_cooldown', '1');
+        $block_phone = get_option('wcbd_fraud_guard_block_phone', '1');
         $whatsapp = get_option('wcbd_fraud_guard_whatsapp', '');
         $phone = get_option('wcbd_fraud_guard_phone', '');
         $saved = isset($_GET['saved']);

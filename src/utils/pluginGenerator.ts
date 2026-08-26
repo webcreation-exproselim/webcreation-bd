@@ -80,6 +80,8 @@ class WCBD_Fraud_Guard {
         add_option('wcbd_fraud_guard_popup_timer', '30');
         add_option('wcbd_fraud_guard_msg_cooldown', 'আপনি সম্প্রতি অর্ডার করেছেন। অনুগ্রহ করে কিছুক্ষণ অপেক্ষা করুন।');
         add_option('wcbd_fraud_guard_msg_blacklist', 'আপনার অর্ডার ব্লক করা হয়েছে। সমস্যা হলে যোগাযোগ করুন।');
+        add_option('wcbd_fraud_guard_block_cooldown', '1');
+        add_option('wcbd_fraud_guard_block_phone', '1');
         add_option('wcbd_fraud_guard_whatsapp', $this->whatsapp_default);
         add_option('wcbd_fraud_guard_phone', $this->whatsapp_default);
     }
@@ -187,6 +189,8 @@ class WCBD_Fraud_Guard {
         $msg_blacklist = esc_js(get_option('wcbd_fraud_guard_msg_blacklist', 'আপনার অর্ডার ব্লক করা হয়েছে। সমস্যা হলে যোগাযোগ করুন।'));
         $whatsapp = esc_js(get_option('wcbd_fraud_guard_whatsapp', ''));
         $phone = esc_js(get_option('wcbd_fraud_guard_phone', ''));
+        $block_cooldown = get_option('wcbd_fraud_guard_block_cooldown', '1') === '1' ? 'true' : 'false';
+        $block_phone = get_option('wcbd_fraud_guard_block_phone', '1') === '1' ? 'true' : 'false';
         $endpoint = esc_js($this->endpoint);
         $incomplete_endpoint = esc_js($this->incomplete_endpoint);
         
@@ -303,6 +307,8 @@ msgCooldown:'%%MSG_COOLDOWN%%',
 msgBlacklist:'%%MSG_BLACKLIST%%',
 whatsapp:'%%WHATSAPP%%',
 phone:'%%PHONE%%',
+blockCooldownOn:%%BLOCK_COOLDOWN%%,
+blockPhoneOn:%%BLOCK_PHONE%%,
 incompleteLogged:{},
 licenseValid:false,
 isBlockCheckout:false,
@@ -714,6 +720,12 @@ if(b&&/^01[0-9]{9}$/.test((el.value||'').replace(/[^0-9]/g,'').replace(/^0088/,'
 }catch(e){try{alert(msg);}catch(e2){}}
 },
 
+blockEnabled:function(reason){
+if(reason==='cooldown')return this.blockCooldownOn!==false;
+if(reason==='blacklist')return this.blockPhoneOn!==false;
+return true;
+},
+
 doPrecheck:function(phone,btnEl,callback){
 var self=this;
 var origText=btnEl.length?btnEl.text():'';
@@ -727,6 +739,10 @@ success:function(r){
 console.log('[WCBD] Precheck response:',r);
 if(r.popup_settings)self.applyRemoteSettings(r.popup_settings);
 if(r.allowed){
+if(btnEl.length)btnEl.prop('disabled',false).text(origText);
+if(callback)callback(true);
+}else if(!self.blockEnabled(r.reason)){
+console.log('[WCBD] Block skipped (system OFF):',r.reason);
 if(btnEl.length)btnEl.prop('disabled',false).text(origText);
 if(callback)callback(true);
 }else{
@@ -900,6 +916,9 @@ console.log('[WCBD] API Response:',r);
 if(r.popup_settings)self.applyRemoteSettings(r.popup_settings);
 if(r.allowed){
 f.off('checkout_place_order').submit();
+}else if(!self.blockEnabled(r.reason)){
+console.log('[WCBD] Block skipped (system OFF):',r.reason);
+f.off('checkout_place_order').submit();
 }else{
 var customMsg=r.reason==='blacklist'?self.msgBlacklist:self.msgCooldown;
 self.popup(r.reason,customMsg,r.minutes_remaining);
@@ -1016,8 +1035,8 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
 LOADERJS;
 
         return str_replace(
-            array('%%ENDPOINT%%', '%%INCOMPLETE_ENDPOINT%%', '%%APIKEY%%', '%%LANG%%', '%%TIMER%%', '%%MSG_COOLDOWN%%', '%%MSG_BLACKLIST%%', '%%WHATSAPP%%', '%%PHONE%%'),
-            array($endpoint, $incomplete_endpoint, esc_js($api_key), $language, $popup_timer, $msg_cooldown, $msg_blacklist, $whatsapp, $phone),
+            array('%%ENDPOINT%%', '%%INCOMPLETE_ENDPOINT%%', '%%APIKEY%%', '%%LANG%%', '%%TIMER%%', '%%MSG_COOLDOWN%%', '%%MSG_BLACKLIST%%', '%%WHATSAPP%%', '%%PHONE%%', '%%BLOCK_COOLDOWN%%', '%%BLOCK_PHONE%%'),
+            array($endpoint, $incomplete_endpoint, esc_js($api_key), $language, $popup_timer, $msg_cooldown, $msg_blacklist, $whatsapp, $phone, $block_cooldown, $block_phone),
             $js_template
         );
     }
@@ -2043,7 +2062,12 @@ ADMINJSTEMPLATE;
         $body = json_decode(wp_remote_retrieve_body($response), true);
         error_log('[WCBD Fraud Guard] API response: ' . wp_remote_retrieve_body($response));
         
-        if (isset($body['allowed']) && $body['allowed'] === false) {
+        $reason = $body['reason'] ?? '';
+        $reason_enabled = true;
+        if ($reason === 'cooldown') $reason_enabled = (get_option('wcbd_fraud_guard_block_cooldown', '1') === '1');
+        if ($reason === 'blacklist') $reason_enabled = (get_option('wcbd_fraud_guard_block_phone', '1') === '1');
+        
+        if (isset($body['allowed']) && $body['allowed'] === false && $reason_enabled) {
             $message = $body['message'] ?? 'আপনি এখন অর্ডার করতে পারবেন না। অনুগ্রহ করে কিছুক্ষণ পর চেষ্টা করুন।';
             
             if ($is_block) {
@@ -2068,6 +2092,8 @@ ADMINJSTEMPLATE;
         update_option('wcbd_fraud_guard_popup_timer', sanitize_text_field($_POST['popup_timer'] ?? '30'));
         update_option('wcbd_fraud_guard_msg_cooldown', sanitize_textarea_field($_POST['msg_cooldown'] ?? ''));
         update_option('wcbd_fraud_guard_msg_blacklist', sanitize_textarea_field($_POST['msg_blacklist'] ?? ''));
+        update_option('wcbd_fraud_guard_block_cooldown', (isset($_POST['block_cooldown']) && $_POST['block_cooldown'] === '1') ? '1' : '0');
+        update_option('wcbd_fraud_guard_block_phone', (isset($_POST['block_phone']) && $_POST['block_phone'] === '1') ? '1' : '0');
         update_option('wcbd_fraud_guard_whatsapp', sanitize_text_field($_POST['whatsapp'] ?? ''));
         update_option('wcbd_fraud_guard_phone', sanitize_text_field($_POST['phone'] ?? ''));
         

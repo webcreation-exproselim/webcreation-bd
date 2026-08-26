@@ -52,6 +52,18 @@ class WCBD_Fraud_Guard {
         add_action('wp_ajax_wcbd_fraud_guard_convert_order', array($this, 'ajax_convert_order'));
         add_action('wp_ajax_wcbd_fraud_guard_cleanup', array($this, 'ajax_cleanup_orders'));
         add_action('wp_ajax_wcbd_fraud_guard_clean_all', array($this, 'ajax_clean_all_orders'));
+        
+        // IP tracking + manual permanent block
+        add_action('init', array($this, 'wcbd_ip_gate'), 1);
+        add_action('woocommerce_checkout_order_processed', array($this, 'wcbd_save_order_ip'), 10, 1);
+        add_action('woocommerce_store_api_checkout_order_processed', array($this, 'wcbd_save_order_ip'), 10, 1);
+        add_filter('manage_edit-shop_order_columns', array($this, 'wcbd_add_ip_column'), 20);
+        add_filter('manage_woocommerce_page_wc-orders_columns', array($this, 'wcbd_add_ip_column'), 20);
+        add_action('manage_shop_order_posts_custom_column', array($this, 'wcbd_ip_column_legacy'), 20, 2);
+        add_action('manage_woocommerce_page_wc-orders_custom_column', array($this, 'wcbd_ip_column_hpos'), 20, 2);
+        add_action('wp_ajax_wcbd_fg_toggle_ip', array($this, 'ajax_toggle_ip'));
+        add_action('wp_ajax_wcbd_fg_get_blocked_ips', array($this, 'ajax_get_blocked_ips'));
+        add_action('admin_footer', array($this, 'wcbd_ip_admin_script'), 99);
         add_action('wp_footer', array($this, 'inject_popup_styles'), 99);
         
         // SERVER-SIDE fraud validation (works for ALL checkout types)

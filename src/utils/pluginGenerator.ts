@@ -1628,6 +1628,68 @@ ADMINJSTEMPLATE;
         return true;
     }
     
+    /* ---------- Manual PHONE block (same as IP block) ---------- */
+    public function wcbd_norm_phone($phone) {
+        $d = preg_replace('/[^0-9]/', '', (string) $phone);
+        if (strlen($d) > 11) $d = substr($d, -11);
+        return $d;
+    }
+    
+    public function wcbd_get_blocked_phones() {
+        $list = get_option('wcbd_fraud_guard_blocked_phones', array());
+        return is_array($list) ? $list : array();
+    }
+    
+    public function wcbd_is_phone_blocked($phone) {
+        $p = $this->wcbd_norm_phone($phone);
+        if (empty($p)) return false;
+        $list = $this->wcbd_get_blocked_phones();
+        return isset($list[$p]);
+    }
+    
+    public function wcbd_block_phone($phone, $note = '') {
+        $p = $this->wcbd_norm_phone($phone);
+        if (empty($p)) return false;
+        $list = $this->wcbd_get_blocked_phones();
+        $list[$p] = array('note' => sanitize_text_field($note), 'time' => current_time('mysql'));
+        update_option('wcbd_fraud_guard_blocked_phones', $list);
+        return true;
+    }
+    
+    public function wcbd_unblock_phone($phone) {
+        $p = $this->wcbd_norm_phone($phone);
+        $list = $this->wcbd_get_blocked_phones();
+        if (isset($list[$p])) {
+            unset($list[$p]);
+            update_option('wcbd_fraud_guard_blocked_phones', $list);
+        }
+        return true;
+    }
+    
+    public function ajax_toggle_phone() {
+        check_ajax_referer('wcbd_fraud_guard_ip', 'nonce');
+        if (!current_user_can('manage_options')) wp_send_json_error('Permission denied');
+        $phone = isset($_POST['phone']) ? sanitize_text_field($_POST['phone']) : '';
+        $mode = isset($_POST['mode']) ? sanitize_text_field($_POST['mode']) : 'block';
+        $note = isset($_POST['note']) ? sanitize_text_field($_POST['note']) : '';
+        $p = $this->wcbd_norm_phone($phone);
+        if (empty($p)) wp_send_json_error('নম্বর নেই');
+        if ($mode === 'unblock') {
+            $this->wcbd_unblock_phone($p);
+            wp_send_json_success(array('phone' => $p, 'blocked' => false));
+        }
+        $this->wcbd_block_phone($p, $note);
+        wp_send_json_success(array('phone' => $p, 'blocked' => true));
+    }
+    
+    public function ajax_get_blocked_phones() {
+        check_ajax_referer('wcbd_fraud_guard_ip', 'nonce');
+        if (!current_user_can('manage_options')) wp_send_json_error('Permission denied');
+        wp_send_json_success($this->wcbd_get_blocked_phones());
+    }
+    
+
+    
     /**
      * Permanent site-wide gate: blocked IP cannot access the website at all
      */

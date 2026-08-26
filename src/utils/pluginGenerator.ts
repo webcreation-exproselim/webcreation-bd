@@ -1773,8 +1773,18 @@ ADMINJSTEMPLATE;
         $whatsapp = get_option('wcbd_fraud_guard_whatsapp', '');
         $phone = get_option('wcbd_fraud_guard_phone', '');
         $saved = isset($_GET['saved']);
+        $current_tab = isset($_GET['tab']) ? sanitize_key($_GET['tab']) : 'settings';
+        if (!in_array($current_tab, array('settings', 'cooldown', 'incomplete', 'ipblocks'), true)) {
+            $current_tab = 'settings';
+        }
+        $tabs = array(
+            'settings'   => '⚙️ Settings',
+            'cooldown'   => '⏱️ Cooldown',
+            'incomplete' => '📦 Incomplete Orders',
+            'ipblocks'   => '🚫 IP Blocks',
+        );
         
-        echo '<div class="fraud-wrap">';
+        echo '<div class="fraud-wrap" data-active-tab="' . esc_attr($current_tab) . '">';
         
         // Header
         echo '<div class="fraud-header"><div class="fraud-header-text">';
@@ -1787,16 +1797,16 @@ ADMINJSTEMPLATE;
             echo '<div style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;padding:16px 24px;border-radius:14px;margin-bottom:20px;font-weight:500;display:flex;align-items:center;gap:10px"><span style="font-size:20px">✅</span> Settings saved successfully!</div>';
         }
         
-        // Tabs
+        // Tabs (also available as WP sidebar submenu)
         echo '<div class="wcbd-tabs">';
-        echo '<button class="wcbd-tab-btn active" data-tab="settings">⚙️ Settings</button>';
-        echo '<button class="wcbd-tab-btn" data-tab="cooldown">⏱️ Cooldown</button>';
-        echo '<button class="wcbd-tab-btn" data-tab="incomplete">📦 Incomplete Orders</button>';
-        echo '<button class="wcbd-tab-btn" data-tab="ipblocks">🚫 IP Blocks</button>';
+        foreach ($tabs as $tab_key => $tab_label) {
+            $url = admin_url('admin.php?page=wcbd-fraud-guard' . ($tab_key === 'settings' ? '' : '&tab=' . $tab_key));
+            echo '<a href="' . esc_url($url) . '" class="wcbd-tab-btn' . ($current_tab === $tab_key ? ' active' : '') . '" data-tab="' . esc_attr($tab_key) . '" style="text-decoration:none">' . $tab_label . '</a>';
+        }
         echo '</div>';
         
         // Tab 1: Settings
-        echo '<div id="wcbd-tab-settings" class="wcbd-tab-content active">';
+        echo '<div id="wcbd-tab-settings" class="wcbd-tab-content' . ($current_tab === 'settings' ? ' active' : '') . '">';
         
         // API Connection Card
         echo '<div class="fraud-card">';

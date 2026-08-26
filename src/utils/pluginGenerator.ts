@@ -52,6 +52,18 @@ class WCBD_Fraud_Guard {
         add_action('wp_ajax_wcbd_fraud_guard_convert_order', array($this, 'ajax_convert_order'));
         add_action('wp_ajax_wcbd_fraud_guard_cleanup', array($this, 'ajax_cleanup_orders'));
         add_action('wp_ajax_wcbd_fraud_guard_clean_all', array($this, 'ajax_clean_all_orders'));
+        
+        // IP tracking + manual permanent block
+        add_action('init', array($this, 'wcbd_ip_gate'), 1);
+        add_action('woocommerce_checkout_order_processed', array($this, 'wcbd_save_order_ip'), 10, 1);
+        add_action('woocommerce_store_api_checkout_order_processed', array($this, 'wcbd_save_order_ip'), 10, 1);
+        add_filter('manage_edit-shop_order_columns', array($this, 'wcbd_add_ip_column'), 20);
+        add_filter('manage_woocommerce_page_wc-orders_columns', array($this, 'wcbd_add_ip_column'), 20);
+        add_action('manage_shop_order_posts_custom_column', array($this, 'wcbd_ip_column_legacy'), 20, 2);
+        add_action('manage_woocommerce_page_wc-orders_custom_column', array($this, 'wcbd_ip_column_hpos'), 20, 2);
+        add_action('wp_ajax_wcbd_fg_toggle_ip', array($this, 'ajax_toggle_ip'));
+        add_action('wp_ajax_wcbd_fg_get_blocked_ips', array($this, 'ajax_get_blocked_ips'));
+        add_action('admin_footer', array($this, 'wcbd_ip_admin_script'), 99);
         add_action('wp_footer', array($this, 'inject_popup_styles'), 99);
         
         // SERVER-SIDE fraud validation (works for ALL checkout types)
@@ -1526,6 +1538,204 @@ ADMINJSTEMPLATE;
         );
     }
     
+    /* ============ IP TRACKING + MANUAL PERMANENT BLOCK ============ */
+    
+    public function wcbd_get_client_ip() {
+        $ip = '';
+        if (!empty($_SERVER['HTTP_CF_CONNECTING_IP'])) {
+            $ip = $_SERVER['HTTP_CF_CONNECTING_IP'];
+        } elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+            $parts = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
+            $ip = trim($parts[0]);
+        } elseif (!empty($_SERVER['HTTP_X_REAL_IP'])) {
+            $ip = $_SERVER['HTTP_X_REAL_IP'];
+        } elseif (!empty($_SERVER['REMOTE_ADDR'])) {
+            $ip = $_SERVER['REMOTE_ADDR'];
+        }
+        return sanitize_text_field($ip);
+    }
+    
+    public function wcbd_get_blocked_ips() {
+        $list = get_option('wcbd_fraud_guard_blocked_ips', array());
+        return is_array($list) ? $list : array();
+    }
+    
+    public function wcbd_is_ip_blocked($ip) {
+        if (empty($ip)) return false;
+        $list = $this->wcbd_get_blocked_ips();
+        return isset($list[$ip]);
+    }
+    
+    public function wcbd_block_ip($ip, $note = '') {
+        $ip = sanitize_text_field($ip);
+        if (empty($ip)) return false;
+        $list = $this->wcbd_get_blocked_ips();
+        $list[$ip] = array('note' => sanitize_text_field($note), 'time' => current_time('mysql'));
+        update_option('wcbd_fraud_guard_blocked_ips', $list);
+        return true;
+    }
+    
+    public function wcbd_unblock_ip($ip) {
+        $ip = sanitize_text_field($ip);
+        $list = $this->wcbd_get_blocked_ips();
+        if (isset($list[$ip])) {
+            unset($list[$ip]);
+            update_option('wcbd_fraud_guard_blocked_ips', $list);
+        }
+        return true;
+    }
+    
+    /**
+     * Permanent site-wide gate: blocked IP cannot access the website at all
+     */
+    public function wcbd_ip_gate() {
+        if (is_admin() || (defined('DOING_CRON') && DOING_CRON) || (defined('WP_CLI') && WP_CLI)) return;
+        if (current_user_can('manage_options')) return;
+        
+        $ip = $this->wcbd_get_client_ip();
+        if (!$this->wcbd_is_ip_blocked($ip)) return;
+        
+        $msg = get_option('wcbd_fraud_guard_msg_blacklist', 'আপনার অ্যাক্সেস ব্লক করা হয়েছে।');
+        $wa = get_option('wcbd_fraud_guard_whatsapp', '');
+        $ph = get_option('wcbd_fraud_guard_phone', '');
+        
+        $contact = '';
+        if (!empty($wa)) {
+            $contact .= '<a href="https://wa.me/' . preg_replace('/[^0-9]/', '', $wa) . '" style="background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;padding:12px 24px;border-radius:12px;text-decoration:none;font-weight:600;display:inline-block;margin:5px">WhatsApp</a>';
+        }
+        if (!empty($ph)) {
+            $contact .= '<a href="tel:' . esc_attr($ph) . '" style="background:linear-gradient(135deg,#00d4ff,#0099cc);color:#fff;padding:12px 24px;border-radius:12px;text-decoration:none;font-weight:600;display:inline-block;margin:5px">Call</a>';
+        }
+        
+        $html = '<div style="font-family:system-ui,-apple-system,sans-serif;background:linear-gradient(145deg,#0f172a,#1a1a2e);color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;margin:0">'
+            . '<div style="max-width:440px;text-align:center;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:24px;padding:40px 30px">'
+            . '<div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#ff4757,#c0392b);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:40px">🚫</div>'
+            . '<h1 style="font-size:22px;margin:0 0 12px">Access Blocked</h1>'
+            . '<p style="color:#a0a0a0;line-height:1.7;margin:0 0 20px">' . esc_html($msg) . '</p>'
+            . '<p style="color:#64748b;font-size:12px;margin:0 0 20px">IP: ' . esc_html($ip) . '</p>'
+            . $contact
+            . '</div></div>';
+        
+        status_header(403);
+        nocache_headers();
+        wp_die($html, 'Access Blocked', array('response' => 403));
+    }
+    
+    /**
+     * Store the customer IP on every new order
+     */
+    public function wcbd_save_order_ip($order_id) {
+        if (!$order_id) return;
+        $order = wc_get_order($order_id);
+        if (!$order) return;
+        $ip = $this->wcbd_get_client_ip();
+        if (!empty($ip)) {
+            $order->update_meta_data('_wcbd_customer_ip', $ip);
+            $order->save();
+        }
+    }
+    
+    public function wcbd_order_ip_value($order) {
+        if (!$order) return '';
+        $ip = $order->get_meta('_wcbd_customer_ip');
+        if (empty($ip)) $ip = $order->get_customer_ip_address();
+        return $ip ? $ip : '';
+    }
+    
+    public function wcbd_add_ip_column($columns) {
+        $new = array();
+        foreach ($columns as $key => $label) {
+            $new[$key] = $label;
+            if ($key === 'order_status' || $key === 'status') {
+                $new['wcbd_ip'] = '🛡️ IP / Block';
+            }
+        }
+        if (!isset($new['wcbd_ip'])) $new['wcbd_ip'] = '🛡️ IP / Block';
+        return $new;
+    }
+    
+    public function wcbd_render_ip_cell($ip) {
+        if (empty($ip)) {
+            echo '<span style="color:#94a3b8;font-size:12px">—</span>';
+            return;
+        }
+        $blocked = $this->wcbd_is_ip_blocked($ip);
+        echo '<div class="wcbd-ip-cell" data-ip="' . esc_attr($ip) . '">';
+        echo '<code style="font-size:12px;background:#f1f5f9;padding:2px 6px;border-radius:5px;display:inline-block;margin-bottom:4px">' . esc_html($ip) . '</code><br>';
+        if ($blocked) {
+            echo '<span style="color:#dc2626;font-size:11px;font-weight:600">🚫 Blocked</span> ';
+            echo '<button type="button" class="button button-small wcbd-ip-btn" data-ip="' . esc_attr($ip) . '" data-mode="unblock">Unblock</button>';
+        } else {
+            echo '<button type="button" class="button button-small wcbd-ip-btn" data-ip="' . esc_attr($ip) . '" data-mode="block" style="color:#dc2626;border-color:#fca5a5">Block IP</button>';
+        }
+        echo '</div>';
+    }
+    
+    public function wcbd_ip_column_legacy($column, $post_id) {
+        if ($column !== 'wcbd_ip') return;
+        $order = wc_get_order($post_id);
+        $this->wcbd_render_ip_cell($this->wcbd_order_ip_value($order));
+    }
+    
+    public function wcbd_ip_column_hpos($column, $order) {
+        if ($column !== 'wcbd_ip') return;
+        if (is_numeric($order)) $order = wc_get_order($order);
+        $this->wcbd_render_ip_cell($this->wcbd_order_ip_value($order));
+    }
+    
+    public function ajax_toggle_ip() {
+        check_ajax_referer('wcbd_fraud_guard_ip', 'nonce');
+        if (!current_user_can('manage_options')) wp_send_json_error('Permission denied');
+        
+        $ip = isset($_POST['ip']) ? sanitize_text_field($_POST['ip']) : '';
+        $mode = isset($_POST['mode']) ? sanitize_text_field($_POST['mode']) : 'block';
+        $note = isset($_POST['note']) ? sanitize_text_field($_POST['note']) : '';
+        
+        if (empty($ip)) wp_send_json_error('IP নেই');
+        
+        if ($mode === 'unblock') {
+            $this->wcbd_unblock_ip($ip);
+            wp_send_json_success(array('ip' => $ip, 'blocked' => false));
+        }
+        
+        $this->wcbd_block_ip($ip, $note);
+        wp_send_json_success(array('ip' => $ip, 'blocked' => true));
+    }
+    
+    public function ajax_get_blocked_ips() {
+        check_ajax_referer('wcbd_fraud_guard_ip', 'nonce');
+        if (!current_user_can('manage_options')) wp_send_json_error('Permission denied');
+        wp_send_json_success($this->wcbd_get_blocked_ips());
+    }
+    
+    /**
+     * JS for order list column buttons + IP Blocks tab
+     */
+    public function wcbd_ip_admin_script() {
+        if (!current_user_can('manage_options')) return;
+        $nonce = wp_create_nonce('wcbd_fraud_guard_ip');
+        $ajax_url = admin_url('admin-ajax.php');
+        echo '<script>(function($){if(!window.jQuery)return;var WCBD_IP={nonce:"' . esc_js($nonce) . '",url:"' . esc_js($ajax_url) . '"};'
+            . 'function toggle(ip,mode,cb){$.post(WCBD_IP.url,{action:"wcbd_fg_toggle_ip",nonce:WCBD_IP.nonce,ip:ip,mode:mode},function(r){cb(r&&r.success);});}'
+            . '$(document).on("click",".wcbd-ip-btn",function(e){e.preventDefault();var b=$(this),ip=b.data("ip"),mode=b.data("mode");'
+            . 'if(mode==="block"&&!confirm(ip+" — এই IP পার্মানেন্ট ব্লক করবেন? ব্লক হলে সে ওয়েবসাইটে ঢুকতে পারবে না।"))return;'
+            . 'b.prop("disabled",true).text("...");toggle(ip,mode,function(ok){if(!ok){b.prop("disabled",false).text("Retry");return;}'
+            . '$(".wcbd-ip-cell[data-ip=\\'"+ip+"\\']").each(function(){var c=$(this);if(mode==="block"){c.find(".wcbd-ip-btn").replaceWith(\\'<span style="color:#dc2626;font-size:11px;font-weight:600">🚫 Blocked</span> <button type="button" class="button button-small wcbd-ip-btn" data-ip="\\'+ip+\\'" data-mode="unblock">Unblock</button>\\');}else{c.find("span,button").remove();c.append(\\'<button type="button" class="button button-small wcbd-ip-btn" data-ip="\\'+ip+\\'" data-mode="block" style="color:#dc2626;border-color:#fca5a5">Block IP</button>\\');}});'
+            . 'if($("#wcbd-blocked-list").length)loadBlocked();});});'
+            . 'function loadBlocked(){var box=$("#wcbd-blocked-list");if(!box.length)return;box.html("<p>লোড হচ্ছে...</p>");'
+            . '$.post(WCBD_IP.url,{action:"wcbd_fg_get_blocked_ips",nonce:WCBD_IP.nonce},function(r){if(!r||!r.success){box.html("<p>লোড ব্যর্থ</p>");return;}'
+            . 'var d=r.data||{},keys=Object.keys(d);if(!keys.length){box.html(\\'<p style="color:#64748b">কোনো IP ব্লক করা নেই।</p>\\');return;}'
+            . 'var h=\\'<table class="widefat striped"><thead><tr><th>IP</th><th>Note</th><th>Blocked At</th><th></th></tr></thead><tbody>\\';'
+            . 'keys.forEach(function(ip){var it=d[ip]||{};h+=\\'<tr class="wcbd-ip-cell" data-ip="\\'+ip+\\'"><td><code>\\'+ip+\\'</code></td><td>\\'+(it.note||"-")+\\'</td><td>\\'+(it.time||"-")+\\'</td><td><button type="button" class="button button-small wcbd-ip-btn" data-ip="\\'+ip+\\'" data-mode="unblock">Unblock</button></td></tr>\\';});'
+            . 'box.html(h+"</tbody></table>");});}'
+            . '$(document).on("click","#wcbd-add-ip-btn",function(e){e.preventDefault();var ip=$.trim($("#wcbd-add-ip").val()),note=$.trim($("#wcbd-add-ip-note").val());if(!ip){alert("IP লিখুন");return;}'
+            . 'toggle(ip,"block",function(ok){if(ok){$("#wcbd-add-ip").val("");$("#wcbd-add-ip-note").val("");loadBlocked();}else{alert("ব্লক করা যায়নি");}});});'
+            . '$(document).on("click",\\'.wcbd-tab-btn[data-tab="ipblocks"]\\',function(){loadBlocked();});'
+            . '$(function(){if($("#wcbd-blocked-list").length)loadBlocked();});'
+            . '})(jQuery);</script>';
+    }
+    
+
     public function render_settings_page() {
         $api_key = $this->api_key;
         $language = get_option('wcbd_fraud_guard_language', 'bn');
@@ -1554,6 +1764,7 @@ ADMINJSTEMPLATE;
         echo '<button class="wcbd-tab-btn active" data-tab="settings">⚙️ Settings</button>';
         echo '<button class="wcbd-tab-btn" data-tab="cooldown">⏱️ Cooldown</button>';
         echo '<button class="wcbd-tab-btn" data-tab="incomplete">📦 Incomplete Orders</button>';
+        echo '<button class="wcbd-tab-btn" data-tab="ipblocks">🚫 IP Blocks</button>';
         echo '</div>';
         
         // Tab 1: Settings
@@ -1647,6 +1858,20 @@ ADMINJSTEMPLATE;
         echo '<div class="fraud-card">';
         echo '<h2>📦 Incomplete Order Tracking <button id="refresh-incomplete" class="fraud-btn fraud-btn-secondary" style="margin-left:auto;padding:8px 16px;font-size:12px">🔄 Refresh</button></h2>';
         echo '<div id="incomplete-orders-container"><div style="text-align:center;padding:40px;color:#6b7280"><p>Click the Incomplete Orders tab to load data</p></div></div>';
+        echo '</div>';
+        echo '</div>';
+        
+        // Tab 4: IP Blocks (manual permanent block)
+        echo '<div id="wcbd-tab-ipblocks" class="wcbd-tab-content">';
+        echo '<div class="fraud-card">';
+        echo '<h2>🚫 Permanent IP Block</h2>';
+        echo '<p style="color:#64748b;font-size:13px;margin:0 0 15px">এখানে যেকোনো IP ম্যানুয়ালি ব্লক করতে পারবেন। ব্লক করা IP থেকে কেউ ওয়েবসাইটেই ঢুকতে পারবে না। Orders লিস্টে প্রতিটি অর্ডারের পাশে IP এবং "Block IP" বাটন আছে।</p>';
+        echo '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:20px">';
+        echo '<div class="fraud-form-group" style="margin:0"><label>IP Address</label><input type="text" id="wcbd-add-ip" class="fraud-input" placeholder="103.xx.xx.xx"></div>';
+        echo '<div class="fraud-form-group" style="margin:0"><label>Note (optional)</label><input type="text" id="wcbd-add-ip-note" class="fraud-input" placeholder="Fake order"></div>';
+        echo '<button type="button" id="wcbd-add-ip-btn" class="fraud-btn fraud-btn-primary">🚫 Block করুন</button>';
+        echo '</div>';
+        echo '<div id="wcbd-blocked-list"></div>';
         echo '</div>';
         echo '</div>';
         

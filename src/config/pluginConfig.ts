@@ -4,7 +4,7 @@
 
 export const PLUGIN_CONFIG = {
   // Current version - UPDATE THIS WHEN RELEASING NEW VERSIONS
-  version: "9.4.0",
+  version: "9.5.0",
   
   // Plugin metadata
   name: "WCBD Fraud Guard",
@@ -16,10 +16,13 @@ export const PLUGIN_CONFIG = {
   badgeLabel: "STABLE",
   
   // Current version highlights (for banners and feature lists)
-  versionHighlight: "WooCommerce Checkout Restored",
+  versionHighlight: "IP Tracking + Permanent Manual Block",
   
   // What's new in this version (for feature list)
   whatsNew: [
+    { icon: "🌐", title: "Order-এ IP দেখা যাবে", description: "WooCommerce Orders লিস্টে প্রতিটি অর্ডারের পাশে কাস্টমারের IP address দেখাবে" },
+    { icon: "🚫", title: "Permanent IP Block", description: "এক ক্লিকে IP ব্লক — ব্লক হলে সে আর ওয়েবসাইটেই ঢুকতে পারবে না (403 page)" },
+    { icon: "✍️", title: "Manual IP Block", description: "Fraud Guard → IP Blocks tab থেকে যেকোনো IP হাতে লিখে ব্লক/আনব্লক করা যাবে" },
     { icon: "🛒", title: "WooCommerce Checkout Fix", description: "Universal interceptor আর WC classic/block checkout এ interfere করবে না — অর্ডার আবার যাবে এবং popup ও আসবে normally" },
     { icon: "✅", title: "First Order Allowed", description: "প্রথম অর্ডারে popup দেখানোর double-check bug fix" },
     { icon: "🧪", title: "Runtime JS Verified", description: "Generated plugin JS syntax test pass করা হয়েছে—custom checkout blocker এবার load হবে" },

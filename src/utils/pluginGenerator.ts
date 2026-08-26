@@ -64,6 +64,8 @@ class WCBD_Fraud_Guard {
         add_action('manage_woocommerce_page_wc-orders_custom_column', array($this, 'wcbd_ip_column_hpos'), 20, 2);
         add_action('wp_ajax_wcbd_fg_toggle_ip', array($this, 'ajax_toggle_ip'));
         add_action('wp_ajax_wcbd_fg_get_blocked_ips', array($this, 'ajax_get_blocked_ips'));
+        add_action('wp_ajax_wcbd_fg_toggle_phone', array($this, 'ajax_toggle_phone'));
+        add_action('wp_ajax_wcbd_fg_get_blocked_phones', array($this, 'ajax_get_blocked_phones'));
         add_action('admin_footer', array($this, 'wcbd_ip_admin_script'), 99);
         add_action('wp_footer', array($this, 'inject_popup_styles'), 99);
         
@@ -1626,6 +1628,68 @@ ADMINJSTEMPLATE;
         return true;
     }
     
+    /* ---------- Manual PHONE block (same as IP block) ---------- */
+    public function wcbd_norm_phone($phone) {
+        $d = preg_replace('/[^0-9]/', '', (string) $phone);
+        if (strlen($d) > 11) $d = substr($d, -11);
+        return $d;
+    }
+    
+    public function wcbd_get_blocked_phones() {
+        $list = get_option('wcbd_fraud_guard_blocked_phones', array());
+        return is_array($list) ? $list : array();
+    }
+    
+    public function wcbd_is_phone_blocked($phone) {
+        $p = $this->wcbd_norm_phone($phone);
+        if (empty($p)) return false;
+        $list = $this->wcbd_get_blocked_phones();
+        return isset($list[$p]);
+    }
+    
+    public function wcbd_block_phone($phone, $note = '') {
+        $p = $this->wcbd_norm_phone($phone);
+        if (empty($p)) return false;
+        $list = $this->wcbd_get_blocked_phones();
+        $list[$p] = array('note' => sanitize_text_field($note), 'time' => current_time('mysql'));
+        update_option('wcbd_fraud_guard_blocked_phones', $list);
+        return true;
+    }
+    
+    public function wcbd_unblock_phone($phone) {
+        $p = $this->wcbd_norm_phone($phone);
+        $list = $this->wcbd_get_blocked_phones();
+        if (isset($list[$p])) {
+            unset($list[$p]);
+            update_option('wcbd_fraud_guard_blocked_phones', $list);
+        }
+        return true;
+    }
+    
+    public function ajax_toggle_phone() {
+        check_ajax_referer('wcbd_fraud_guard_ip', 'nonce');
+        if (!current_user_can('manage_options')) wp_send_json_error('Permission denied');
+        $phone = isset($_POST['phone']) ? sanitize_text_field($_POST['phone']) : '';
+        $mode = isset($_POST['mode']) ? sanitize_text_field($_POST['mode']) : 'block';
+        $note = isset($_POST['note']) ? sanitize_text_field($_POST['note']) : '';
+        $p = $this->wcbd_norm_phone($phone);
+        if (empty($p)) wp_send_json_error('নম্বর নেই');
+        if ($mode === 'unblock') {
+            $this->wcbd_unblock_phone($p);
+            wp_send_json_success(array('phone' => $p, 'blocked' => false));
+        }
+        $this->wcbd_block_phone($p, $note);
+        wp_send_json_success(array('phone' => $p, 'blocked' => true));
+    }
+    
+    public function ajax_get_blocked_phones() {
+        check_ajax_referer('wcbd_fraud_guard_ip', 'nonce');
+        if (!current_user_can('manage_options')) wp_send_json_error('Permission denied');
+        wp_send_json_success($this->wcbd_get_blocked_phones());
+    }
+    
+
+    
     /**
      * Permanent site-wide gate: blocked IP cannot access the website at all
      */
@@ -1688,41 +1752,71 @@ ADMINJSTEMPLATE;
         foreach ($columns as $key => $label) {
             $new[$key] = $label;
             if ($key === 'order_status' || $key === 'status') {
-                $new['wcbd_ip'] = '🛡️ IP / Block';
+                $new['wcbd_ip'] = '🛡️ IP / Phone Block';
             }
         }
-        if (!isset($new['wcbd_ip'])) $new['wcbd_ip'] = '🛡️ IP / Block';
+        if (!isset($new['wcbd_ip'])) $new['wcbd_ip'] = '🛡️ IP / Phone Block';
         return $new;
     }
     
-    public function wcbd_render_ip_cell($ip) {
+    public function wcbd_render_ip_cell($ip, $phone = '') {
+        echo '<div style="min-width:150px">';
+        
+        // ---- IP part ----
         if (empty($ip)) {
-            echo '<span style="color:#94a3b8;font-size:12px">—</span>';
-            return;
-        }
-        $blocked = $this->wcbd_is_ip_blocked($ip);
-        echo '<div class="wcbd-ip-cell" data-ip="' . esc_attr($ip) . '">';
-        echo '<code style="font-size:12px;background:#f1f5f9;padding:2px 6px;border-radius:5px;display:inline-block;margin-bottom:4px">' . esc_html($ip) . '</code><br>';
-        if ($blocked) {
-            echo '<span style="color:#dc2626;font-size:11px;font-weight:600">🚫 Blocked</span> ';
-            echo '<button type="button" class="button button-small wcbd-ip-btn" data-ip="' . esc_attr($ip) . '" data-mode="unblock">Unblock</button>';
+            echo '<div style="color:#94a3b8;font-size:12px">IP: —</div>';
         } else {
-            echo '<button type="button" class="button button-small wcbd-ip-btn" data-ip="' . esc_attr($ip) . '" data-mode="block" style="color:#dc2626;border-color:#fca5a5">Block IP</button>';
+            $blocked = $this->wcbd_is_ip_blocked($ip);
+            echo '<div class="wcbd-ip-cell" data-ip="' . esc_attr($ip) . '" style="margin-bottom:6px">';
+            echo '<code style="font-size:12px;background:#f1f5f9;padding:2px 6px;border-radius:5px;display:inline-block;margin-bottom:4px">' . esc_html($ip) . '</code><br>';
+            if ($blocked) {
+                echo '<span style="color:#dc2626;font-size:11px;font-weight:600">🚫 IP Blocked</span> ';
+                echo '<button type="button" class="button button-small wcbd-ip-btn" data-ip="' . esc_attr($ip) . '" data-mode="unblock">Unblock</button>';
+            } else {
+                echo '<button type="button" class="button button-small wcbd-ip-btn" data-ip="' . esc_attr($ip) . '" data-mode="block" style="color:#dc2626;border-color:#fca5a5">Block IP</button>';
+            }
+            echo '</div>';
         }
+        
+        // ---- Phone part ----
+        $p = $this->wcbd_norm_phone($phone);
+        if (empty($p)) {
+            echo '<div style="color:#94a3b8;font-size:12px">Phone: —</div>';
+        } else {
+            $pblocked = $this->wcbd_is_phone_blocked($p);
+            echo '<div class="wcbd-phone-cell" data-phone="' . esc_attr($p) . '">';
+            echo '<code style="font-size:12px;background:#fef3c7;padding:2px 6px;border-radius:5px;display:inline-block;margin-bottom:4px">' . esc_html($p) . '</code><br>';
+            if ($pblocked) {
+                echo '<span style="color:#dc2626;font-size:11px;font-weight:600">🚫 Phone Blocked</span> ';
+                echo '<button type="button" class="button button-small wcbd-phone-btn" data-phone="' . esc_attr($p) . '" data-mode="unblock">Unblock</button>';
+            } else {
+                echo '<button type="button" class="button button-small wcbd-phone-btn" data-phone="' . esc_attr($p) . '" data-mode="block" style="color:#b45309;border-color:#fcd34d">Block Number</button>';
+            }
+            echo '</div>';
+        }
+        
         echo '</div>';
+    }
+    
+    public function wcbd_order_phone_value($order) {
+        if (!$order) return '';
+        $phone = $order->get_billing_phone();
+        if (empty($phone)) $phone = $order->get_meta('_billing_phone');
+        return $phone ? $phone : '';
     }
     
     public function wcbd_ip_column_legacy($column, $post_id) {
         if ($column !== 'wcbd_ip') return;
         $order = wc_get_order($post_id);
-        $this->wcbd_render_ip_cell($this->wcbd_order_ip_value($order));
+        $this->wcbd_render_ip_cell($this->wcbd_order_ip_value($order), $this->wcbd_order_phone_value($order));
     }
     
     public function wcbd_ip_column_hpos($column, $order) {
         if ($column !== 'wcbd_ip') return;
         if (is_numeric($order)) $order = wc_get_order($order);
-        $this->wcbd_render_ip_cell($this->wcbd_order_ip_value($order));
+        $this->wcbd_render_ip_cell($this->wcbd_order_ip_value($order), $this->wcbd_order_phone_value($order));
     }
+
     
     public function ajax_toggle_ip() {
         check_ajax_referer('wcbd_fraud_guard_ip', 'nonce');
@@ -1771,8 +1865,22 @@ ADMINJSTEMPLATE;
             . 'box.html(h+"</tbody></table>");});}'
             . '$(document).on("click","#wcbd-add-ip-btn",function(e){e.preventDefault();var ip=$.trim($("#wcbd-add-ip").val()),note=$.trim($("#wcbd-add-ip-note").val());if(!ip){alert("IP লিখুন");return;}'
             . 'toggle(ip,"block",function(ok){if(ok){$("#wcbd-add-ip").val("");$("#wcbd-add-ip-note").val("");loadBlocked();}else{alert("ব্লক করা যায়নি");}});});'
-            . '$(document).on("click",\\'.wcbd-tab-btn[data-tab="ipblocks"]\\',function(){loadBlocked();});'
-            . '$(function(){if($("#wcbd-blocked-list").length)loadBlocked();});'
+            . '$(document).on("click",\\'.wcbd-tab-btn[data-tab="ipblocks"]\\',function(){loadBlocked();loadPhones();});'
+            . 'function togglePhone(p,mode,cb){$.post(WCBD_IP.url,{action:"wcbd_fg_toggle_phone",nonce:WCBD_IP.nonce,phone:p,mode:mode},function(r){cb(r&&r.success);});}'
+            . '$(document).on("click",".wcbd-phone-btn",function(e){e.preventDefault();var b=$(this),p=String(b.data("phone")),mode=b.data("mode");'
+            . 'if(mode==="block"&&!confirm(p+" — এই নম্বর পার্মানেন্ট ব্লক করবেন? এই নম্বর দিয়ে আর অর্ডার করা যাবে না।"))return;'
+            . 'b.prop("disabled",true).text("...");togglePhone(p,mode,function(ok){if(!ok){b.prop("disabled",false).text("Retry");return;}'
+            . '$(".wcbd-phone-cell[data-phone=\\'"+p+"\\']").each(function(){var c=$(this);if(mode==="block"){c.find(".wcbd-phone-btn").replaceWith(\\'<span style="color:#dc2626;font-size:11px;font-weight:600">🚫 Phone Blocked</span> <button type="button" class="button button-small wcbd-phone-btn" data-phone="\\'+p+\\'" data-mode="unblock">Unblock</button>\\');}else{c.find("span,button").remove();c.append(\\'<button type="button" class="button button-small wcbd-phone-btn" data-phone="\\'+p+\\'" data-mode="block" style="color:#b45309;border-color:#fcd34d">Block Number</button>\\');}});'
+            . 'if($("#wcbd-blocked-phones").length)loadPhones();});});'
+            . 'function loadPhones(){var box=$("#wcbd-blocked-phones");if(!box.length)return;box.html("<p>লোড হচ্ছে...</p>");'
+            . '$.post(WCBD_IP.url,{action:"wcbd_fg_get_blocked_phones",nonce:WCBD_IP.nonce},function(r){if(!r||!r.success){box.html("<p>লোড ব্যর্থ</p>");return;}'
+            . 'var d=r.data||{},keys=Object.keys(d);if(!keys.length){box.html(\\'<p style="color:#64748b">কোনো নম্বর ব্লক করা নেই।</p>\\');return;}'
+            . 'var h=\\'<table class="widefat striped"><thead><tr><th>Phone</th><th>Note</th><th>Blocked At</th><th></th></tr></thead><tbody>\\';'
+            . 'keys.forEach(function(p){var it=d[p]||{};h+=\\'<tr class="wcbd-phone-cell" data-phone="\\'+p+\\'"><td><code>\\'+p+\\'</code></td><td>\\'+(it.note||"-")+\\'</td><td>\\'+(it.time||"-")+\\'</td><td><button type="button" class="button button-small wcbd-phone-btn" data-phone="\\'+p+\\'" data-mode="unblock">Unblock</button></td></tr>\\';});'
+            . 'box.html(h+"</tbody></table>");});}'
+            . '$(document).on("click","#wcbd-add-phone-btn",function(e){e.preventDefault();var p=$.trim($("#wcbd-add-phone").val()),note=$.trim($("#wcbd-add-phone-note").val());if(!p){alert("নম্বর লিখুন");return;}'
+            . 'togglePhone(p,"block",function(ok){if(ok){$("#wcbd-add-phone").val("");$("#wcbd-add-phone-note").val("");loadPhones();}else{alert("ব্লক করা যায়নি");}});});'
+            . '$(function(){if($("#wcbd-blocked-list").length)loadBlocked();if($("#wcbd-blocked-phones").length)loadPhones();});'
             . '})(jQuery);</script>';
     }
     
@@ -1947,6 +2055,17 @@ ADMINJSTEMPLATE;
         echo '</div>';
         echo '<div id="wcbd-blocked-list"></div>';
         echo '</div>';
+        
+        echo '<div class="fraud-card">';
+        echo '<h2>📵 Permanent Phone Block</h2>';
+        echo '<p style="color:#64748b;font-size:13px;margin:0 0 15px">যেকোনো ফোন নম্বর ম্যানুয়ালি ব্লক করুন। ব্লক করা নম্বর দিয়ে আর অর্ডার করা যাবে না। Orders লিস্টে প্রতিটি অর্ডারের পাশে নম্বর এবং "Block Number" বাটন আছে।</p>';
+        echo '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:20px">';
+        echo '<div class="fraud-form-group" style="margin:0"><label>Phone Number</label><input type="text" id="wcbd-add-phone" class="fraud-input" placeholder="01XXXXXXXXX"></div>';
+        echo '<div class="fraud-form-group" style="margin:0"><label>Note (optional)</label><input type="text" id="wcbd-add-phone-note" class="fraud-input" placeholder="Fake order"></div>';
+        echo '<button type="button" id="wcbd-add-phone-btn" class="fraud-btn fraud-btn-primary">📵 Block করুন</button>';
+        echo '</div>';
+        echo '<div id="wcbd-blocked-phones"></div>';
+        echo '</div>';
         echo '</div>';
         
         // Features
@@ -2010,8 +2129,21 @@ ADMINJSTEMPLATE;
     private function validate_order_server_side($phone, $is_block = false) {
         if (empty($phone)) return;
         
+        // Manual permanent phone block (local list)
+        if ($this->wcbd_is_phone_blocked($phone) && get_option('wcbd_fraud_guard_block_phone', '1') === '1') {
+            $msg = get_option('wcbd_fraud_guard_msg_blacklist', '');
+            if (empty($msg)) $msg = 'আপনার নম্বর ব্লক করা হয়েছে। অর্ডার করা সম্ভব নয়। সমস্যা হলে যোগাযোগ করুন।';
+            if ($is_block) {
+                throw new \\Exception($msg);
+            } else {
+                wc_add_notice($msg, 'error');
+                return;
+            }
+        }
+        
         if (defined('WCBD_FRAUD_CHECKED')) return;
         define('WCBD_FRAUD_CHECKED', true);
+
         
         $api_key = $this->api_key;
         if (empty($api_key)) return;

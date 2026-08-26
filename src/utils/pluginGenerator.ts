@@ -64,6 +64,8 @@ class WCBD_Fraud_Guard {
         add_action('manage_woocommerce_page_wc-orders_custom_column', array($this, 'wcbd_ip_column_hpos'), 20, 2);
         add_action('wp_ajax_wcbd_fg_toggle_ip', array($this, 'ajax_toggle_ip'));
         add_action('wp_ajax_wcbd_fg_get_blocked_ips', array($this, 'ajax_get_blocked_ips'));
+        add_action('wp_ajax_wcbd_fg_toggle_phone', array($this, 'ajax_toggle_phone'));
+        add_action('wp_ajax_wcbd_fg_get_blocked_phones', array($this, 'ajax_get_blocked_phones'));
         add_action('admin_footer', array($this, 'wcbd_ip_admin_script'), 99);
         add_action('wp_footer', array($this, 'inject_popup_styles'), 99);
         

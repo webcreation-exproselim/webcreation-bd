@@ -42,6 +42,7 @@ class WCBD_Fraud_Guard {
         
         add_action('admin_init', array($this, 'check_woocommerce'));
         add_action('admin_menu', array($this, 'add_admin_menu'));
+        add_filter('parent_file', array($this, 'wcbd_highlight_submenu'));
         add_action('wp_enqueue_scripts', array($this, 'enqueue_frontend_scripts'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
         add_action('admin_post_wcbd_fraud_guard_save_settings', array($this, 'save_settings'));
@@ -101,6 +102,33 @@ class WCBD_Fraud_Guard {
             'dashicons-shield',
             56
         );
+        
+        // Submenu items (WP sidebar menu instead of only in-page tabs)
+        add_submenu_page(
+            'wcbd-fraud-guard',
+            'Fraud Guard Settings',
+            '⚙️ Settings',
+            'manage_options',
+            'wcbd-fraud-guard',
+            array($this, 'render_settings_page')
+        );
+        add_submenu_page('wcbd-fraud-guard', 'Cooldown', '⏱️ Cooldown', 'manage_options', 'admin.php?page=wcbd-fraud-guard&tab=cooldown');
+        add_submenu_page('wcbd-fraud-guard', 'Incomplete Orders', '📦 Incomplete Orders', 'manage_options', 'admin.php?page=wcbd-fraud-guard&tab=incomplete');
+        add_submenu_page('wcbd-fraud-guard', 'IP Blocks', '🚫 IP Blocks', 'manage_options', 'admin.php?page=wcbd-fraud-guard&tab=ipblocks');
+    }
+    
+    /**
+     * Highlight the correct submenu item when a tab is open
+     */
+    public function wcbd_highlight_submenu($parent_file) {
+        global $plugin_page, $submenu_file;
+        if ($plugin_page === 'wcbd-fraud-guard' && !empty($_GET['tab'])) {
+            $tab = sanitize_key($_GET['tab']);
+            if (in_array($tab, array('cooldown', 'incomplete', 'ipblocks'), true)) {
+                $submenu_file = 'admin.php?page=wcbd-fraud-guard&tab=' . $tab;
+            }
+        }
+        return $parent_file;
     }
     
     /**
@@ -1139,15 +1167,9 @@ LOADERJS;
         $js_template = <<<'ADMINJSTEMPLATE'
 (function(jQ){
 jQ(document).ready(function(){
-jQ(".wcbd-tab-btn").on("click",function(){
-var tab=jQ(this).data("tab");
-jQ(".wcbd-tab-btn").removeClass("active");
-jQ(this).addClass("active");
-jQ(".wcbd-tab-content").removeClass("active");
-jQ("#wcbd-tab-"+tab).addClass("active");
-if(tab==="incomplete"){loadIncompleteOrders();}
-if(tab==="cooldown"){loadCooldown();}
-});
+var wcbdActiveTab=jQ(".fraud-wrap").data("active-tab")||"settings";
+if(wcbdActiveTab==="incomplete"){loadIncompleteOrders();}
+if(wcbdActiveTab==="cooldown"){loadCooldown();}
 
 jQ("#wcbd-test-api").on("click",function(){
 var btn=jQ(this);
@@ -1745,8 +1767,18 @@ ADMINJSTEMPLATE;
         $whatsapp = get_option('wcbd_fraud_guard_whatsapp', '');
         $phone = get_option('wcbd_fraud_guard_phone', '');
         $saved = isset($_GET['saved']);
+        $current_tab = isset($_GET['tab']) ? sanitize_key($_GET['tab']) : 'settings';
+        if (!in_array($current_tab, array('settings', 'cooldown', 'incomplete', 'ipblocks'), true)) {
+            $current_tab = 'settings';
+        }
+        $tabs = array(
+            'settings'   => '⚙️ Settings',
+            'cooldown'   => '⏱️ Cooldown',
+            'incomplete' => '📦 Incomplete Orders',
+            'ipblocks'   => '🚫 IP Blocks',
+        );
         
-        echo '<div class="fraud-wrap">';
+        echo '<div class="fraud-wrap" data-active-tab="' . esc_attr($current_tab) . '">';
         
         // Header
         echo '<div class="fraud-header"><div class="fraud-header-text">';
@@ -1759,16 +1791,16 @@ ADMINJSTEMPLATE;
             echo '<div style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;padding:16px 24px;border-radius:14px;margin-bottom:20px;font-weight:500;display:flex;align-items:center;gap:10px"><span style="font-size:20px">✅</span> Settings saved successfully!</div>';
         }
         
-        // Tabs
+        // Tabs (also available as WP sidebar submenu)
         echo '<div class="wcbd-tabs">';
-        echo '<button class="wcbd-tab-btn active" data-tab="settings">⚙️ Settings</button>';
-        echo '<button class="wcbd-tab-btn" data-tab="cooldown">⏱️ Cooldown</button>';
-        echo '<button class="wcbd-tab-btn" data-tab="incomplete">📦 Incomplete Orders</button>';
-        echo '<button class="wcbd-tab-btn" data-tab="ipblocks">🚫 IP Blocks</button>';
+        foreach ($tabs as $tab_key => $tab_label) {
+            $url = admin_url('admin.php?page=wcbd-fraud-guard' . ($tab_key === 'settings' ? '' : '&tab=' . $tab_key));
+            echo '<a href="' . esc_url($url) . '" class="wcbd-tab-btn' . ($current_tab === $tab_key ? ' active' : '') . '" data-tab="' . esc_attr($tab_key) . '" style="text-decoration:none">' . $tab_label . '</a>';
+        }
         echo '</div>';
         
         // Tab 1: Settings
-        echo '<div id="wcbd-tab-settings" class="wcbd-tab-content active">';
+        echo '<div id="wcbd-tab-settings" class="wcbd-tab-content' . ($current_tab === 'settings' ? ' active' : '') . '">';
         
         // API Connection Card
         echo '<div class="fraud-card">';
@@ -1846,23 +1878,23 @@ ADMINJSTEMPLATE;
         echo '</div>'; // End settings tab
         
         // Tab 2: Cooldown
-        echo '<div id="wcbd-tab-cooldown" class="wcbd-tab-content">';
+        echo '<div id="wcbd-tab-cooldown" class="wcbd-tab-content' . ($current_tab === 'cooldown' ? ' active' : '') . '">';
         echo '<div class="fraud-card dark">';
         echo '<h2>⏱️ Cooldown Period Control</h2>';
-        echo '<div id="cooldown-container"><div style="text-align:center;padding:40px;color:#94a3b8"><p>Click the Cooldown tab to load settings</p></div></div>';
+        echo '<div id="cooldown-container"><div style="text-align:center;padding:40px;color:#94a3b8"><p>Loading...</p></div></div>';
         echo '</div>';
         echo '</div>';
         
         // Tab 3: Incomplete Orders
-        echo '<div id="wcbd-tab-incomplete" class="wcbd-tab-content">';
+        echo '<div id="wcbd-tab-incomplete" class="wcbd-tab-content' . ($current_tab === 'incomplete' ? ' active' : '') . '">';
         echo '<div class="fraud-card">';
         echo '<h2>📦 Incomplete Order Tracking <button id="refresh-incomplete" class="fraud-btn fraud-btn-secondary" style="margin-left:auto;padding:8px 16px;font-size:12px">🔄 Refresh</button></h2>';
-        echo '<div id="incomplete-orders-container"><div style="text-align:center;padding:40px;color:#6b7280"><p>Click the Incomplete Orders tab to load data</p></div></div>';
+        echo '<div id="incomplete-orders-container"><div style="text-align:center;padding:40px;color:#6b7280"><p>Loading...</p></div></div>';
         echo '</div>';
         echo '</div>';
         
         // Tab 4: IP Blocks (manual permanent block)
-        echo '<div id="wcbd-tab-ipblocks" class="wcbd-tab-content">';
+        echo '<div id="wcbd-tab-ipblocks" class="wcbd-tab-content' . ($current_tab === 'ipblocks' ? ' active' : '') . '">';
         echo '<div class="fraud-card">';
         echo '<h2>🚫 Permanent IP Block</h2>';
         echo '<p style="color:#64748b;font-size:13px;margin:0 0 15px">এখানে যেকোনো IP ম্যানুয়ালি ব্লক করতে পারবেন। ব্লক করা IP থেকে কেউ ওয়েবসাইটেই ঢুকতে পারবে না। Orders লিস্টে প্রতিটি অর্ডারের পাশে IP এবং "Block IP" বাটন আছে।</p>';

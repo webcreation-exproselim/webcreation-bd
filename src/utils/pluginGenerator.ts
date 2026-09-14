@@ -235,9 +235,16 @@ try{if(forms[k].querySelector('input[type="tel"], [name*="phone" i], [name*="mob
 return false;
 }
 
+function wcbdSendCleanup(phone,tag){
+try{
+fetch('%%INCOMPLETE_ENDPOINT%%',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({api_key:'%%APIKEY%%',action:'completed',phone:phone})})
+.then(function(r){return r.json().catch(function(){return null;});})
+.then(function(r){console.log('[WCBD] ✅ Incomplete record cleaned up'+(tag?' ('+tag+')':'')+':',r);})
+.catch(function(err){console.error('[WCBD] Cleanup error:',err);});
+}catch(e){console.error('[WCBD] Cleanup exception:',e);}
+}
 function wcbdCleanupCompleted(){
 console.log('[WCBD v${PLUGIN_CONFIG.version}] Thank You page detected - running cleanup...');
-var jQ=jQuery;
 var orderPhone='';
 var phoneSelectors=[
 '.woocommerce-order-overview .woocommerce-order-overview__phone',
@@ -249,11 +256,13 @@ var phoneSelectors=[
 '.woocommerce-column--billing-address',
 '[data-block-name="woocommerce/order-confirmation-billing-address"]'
 ];
-jQ(phoneSelectors.join(',')).each(function(){
-var text=jQ(this).text();
-var match=text.match(/01[0-9]{9}/);
-if(match&&!orderPhone)orderPhone=match[0];
-});
+try{
+var nodes=document.querySelectorAll(phoneSelectors.join(','));
+for(var n=0;n<nodes.length;n++){
+var m=(nodes[n].textContent||'').match(/01[0-9]{9}/);
+if(m&&!orderPhone)orderPhone=m[0];
+}
+}catch(e){}
 if(!orderPhone){
 var allText=document.body.innerText||'';
 var phoneMatch=allText.match(/01[0-9]{9}/);
@@ -261,12 +270,7 @@ if(phoneMatch)orderPhone=phoneMatch[0];
 }
 if(orderPhone){
 console.log('[WCBD] Cleaning up incomplete record for phone:',orderPhone);
-jQ.ajax({
-url:'%%INCOMPLETE_ENDPOINT%%',method:'POST',contentType:'application/json',
-data:JSON.stringify({api_key:'%%APIKEY%%',action:'completed',phone:orderPhone}),
-success:function(r){console.log('[WCBD] ✅ Incomplete record cleaned up:',r);},
-error:function(xhr,status,err){console.error('[WCBD] Cleanup error:',err);}
-});
+wcbdSendCleanup(orderPhone,'');
 }else{
 console.log('[WCBD] Could not detect phone number on Thank You page - retrying in 2s...');
 setTimeout(function(){
@@ -274,12 +278,7 @@ var retryText=document.body.innerText||'';
 var retryMatch=retryText.match(/01[0-9]{9}/);
 if(retryMatch){
 console.log('[WCBD] Retry: found phone',retryMatch[0]);
-jQ.ajax({
-url:'%%INCOMPLETE_ENDPOINT%%',method:'POST',contentType:'application/json',
-data:JSON.stringify({api_key:'%%APIKEY%%',action:'completed',phone:retryMatch[0]}),
-success:function(r){console.log('[WCBD] ✅ Retry cleanup success:',r);},
-error:function(xhr,status,err){console.error('[WCBD] Retry cleanup error:',err);}
-});
+wcbdSendCleanup(retryMatch[0],'retry');
 }else{
 console.log('[WCBD] Retry: still no phone found on page');
 }

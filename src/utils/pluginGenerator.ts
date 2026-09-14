@@ -1048,7 +1048,30 @@ wcbdClosePopup();
 
 WCBD_FG.init();
 }
-if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',wcbdLoad);}else{wcbdLoad();}
+// Keep watching for late-rendered checkouts (React/Next/SPA themes, popup & multi-step checkouts)
+function wcbdWatch(){
+if(window.__wcbdFgStarted)return;
+wcbdLoad();
+}
+if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',wcbdWatch);}else{wcbdWatch();}
+(function(){
+var tries=0;
+var iv=setInterval(function(){
+tries++;
+if(window.__wcbdFgStarted||tries>60){clearInterval(iv);return;}
+wcbdWatch();
+},500);
+try{
+var mo=new MutationObserver(function(){if(window.__wcbdFgStarted){mo.disconnect();return;}wcbdWatch();});
+mo.observe(document.documentElement,{childList:true,subtree:true});
+setTimeout(function(){try{mo.disconnect();}catch(e){}},40000);
+}catch(e){}
+window.addEventListener('popstate',wcbdWatch);
+try{
+var ps=history.pushState;
+history.pushState=function(){var r=ps.apply(this,arguments);setTimeout(wcbdWatch,300);return r;};
+}catch(e){}
+})();
 })();
 LOADERJS;
 

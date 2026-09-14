@@ -235,9 +235,16 @@ try{if(forms[k].querySelector('input[type="tel"], [name*="phone" i], [name*="mob
 return false;
 }
 
+function wcbdSendCleanup(phone,tag){
+try{
+fetch('%%INCOMPLETE_ENDPOINT%%',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({api_key:'%%APIKEY%%',action:'completed',phone:phone})})
+.then(function(r){return r.json().catch(function(){return null;});})
+.then(function(r){console.log('[WCBD] ✅ Incomplete record cleaned up'+(tag?' ('+tag+')':'')+':',r);})
+.catch(function(err){console.error('[WCBD] Cleanup error:',err);});
+}catch(e){console.error('[WCBD] Cleanup exception:',e);}
+}
 function wcbdCleanupCompleted(){
 console.log('[WCBD v${PLUGIN_CONFIG.version}] Thank You page detected - running cleanup...');
-var jQ=jQuery;
 var orderPhone='';
 var phoneSelectors=[
 '.woocommerce-order-overview .woocommerce-order-overview__phone',
@@ -249,11 +256,13 @@ var phoneSelectors=[
 '.woocommerce-column--billing-address',
 '[data-block-name="woocommerce/order-confirmation-billing-address"]'
 ];
-jQ(phoneSelectors.join(',')).each(function(){
-var text=jQ(this).text();
-var match=text.match(/01[0-9]{9}/);
-if(match&&!orderPhone)orderPhone=match[0];
-});
+try{
+var nodes=document.querySelectorAll(phoneSelectors.join(','));
+for(var n=0;n<nodes.length;n++){
+var m=(nodes[n].textContent||'').match(/01[0-9]{9}/);
+if(m&&!orderPhone)orderPhone=m[0];
+}
+}catch(e){}
 if(!orderPhone){
 var allText=document.body.innerText||'';
 var phoneMatch=allText.match(/01[0-9]{9}/);
@@ -261,12 +270,7 @@ if(phoneMatch)orderPhone=phoneMatch[0];
 }
 if(orderPhone){
 console.log('[WCBD] Cleaning up incomplete record for phone:',orderPhone);
-jQ.ajax({
-url:'%%INCOMPLETE_ENDPOINT%%',method:'POST',contentType:'application/json',
-data:JSON.stringify({api_key:'%%APIKEY%%',action:'completed',phone:orderPhone}),
-success:function(r){console.log('[WCBD] ✅ Incomplete record cleaned up:',r);},
-error:function(xhr,status,err){console.error('[WCBD] Cleanup error:',err);}
-});
+wcbdSendCleanup(orderPhone,'');
 }else{
 console.log('[WCBD] Could not detect phone number on Thank You page - retrying in 2s...');
 setTimeout(function(){
@@ -274,30 +278,44 @@ var retryText=document.body.innerText||'';
 var retryMatch=retryText.match(/01[0-9]{9}/);
 if(retryMatch){
 console.log('[WCBD] Retry: found phone',retryMatch[0]);
-jQ.ajax({
-url:'%%INCOMPLETE_ENDPOINT%%',method:'POST',contentType:'application/json',
-data:JSON.stringify({api_key:'%%APIKEY%%',action:'completed',phone:retryMatch[0]}),
-success:function(r){console.log('[WCBD] ✅ Retry cleanup success:',r);},
-error:function(xhr,status,err){console.error('[WCBD] Retry cleanup error:',err);}
-});
+wcbdSendCleanup(retryMatch[0],'retry');
 }else{
 console.log('[WCBD] Retry: still no phone found on page');
 }
 },2000);
 }
 }
+// Ensure jQuery exists (some custom/headless themes dequeue it) before running Fraud Guard
+function wcbdEnsureJQuery(cb){
+if(window.jQuery){cb();return;}
+if(window.__wcbdJqLoading){var t=setInterval(function(){if(window.jQuery){clearInterval(t);cb();}},100);setTimeout(function(){clearInterval(t);},10000);return;}
+window.__wcbdJqLoading=true;
+console.log('[WCBD] jQuery missing - loading fallback copy...');
+var j=document.createElement('script');
+j.src='https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js';
+j.onload=function(){console.log('[WCBD] jQuery fallback ready');cb();};
+j.onerror=function(){console.warn('[WCBD] jQuery fallback failed - Fraud Guard disabled on this page');};
+document.head.appendChild(j);
+}
 function wcbdLoad(){
-if(wcbdIsThankYou()){wcbdCleanupCompleted();return;}
+if(window.__wcbdFgLoading||window.__wcbdFgStarted)return;
+if(wcbdIsThankYou()){if(window.__wcbdTyDone)return;window.__wcbdTyDone=true;wcbdCleanupCompleted();return;}
 if(!wcbdCheckout()){return;}
+window.__wcbdFgLoading=true;
 console.log('[WCBD v${PLUGIN_CONFIG.version}] Checkout detected - loading Fraud Guard...');
+wcbdEnsureJQuery(function(){
 var s=document.createElement('script');
 s.src='https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js';
 s.onload=function(){wcbdInit();};
 s.onerror=function(){console.warn('[WCBD] FingerprintJS failed to load - continuing without device ID');wcbdInit();};
 document.head.appendChild(s);
+});
 }
 function wcbdInit(){
-var jQ=jQuery;
+if(!window.jQuery){console.warn('[WCBD] jQuery unavailable - aborting init');return;}
+if(window.__wcbdFgStarted)return;
+window.__wcbdFgStarted=true;
+var jQ=window.jQuery;
 var WCBD_FG={
 deviceId:null,
 endpoint:'%%ENDPOINT%%',
@@ -1032,7 +1050,30 @@ wcbdClosePopup();
 
 WCBD_FG.init();
 }
-if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',wcbdLoad);}else{wcbdLoad();}
+// Keep watching for late-rendered checkouts (React/Next/SPA themes, popup & multi-step checkouts)
+function wcbdWatch(){
+if(window.__wcbdFgStarted)return;
+wcbdLoad();
+}
+if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',wcbdWatch);}else{wcbdWatch();}
+(function(){
+var tries=0;
+var iv=setInterval(function(){
+tries++;
+if(window.__wcbdFgStarted||tries>60){clearInterval(iv);return;}
+wcbdWatch();
+},500);
+try{
+var mo=new MutationObserver(function(){if(window.__wcbdFgStarted){mo.disconnect();return;}wcbdWatch();});
+mo.observe(document.documentElement,{childList:true,subtree:true});
+setTimeout(function(){try{mo.disconnect();}catch(e){}},40000);
+}catch(e){}
+window.addEventListener('popstate',wcbdWatch);
+try{
+var ps=history.pushState;
+history.pushState=function(){var r=ps.apply(this,arguments);setTimeout(wcbdWatch,300);return r;};
+}catch(e){}
+})();
 })();
 LOADERJS;
 

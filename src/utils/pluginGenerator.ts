@@ -298,8 +298,10 @@ j.onerror=function(){console.warn('[WCBD] jQuery fallback failed - Fraud Guard d
 document.head.appendChild(j);
 }
 function wcbdLoad(){
-if(wcbdIsThankYou()){wcbdCleanupCompleted();return;}
+if(window.__wcbdFgLoading||window.__wcbdFgStarted)return;
+if(wcbdIsThankYou()){if(window.__wcbdTyDone)return;window.__wcbdTyDone=true;wcbdCleanupCompleted();return;}
 if(!wcbdCheckout()){return;}
+window.__wcbdFgLoading=true;
 console.log('[WCBD v${PLUGIN_CONFIG.version}] Checkout detected - loading Fraud Guard...');
 wcbdEnsureJQuery(function(){
 var s=document.createElement('script');

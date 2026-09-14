@@ -310,7 +310,10 @@ document.head.appendChild(s);
 });
 }
 function wcbdInit(){
-var jQ=jQuery;
+if(!window.jQuery){console.warn('[WCBD] jQuery unavailable - aborting init');return;}
+if(window.__wcbdFgStarted)return;
+window.__wcbdFgStarted=true;
+var jQ=window.jQuery;
 var WCBD_FG={
 deviceId:null,
 endpoint:'%%ENDPOINT%%',

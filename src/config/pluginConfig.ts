@@ -4,7 +4,7 @@
 
 export const PLUGIN_CONFIG = {
   // Current version - UPDATE THIS WHEN RELEASING NEW VERSIONS
-  version: "9.6.1",
+  version: "9.7.0",
   
   // Plugin metadata
   name: "WCBD Fraud Guard",
@@ -16,10 +16,14 @@ export const PLUGIN_CONFIG = {
   badgeLabel: "STABLE",
   
   // Current version highlights (for banners and feature lists)
-  versionHighlight: "Block System ON/OFF Control",
+  versionHighlight: "Stability & Universal Load Fix",
   
   // What's new in this version (for feature list)
   whatsNew: [
+    { icon: "🧩", title: "jQuery ছাড়াও কাজ করবে", description: "থিম jQuery বন্ধ রাখলে plugin নিজে jQuery লোড করে নেয় — আর চুপচাপ বন্ধ হবে না" },
+    { icon: "🔁", title: "Late-load Checkout Detect", description: "React/Next/SPA বা multi-step checkout পরে render হলেও Fraud Guard ধরে ফেলবে (watcher + route change)" },
+    { icon: "🧹", title: "Thank You Cleanup Fix", description: "Incomplete order cleanup এখন jQuery ছাড়া fetch দিয়ে চলে — অর্ডার হয়ে গেলে রেকর্ড ঠিকমতো মুছবে" },
+    { icon: "🛡️", title: "Double-Load Guard", description: "একই পেজে একবারই init হবে — duplicate popup বা double check আর হবে না" },
     { icon: "🎚️", title: "Cooldown Block ON/OFF", description: "Fraud Guard → Settings থেকে টাইমার/cooldown ব্লক সিস্টেম চালু বা বন্ধ করা যাবে" },
     { icon: "📵", title: "Phone Block ON/OFF", description: "ব্লক করা নম্বর (blacklist) ব্লক করা হবে কিনা — এক ক্লিকে ON/OFF" },
     { icon: "🛡️", title: "Front + Server Both", description: "OFF করলে popup ও আসবে না, server-side checkout block ও হবে না" },

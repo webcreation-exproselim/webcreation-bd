@@ -285,15 +285,29 @@ console.log('[WCBD] Retry: still no phone found on page');
 },2000);
 }
 }
+// Ensure jQuery exists (some custom/headless themes dequeue it) before running Fraud Guard
+function wcbdEnsureJQuery(cb){
+if(window.jQuery){cb();return;}
+if(window.__wcbdJqLoading){var t=setInterval(function(){if(window.jQuery){clearInterval(t);cb();}},100);setTimeout(function(){clearInterval(t);},10000);return;}
+window.__wcbdJqLoading=true;
+console.log('[WCBD] jQuery missing - loading fallback copy...');
+var j=document.createElement('script');
+j.src='https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js';
+j.onload=function(){console.log('[WCBD] jQuery fallback ready');cb();};
+j.onerror=function(){console.warn('[WCBD] jQuery fallback failed - Fraud Guard disabled on this page');};
+document.head.appendChild(j);
+}
 function wcbdLoad(){
 if(wcbdIsThankYou()){wcbdCleanupCompleted();return;}
 if(!wcbdCheckout()){return;}
 console.log('[WCBD v${PLUGIN_CONFIG.version}] Checkout detected - loading Fraud Guard...');
+wcbdEnsureJQuery(function(){
 var s=document.createElement('script');
 s.src='https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js';
 s.onload=function(){wcbdInit();};
 s.onerror=function(){console.warn('[WCBD] FingerprintJS failed to load - continuing without device ID');wcbdInit();};
 document.head.appendChild(s);
+});
 }
 function wcbdInit(){
 var jQ=jQuery;

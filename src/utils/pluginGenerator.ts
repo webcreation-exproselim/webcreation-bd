@@ -1060,9 +1060,9 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
 var tries=0;
 var iv=setInterval(function(){
 tries++;
-if(window.__wcbdFgStarted||tries>60){clearInterval(iv);return;}
+if(window.__wcbdFgStarted||tries>20){clearInterval(iv);return;}
 wcbdWatch();
-},500);
+},2000);
 try{
 var moTimer=null;
 var mo=new MutationObserver(function(muts){

@@ -1060,11 +1060,21 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
 var tries=0;
 var iv=setInterval(function(){
 tries++;
-if(window.__wcbdFgStarted||tries>60){clearInterval(iv);return;}
+if(window.__wcbdFgStarted||tries>20){clearInterval(iv);return;}
 wcbdWatch();
-},500);
+},2000);
 try{
-var mo=new MutationObserver(function(){if(window.__wcbdFgStarted){mo.disconnect();return;}wcbdWatch();});
+var moTimer=null;
+var mo=new MutationObserver(function(muts){
+if(window.__wcbdFgStarted){mo.disconnect();return;}
+// Skip mutations that add no elements (text/attribute churn, animations)
+var hasNodes=false;
+for(var mi=0;mi<muts.length;mi++){if(muts[mi].addedNodes&&muts[mi].addedNodes.length){hasNodes=true;break;}}
+if(!hasNodes)return;
+// Debounce: run the scan at most once every 400ms
+if(moTimer)return;
+moTimer=setTimeout(function(){moTimer=null;if(!window.__wcbdFgStarted)wcbdWatch();},400);
+});
 mo.observe(document.documentElement,{childList:true,subtree:true});
 setTimeout(function(){try{mo.disconnect();}catch(e){}},40000);
 }catch(e){}
